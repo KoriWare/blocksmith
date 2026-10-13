@@ -234,3 +234,33 @@ Our own defaults / methods (unsourced, shown as suggestions or stated in the pro
 - Taper roughing: passes parallel to the taper at DOC per side, no finish allowance; no nose radius comp.
 - Cross-drill: peck re-approach 0.01 in radial above last depth, OD clearance 0.02 in radial.
 - Feeds / RPM gray suggestions (0.002 in/rev groove, 0.008/0.004 in/rev turn, 4 in/min live drill, 1500 live RPM, 800/1200 RPM).
+
+## Round 30 · batch 4 (Oct 13, 2026)
+
+| Fact | Used by | Sources | Status |
+|---|---|---|---|
+| Haas #1098 = spindle load (vector drive), percent | sload (Haas hint only; value stays red until you confirm it) | Haas Mill Macros chapter (official) haascnc.com/service/online-operator-s-manuals/mill-operator-s-manual/mill---macros.html + inventcom.net Haas macro variable list | OK |
+| Fanuc spindle load variable | sload | No standard macro variable found (it depends on PMC / builder settings) | FLAGGED: red setting "Spindle load variable", you type it |
+| Fanuc look-ahead can read a variable before the move ends | sload | Common forum advice, sources do not agree on a fix | FLAGGED in the program comment: check your control's buffering |
+| Haas D geometry / wear #2401 / #2601 | tdia (comment) | Haas Macros chapter (official) | OK |
+| G10 L12 / L13 = D geometry / D wear (Haas) | tdia | Haas G10 page (official) + haas.co.uk G10 page | OK |
+| Fanuc G10 L10–L13 by memory type (C: L12/L13 for D; A/B: L11) | tdia | Smid "CNC Programming Handbook" excerpt (coursehero) + cncmacros.com + practicalmachinist.com thread (agree) | OK; memory type is a red setting |
+| Setter diameter macro call and result # | tdia | Depends on the setter maker | red settings, you type them |
+| G31 skip, #5061–#5063 skip positions, G10 L2 | ppres, rotcl | Round 27 rows | OK |
+| Haas G76 one-block (X Z K D F A; P, Settings 86/95/96/99) | lthread | Haas lathe G76 page (official) | OK |
+| Fanuc G76 two-block: P(spring)(chamfer)(angle) Q(min) R(allow) / X Z P(height) Q(first) F; P/Q in 0.0001 in or microns, no decimal | lthread | zappettini.com + cncprogramminghub.com + industrialmonitordirect.com + practicalmachinist.com (agree) | OK |
+| G12.1 / G13.1 (Fanuc), G112 / G113 (Haas), X dia + C radius units on Fanuc, Haas G17 before | poly | Engrave-round rows (Haas G112 page official; Fanuc 2+ agree) | OK |
+| Y axis on a multitask lathe moves in the current plane without extra codes | yflat | Machine specific | FLAGGED in program comment |
+| Live tool / C axis codes | cface, yflat, poly | Round 29 rows | red settings |
+| Indirect #[base+#i] assignment, WHILE/DO/END | drift | Round 25 rows (Haas official + Fanuc 2+) | OK |
+| #3000 ≤ 26 characters on Fanuc, #3006 message stop | all | earlier rows | OK |
+
+Our own defaults / methods (unsourced, shown as gray suggestions or stated in the program):
+- Polygon rings: stepover = cutter radius; tool-center path, no comp.
+- Y flats: 0.5 × cutter Z stepover, DOC per side × 2 in X per pass.
+- Face bolt circle peck re-approach 0.02 in; clear Z 0.1 in.
+- Thread start clearance 0.1 in on diameter; gray spring 1, min depth 0.002, finish allow 0.001, 60°, 600 RPM.
+- Part present: two touch points, approach clearance 0.2, skip feed 10 in/min.
+- Rotary centerline: alarm if the two top readings differ more than the expected gap + 1.
+- Drift: simple moving average of the last N readings vs nominal.
+- Feeds / RPM: 20 in/min and 3000 RPM load check, 1500 / 3000 live RPM, 4 / 10 in/min live feeds.
