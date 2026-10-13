@@ -1,7 +1,7 @@
-<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=25" style="width:390px;height:844px"></iframe><script>
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=26" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
- setTimeout(async()=>{const d=w.document,E=x=>w.eval(x);w.confirm=()=>true;try{
+ setTimeout(async()=>{w.eval('NOASK=1');const d=w.document,E=x=>w.eval(x);w.confirm=()=>true;try{
   log('each machine has own tools',E('S.m.every(m=>Array.isArray(m.tools)&&m.tools.length)'));
   E('S.cur=0;S.tools[0].dia=3');E('S.cur=1');log('editing Mill A tools does not change Mill B',E('S.tools[0].dia')==2);
   log('tools not saved as shared key',!JSON.parse(w.localStorage.mc||'{}').tools||E('save(),!JSON.parse(localStorage.mc).tools'));

@@ -1,8 +1,8 @@
-<!doctype html><body style="background:#fff"><pre id="o"></pre><iframe id="f" src="../index.html?v=25" style="width:390px;height:844px"></iframe><script>
+<!doctype html><body style="background:#fff"><pre id="o"></pre><iframe id="f" src="../index.html?v=26" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);
 f.onload=()=>{const w=f.contentWindow,d=w.document;try{
  if(!window.r){window.r=1;w.localStorage.clear();w.location.reload();return}}catch(e){}
- setTimeout(()=>{const w=f.contentWindow,d=w.document;try{
+ setTimeout(()=>{const w=f.contentWindow,d=w.document;w.eval('NOASK=1');try{
   // red chip confirm on Mill A: Extended offsets
   w.edit(0);const k=w.eval('S').m[0].s.findIndex(x=>x.k=='Extended offsets');d.querySelectorAll('.set .chip')[k].click();log('red chip confirm turns setting green',w.eval('S').m[0].s[k].st=='user');
   // set extended offsets to 48 via input

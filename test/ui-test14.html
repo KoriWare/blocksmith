@@ -1,7 +1,7 @@
-<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=25" style="width:390px;height:844px"></iframe><script>
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=26" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
- setTimeout(()=>{const d=w.document,E=x=>w.eval(x);try{
+ setTimeout(()=>{w.eval('NOASK=1');const d=w.document,E=x=>w.eval(x);try{
   const code=()=>E("txt().join('\\n')"),cl=()=>d.querySelector('#cl').textContent,chips=()=>d.querySelector('#out .card').textContent;
   const TY=t=>{d.querySelector('#q').value=t;w.go()};const BC='G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1';
   log('header toggle present, default in',!!d.querySelector('.h .units #u-mm')&&d.querySelector('#u-in').classList.contains('on')&&w.UN()=='in');

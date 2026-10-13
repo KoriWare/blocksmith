@@ -1,0 +1,41 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=26" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+ setTimeout(()=>{const d=w.document,E=x=>w.eval(x);try{
+  const code=()=>E("txt().join('\\n')"),BC='G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1';
+  // 7 asking first
+  w.cur(0);w.ex(BC);log('7 no code before common vars confirmed',!d.querySelector('#ed')&&!!d.querySelector('#cvask')&&/#100/.test(d.querySelector('#cvask').textContent));
+  d.querySelector('#cvo').click();log('7 override once shows code, check still red',!!d.querySelector('#ed')&&/❌ Common variables/.test(d.querySelector('#cl').textContent));
+  w.ex(BC);d.querySelector('#cvy').click();log('7 confirm free -> code + setting green',!!d.querySelector('#ed')&&E("sv('Free common variables').st")=='user'&&!/❌ Common variables/.test(d.querySelector('#cl').textContent));
+  // 6 work-arounds
+  d.querySelector('#q').value='counterbore 4 holes';d.querySelector('#q').dispatchEvent(new Event('input'));log('6 work-around shown as suggestion, verify',/suggestion, verify/.test(d.querySelector('#us').textContent)&&/Counterbore/.test(d.querySelector('#us').textContent));
+  const c0=code();log('6 never inserted',!/COUNTERBORE/i.test(c0));
+  E("S.m[0].opt.macroB=0");w.ex(BC);log('6 work-around when option missing',/suggestion, verify/.test(d.querySelector('#wa').textContent)&&/long-hand/.test(d.querySelector('#wa').textContent));E("S.m[0].opt.macroB=1");
+  // 2 sourced data
+  w.pick('Haas VF-style VMC (generic)','Vertical mills');const hi=E('S.m.length-1');E(`S.m[${hi}].opt.tsc=1;S.m[${hi}].probes=[{type:'Renishaw OMP-style spindle probe',nick:'',def:1}]`);w.edit(hi);
+  log('2 Haas TSC M88 / M89 with source + verify',/M88 \/ M89[\s\S]*mill---m-codes[\s\S]*verify on control/.test(d.body.textContent));
+  log('2 Renishaw cycles O9810/O9814 with source',/O9810[\s\S]*O9814[\s\S]*Inspection Plus Programming Manual/.test(d.querySelector('#probes').textContent));
+  log('3 Haas preset note sourced',/haascnc\.com/.test(d.querySelector('#pnote').textContent));
+  w.pick('Generic 3-axis VMC','Vertical mills');const gi=E('S.m.length-1');E(`S.m[${gi}].opt.tsc=1`);w.edit(gi);
+  log('2 non-Haas TSC stays red user field',!!d.querySelector('[data-om="tsc"]')&&/from your manual/.test(d.querySelector('[data-om="tsc"]').closest('label').textContent)&&!d.querySelector('#pnote'));
+  w.pick('Generic 2-axis lathe','Lathes');w.edit(E('S.m.length-1'));log('2 lathe probe cycle numbers red (not sourced)',!!d.querySelector('#pcyc')&&/not sourced/.test(d.querySelector('#probes').textContent));
+  w.reference();d.querySelector('#rq').value='O9811';d.querySelector('#rq').dispatchEvent(new Event('input'));log('2 reference lists sourced cycle',/O9811[\s\S]*source: Renishaw/.test(d.querySelector('#ro').textContent));
+  // 1/4 form tool
+  w.cur(0);w.eval('NOASK=1');w.ex('G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 70 z0 0');
+  E("S.tools.find(t=>t.n==1).type='Custom form tool';S.tools.find(t=>t.n==1).prof=[[0.25,0],[1,0.2],[1,1]]");
+  log('1 form profile read, radius 0.5, lift at r=0.3 between',E('toolRmax()')==0.5&&E('toolLift(0.1)')==0&&E('toolLift(0.3)')>0&&E('toolLift(0.3)')<0.2&&E('toolLift(0.6)')===Infinity);
+  d.querySelector('#tStk').click();w.scrub(E('J.M.length'));const N=E('J._stk.N');log('4 finer grid (≥144 cells)',N>=144&&E('J._stk.h instanceof Float32Array'));
+  log('1 stock removal uses profile (stepped depth)',E('(()=>{const h=[...J._stk.h],s=J.stock;return new Set(h.filter(v=>v<s[5]-1e-6).map(v=>v.toFixed(3))).size>1})()'));
+  const t0=performance.now();E('J._stk=null;stockMap()');log('4 full stock map fast (<300 ms)',performance.now()-t0<300);
+  // 5 layout
+  log('5 Editor + Simulate tabs',[...d.querySelectorAll('.tabs button')].map(b=>b.textContent).join()=='Machines,Build,Editor,Simulate,Library,More');
+  w.tab('sim');log('5 Simulate tab hides editor',d.querySelector('#out').dataset.view=='sim'&&getComputedStyle(d.querySelector('#ed')).display=='none'&&getComputedStyle(d.querySelector('#cv')).display!='none');
+  w.tab('edit');log('5 Editor tab hides sim',getComputedStyle(d.querySelector('#cv')).display=='none'&&getComputedStyle(d.querySelector('#ed')).display!='none');
+  w.tab('sim');log('5 sticky play bar',getComputedStyle(d.querySelector('#pbar')).position=='sticky'&&/Play/.test(d.querySelector('#pbar').textContent)&&!!d.querySelector('#pbar #sc'));
+  d.querySelector('#simcode').open=true;w.scrub(3);log('5 code pane shows current line',!!d.querySelector('#simcode pre .cur'));
+  log('5 chips ≥44px',[...d.querySelectorAll('.chip')].filter(c=>c.offsetParent).every(c=>c.offsetHeight>=44&&c.offsetWidth>=44));
+  w.more();d.querySelector('#tsz .chip.y').click();log('5 text size setting scales content',E('S.ts')==115&&d.querySelector('#v').style.zoom=='1.15');d.querySelector('#tsz .chip.gr').click();
+  w.tab('machines');log('5 mill + lathe icons drawn (svg)',!!d.querySelector('.card .t svg[aria-label=mill]')&&!!d.querySelector('.card .t svg[aria-label=lathe]')&&!!d.querySelector('#mode svg'));
+  log('no page errors',!errs.length);if(errs.length)out.push('ERR '+errs.join(' | '));
+ }catch(e){out.push('FAIL exception '+e.message+' '+(e.stack||'').split('\n')[1])}o.textContent=out.join('\n')},1500)}
+</script>

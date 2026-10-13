@@ -1,7 +1,7 @@
-<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=25" style="width:390px;height:844px"></iframe><script>
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=26" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
- setTimeout(async()=>{const d=w.document,E=x=>w.eval(x),cl=()=>d.querySelector('#cl').textContent;w.confirm=()=>true;try{
+ setTimeout(async()=>{w.eval('NOASK=1');const d=w.document,E=x=>w.eval(x),cl=()=>d.querySelector('#cl').textContent;w.confirm=()=>true;try{
   E('S.cur=0');w.tab('new');w.ex('G54 T20 probe bore 2.0 dia center x0 y0 probe z -0.25 tip 0.157 write to g55');w.ed('Confirm write');
   log('bore probe sim: no tolerance alarm',!E('J.run.alarms.length')&&!E('J.run.err'));
   const mx=E('Math.max(...J.M.map(m=>m.b[0]))');log('probe stops at wall (max X '+mx.toFixed(3)+' = 1-0.0785)',Math.abs(mx-(1-0.0785))<0.01);

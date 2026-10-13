@@ -1,7 +1,7 @@
-<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=25" style="width:390px;height:844px"></iframe><script>
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=26" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}const errs=[];w.addEventListener('error',e=>errs.push(e.message));
- setTimeout(()=>{const d=w.document,E=x=>w.eval(x);try{
+ setTimeout(()=>{w.eval('NOASK=1');const d=w.document,E=x=>w.eval(x);try{
   const code=()=>E("txt().join('\\n')"),cl=()=>d.querySelector('#cl').textContent;
   log('round-20 code loaded (no load error)',typeof w.scanSug=='function'&&typeof w.varsPanel=='function');
   // ---- Part A
@@ -24,7 +24,7 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   log('A5 batch flags G20 program on mm machine',/❌ Program units G20 \(inch\) match this machine \(mm, G21\)/.test(d.querySelector('#bo2').textContent));
   d.querySelector('#u-in').click();
   // ---- Part B
-  w.tab('machines');log('B header mode indicator Milling',d.querySelector('#mode').textContent=='Milling');
+  w.tab('machines');log('B header mode indicator Milling',d.querySelector('#mode').textContent.trim()=='Milling');
   log('B first-run guide card',!!d.querySelector('#fr'));
   const favB=[...d.querySelectorAll('.card .chip')].filter(b=>/Favorite/.test(b.textContent));favB[2].click();
   log('B favorite pinned to top',/Lathe 1/.test(d.querySelector('.card[onclick^="edit("] .t').textContent));
@@ -56,7 +56,7 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   w.reopen(0);const L2=code().split('\n'),k2=L2.findIndex(l=>/^#100=0/.test(l));E(`J.edits[${k2}]='#150=0 (COUNT)'`);w.show();d.querySelector('#jn').value='BC test';w.saveJob();
   log('B library: same name -> version 2 + change note',E('S.jobs[0].versions.length')==1&&/#150/.test(E('S.jobs[0].change'))&&/Version history/.test(d.body.textContent)&&/Tool life \/ wear: drill 200/.test(d.body.textContent));
   d.querySelector('#lq').value='zzz';d.querySelector('#lq').dispatchEvent(new Event('input'));log('B library search',/Nothing matches/.test(d.querySelector('#lo').textContent));
-  log('B tabs read Build / Library',[...d.querySelectorAll('.tabs button')].map(b=>b.textContent).join()=='Machines,Build,Library,More');
+  log('B tabs read Build / Library',[...d.querySelectorAll('.tabs button')].map(b=>b.textContent).join()=='Machines,Build,Editor,Simulate,Library,More');
   w.scanner('G00 X1. Y1.\nG01 Z-0.2 F10.\nG00 Z0.1\nG00 X2. Y1.\nG01 Z-0.2 F10.\nG00 Z0.1\nG00 X3. Y1.\nG01 Z-0.2 F10.\nG00 Z0.1\nG01 X5. F20.\nG01 X5. F20.\nG01 Z-0.1\nG01 Z-0.2\nG01 Z-0.3\nG01 Z-0.4');
   const sg=d.querySelector('#sug').textContent;log('B scanner suggestions: G81, duplicate, WHILE loop',/G81 canned cycle/.test(sg)&&/Duplicate block/.test(sg)&&/repeated passes → WHILE/.test(sg)&&!!d.querySelector('#sug .dm')&&!!d.querySelector('#sug .dp'));
   const before=d.querySelector('#sq').value.split('\n').length;[...d.querySelectorAll('#sug .chip.y')][0].click();log('B accept suggestion rewrites program',d.querySelector('#sq').value.split('\n').length<before);

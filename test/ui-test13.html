@@ -1,7 +1,7 @@
-<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=25" style="width:390px;height:844px"></iframe><script>
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=26" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
- setTimeout(()=>{const d=w.document,E=x=>w.eval(x);try{
+ setTimeout(()=>{w.eval('NOASK=1');const d=w.document,E=x=>w.eval(x);try{
   const setC=v=>{E(`(()=>{const m=S.m[S.cur],x=m.s.find(x=>x.k=='Control');x.v=${JSON.stringify(v)};x.st='user';save()})()`)};
   const CK=t=>{E('S.cur');return w.ctrlChecks(t,1)};
   w.pick('Generic 2-axis lathe','Lathes');E('S.cur=S.m.length-1');setC('Fanuc 0i-F');

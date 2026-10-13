@@ -1,7 +1,7 @@
-<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=25" style="width:390px;height:844px"></iframe><script>
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=26" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
- setTimeout(()=>{const d=w.document,E=x=>w.eval(x);w.confirm=()=>true;try{
+ setTimeout(()=>{w.eval('NOASK=1');const d=w.document,E=x=>w.eval(x);w.confirm=()=>true;try{
   E('S.cur=0;S.m[0].opt.probe=0');w.tab('new');w.ex('G54 T20 probe bore 2.0 dia center x0 y0 probe z -0.25 tip 0.157 write to g55');
   log('probe refused when options off',/Not written/.test(d.body.textContent));
   E("S.m[0].opt.probe=1;S.m[0].opt.g10=1");w.ex('G54 T20 probe bore 2.0 dia center x0 y0 probe z -0.25 tip 0.157 write to g55');
