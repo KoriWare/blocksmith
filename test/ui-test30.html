@@ -1,0 +1,40 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=43" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+const HJ=[['tp32','3+2 tilted plane tilt 30 rotary 45 plane x2.0 y2.0 z0 program o1234 safe z1.0 t1 g54'],
+['tpdrill','drill bolt circle on faces faces 90,0; 90,90; 90,180 4 holes 2.0 bolt circle center x0 y0 face z1.0 0.5 deep r1.1 safe z2.0 t3 g54'],
+['rcchk','rotary centerline check bore x3.0 y0 1.0 bore probe z-0.25 expected center x0 y0 tol 0.001 safe z1.0 t7 g54'],
+['runw','unwind rotary home']];
+const FJ=[['tp32','3+2 tilted plane tilt 30 rotary 45 plane x2.0 y2.0 z0 euler i0 j30 k45 program o1234 safe z1.0 t1 g54'],
+['tpdrill','drill bolt circle on faces faces 0,90,0; 90,90,0 4 holes 2.0 bolt circle center x0 y0 face z1.0 0.5 deep r1.1 safe z2.0 t3 g54'],HJ[2],HJ[3]];
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+  const setv=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x)return;if(${JSON.stringify(v)}!==null)x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  log('5-axis preset group',E("PRESETS['5-axis mills'].length==4"));
+  const run=(nm,jobs)=>jobs.forEach(([op,t])=>{w.tab('new');d.querySelector('#q').value=t;w.go();const j0=E('J&&J.op');E('show()');const miss=E('J?Object.entries(J.p).filter(([k,x])=>x.v==null).map(([k])=>k):[]');
+    const code=E('J&&J.code?txt().join("\\n"):""');let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{contact:mkContact(J),lathe:J.lathe});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
+    const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+d.querySelector('#out').innerText.slice(0,500).replace(/\s+/g,' ')];
+    log(`${nm} ${op}: recognised, code written`,j0==op&&!!code,'op='+j0+' miss='+miss.join(',')+' '+ck.join('|'));
+    if(code){log(`${nm} ${op}: sim runs, no alarm`,!sim[0]&&!sim[1],JSON.stringify(sim));log(`${nm} ${op}: all checks pass`,!ck.length,ck.join(' | '));const xx=[...d.querySelectorAll('#cl .s')].filter(x=>/❌/.test(x.textContent)).map(x=>x.textContent);log(`${nm} ${op}: no ❌ in panel`,!xx.length,xx.join('|'));
+     const hk=/Haas/.test(nm);
+     if(op=='tp32')log(nm+' tp32 codes',hk?/G43 H1[\s\S]*G268 X2\.0 Y2\.0 Z0\.0[\s\S]*M98 P1234[\s\S]*G269/.test(code)&&/G00 B30\.0 C45\.0/.test(code):/G68\.2 X2\.0 Y2\.0 Z0\.0 I0\.0 J30\.0 K45\.0[\s\S]*\nG53\.1 [\s\S]*G69/.test(code),code.split('\n').join(' / '));
+     if(op=='tpdrill')log(nm+' tpdrill faces',(code.match(hk?/G268/g:/G68\.2/g)||[]).length==(hk?3:2));
+     if(op=='rcchk')log(nm+' rcchk never writes',!/G10|#2\d{4}=|#5\d{3}=/.test(code)&&/C180\./.test(code));
+     if(op=='runw')log(nm+' runw order',/M05[\s\S]*G53 Z0\.[\s\S]*G49[\s\S]*(G269|G69)[\s\S]*(G53 B0\. C0\.|G28 A0\. C0\.)/.test(code),code)}});
+  [['Generic 5-axis table-table B/C (Haas UMC-style)','Haas NGC','Haas',HJ],['Generic 5-axis table-table A/C (trunnion)','Fanuc 0i','Fanuc',FJ]].forEach(([nm,ctl,tag,jobs])=>{const hk=tag=='Haas';w.pick(nm,'5-axis mills');w.cur(E('S.m.length')-1);setv('Control',ctl);
+   log(tag+' axes prefilled red',E("S.m[S.cur].s.find(x=>x.k=='Tilt axis name').st")=='confirm');
+   log(tag+' MRZP empty red',E("(()=>{const x=S.m[S.cur].s.find(x=>x.k=='Pivot / rotary center offsets (MRZP)');return !x.v&&x.st=='confirm'})()"));
+   w.tab('new');d.querySelector('#q').value=jobs[0][1];w.go();log(tag+' tp32 red before setup',!E('J.code'));
+   ['Kinematics type','Tilt axis name','Rotary axis name'].forEach(k=>setv(k,null));setv('Tilt axis limits (min / max deg)','-35 / 120');setv('Rotary axis limits (min / max deg, or continuous)','continuous');setv('Pivot / rotary center offsets (MRZP)','set in machine settings');
+   setv('TCPC code on / off',hk?'G234 / G49':'G43.4 / G49');setv('Tilted plane code on / off / cancel',hk?'G268 / G269':'G68.2 + G53.1 / G69');setv('DWO code on / off',hk?'G254 / G255':'');setv('Option: tilted plane / DWO','yes');
+   setv('Tilt axis clamp on / off',hk?'M10 / M11':'M60 / M61');setv('Rotary axis clamp on / off',hk?'M12 / M13':'M62 / M63');
+   E("S.m[S.cur].probes=[{type:'Renishaw OMP-style spindle probe',def:1}];Object.assign(S.m[S.cur].opt,{probe:1});save()");setv('Spindle probe on / off',hk?'M59 P1133 / M69 P1133':'M200 / M201');setv('Skip code (probe)',null);
+   run(tag,jobs);
+   w.tab('new');d.querySelector('#q').value='rectangular pocket 2 x 1 0.25 deep t2 g54';w.go();log(tag+' 3-axis mill job offered on 5-axis',E('J&&J.op')!=null&&!E('J.lathe'));
+   });
+  w.pick('Haas VF-style VMC (generic)','Vertical mills');w.cur(E('S.m.length')-1);w.tab('new');d.querySelector('#q').value=HJ[0][1];w.go();log('3+2 not offered on 3-axis VMC',E('J&&J.op')!='tp32');
+  const old=[['tool length check T1','tlen'],['protected probe move','ppos'],['stock allowance check','pstock']].map(([p,e])=>{w.tab('new');d.querySelector('#q').value=p;w.go();return[p,e,E('J&&J.op')]});log('old phrases unchanged',old.every(([p,e,o])=>o==e),JSON.stringify(old));
+  log('Help fivex',E("HELP.some(h=>h[0]=='fivex')"));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>

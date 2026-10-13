@@ -370,3 +370,23 @@ Pages opened and read this round: Renishaw contact tool-setting manual H-2000-62
 Amber (thin): Renishaw setter macros (one manual; WIPS may differ; rotating speed from the macro settings); Fanuc #4120 meaning; X-C face pocket (no worked public example; codes from the polygon job); O9835 radius-only.
 Our own defaults (unsourced): gray feeds / RPM (G47 30 / 10 follow the Haas example values); G31 approach at 5× skip feed; ramp entry along X on the face pocket and the 0.02 restart above the previous level; tool-life "near end" uses the % you type.
 Not built / limited: Haas tool life for tools 100–200 (Haas lists the limit only to #5699); Fanuc tool life (option-specific variables, zero public sources checked); face pocket off-center (pocket is centered on the spindle).
+
+## Round 35 — batch 8: 5-axis mills (v2.6, sw mc-v40)
+
+Opened and checked 2026-10-13.
+
+| Item | Source | Type | Used for |
+|---|---|---|---|
+| Haas G234 TCPC (H on same block, cancel G49/G43/G44, rotaries at 0 first, no rapid rotary moves, not with G254) | https://www.haascnc.com/service/codes-settings.type=gcode.machine=mill.value=G234.html | official | gray hint, Help |
+| Haas G254 / G255 DWO (3+2 only, work offset first, rotary motion done first, XY then Z after, G53 retract before rotary moves, UMC uses B tilt / C rotary) | https://www.haascnc.com/service/codes-settings.type=gcode.machine=mill.value=G254.html | official | gray hint, unwind order, B/C preset naming |
+| Haas G268 / G269 feature coordinate system (G43 before G268; G268 X Y Z [I J K Q]; recall XY/Z after; G268 before G234) | https://www.haascnc.com/service/codes-settings.type=gcode.machine=mill.value=G268.html | official | 3+2 wrapper, tilted-face drilling (Haas) |
+| Haas M12 / M13 5th-axis brake (M10 / M11 4th already logged) | https://www.haascnc.com/service/codes-settings.type=mcode.machine=mill.value=M12.html | official | gray hint for clamp codes |
+| Fanuc G68.2 X Y Z I J K (Euler Z, X', Z''), G53.1 own block after G68.2, G69 cancel (M) | Fanuc 30i/31i/32i-MA user manual p.709 (cncmanuals.com copy) http://cncmanuals.com/fanuc/773/30i-300i-300is-ma-31i-310i-310is-ma-a5-32i-320i-320is-ma-common-to-lathe-machining-center-users-manual/page/743 ; agrees: https://zappettiniconsulting.com/wiki/fanuc-tilted-working-plane-g682 , https://forum.cgtech.com/viewtopic.php?id=303 | official (30i) + 2 agreeing | 3+2 wrapper, tilted faces (Fanuc). Length comp off before G68.2 (Zappettini PS5462; eMastercam thread agrees G43 after G53.1, G49 before G69) |
+| Fanuc G43.4 type 1 / G43.5 type 2 TCP, G49 cancel | Fanuc 30i-A TCP additional manual (cncmanuals.com copy) http://www.cncmanuals.com/fanuc/609/series-30i-model-a-tool-center-point-control-for-5-axis-machining-additional-manual/page/10 ; https://zappettiniconsulting.com/wiki/fanuc-tcp-tool-center-point | official (30i) + 1 | gray hint, unwind cancel |
+
+Amber (thin):
+- `f0i5` — Fanuc 0i availability of G68.2 / G43.4 is model/option dependent; sources are 30i manuals. Fanuc G28 on roll-over rotaries.
+- `rcc` — the bore-at-0°/180° midpoint check is our own simple method (no public worked example found agreeing in 2 places); builder MRZP routines (Haas VPS/WIPS) differ. Job only reports.
+
+Never guessed / always red: kinematics, axis letters (prefilled from preset name but still red), limits, + directions, pivot/MRZP offsets, all code lines, option yes/no, Fanuc clamp M-codes (no public source — builder specific).
+Unsourced defaults (gray): tilted-face drill feed 6, RPM 2000, start angle 0; centerline check skip feed 10, over-travel 0.1.
