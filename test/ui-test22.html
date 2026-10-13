@@ -1,0 +1,38 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=34" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+const JOBS=[['ctr','part counter stop at 200 using #600',{}],['life','tool life T8 sister T18 500 uses #600 #601',{}],
+ ['pboss','probe boss 2.0 dia center x0 y0 probe z-0.25 safe z0.5 tip 0.157 write to g54 T20 G54',{'Confirm write':'YES'}],
+ ['corner','probe outside corner x-y- corner at x0 y0 probe z-0.2 safe z0.5 tip 0.157 write to g54 T20 G54',{'Confirm write':'YES'}],
+ ['insp','inspect bore 1.0 dia tol 0.001 center x0 y0 probe z-0.3 safe z0.5 tip 0.157 T20 G54',{}],
+ ['cpock','circular pocket 1.5 dia 0.5 deep center x0 y0 z0 0 0.5 cutter stepdown 0.1 T3 G54',{}],
+ ['cboss','circular boss 1.0 dia from 2.0 stock 0.3 deep center x0 y0 z0 0 0.5 cutter stepdown 0.1 T3 G54',{}],
+ ['thmill','thread mill internal 1/2-13 major 0.5 0.75 deep center x0 y0 z0 0 0.375 cutter T7 G54',{}],
+ ['serial','engrave serial #610 4 digits 0.125 tall 0.005 deep at x0.5 y0.5 z0 0 T9 G54',{}],
+ ['warm','warm up rpm steps 2000 4000 6000 2 passes',{'X min':-15,'X max':-5,'Y min':-10,'Y max':-2,'Z clear':-1}]];
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+  const setv=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x)return;if(${JSON.stringify(v)}!==null)x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  ['Fanuc Robodrill-style (generic)','Haas VF-style VMC (generic)'].forEach(nm=>{const hk=/Haas/.test(nm);w.pick(nm,'Vertical mills');w.cur(E('S.m.length')-1);
+   // before setup: probe job lists red setup
+   w.tab('new');d.querySelector('#q').value=JOBS[2][1];w.go();if(!hk)log('Probe boss: setup red before confirm (probe M-codes, skip)',/Spindle probe on \/ off/.test(d.querySelector('#out').textContent)&&!E('J.code'));
+   setv('Control',null);setv('Skip code (probe)',null);setv('Spindle probe on / off','M100 / M101');setv('DPRNT support','yes');setv('Max RPM','8000');E("S.m[S.cur].opt.probe=1;S.m[S.cur].opt.g10=1;save()");
+   JOBS.forEach(([op,t,extra])=>{w.tab('new');d.querySelector('#q').value=t;w.go();const j0=E('J&&J.op');
+    const miss=E('J?Object.entries(J.p).filter(([k,x])=>x.v==null).map(([k])=>k):[]');
+    Object.entries(extra).forEach(([k,v])=>E(`J.p[${JSON.stringify(k)}]={v:${JSON.stringify(v)},g:false}`));E('show()');
+    const code=E('J&&J.code?txt().join("\\n"):""');let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{contact:mkContact(J)});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
+    const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+d.querySelector('#out').innerText.slice(0,300)];
+    log(`${hk?'Haas':'Fanuc'} ${op}: recognised, code written`,j0==op&&!!code,'op='+j0+' miss='+miss.join(','));
+    if(code)log(`${hk?'Haas':'Fanuc'} ${op}: sim runs, no alarm`,!sim[0]&&!sim[1],JSON.stringify(sim));
+    if(code)log(`${hk?'Haas':'Fanuc'} ${op}: all checks pass`,ck.length==0,ck.join(' | '));
+    if(code&&op=='insp')log(`${hk?'Haas':'Fanuc'} insp: POPEN only on Fanuc`,hk?!/POPEN/.test(code):/POPEN/.test(code)&&/PCLOS/.test(code));
+    if(code)out.push("CODE "+op+"\n"+code.split("\n").slice(0,60).join("\n"));if(code&&op=="thmill")log('thmill internal RH = G03 going up',/G03 X0\.0625 Y0\.0* I-0\.0625 J0\. Z-0\.6/.test(code)||/G03 .*I-0\.0625/.test(code));
+   });
+   w.tab('new');d.querySelector('#q').value='part counter stop at 200 using #150';w.go();log((hk?'Haas':'Fanuc')+' counter in a non-retained / probe range is blocked',/Not written/.test(d.querySelector('#out').textContent));
+  });
+  log('broken tool → Tool length check (broken mode)',E('parse("broken tool check T5").p.Mode.v')=='Broken-tool check');
+  log('web / pocket / bore still recognised',['probe web 1.0 wide','probe pocket 2 wide','probe bore 2.0 dia'].every(t=>/^p(web|pocket|bore)$/.test((E('parse('+JSON.stringify(t)+')')||{}).op)));
+  log('Help topic + ?',E("HELP.some(h=>h[0]=='jobs27')"));
+  log('No page errors',!errs.length,errs.join('|'));
+ }catch(e){out.push('FAIL exception '+e.message+' '+e.stack)}o.textContent=out.join('\n')},1500)}
+</script></body>

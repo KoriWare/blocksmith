@@ -1841,4 +1841,197 @@ HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='faq')),0,['tlen','Tool length ch
 <p><span style="color:#999">Public examples only, not defaults: Renishaw's contact tool-setting manual (hosted by Haas) uses G65 P9853 B1. T__ to set a length; Renishaw laser manuals use G65 P9862. Your setter software, its option and its variable settings decide the real call. Some setter macros finish with a G28 that cancels the tool offset.</span></p>
 <p>The simulator does not run the setter: it starts the offset at your expected length and assumes the setter reads the same, so you can step through the logic. Lathe tool-eye arms are not covered yet.</p>`]);
 </script>
+<script>
+// ---- Round 27 · real-world jobs (part counter, tool life + sister, probe boss / corner, circular pocket / boss, thread mill, serial engrave, warm-up, inspect + DPRNT)
+// Sources for every control-specific number: docs/sources.md, Round 27. Positions, offsets, variables, M-codes are never filled in by the app.
+const J2={};const defJ=(op,s)=>{J2[op]=s;OPN[op]=s.name};
+const isJ2=j=>!!(j&&J2[j.op]);
+const PRB='Spindle probe on / off';
+const addPR=m=>{if(m&&m.s&&!isLT(m.type||'')&&!m.s.find(x=>x.k==PRB))m.s.push({k:PRB,v:'',st:'confirm'})};S.m.forEach(addPR);
+const _mk27=mk;mk=function(){const m=_mk27.apply(this,arguments);addPR(m);return m};
+const _ed27=edit;edit=function(i){_ed27(i);const m=S.m[i];if(!m)return;V.querySelectorAll('input[data-j]').forEach(el=>{const x=m.s[+el.dataset.j];if(x&&x.k==PRB&&!x.v)el.placeholder='M__ / M__ from your probe manual (builder-specific)'})};
+['Boss Ø','Stock Ø','Major Ø','Minor Ø','Pitch','Thread length','Safe Z','Clearance','Edge in','Size check ±','Letter height','Text start X','Text start Y','Corner X','Corner Y','X min','X max','Y min','Y max','Z clear','Helix pitch','Plunge feed','Tol ±'].forEach(k=>KL.add(k));
+Object.assign(UNIT,{'Counter #':'#, a free common variable kept at power off','Target count':'count','Parts per cycle':'count','Program end':'M30 or M99 loop','At target':'alarm or M00 stop',
+ 'Primary tool':'tool number','Sister tool':'tool number','Life (uses)':'count per tool','Primary count #':'#, free retained variable','Sister count #':'#, free retained variable',
+ 'Boss Ø':'in','Stock Ø':'in, outside size of the material around the boss','Safe Z':'in, clear above the part','Clearance':'in, gap before touching','Edge in':'in, how far in from the corner to touch','Size check ±':'in, wrong-size stop before writing','Tol ±':'in, ± allowed','Feature':'bore or boss',
+ 'Corner':'X-Y- / X+Y- / X+Y+ / X-Y+ (where the corner sits)','Corner type':'outside (part) or inside (pocket)','Corner X':'in','Corner Y':'in',
+ 'Major Ø':'in, thread major diameter (internal)','Minor Ø':'in, thread minor diameter from your thread table (external)','Pitch':'in per thread (1 / TPI)','Thread length':'in','Thread':'internal or external','Hand':'RH or LH','Helix pitch':'in per turn of the helical ramp',
+ 'Digits':'count, digits to cut (leading zeros kept)','Text start X':'in','Text start Y':'in','Letter height':'in','Plunge feed':'in/min',
+ 'RPM steps':'rpm list, e.g. 2000 4000 6000','Passes per step':'count','X min':'in, G53 machine','X max':'in, G53 machine','Y min':'in, G53 machine','Y max':'in, G53 machine','Z clear':'in, G53 machine'});
+// ---- shared helpers
+const jv=(j,k)=>(j.p[k]||{}).v,hkC=()=>ctrlKey()=='haas';
+function hdr(L,o,name){L('%');L(`O${o} (${name} - MACRO BUILDER)`);L(`(${hkC()?'HAAS-STYLE':'FANUC 0I-STYLE'} - VERIFY ON CONTROL)`);L('G17 G20 G40 G49 G80 G90 (SAFE START)')}
+function endP(L){L('G91 G28 Z0.');L('G90');L('M30')}
+function tstart(L,j,x,y,z){const T=jv(j,'Tool');L(`T${T} M06`);L(`${offCode(jv(j,'Work offset'))} G00 X${f4(x)} Y${f4(y)}`);if(jv(j,'RPM'))L(`S${jv(j,'RPM')} M03`);L(`G43 H${T} Z${f4(z)}`)}
+function varOK(n){n=+n;const k=ctrlKey();if(!(n>0))return'a variable number like #500';if(k=='haas'){if(n==3901||n==3902)return null;if((n>=600&&n<=699)||(n>=800&&n<=999)||(n>=10600&&n<=10699)||(n>=10800&&n<=10999)||(n>=10200&&n<=10499))return null;if((n>=100&&n<=199)||(n>=500&&n<=599)||(n>=10100&&n<=10199)||(n>=10500&&n<=10599))return'#'+n+' is in the Haas range kept for probes / pallets — use #600–#699 or #800–#999';return'#'+n+' is not a Haas variable kept at power off (use #600–#699 or #800–#999)'}
+ if(k=='fanuc0i'){if(n==3901)return null;if(n>=500&&n<=999)return null;if(n>=100&&n<=199)return'#'+n+' may be cleared at power off on Fanuc-style controls — use #500–#999';return'#'+n+' is not a common variable kept at power off (use #500–#999)'}return'confirm Control first'}
+function prbCodes(){const x=sv(PRB);if(!x||x.st!='user'||!String(x.v).trim())return null;const p=String(x.v).toUpperCase().split(/[\/,]/).map(s=>s.trim());return p.length>=2&&p[0]&&p[1]?{on:p[0],off:p[1]}:null}
+function prbSetup(j,write){const m=[],sk=sv('Skip code (probe)');if(!sk||sk.st!='user')m.push(['Skip code (probe)','confirm G31 (or your skip code) on the control']);if(!prbCodes())m.push([PRB,'type both M-codes from your probe manual, like M__ / M__']);if(!opt('probe'))m.push(['Option: Probing (G31 skip)','tick it in Options']);if(write&&!opt('g10'))m.push(['Option: G10 offset writing','tick it in Options']);return m}
+function g31(L,ax,to,f){L(`G31 ${ax}${f4(to)} F${f4(f)}`)}
+// probe one touch from (sx,sy) toward target on axis, store skip position in #nn
+function touch(L,a,sx,sy,to,pz,sz,f,nn){L(`G00 X${f4(sx)} Y${f4(sy)}`);L(`G01 Z${f4(pz)} F${f4(f*3)}`);g31(L,a,to,f);L(`#${nn}=#${a=='X'?5061:5062} (SKIP POSITION ${a})`);L(`G01 X${f4(sx)} Y${f4(sy)} F${f4(f*3)}`);L(`G00 Z${f4(sz)}`)}
+function wrOff(L,j,ax){const ro=jv(j,'Result offset');ax.forEach(([a,v])=>L(`G91 G10 ${g10(ro)} ${a}#${v} (SHIFT ${offLbl(ro)} ${a} TO MEASURED ZERO)`));L('G90')}
+// ---- 1 part counter
+defJ('ctr',{name:'Part counter + stop at count',re:/part\s*count|parts?\s*counter|count\s*(the\s*)?parts|stop\s*at\s*(the\s*)?(count|\d+\s*parts?)|batch\s*(count|of\s*\d+)|\b\d+\s*parts?\s*then\s*stop/,
+ req:['Counter #','Target count'],sug:{'Parts per cycle':1,'Program end':'M30','At target':'Alarm stop'},choices:{'Program end':['M30','M99 loop'],'At target':['Alarm stop','M00 stop']},
+ parse:(l,G,n)=>{G('Counter #',n(/(?:counter|var(?:iable)?|use)\s*#\s*(\d+)/)??n(/#\s*(\d{3,5})/));G('Target count',n(/(?:target|stop\s*at|batch\s*(?:of)?|run|make)\s*(\d+)/)??n(/(\d+)\s*parts?/));const pp=n(/(\d+)\s*(?:parts?\s*)?per\s*cycle/);if(pp)G('Parts per cycle',pp);if(/m99|loop/.test(l))G('Program end','M99 loop');if(/m00|m0\b|pause/.test(l))G('At target','M00 stop')},
+ block:j=>{const e=varOK(jv(j,'Counter #'));if(e)return'Counter #'+jv(j,'Counter #')+': '+e;if(!(jv(j,'Target count')>=1))return'Target count must be 1 or more.';return null},
+ gen:(j,L)=>{const v='#'+jv(j,'Counter #'),t=jv(j,'Target count'),n=jv(j,'Parts per cycle')||1,m99=jv(j,'Program end')=='M99 loop';hdr(L,7100,'PART COUNTER');
+  L(`(COUNTER ${v} - TARGET ${t} - SET ${v}=0 TO START A NEW BATCH)`);L(`IF[${v}GE${t}]GOTO91 (BATCH ALREADY DONE)`);L('(---- YOUR PART PROGRAM GOES HERE ----)');L(`${v}=${v}+${n} (COUNT THIS CYCLE)`);L(`IF[${v}GE${t}]GOTO92`);L(m99?'M99':'M30');
+  L('N91 #3000=21 (BATCH ALREADY COMPLETE)');if(jv(j,'At target')=='M00 stop'){L(`N92 M00 (TARGET REACHED - SET ${v}=0)`);L('M30')}else{L('N92 #3000=22 (TARGET COUNT REACHED)');L('M30')}},
+ checks:j=>{const n=+jv(j,'Counter #'),m99=jv(j,'Program end')=='M99 loop';return[[`Counter #${n} is kept at power off on this control`,!varOK(n)],[n==3901?(hkC()?'#3901 is Haas M30 counter 1 — M30 already adds 1, so only use it with M99 loops':'#3901 is the Fanuc parts counter — M30 adds 1 when parameter 6700 bit 0 = 0; use it with M99 loops or check that parameter'):'Counter is not the built-in M30 counter (no double counting)',n!=3901||m99],['Checks the count before running and after each part',true]]}});
+// ---- 2 tool life + sister
+defJ('life',{name:'Tool life + sister tool',re:/tool\s*life|sister\s*tool|spare\s*tool|backup\s*tool|tool\s*wear\s*count|swap\s*to\s*t\d+/,
+ req:['Primary tool','Sister tool','Life (uses)','Primary count #','Sister count #'],sug:{},
+ parse:(l,G,n)=>{const ts=[...l.matchAll(/\bt\s*(\d{1,3})\b/g)].map(m=>+m[1]);G('Primary tool',ts[0]??null);G('Sister tool',n(/sister\s*(?:tool)?\s*(?:is\s*)?t?\s*(\d{1,3})/)??ts[1]??null);G('Life (uses)',n(/(?:life|every|after|max)\s*(?:of\s*)?(\d+)\s*(?:uses?|parts?|cycles?|holes?)?/)??n(/(\d+)\s*(?:uses?|parts?|cycles?)/));const vs=[...l.matchAll(/#\s*(\d{3,5})/g)].map(m=>+m[1]);G('Primary count #',vs[0]??null);G('Sister count #',vs[1]??null)},
+ block:j=>{for(const k of['Primary count #','Sister count #']){const e=varOK(jv(j,k));if(e)return k+': '+e}if(jv(j,'Primary count #')==jv(j,'Sister count #'))return'Primary and sister need two different counter variables.';if(jv(j,'Primary tool')==jv(j,'Sister tool'))return'Sister tool must be a different tool number.';if(!(jv(j,'Life (uses)')>=1))return'Life must be 1 or more.';return null},
+ gen:(j,L)=>{const a=jv(j,'Primary tool'),b=jv(j,'Sister tool'),n=jv(j,'Life (uses)'),va='#'+jv(j,'Primary count #'),vb='#'+jv(j,'Sister count #');hdr(L,7200,'TOOL LIFE + SISTER TOOL');
+  L(`(T${a} COUNT ${va} - T${b} COUNT ${vb} - LIFE ${n} USES EACH)`);L('(SET THE COUNT TO 0 WHEN THAT TOOL IS REPLACED)');L(`IF[${va}LT${n}]GOTO1`);L(`IF[${vb}LT${n}]GOTO2`);L(`#3000=31 (T${a} AND T${b} LIFE USED UP)`);
+  L(`N1 #20=${a} (PRIMARY T${a})`);L(`${va}=${va}+1`);L('GOTO3');L(`N2 #20=${b} (SISTER T${b})`);L(`${vb}=${vb}+1`);L('N3 T#20 M06');L('(---- YOUR CUT FOR THIS TOOL - USE G43 H#20 ----)');L('(H#20 ASSUMES H NUMBER = TOOL NUMBER)');endP(L)},
+ checks:j=>[['Both counters kept at power off',!varOK(jv(j,'Primary count #'))&&!varOK(jv(j,'Sister count #'))],['Alarm when both tools are used up',true],['H number = tool number assumed (stated in the program)',true]]});
+// ---- probe touches: boss center (bore already exists as Probe bore center)
+const prbReq=['Center X','Center Y','Probe Z','Safe Z','Tip Ø','Result offset','Confirm write'];
+function prbCore(L,j,boss){const cx=jv(j,'Center X'),cy=jv(j,'Center Y'),D=jv(j,'Dia')??jv(j,'Boss Ø'),r=jv(j,'Tip Ø')/2,c=jv(j,'Clearance')||0.2,pz=jv(j,'Probe Z'),sz=jv(j,'Safe Z'),f=jv(j,'Skip feed')||10,pc=prbCodes();
+ tstart(L,j,cx,cy,sz);L(`${pc.on} (PROBE ON - YOUR CONFIRMED CODE)`);
+ if(boss){[['X',1,20],['X',-1,21],['Y',1,22],['Y',-1,23]].forEach(([a,s,nn])=>{const o=D/2+r+c,sx=a=='X'?cx+s*o:cx,sy=a=='Y'?cy+s*o:cy,to=(a=='X'?cx:cy)+s*(D/2-c);touch(L,a,sx,sy,to,pz,sz,f,nn)});
+  L(`#12=#20-#21-${f4(2*r)} (MEASURED DIA)`)}
+ else{L(`G01 Z${f4(pz)} F${f4(f*3)}`);[['X',1,20],['X',-1,21],['Y',1,22],['Y',-1,23]].forEach(([a,s,nn])=>{g31(L,a,(a=='X'?cx:cy)+s*(D/2+c),f);L(`#${nn}=#${a=='X'?5061:5062} (SKIP POSITION ${a})`);L(`G01 X${f4(cx)} Y${f4(cy)} F${f4(f*3)}`)});L(`#12=#20-#21+${f4(2*r)} (MEASURED DIA)`);L(`G00 Z${f4(sz)}`)}
+ L('#10=[#20+#21]/2 (X CENTER)');L('#11=[#22+#23]/2 (Y CENTER)');return pc}
+function circContact(j,boss){const v=k=>jv(j,k),r=v('Tip Ø')/2,cx=v('Center X'),cy=v('Center Y'),D=v('Dia')??v('Boss Ø');return(a,b)=>{const N=400;for(let k=1;k<=N;k++){const p=a.map((x,n)=>x+(b[n]-x)*k/N),d=Math.hypot(p[0]-cx,p[1]-cy);if(boss?d<=D/2+r:d>=D/2-r)return p}return b}}
+const offSame=j=>offCode(jv(j,'Result offset')||'')==offCode(jv(j,'Work offset')||'')?null:'Result offset must be the same as the work offset you probe in (the program shifts that offset by what it measures).';
+defJ('pboss',{name:'Probe boss center',re:/(?:probe|find|pick\s*up)\s*(?:the\s*)?(?:center\s*of\s*(?:a|the)\s*)?(?:boss|post|round\s*stock|od\b|outside\s*dia)|boss\s*center/,
+ req:['Center X','Center Y','Boss Ø','Probe Z','Safe Z','Tip Ø','Tool','Work offset','Result offset','Confirm write'],sug:{'Clearance':0.2,'Size check ±':0.02,'Skip feed':10},probe:1,
+ parse:(l,G,n)=>{G('Boss Ø',n(/([\d.]+)\s*(?:"|in)?\s*(?:dia|boss|od)/));G('Probe Z',n(/(?:probe\s*z|at\s*z)\s*(-?[\d.]+)/));G('Safe Z',n(/safe\s*z\s*(-?[\d.]+)/));G('Tip Ø',n(/tip\s*([\d.]+)/))},
+ block:j=>offSame(j)||(jv(j,'Probe Z')>=jv(j,'Safe Z')?'Probe Z must be below Safe Z.':null),contact:j=>circContact(j,1),
+ gen:(j,L)=>{hdr(L,3100,'PROBE BOSS CENTER');const pc=prbCore(L,j,1);L(`IF[ABS[#12-${f4(jv(j,'Boss Ø'))}]GT${f4(jv(j,'Size check ±'))}]GOTO98`);wrOff(L,j,[['X',10],['Y',11]]);L(`${pc.off} (PROBE OFF)`);endP(L);L('N98 #3000=3 (SIZE WRONG - NOT WRITTEN)');L('M30')}});
+// ---- 8 corner find (web / pocket already exist)
+defJ('corner',{name:'Probe corner (inside / outside)',re:/corner/,
+ req:['Corner type','Corner','Corner X','Corner Y','Probe Z','Safe Z','Tip Ø','Tool','Work offset','Result offset','Confirm write'],sug:{'Clearance':0.2,'Edge in':0.25,'Skip feed':10},probe:1,choices:{'Corner type':['outside','inside'],'Corner':['X-Y-','X+Y-','X+Y+','X-Y+']},
+ parse:(l,G,n)=>{G('Corner type',/inside|internal|pocket/.test(l)?'inside':/outside|external/.test(l)?'outside':null);const c=l.match(/\bx\s*([+-])\s*y\s*([+-])/);G('Corner',c?`X${c[1]}Y${c[2]}`:/lower\s*left|front\s*left/.test(l)?'X-Y-':/lower\s*right|front\s*right/.test(l)?'X+Y-':/upper\s*right|back\s*right/.test(l)?'X+Y+':/upper\s*left|back\s*left/.test(l)?'X-Y+':null);
+  const xy=l.match(/(?:corner|at)\s*(?:at\s*)?x\s*(-?[\d.]+)\s*,?\s*y\s*(-?[\d.]+)/);G('Corner X',xy?+xy[1]:null);G('Corner Y',xy?+xy[2]:null);G('Probe Z',n(/(?:probe\s*z|at\s*z)\s*(-?[\d.]+)/));G('Safe Z',n(/safe\s*z\s*(-?[\d.]+)/));G('Tip Ø',n(/tip\s*([\d.]+)/))},
+ block:j=>offSame(j)||(jv(j,'Probe Z')>=jv(j,'Safe Z')?'Probe Z must be below Safe Z.':null),
+ contact:j=>{const cx=jv(j,'Corner X'),cy=jv(j,'Corner Y');return(a,b)=>{const N=400;for(let k=1;k<=N;k++){const p=a.map((x,n)=>x+(b[n]-x)*k/N),r=jv(j,'Tip Ø')/2;if(Math.abs(b[0]-a[0])>1e-9&&Math.abs(p[0]-cx)<=r+1e-4)return p;if(Math.abs(b[1]-a[1])>1e-9&&Math.abs(p[1]-cy)<=r+1e-4)return p}return b}},
+ gen:(j,L)=>{hdr(L,3200,'PROBE '+jv(j,'Corner type').toUpperCase()+' CORNER '+jv(j,'Corner'));const cx=jv(j,'Corner X'),cy=jv(j,'Corner Y'),r=jv(j,'Tip Ø')/2,c=jv(j,'Clearance'),e=jv(j,'Edge in'),pz=jv(j,'Probe Z'),sz=jv(j,'Safe Z'),f=jv(j,'Skip feed'),pc=prbCodes();
+  const Lx=jv(j,'Corner')[1]=='-'?-1:1,Ly=jv(j,'Corner')[3]=='-'?-1:1,k=jv(j,'Corner type')=='outside'?1:-1;
+  tstart(L,j,cx+k*Lx*(c+r),cy-Ly*e,sz);L(`${pc.on} (PROBE ON - YOUR CONFIRMED CODE)`);
+  touch(L,'X',cx+k*Lx*(c+r),cy-Ly*e,cx-k*Lx*c,pz,sz,f,20);touch(L,'Y',cx-Lx*e,cy+k*Ly*(c+r),cy-k*Ly*c,pz,sz,f,22);
+  L(`#10=#20${k*Lx>0?'-':'+'}${f4(r)} (X EDGE)`);L(`#11=#22${k*Ly>0?'-':'+'}${f4(r)} (Y EDGE)`);
+  L(`IF[ABS[#10-${f4(cx)}]GT${f4(c)}]GOTO98`);L(`IF[ABS[#11-${f4(cy)}]GT${f4(c)}]GOTO98`);wrOff(L,j,[['X',10],['Y',11]]);L(`${pc.off} (PROBE OFF)`);endP(L);L('N98 #3000=4 (CORNER NOT WHERE EXPECTED)');L('M30')}});
+// ---- 10 inspect + DPRNT + tolerance alarm
+defJ('insp',{name:'Inspect bore / boss + DPRNT report',re:/inspect|dprnt|spc|report\s*(the\s*)?(size|dia)|check\s*(the\s*)?(bore|hole|boss)\s*(size|dia)|measure\s*(the\s*)?(bore|hole|boss)/,
+ req:['Feature','Center X','Center Y','Dia','Tol ±','Probe Z','Safe Z','Tip Ø','Tool','Work offset'],sug:{'Clearance':0.2,'Skip feed':10},probe:1,choices:{'Feature':['bore','boss']},
+ parse:(l,G,n)=>{G('Feature',/boss|post|\bod\b/.test(l)?'boss':/bore|hole|\bid\b/.test(l)?'bore':null);G('Dia',n(/([\d.]+)\s*(?:"|in)?\s*(?:dia|bore|hole|boss)/));G('Tol ±',n(/(?:tol(?:erance)?|±|\+\/-)\s*([\d.]+)/));G('Probe Z',n(/(?:probe\s*z|at\s*z)\s*(-?[\d.]+)/));G('Safe Z',n(/safe\s*z\s*(-?[\d.]+)/));G('Tip Ø',n(/tip\s*([\d.]+)/))},
+ setup:j=>{const d=sv('DPRNT support');return d&&d.st=='user'&&/^\s*(y|yes|on|1|true)/i.test(d.v)?[]:[['DPRNT support','confirm yes in Machines'+(hkC()?' and set Haas Setting 261 (file or TCP)':' (Fanuc: also the I/O channel for POPEN)')]]},
+ contact:j=>circContact(j,jv(j,'Feature')=='boss'),
+ gen:(j,L)=>{hdr(L,3300,'INSPECT '+jv(j,'Feature').toUpperCase()+' + DPRNT');const boss=jv(j,'Feature')=='boss',pc=prbCore(L,j,boss),D=jv(j,'Dia');
+  L(`#13=#12-${f4(D)} (SIZE ERROR)`);L(`#14=#10-${f4(jv(j,'Center X'))} (X POSITION ERROR)`);L(`#15=#11-${f4(jv(j,'Center Y'))} (Y POSITION ERROR)`);
+  if(!hkC())L('POPEN');L('DPRNT[DIA*#12[44]*ERR*#13[44]]');L('DPRNT[XERR*#14[44]*YERR*#15[44]]');if(!hkC())L('PCLOS');
+  L(`${pc.off} (PROBE OFF)`);L(`IF[ABS[#13]GT${f4(jv(j,'Tol ±'))}]GOTO98`);endP(L);L('N98 #3000=41 (DIA OUT OF TOLERANCE)');L('M30')},
+ checks:j=>[['No offset is written (inspection only)',true],['DPRNT output: '+(hkC()?'Haas Setting 261 chooses file or TCP; no POPEN/PCLOS written':'POPEN … PCLOS around DPRNT'),true],['Out of tolerance raises #3000',true]]});
+// ---- 4 circular pocket / boss
+function cutIn(j){const so=jv(j,'Cutter')*(jv(j,'Stepover %')||50)/100;return so}
+function levels(z0,d,sd){const o=[];let z=z0;while(z>z0-d+1e-9){z=Math.max(z0-d,z-sd);o.push(z)}return o}
+defJ('cpock',{name:'Circular pocket',re:/(?:circular|round|circle)\s*pocket|pocket\s*(?:circle|round)|counterbore\s*by\s*interp|helical\s*pocket/,
+ req:['Center X','Center Y','Dia','Depth','Z0','Cutter','Stepdown','Tool','Work offset'],sug:{'Stepover %':50,'Feed':20,'Plunge feed':10,'RPM':3000,'Clear Z':0.1},
+ parse:(l,G,n)=>{G('Dia',n(/([\d.]+)\s*(?:"|in)?\s*(?:dia|pocket)/));G('Depth',n(/([\d.]+)\s*(?:"|in)?\s*deep/));G('Cutter',n(/([\d.]+)\s*(?:"|in)?\s*(?:cutter|end\s*mill|em\b)/));G('Stepdown',n(/step\s*down\s*([\d.]+)/))},
+ block:j=>(jv(j,'Dia')-jv(j,'Cutter'))/2<=0?'Cutter must be smaller than the pocket.':null,
+ gen:(j,L)=>{const cx=jv(j,'Center X'),cy=jv(j,'Center Y'),R=(jv(j,'Dia')-jv(j,'Cutter'))/2,z0=jv(j,'Z0'),cz=jv(j,'Clear Z')||0.1,f=jv(j,'Feed'),pf=jv(j,'Plunge feed'),so=cutIn(j),rh=Math.min(R,jv(j,'Cutter')*0.25),hp=jv(j,'Helix pitch')||Math.min(jv(j,'Stepdown'),2*Math.PI*rh*Math.tan(3*Math.PI/180));
+  hdr(L,4100,'CIRCULAR POCKET');L(`(POCKET DIA ${f4(jv(j,'Dia'))} - TOOL PATH RADIUS ${f4(R)} - CLIMB G03)`);tstart(L,j,cx+rh,cy,z0+cz);let zc=z0;
+  levels(z0,jv(j,'Depth'),jv(j,'Stepdown')).forEach(z=>{L(`G01 X${f4(cx+rh)} Y${f4(cy)} F${f4(f)}`);let zz=zc;while(zz>z+1e-9){zz=Math.max(z,zz-hp);L(`G03 X${f4(cx+rh)} Y${f4(cy)} I${f4(-rh)} J0. Z${f4(zz)} F${f4(pf)}`)}L(`G03 X${f4(cx+rh)} Y${f4(cy)} I${f4(-rh)} J0. F${f4(f)}`);
+   let r=rh;while(r<R-1e-9){r=Math.min(R,r+so);L(`G01 X${f4(cx+r)} Y${f4(cy)}`);L(`G03 X${f4(cx+r)} Y${f4(cy)} I${f4(-r)} J0.`)}zc=z});
+  L(`G01 X${f4(cx)} Y${f4(cy)}`);L(`G00 Z${f4(z0+cz)}`);endP(L);j.stock=[cx-jv(j,'Dia')/2-0.5,cy-jv(j,'Dia')/2-0.5,z0-jv(j,'Depth')-0.25,cx+jv(j,'Dia')/2+0.5,cy+jv(j,'Dia')/2+0.5,z0]},
+ checks:j=>[['Helical entry (no straight plunge)',true],['Climb milling inside (G03 with M03)',true],['Helix pitch '+(jv(j,'Helix pitch')?'set by you':'suggested (about 3° ramp) — change it for your cutter'),true]]});
+defJ('cboss',{name:'Circular boss',re:/(?:circular|round|circle)\s*boss|boss\s*(?:circle|round)|mill\s*(?:a\s*)?boss|turn\s*a\s*boss\s*on\s*(?:the\s*)?mill/,
+ req:['Center X','Center Y','Boss Ø','Stock Ø','Depth','Z0','Cutter','Stepdown','Tool','Work offset'],sug:{'Stepover %':50,'Feed':20,'RPM':3000,'Clear Z':0.1},
+ parse:(l,G,n)=>{G('Boss Ø',n(/([\d.]+)\s*(?:"|in)?\s*(?:dia|boss)/));G('Stock Ø',n(/(?:from|stock)\s*([\d.]+)/));G('Depth',n(/([\d.]+)\s*(?:"|in)?\s*(?:deep|tall|high)/));G('Cutter',n(/([\d.]+)\s*(?:"|in)?\s*(?:cutter|end\s*mill|em\b)/));G('Stepdown',n(/step\s*down\s*([\d.]+)/))},
+ block:j=>jv(j,'Stock Ø')<=jv(j,'Boss Ø')?'Stock Ø must be bigger than the boss.':null,
+ gen:(j,L)=>{const cx=jv(j,'Center X'),cy=jv(j,'Center Y'),R=(jv(j,'Boss Ø')+jv(j,'Cutter'))/2,R0=(jv(j,'Stock Ø')+jv(j,'Cutter'))/2,z0=jv(j,'Z0'),cz=jv(j,'Clear Z')||0.1,f=jv(j,'Feed'),so=cutIn(j),xs=cx+R0+0.1;
+  hdr(L,4200,'CIRCULAR BOSS');L(`(BOSS DIA ${f4(jv(j,'Boss Ø'))} - FINAL TOOL PATH RADIUS ${f4(R)} - CLIMB G02)`);tstart(L,j,xs,cy,z0+cz);
+  levels(z0,jv(j,'Depth'),jv(j,'Stepdown')).forEach(z=>{L(`G00 X${f4(xs)} Y${f4(cy)}`);L(`G01 Z${f4(z)} F${f4(f)}`);let r=R0;while(r>R+1e-9){r=Math.max(R,r-so);L(`G01 X${f4(cx+r)} Y${f4(cy)}`);L(`G02 X${f4(cx+r)} Y${f4(cy)} I${f4(-r)} J0.`)}L(`G01 X${f4(xs)}`);L(`G00 Z${f4(z0+cz)}`)});
+  endP(L);const s=jv(j,'Stock Ø')/2+0.25;j.stock=[cx-s,cy-s,z0-jv(j,'Depth')-0.25,cx+s,cy+s,z0]},
+ checks:j=>[['Starts outside the stock, climb milling outside (G02 with M03)',true]]});
+// ---- 5 thread mill
+defJ('thmill',{name:'Thread mill',re:/thread\s*mill|mill\s*(?:a\s*|the\s*)?thread|helical\s*thread/,
+ req:['Thread','Center X','Center Y','Pitch','Thread length','Z0','Cutter','Tool','Work offset'],sug:{'Hand':'RH','Feed':10,'RPM':3000,'Clear Z':0.1},choices:{'Thread':['internal','external'],'Hand':['RH','LH']},
+ parse:(l,G,n)=>{G('Thread',/internal|tapped|\bid\b|hole/.test(l)?'internal':/external|\bod\b|stud|boss/.test(l)?'external':null);if(/\blh\b|left/.test(l))G('Hand','LH');
+  const tpi=n(/(\d+)\s*tpi/)??n(/\d\/\d+-(\d+)|\b\d*\.?\d+\s*-\s*(\d+)\b/);const pm=n(/pitch\s*([\d.]+)/);G('Pitch',pm??(tpi?1/tpi:null));G('Major Ø',n(/major\s*([\d.]+)/)??n(/([\d.]+)\s*(?:"|in)?\s*(?:major|dia)/));G('Minor Ø',n(/minor\s*([\d.]+)/));G('Thread length',n(/([\d.]+)\s*(?:"|in)?\s*(?:deep|long)/));G('Cutter',n(/([\d.]+)\s*(?:"|in)?\s*(?:cutter|thread\s*mill\s*dia|tool\s*dia)/))},
+ extra:j=>jv(j,'Thread')=='external'?['Minor Ø']:jv(j,'Thread')=='internal'?['Major Ø']:[],
+ block:j=>{const ex=jv(j,'Thread')=='external',A=ex?(jv(j,'Minor Ø')+jv(j,'Cutter'))/2:(jv(j,'Major Ø')-jv(j,'Cutter'))/2;if(!(A>0))return'Cutter is too big for this thread.';if(!(jv(j,'Pitch')>0))return'Pitch must be more than 0.';return null},
+ gen:(j,L)=>{const ex=jv(j,'Thread')=='external',rh=jv(j,'Hand')!='LH',cx=jv(j,'Center X'),cy=jv(j,'Center Y'),P=jv(j,'Pitch'),len=jv(j,'Thread length'),z0=jv(j,'Z0'),cz=jv(j,'Clear Z')||0.1,f=jv(j,'Feed'),cut=jv(j,'Cutter');
+  const A=ex?(jv(j,'Minor Ø')+cut)/2:(jv(j,'Major Ø')-cut)/2,up=ex?!rh:rh,G=ex?'G02':'G03',n=Math.ceil(len/P-1e-9),zb=z0-len,zs=up?zb:z0,dz=up?1:-1;
+  hdr(L,4300,`THREAD MILL ${ex?'EXTERNAL':'INTERNAL'} ${rh?'RH':'LH'}`);L(`(PATH RADIUS ${f4(A)} AT TOOL CENTER - ${G} ${up?'BOTTOM UP':'TOP DOWN'} - CLIMB)`);L('(NO CUTTER COMP - ADJUST SIZE WITH THE PATH RADIUS)');
+  if(!ex){tstart(L,j,cx,cy,z0+cz);L(`G01 Z${f4(zs)} F${f4(f*3)}`);L(`G01 X${f4(cx+A/2)} Y${f4(cy-A/2)} F${f4(f)}`);let z=zs+dz*P/8;L(`G03 X${f4(cx+A)} Y${f4(cy)} R${f4(A/2)} Z${f4(z)}`);for(let i=0;i<n;i++){z+=dz*P;L(`G03 X${f4(cx+A)} Y${f4(cy)} I${f4(-A)} J0. Z${f4(z)}`)}z+=dz*P/8;L(`G03 X${f4(cx+A/2)} Y${f4(cy+A/2)} R${f4(A/2)} Z${f4(z)}`);L(`G01 X${f4(cx)} Y${f4(cy)}`)}
+  else{const xs=cx+A+cut/2+0.1;tstart(L,j,xs,cy,z0+cz);L(`G01 Z${f4(zs)} F${f4(f*3)}`);L(`G01 X${f4(cx+A)} F${f4(f)}`);let z=zs;for(let i=0;i<n;i++){z+=dz*P;L(`G02 X${f4(cx+A)} Y${f4(cy)} I${f4(-A)} J0. Z${f4(z)}`)}L(`G01 X${f4(xs)}`)}
+  L(`G00 Z${f4(z0+cz)}`);endP(L);const s=(jv(j,'Major Ø')||jv(j,'Minor Ø'))/2+0.5;j.stock=[cx-s,cy-s,zb-0.25,cx+s,cy+s,z0]},
+ checks:j=>[['Direction from the cutter maker rule: '+(jv(j,'Thread')=='external'?'external = G02':'internal = G03')+', '+(jv(j,'Hand')!='LH'?'RH':'LH'),true],['Path at tool center — check the size on a test part',true]]});
+// ---- 6 serial number engrave (digits from a counter variable, font from Engrave text)
+defJ('serial',{name:'Serial number engrave (counts up)',re:/serial|incrementing\s*(number|engrav)|engrave\s*(?:the\s*)?(?:next\s*)?number|part\s*number\s*engrav|count\s*up\s*engrav/,
+ req:['Counter #','Digits','Letter height','Depth','Text start X','Text start Y','Z0','Tool','Work offset'],sug:{'Feed':10,'Plunge feed':5,'RPM':8000,'Clear Z':0.05},
+ parse:(l,G,n)=>{G('Counter #',n(/#\s*(\d{3,5})/));G('Digits',n(/(\d+)\s*digits?/));G('Letter height',n(/([\d.]+)\s*(?:"|in)?\s*(?:tall|high)/));G('Depth',n(/([\d.]+)\s*(?:"|in)?\s*deep/));const xy=l.match(/(?:start|at)\s*x\s*(-?[\d.]+)\s*,?\s*y\s*(-?[\d.]+)/);G('Text start X',xy?+xy[1]:null);G('Text start Y',xy?+xy[2]:null)},
+ block:j=>{const e=varOK(jv(j,'Counter #'));if(e)return'Counter #'+jv(j,'Counter #')+': '+e;const d=jv(j,'Digits');if(!(d>=1&&d<=8))return'Digits must be 1–8.';return null},
+ gen:(j,L)=>{const v='#'+jv(j,'Counter #'),D=jv(j,'Digits'),H=jv(j,'Letter height'),s=H/6,dp=jv(j,'Depth'),z0=jv(j,'Z0'),cz=jv(j,'Clear Z')||0.05,f=jv(j,'Feed'),pf=jv(j,'Plunge feed'),x0=jv(j,'Text start X'),y0=jv(j,'Text start Y'),adv=5.5*s;
+  hdr(L,6200,'SERIAL NUMBER ENGRAVE');L(`(SERIAL IN ${v} - ${D} DIGITS - ADDS 1 AFTER EACH PART)`);L(`(SET ${v} TO THE FIRST SERIAL BEFORE THE FIRST PART)`);L(`IF[${v}LT0]GOTO91`);L(`IF[${v}GE${10**D}]GOTO92`);
+  tstart(L,j,x0,y0,z0+cz);L(`#30=FIX[${v}] (SERIAL TO CUT)`);
+  for(let k=D-1;k>=0;k--){L(`#31=FIX[#30/${10**k}]-FIX[#30/${10**(k+1)}]*10 (DIGIT ${D-k})`);L('#32=7110+#31');L('G65 P#32 (CUT ONE DIGIT, MOVES TO NEXT)')}
+  L(`${v}=${v}+1 (NEXT SERIAL)`);L(`G00 Z${f4(z0+cz)}`);endP(L);L('N91 #3000=51 (SERIAL BELOW ZERO)');L(`N92 #3000=52 (SERIAL OVER ${D} DIGITS)`);L('M30');
+  for(let d=0;d<10;d++){L(`O${7110+d} (DIGIT ${d})`);L('G91');let cur=[0,0];EFONT[String(d)].split('|').forEach(st=>{const pts=st.split(' ').map(p=>p.split(',').map(Number)).map(([a,b])=>[a*s,b*s]);
+    L(`G00 X${f4(pts[0][0]-cur[0])} Y${f4(pts[0][1]-cur[1])}`);L(`G01 Z${f4(-(cz+dp))} F${f4(pf)}`);for(let i=1;i<pts.length;i++)L(`G01 X${f4(pts[i][0]-pts[i-1][0])} Y${f4(pts[i][1]-pts[i-1][1])} F${f4(f)}`);L(`G00 Z${f4(cz+dp)}`);cur=pts.at(-1)});
+   L(`G00 X${f4(adv-cur[0])} Y${f4(-cur[1])}`);L('G90');L('M99')}
+  L('%');const w=adv*D;j.stock=[x0-0.25,y0-0.25,z0-0.25,x0+w+0.25,y0+H+0.25,z0];return 1},
+ checks:j=>[['Counter kept at power off on this control',!varOK(jv(j,'Counter #'))],['Same single-stroke digits as Engrave text',true],['Digit subprograms O7110–O7119 must not clash with programs on the control',null]]});
+// ---- 9 warm-up
+defJ('warm',{name:'Spindle + axis warm-up',re:/warm\s*-?\s*up|warmup|spindle\s*break\s*-?\s*in/,
+ req:['RPM steps','Passes per step','X min','X max','Y min','Y max','Z clear'],sug:{},
+ parse:(l,G,n)=>{const m=l.match(/(?:rpm\s*(?:steps?)?|steps?|speeds?)\s*((?:\d{3,5}[\s,]*)+)/);G('RPM steps',m?m[1].trim().split(/[\s,]+/).join(' '):null);G('Passes per step',n(/(\d+)\s*pass/))},
+ setup:j=>{const m=sv('Max RPM');return m&&m.st=='user'?[]:[['Max RPM','confirm the spindle max in Machines']]},
+ block:j=>{const st=String(jv(j,'RPM steps')).split(/[\s,]+/).map(Number);if(st.some(x=>!(x>0)))return'RPM steps must be numbers, like 2000 4000 6000.';const mx=+((sv('Max RPM')||{}).v);if(st.some(x=>x>mx))return'An RPM step is above Max RPM ('+mx+') for this machine.';if(jv(j,'X min')>=jv(j,'X max')||jv(j,'Y min')>=jv(j,'Y max'))return'Min must be less than max.';return null},
+ gen:(j,L)=>{const st=String(jv(j,'RPM steps')).split(/[\s,]+/).map(Number),x1=jv(j,'X min'),x2=jv(j,'X max'),y1=jv(j,'Y min'),y2=jv(j,'Y max'),zc=jv(j,'Z clear'),n=jv(j,'Passes per step');
+  hdr(L,9100,'WARM-UP');L('(G53 MACHINE COORDINATES FROM YOUR OWN TRAVEL LIMITS)');L('(CLEAR THE TABLE - SPINDLE RUNS WITH THE LOADED TOOL)');L(`G53 G00 Z${f4(zc)}`);
+  st.forEach(r=>{L(`S${r} M03 (STEP ${r} RPM)`);L('#20=0');L(`WHILE[#20LT${n}]DO1`);[[x1,y1],[x2,y1],[x2,y2],[x1,y2],[x1,y1]].forEach(([x,y])=>L(`G53 G00 X${f4(x)} Y${f4(y)}`));L('#20=#20+1');L('END1')});
+  L('M05');L(`G53 G00 Z${f4(zc)}`);L('M30');j.stock=[x1,y1,zc-1,x2,y2,zc-0.9]},
+ checks:j=>[['Every RPM step at or below Max RPM',true],['Moves only inside the G53 limits you typed',true]]});
+// ---- framework: parse, show, ed, fill, gen, sim, checks
+const J2ORDER=['corner','pboss','insp','serial','thmill','cpock','cboss','life','ctr','warm'];
+function j2Op(t){const l=String(t||'').toLowerCase();if(isL())return null;for(const op of J2ORDER)if(J2[op].re.test(l))return op;return null}
+function parseJ2(t,op){const l=t.toLowerCase(),mm=UN()=='mm',S2=J2[op],p={},n=re=>{const m=l.match(re);if(!m)return null;const x=m.slice(1).find(x=>x!=null);return x==null?null:+x};
+ const G=(k,v)=>{p[k]={v:(typeof v=='number'&&mm&&KL.has(k))?canonV(k,v):v,g:false}};const tl=l.match(/\bt(?:ool)?\s*(?:number\s*)?(\d{1,3})\b/);if(S2.req.includes('Tool'))G('Tool',tl?+tl[1]:null);if(S2.req.includes('Work offset'))G('Work offset',normOff(t)||null);
+ const xy=l.match(/(?:center|centre|at)\s*x\s*(-?[\d.]+)\s*,?\s*y\s*(-?[\d.]+)/);if(S2.req.includes('Center X')){G('Center X',xy?+xy[1]:null);G('Center Y',xy?+xy[2]:null)}const z0=l.match(/z0\s*(?:=|at)?\s*(-?[\d.]+)/);if(S2.req.includes('Z0'))G('Z0',z0?+z0[1]:null);
+ if(S2.probe){const w=l.match(/write\s*(?:to\s*)?((?:g54\.1\s*)?p\s*\d+|g5[4-9])/);G('Result offset',w?normOff(w[1]):null);G('Confirm write',null)}
+ S2.parse(l,G,n);const j={op,p,text:l};j2Norm(j);return j}
+function j2Req(j){const S2=J2[j.op];let r=[...S2.req,...(S2.extra?S2.extra(j):[])];return r}
+function j2Norm(j){const S2=J2[j.op],r=j2Req(j),np={};r.forEach(k=>np[k]=j.p[k]&&j.p[k].v!=null?j.p[k]:{v:null,g:false});Object.entries(S2.sug).forEach(([k,v])=>np[k]=j.p[k]&&j.p[k].v!=null?j.p[k]:{v,g:true});j.p=np;REQ[j.op]=r}
+const _parse27=parse;parse=function(t){const op=j2Op(t);return op?parseJ2(t,op):_parse27(t)};
+const _req27=req;req=function(j){return isJ2(j)?j:_req27(j)};
+function j2Setup(j){const S2=J2[j.op],m=[],cx=sv('Control');if(!cx||cx.st!='user'||!ctrlKey())m.push(['Control','confirm Haas-style or Fanuc 0i-style']);if(S2.probe)m.push(...prbSetup(j,j.op!='insp'));if(S2.setup)m.push(...S2.setup(j));return m}
+const _ed27b=ed;ed=function(k){if(!isJ2(J))return _ed27b(k);const ch=(J2[J.op].choices||{})[k];if(ch){const i=ch.indexOf(J.p[k].v);J.p[k]={v:ch[(i+1)%ch.length],g:false};j2Norm(J);show();return}_ed27b(k)};
+const _fill27=fill;fill=function(){if(!isJ2(J))return _fill27();V.querySelectorAll('[data-k]').forEach(el=>{if(el.value==='')return;const k=el.dataset.k,ch=(J2[J.op].choices||{})[k],nv=+el.value;J.p[k]={v:k=='Work offset'||k=='Result offset'?normOff(el.value):ch?(ch.find(c=>c.toLowerCase()==el.value.trim().toLowerCase())||null):k=='RPM steps'?el.value.trim():isNaN(nv)?el.value:(KL.has(k)?canonV(k,nv):nv),g:false}});j2Norm(J);show()};
+const _show27=show;show=function(){if(!isJ2(J))return _show27();j2Norm(J);const miss=Object.entries(J.p).filter(([k,x])=>x.v==null),sm=j2Setup(J),blk=miss.length?null:J2[J.op].block?J2[J.op].block(J):null,mn=(S.m[S.cur]||{}).name||'this machine';
+ const smCard=sm.length?`<div class="card" id="j2sm"><div class="t">Machine setup still red — ${sm.length} item${sm.length>1?'s':''}</div><div class="s">From your machine and its manuals. The app never fills these in, so no code is written until they are confirmed.</div>${sm.map(([k,w])=>`<div class="set"><span>${esc(k)} <span class="s">(${esc(w)})</span></span><span class="chip r">!</span></div>`).join('')}<button class="btn o" onclick="edit(S.cur)">Open ${esc(mn)} setup</button></div>`:'';
+ if(miss.length){_show27();V.querySelectorAll('#out [data-k]').forEach(el=>{const ch=(J2[J.op].choices||{})[el.dataset.k];if(ch&&el.tagName=='INPUT')el.outerHTML=`<select style="width:40%" data-k="${el.dataset.k}"><option value="">pick…</option>${ch.map(c=>`<option>${c}</option>`).join('')}</select>`});$('#out').insertAdjacentHTML('beforeend',smCard);return}
+ if(sm.length||blk){$('#out').innerHTML=`<div class="card"><div class="t">${OPN[J.op]}</div>${Object.entries(J.p).map(([k,x])=>`<button class="chip ${x.v==null?'r':x.g?'gr':'y'}" onclick="ed('${k}')">${chipTxt(k,x)}</button>`).join('')}<div class="s">Yellow = from your words · gray = suggested, tap to change.</div></div>`+smCard+(blk?`<div class="ok bad">⛔ Not written: ${esc(blk)}</div>`:'');return}
+ _show27()};
+function genJ2(j){const C=[],L=s=>C.push(s);j.stock=null;const r=J2[j.op].gen(j,L);if(!j.stock){const cx=jv(j,'Center X')??jv(j,'Corner X')??0,cy=jv(j,'Center Y')??jv(j,'Corner Y')??0,sz=Math.max(jv(j,'Dia')||0,jv(j,'Boss Ø')||0,1)+1,zt=J2[j.op].probe?(jv(j,'Probe Z')||0)+0.2:0;j.stock=[cx-sz/2,cy-sz/2,zt-0.75,cx+sz/2,cy+sz/2,zt]}if(!r&&C.at(-1)!='%')C.push('%');return{code:C,moves:[],out:0}}
+const _gen27=gen;gen=function(j){return isJ2(j)?genU(genJ2,j):_gen27(j)};
+const _mkc27=mkContact;mkContact=function(j){return isJ2(j)?(J2[j.op].contact?J2[j.op].contact(j):null):_mkc27(j)};
+const _checks27=checks;checks=function(j){if(!isJ2(j))return _checks27(j);const t=txt().join('\n'),hk=hkC(),al=[...t.matchAll(/#3000=(\d+)\s*\(([^)]*)\)/g)];
+ const c=[['Safe start line (G17 '+GU()+' G40 G49 G80 G90)',/G17 G2[01] G40 G49 G80 G90/.test(t)],['WHILE / END pairs match',(t.match(/DO\d/g)||[]).length==(t.match(/END\d/g)||[]).length],['Balanced [ ] brackets',(t.match(/\[/g)||[]).length==(t.match(/\]/g)||[]).length],...ctrlChecks(t,0),['Ends with M30',/M30/.test(t)],['Custom Macro B option on',opt('macroB')]];
+ if(al.length)c.push(['#3000 alarms in range ('+(hk?'1–999 Haas':'0–200, 26 characters Fanuc')+')',al.every(m=>hk?(+m[1]>=1&&+m[1]<=999):(+m[1]<=200&&m[2].length<=26))]);
+ if(J2[j.op].probe){const pc=prbCodes();c.push(['Probe on / off from your confirmed M-codes ('+(pc?pc.on+' / '+pc.off:'?')+')',!!pc],['Skip code confirmed',(sv('Skip code (probe)')||{}).st=='user']);if(j.op!='insp')c.push(['You confirmed the offset write',jv(j,'Confirm write')=='YES'],['Wrong-size / wrong-place stop before writing',/GOTO98/.test(t)])}
+ c.push(['Every position came from you (nothing guessed)',Object.entries(j.p).filter(([k])=>/ X$| Y$|^Center|^Corner [XY]|^Text start|^[XY] m|^Z clear|^Probe Z|^Safe Z|^Z0/.test(k)).every(([k,x])=>!x.g)]);
+ return [...c,...(J2[j.op].checks?J2[j.op].checks(j):[])].filter(x=>x[1]!==null)};
+const _go27=go;go=function(){const t=($('#q')||{}).value||'';const op=j2Op(t);if(op){J={...parseJ2(t,op),date:Date.now(),edits:{}};show();return}_go27()};
+TLNEAR.push(['Part counter','part counter stop at 100',/count|parts?|batch|stop/],['Tool life + sister','tool life T8 sister T18',/life|sister|wear|spare/],['Thread mill','thread mill internal',/thread/],['Circular pocket','circular pocket',/pocket|counterbore|round/],['Probe corner','probe outside corner',/corner|edge|probe|find/],['Inspect + DPRNT','inspect bore',/inspect|measure|report|check|size/],['Warm-up','warm up spindle',/warm|spindle|idle/],['Serial engrave','engrave serial number',/serial|number|engrav/]);
+const _ct27=curTopic;curTopic=function(){const t=_ct27();return t=='build'&&isJ2(J)&&/^New job/.test($('#ttl').textContent)?'jobs27':t};
+LOG.unshift(['1.9 · Oct 13','Ten real-world jobs: part counter, tool life + sister tool, probe boss center and corners (with bore / web / pocket), circular pocket and boss, thread milling, serial number engraving, broken-tool check (Tool length check), warm-up, inspect + DPRNT report. Every position, variable and M-code is yours to confirm.']);
+HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='faq')),0,['jobs27','Counters, tool life, probing, pockets, threads, serials, warm-up, inspection',()=>`<p>Say what you need in plain words. Everything that sets a position, a variable, an offset or a machine M-code stays red until you type or confirm it.</p>
+<p><b>Part counter</b> (“part counter stop at 200 using #600”): adds parts to your counter each cycle and stops at the target. Use a variable kept at power off: Fanuc-style #500–#999, Haas #600–#699 or #800–#999. #3901 is the built-in counter — M30 already adds to it (Fanuc: parameter 6700 bit 0), so only use it when the program loops with M99.</p>
+<p><b>Tool life + sister tool</b> (“tool life T8 sister T18 500 uses #600 #601”): counts uses of each tool, swaps to the sister when the first is used up, and alarms when both are. Set a count back to 0 when you change that tool. H number = tool number is assumed.</p>
+<p><b>Probing</b>: bore, web and pocket centers were already here; now also <i>boss center</i> and <i>inside / outside corner</i>. Each needs your probe on / off M-codes (Machines, red), skip code confirmed, the result offset equal to the offset you probe in, and your tap on “Confirm write”. A wrong-size or wrong-place reading stops before writing.</p>
+<p><b>Inspect + DPRNT</b> (“inspect bore 1.0 dia tol 0.001”): measures, sends DIA / ERR / X / Y lines with DPRNT and alarms if out of tolerance. Writes no offsets. Fanuc wraps the lines in POPEN / PCLOS; on Haas, Setting 261 picks a file or TCP port.</p>
+<p><b>Circular pocket / boss</b>: pocket ramps down on a helix (pitch suggested for about a 3° ramp — change it for your cutter) then climbs out in circles (G03). Boss starts outside your stock size and climbs inward (G02).</p>
+<p><b>Thread mill</b>: tool-center path, no cutter comp. Cutter makers' rule: internal = G03 (RH bottom up, LH top down), external = G02 (RH top down, LH bottom up). Internal uses the major Ø; external needs the minor Ø from your thread table.</p>
+<p><b>Serial engrave</b> (“engrave serial #610 4 digits 0.125 tall 0.005 deep at x0.5 y0.5”): cuts the number in your counter with the Engrave text digits, then adds 1. Digit subprograms are O7110–O7119.</p>
+<p><b>Broken-tool check</b>: say “broken tool check T8” — it is the Tool length check in broken-tool mode.</p>
+<p><b>Warm-up</b>: runs each RPM step (never over Max RPM) while moving around the G53 machine limits you type. Clear the table first.</p>`]);
+</script>
 </body></html>
