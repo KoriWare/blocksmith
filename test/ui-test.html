@@ -7,7 +7,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;try{
   w.edit(0);const k=w.eval('S').m[0].s.findIndex(x=>x.k=='Extended offsets');d.querySelectorAll('.set .chip')[k].click();log('red chip confirm turns setting green',w.eval('S').m[0].s[k].st=='user');
   // set extended offsets to 48 via input
   const inp=d.querySelector(`input[data-j="${k}"]`);inp.value='48';inp.onchange();log('extended offsets saved =48',w.eval('S').m[0].s[k].v=='48');
-  w.eval('S').cur=0;w.tab('new');w.ex('T5 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep');
+  w.eval('S').cur=0;w.eval('S').m[0].opt.ext=1;w.tab('new');w.ex('T5 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep');
   const sel=d.querySelector('select[data-k="Work offset"]');const opts=[...sel.options].map(o=>o.textContent);log('picker offers G54.1 P1..P48 ('+opts.length+' options)',opts.includes('G54.1 P48')&&!opts.includes('G54.1 P49'));
   sel.value='P12';w.fill();const code=w.eval('txt()').join('\n');log('code uses G54.1 P12',/G54\.1 P12 G00/.test(code));
   log('offset check passes',/Work offset G54.1 P12 exists[^❌]*/.test(d.querySelector('#cl').textContent)&&!d.querySelector('#cl').textContent.includes('❌ Work offset'));
