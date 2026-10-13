@@ -1,0 +1,73 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=25" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+ setTimeout(()=>{const d=w.document,E=x=>w.eval(x);try{
+  const code=()=>E("txt().join('\\n')"),cl=()=>d.querySelector('#cl').textContent;
+  log('round-20 code loaded (no load error)',typeof w.scanSug=='function'&&typeof w.varsPanel=='function');
+  // ---- Part A
+  w.cur(0);d.querySelector('#u-mm').click();
+  w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');
+  log('A3 example shows mm text in the box',d.querySelector('#q').value=='G54 T2 6 hole bolt circle 75 dia center x0 y0 z0 0 start 15 12 deep peck 2.5');
+  log('A1 user values exact (D75. Z12.), built-in clearance round (R2.5, G43 Z27.5)',/D75\. A15\.0* Z12\. R2\.5/.test(code())&&/G43 H2 Z27\.5/.test(code()));
+  const c1=code();w.go();log('A3 Make my macro again reads the box the same',code()==c1);
+  w.ex('G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 70 z0 0');
+  log('A1 macro body constants round in mm (X[-#7/2-2.5], G00 Z25.)',/X\[-#7\/2-2\.5\]/.test(code())&&/G00 Z25\./.test(code())&&!/27\.94|2\.54\b/.test(code()));
+  w.pick('Nakamura-Tome multitasking lathe (generic)','Multitasking lathes');E('S.cur=S.m.length-1');w.tab('new');
+  w.ex('G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 part off 0.125');
+  log('A2 comment in active units (1 MM DIA PER PASS)',/1 MM DIA PER PASS/.test(code())&&!/0\.04 DIA/.test(code()));
+  log('A1 NT clearance X26. (bar 25 + 1)',/G00 X26\. Z0\.5/.test(code()));
+  d.querySelector('#u-in').click();log('A3 toggle back to inch swaps the example text',d.querySelector('#q').value=='G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 part off 0.125'||E('J.text')=='G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 part off 0.125');
+  d.querySelector('#u-mm').click();w.cur(0);
+  w.tools();const di=d.querySelector('[data-f="dia"]');log('A4 tool library shows mm (Ø mm label, value ×25.4)',/mm/.test(di.closest('label').textContent)&&Math.abs(+di.value-E('S.tools[0].dia')*25.4)<0.01);
+  di.value='10';di.onchange();log('A4 typing 10 mm stores 0.3937 in',Math.abs(E('S.tools[0].dia')-10/25.4)<1e-6);
+  w.batch();d.querySelector('#bq').value='%\nO1000\nG17 G20 G40 G49 G80 G90\nG00 X0 Y0\nM30\n%';w.doBatch();
+  log('A5 batch flags G20 program on mm machine',/❌ Program units G20 \(inch\) match this machine \(mm, G21\)/.test(d.querySelector('#bo2').textContent));
+  d.querySelector('#u-in').click();
+  // ---- Part B
+  w.tab('machines');log('B header mode indicator Milling',d.querySelector('#mode').textContent=='Milling');
+  log('B first-run guide card',!!d.querySelector('#fr'));
+  const favB=[...d.querySelectorAll('.card .chip')].filter(b=>/Favorite/.test(b.textContent));favB[2].click();
+  log('B favorite pinned to top',/Lathe 1/.test(d.querySelector('.card[onclick^="edit("] .t').textContent));
+  w.addM();log('B brand presets listed (plain text, generic)',/Haas VF-style VMC \(generic\)/.test(d.body.textContent)&&/Okuma LB\/GENOS L-style/.test(d.body.textContent)&&/Not affiliated/.test(d.body.textContent));
+  w.pick('Haas VF-style VMC (generic)','Vertical mills');const hm=E('S.m.at(-1)');log('B preset sets control (red) and pre-checks options',/Haas/.test(hm.s[0].v)&&hm.s[0].st=='confirm'&&hm.opt.rigid&&hm.opt.flood);
+  log('B options grouped (Coolant & air, Lathe-specific)',/Coolant & air/.test(d.body.textContent)&&/through-spindle coolant/i.test(d.body.textContent));
+  const addP=()=>[...d.querySelectorAll('#probes .chip')].find(b=>/Add probe/.test(b.textContent)).click();addP();addP();log('B probe list: two probes, first default',E('S.m.at(-1).probes.length')==2&&E('S.m.at(-1).probes[0].def')==1);
+  const n0=E('S.m.length');[...d.querySelectorAll('.btn')].find(b=>/Duplicate/.test(b.textContent)).click();log('B duplicate machine',E('S.m.length')==n0+1&&/copy$/.test(E('S.m.at(-1).name'))&&E('S.m.at(-1).probes.length')==2);
+  log('B capability settings red (Free common variables, DPRNT, O9000)',['Free common variables','DPRNT support','O9000 protection'].every(k=>E(`S.m.at(-1).s.find(x=>x.k=='${k}').st`)=='confirm'));
+  w.cur(0);w.tab('new');d.querySelector('#q').value='G54 T2 6 hole bolt circle 3.0 dia';d.querySelector('#q').dispatchEvent(new Event('input'));log('B understood-so-far while typing',/Understood so far: .*Bolt/i.test(d.querySelector('#us').textContent)&&/still need/.test(d.querySelector('#us').textContent)&&/Dia 3/.test(d.querySelector('#us').textContent));
+  w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');
+  log('B common variables must be confirmed free',/❌ Common variables/.test(cl())&&/Not ready/.test(d.querySelector('#ready').textContent));
+  [...d.querySelectorAll('#cl .chip')].find(b=>/free on this machine/.test(b.textContent)).click();log('B confirm free -> check passes',!/❌ Common variables/.test(cl())&&E("sv('Free common variables').st")=='user');
+  log('B sticky summary text',/checks passed/.test(d.querySelector('#ck').textContent)&&getComputedStyle(d.querySelector('#ck')).position=='sticky');
+  log('B syntax highlight + line numbers',!!d.querySelector('#ed .ln .hg')&&!!d.querySelector('#ed .ln .hk')&&getComputedStyle(d.querySelector('#ed .ln'),'::before').content!='none');
+  log('B source notes collapsed',d.querySelector('#srcn')&&!d.querySelector('#srcn').open&&/G83/.test(d.querySelector('#srcn').textContent));
+  w.scrub(Math.floor(E('J.M.length')/2));log('B live variables at step (#100 count, local #11)',/#100=/.test(d.querySelector('#vars').textContent)&&/#11=6/.test(d.querySelector('#vars').textContent));
+  d.querySelector('#tStk').click();log('B stock removal toggles and maps material',E('J._stk')&&E('J._stk.h.some(v=>v<J.stock[5]-1e-6)'));
+  d.querySelector('#tSp').click();log('B speed chip cycles',E('view.sp')==2);d.querySelector('#tTool').click();log('B tool chip off',E('view.tool')==0);d.querySelector('#tTool').click();
+  w.simFS();log('B full screen on',d.querySelector('#cv').classList.contains('fs'));w.simFS();
+  const ln=[...d.querySelectorAll('.ln')].find(e=>/^#102=/.test(e.textContent));ln.dispatchEvent(new Event('focus'));ln.textContent='#102=#7/0';ln.dispatchEvent(new Event('input'));
+  log('B inline warning marker + division by zero flagged',ln.classList.contains('warn')&&/division by zero/i.test(ln.title)&&/Division by zero/.test(cl()));
+  w.undoEd();log('B undo restores the line',!/#7\/0/.test(code()));w.redoEd();log('B redo',/#7\/0/.test(code()));w.undoEd();
+  d.querySelector('#fq').value='G83';d.querySelector('#fq').dispatchEvent(new Event('input'));log('B find in code',d.querySelectorAll('.ln.hit').length==1);
+  log('B .eia export + header/dry-run toggles + exact disclaimer',!!d.querySelector('#eia')&&!!d.querySelector('#hdr')&&!!d.querySelector('#dry')&&/This app is an aid, not a substitute for proven programs or machine documentation\./.test(d.querySelector('.foot').textContent));
+  E('S.hdr=1');log('B header comment in export text',/\(MACHINE: MILL A\)[\s\S]*\(UNITS: INCH G20\)/.test(w.progText()));E('S.hdr=0');
+  const L=code().split('\n'),k=L.findIndex(l=>/^M30/.test(l));E(`J.edits[${k}]='#3006=1 (CHECK PART)'`);w.refresh();log('B #3006 message preview',/MESSAGE 1: CHECK PART/.test(d.querySelector('#alm').textContent));w.undoEd();E(`delete J.edits[${k}]`);w.show();
+  d.querySelector('#jn').value='BC test';d.querySelector('#jno').value='first';d.querySelector('#jl').value='drill 200 holes';w.saveJob();
+  w.reopen(0);const L2=code().split('\n'),k2=L2.findIndex(l=>/^#100=0/.test(l));E(`J.edits[${k2}]='#150=0 (COUNT)'`);w.show();d.querySelector('#jn').value='BC test';w.saveJob();
+  log('B library: same name -> version 2 + change note',E('S.jobs[0].versions.length')==1&&/#150/.test(E('S.jobs[0].change'))&&/Version history/.test(d.body.textContent)&&/Tool life \/ wear: drill 200/.test(d.body.textContent));
+  d.querySelector('#lq').value='zzz';d.querySelector('#lq').dispatchEvent(new Event('input'));log('B library search',/Nothing matches/.test(d.querySelector('#lo').textContent));
+  log('B tabs read Build / Library',[...d.querySelectorAll('.tabs button')].map(b=>b.textContent).join()=='Machines,Build,Library,More');
+  w.scanner('G00 X1. Y1.\nG01 Z-0.2 F10.\nG00 Z0.1\nG00 X2. Y1.\nG01 Z-0.2 F10.\nG00 Z0.1\nG00 X3. Y1.\nG01 Z-0.2 F10.\nG00 Z0.1\nG01 X5. F20.\nG01 X5. F20.\nG01 Z-0.1\nG01 Z-0.2\nG01 Z-0.3\nG01 Z-0.4');
+  const sg=d.querySelector('#sug').textContent;log('B scanner suggestions: G81, duplicate, WHILE loop',/G81 canned cycle/.test(sg)&&/Duplicate block/.test(sg)&&/repeated passes → WHILE/.test(sg)&&!!d.querySelector('#sug .dm')&&!!d.querySelector('#sug .dp'));
+  const before=d.querySelector('#sq').value.split('\n').length;[...d.querySelectorAll('#sug .chip.y')][0].click();log('B accept suggestion rewrites program',d.querySelector('#sq').value.split('\n').length<before);
+  w.reference();d.querySelector('[data-rf="Mill"]').click();log('B reference filter chips',!!d.querySelector('[data-rf="Turn"]'));
+  w.calc();w.cur(0);w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');w.calc();d.querySelector('#cAsV').click();log('B calculator value dropped into editor as #110',/#110=\d+ \(RPM\)/.test(code()));
+  w.tools();const ts=d.querySelector('select[data-f="type"]');ts.value='Custom form tool';ts.dispatchEvent(new Event('change'));
+  setTimeout(()=>{try{const ta=d.querySelector('[data-pr]');ta.value='0.25@0, 0.4@0.2';ta.onchange({target:ta});log('B custom form tool profile stored',E('S.tools[0].prof.length')==2);
+   w.batch();d.querySelector('#bq').value='%\nO1000\nG17 G20 G40 G49 G80 G90\nG00 X0 Y0\nM30\n%';d.querySelector('#bmB').value='2';w.doBatch();log('B batch two machines + differences',/Differences A vs B/.test(d.querySelector('#bo2').textContent)&&/Lathe 1/.test(d.querySelector('#bo2').textContent));
+   w.more();log('B transfer notes',/Transfer notes/.test(d.body.textContent));w.xfer();log('B transfer notes page',/RS-232/.test(d.body.textContent));
+   E("J={...J}");const r=E("interp(['#1=5','#[#1+40]=2','M30'],{})");log('B indirect address outside legal range flagged',/outside the legal ranges/.test(r.err||''));
+   log('no page errors',!errs.length||console.log(errs.join('|')));if(errs.length)out.push('ERR '+errs.join(' | '));
+  }catch(e){out.push('FAIL exception '+e.message+' '+e.stack)}o.textContent=out.join('\n')},300);
+ }catch(e){out.push('FAIL exception '+e.message+' '+(e.stack||'').split('\n')[1]);o.textContent=out.join('\n')}},1500)}
+</script>

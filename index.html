@@ -26,6 +26,12 @@ textarea,input,select{width:100%;background:#0a0a0a;color:#eee;border:1px solid 
 .foot{font-size:12px;color:#ff8a8a;margin-top:8px}canvas{width:100%;height:300px;background:#0a0a0a;border-radius:12px;touch-action:none;display:block}
 .row{display:flex;gap:6px;flex-wrap:wrap}.row button{flex:1}.hid{display:none}label{font-size:14px}
 .set{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #2a2a2a;font-size:14px}
+.hc{color:#7d7d7d}.hv{color:#ff9fd0}.hk{color:#ffd21f;font-weight:700}.hg{color:#14b8a6}.hn{color:#9aa4ff}
+#ed{counter-reset:ln}#ed .ln{counter-increment:ln}#ed .ln::before{content:counter(ln);display:inline-block;width:2.6em;margin-left:-4px;color:#555;user-select:none;-webkit-user-select:none}
+#ed .ln.warn{border-left-color:#ff4d4d;background:#2a0d0d}#ed .ln.warn::after{content:attr(data-w);color:#ff8a8a;margin-left:10px;font-size:10.5px}#ed .ln.hit{background:#1d3a36}
+#ck{position:sticky;top:54px;z-index:4}
+#cv.fs{position:fixed;inset:0;width:100vw!important;height:100vh!important;z-index:60;background:#0a0a0a}#fsx{position:fixed;top:10px;right:10px;z-index:61}
+.diff .dm{color:#ff8a8a;background:#2a0d0d;white-space:pre}.diff .dp{color:#7ee2b8;background:#0d2a1f;white-space:pre}
 </style></head><body>
 <div class="h"><span id="ttl">My Machines 😼</span><span class="hr"><span class="units" role="group" aria-label="Length units"><button type="button" id="u-in" aria-pressed="true">in</button><span class="sep">|</span><button type="button" id="u-mm" aria-pressed="false">mm</button></span><small>● Offline</small></span></div>
 <div class="c" id="v"></div>
@@ -82,12 +88,14 @@ function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
 function ed(k){const x=J.p[k],v=prompt(k=='Work offset'?'Work offset — this machine allows: G54–G59'+(extN()?`, ${offLbl('P1')}…${offLbl(offOpts().at(-1))}`:''):k,k=='Work offset'?offLbl(x.v||''):x.v??'');if(v==null)return;x.v=k=='Work offset'?normOff(v):isNaN(+v)?v:+v;x.g=false;show()}
 function fill(){V.querySelectorAll('[data-k]').forEach(el=>{if(el.value!=='')J.p[el.dataset.k]={v:el.dataset.k=='Work offset'?normOff(el.value):isNaN(+el.value)?el.value.toUpperCase():+el.value,g:false}});show()}
 // ---------- generator: Macro B main + subprogram, and simulated moves
-let GENMM=0;function f4(n){return(+n).toFixed(GENMM?7:4).replace(/0+$/,'').replace(/\.$/,'.0')}
+let GENMM=0;function f4(n){const t=(+n).toFixed(GENMM?7:4).replace(/0+$/,'').replace(/\.$/,'.0');return GENMM?t+'\u0002':t}
+// built-in inch constant -> its round metric twin (only while writing a mm program)
+function C(x){return GENMM?nice(x*25.4)/25.4:x}
 function gen(j){const p=k=>j.p[k]?j.p[k].v:0,c=[],mv=[];let pos=[0,0,2],out=0;
  const L=s=>c.push(s);const R=(x,y,z)=>{mv.push({a:[...pos],b:[x??pos[0],y??pos[1],z??pos[2]],r:1});pos=mv.at(-1).b},F=(x,y,z,f)=>{mv.push({a:[...pos],b:[x??pos[0],y??pos[1],z??pos[2]],f});pos=mv.at(-1).b};
  const T=p('Tool'),cz=p('Clear Z');
  L('%');L('O1000 ('+OPN[j.op].toUpperCase()+' - MACRO CATCULATOR DEMO)');L('(GENERIC FANUC-STYLE MACRO B - VERIFY ON CONTROL)');
- L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06`);L(`${offCode(p('Work offset'))} G00 X0. Y0. S${p('RPM')} M03`);{const sx=j.p['Center X']||j.p['Start X'],sy=j.p['Center Y']||j.p['Start Y'];L(`G52 X${f4(sx?sx.v:0)} Y${f4(sy?sy.v:0)} Z${f4(p('Z0'))} (LOCAL SHIFT TO PART ZERO)`)}L(`G43 H${T} Z${f4(cz+1)} M08`);
+ L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06`);L(`${offCode(p('Work offset'))} G00 X0. Y0. S${p('RPM')} M03`);{const sx=j.p['Center X']||j.p['Start X'],sy=j.p['Center Y']||j.p['Start Y'];L(`G52 X${f4(sx?sx.v:0)} Y${f4(sy?sy.v:0)} Z${f4(p('Z0'))} (LOCAL SHIFT TO PART ZERO)`)}L(`G43 H${T} Z${f4(cz+C(1))} M08`);
  const drill=(x,y)=>{const d=-p('Depth'),q=p('Peck Q');R(x,y,null);R(null,null,cz);if(j.p['Peck Q']){let z=0;while(z>d){const nz=Math.max(d,z-q);F(null,null,nz,p('Feed'));R(null,null,cz);if(nz>d)R(null,null,nz+0.01);z=nz}}else{F(null,null,d,p('Feed'));R(null,null,cz)}};
  const cyc=j.p['Peck Q']?`G83 Z-#26 R#18 Q#17 F#9`:`G81 Z-#26 R#18 F#9`;
  R(0,0,cz+1);
@@ -151,7 +159,7 @@ function genL(j){const p=k=>j.p[k]?j.p[k].v:0,c=[],mv=[],L=s=>c.push(s);let TG='
  const mx=+(sv('Max RPM (G50)')||{v:3000}).v;pos=[Rr+0.5,0,1];
  const R=(x,z)=>{mv.push({a:[...pos],b:[x==null?pos[0]:x/2,0,z??pos[2]],r:1,t:TG});pos=mv.at(-1).b},F=(x,z,f)=>{mv.push({a:[...pos],b:[x==null?pos[0]:x/2,0,z??pos[2]],f:f||p('Feed/rev'),t:TG});pos=mv.at(-1).b};
  L('%');L('O2000 ('+OPN[j.op].toUpperCase()+' - MACRO CATCULATOR DEMO)');L('(GENERIC FANUC-STYLE LATHE MACRO B - X IN DIAMETER)');L('G18 G20 G40 G80 G99 (SAFE START)');L(`${tt} (TOOL ${T})`);L(`${offCode(p('Work offset'))} G52 Z${f4(p('Z0'))} (LOCAL Z SHIFT - CONFIRM G52 ON CONTROL)`);L(`G50 S${mx} (MAX RPM CLAMP)`);
- L(j.op=='ldrill'?`G97 S${p('RPM')} M03`:`G96 S${p('SFM')} M03`);L(`G00 X${f4(st+0.1)} Z0.1 M08`);R(st+0.1,0.1);
+ L(j.op=='ldrill'?`G97 S${p('RPM')} M03`:`G96 S${p('SFM')} M03`);L(`G00 X${f4(st+C(0.1))} Z0.1 M08`);R(st+0.1,0.1);
  let Lst=2,zmax=0,sub=[];
  if(j.op=='lturn'){const fin=p('Finish Ø'),len=p('Length'),doc=p('DOC'),ch=p('Chamfer');Lst=len+0.5;
   L(`G65 P9200 A${f4(st)} B${f4(fin)} C${f4(ch)} D${f4(doc)} Z${f4(len)} F${f4(p('Feed/rev'))}`);
@@ -168,7 +176,7 @@ function genL(j){const p=k=>j.p[k]?j.p[k].v:0,c=[],mv=[],L=s=>c.push(s);let TG='
  if(j.op=='ldrill'){const d=p('Depth'),q=p('Peck Q');Lst=Math.max(2,d+0.5);L(`G65 P9203 Z${f4(d)} Q${f4(q)} F${f4(p('Feed/rev'))}`);
   TG='G01 Z-#100';R(0,0.1);let z=0;while(z>-d){const nz=Math.max(-d,z-q);F(0,nz);R(0,0.1);if(nz>-d)R(0,nz+0.01);z=nz}
   sub=['O9203 (PECK DRILL ON CENTER)',...[26,17,9].map(v=>`IF[#${v}EQ#0]GOTO99`),'G00 X0 Z0.1','#100=0','WHILE[#100LT#26]DO1','#100=#100+#17','IF[#100GT#26]THEN #100=#26','G01 Z-#100 F#9','G00 Z0.1','IF[#100LT#26]THEN G00 Z[-#100+0.01]','END1']}
- TG='G28';R(st+1,1);L(`G00 X${f4(st+1)} Z1.0 M09`);L('G52 Z0 (CANCEL SHIFT)');L('G28 U0. W0. (SAFE END)');L('M05');L('M30');L('');
+ TG='G28';R(st+1,1);L(`G00 X${f4(st+C(1))} Z1.0 M09`);L('G52 Z0 (CANCEL SHIFT)');L('G28 U0. W0. (SAFE END)');L('M05');L('M30');L('');
  sub.forEach(L);L('M99');L('N98 #3000=2 (STOCK OR INSERT TOO SMALL)');L('N99 #3000=1 (MISSING ARGUMENT)');L('M99');L('%');
  mv.forEach(m=>{const i=c.findIndex(l=>l.includes(m.t));m.l=i<0?7:i});
  j.stock=[-Rr,-Rr,-Lst,Rr,Rr,zmax];j.lb={R:Rr,L:Lst,z:zmax};let out=0;mv.forEach(m=>{if(m.b[0]<-1e-6||(!m.r&&m.b[2]<-Lst))m.out=1,out++});return{code:c,moves:mv,out}}
@@ -243,7 +251,7 @@ function mexpr(e,V){let s=e.replace(/\[/g,'(').replace(/\]/g,')').replace(/#(\d+
   .replace(/EQ/g,'==').replace(/NE/g,'!=').replace(/GE/g,'>=').replace(/LE/g,'<=').replace(/GT/g,'>').replace(/LT/g,'<').replace(/AND/g,'&&').replace(/XOR/g,'^').replace(/OR/g,'||')
   .replace(/(SIN|COS|TAN|ATAN|ASIN|ACOS|SQRT|ABS|ROUND|FIX|FUP|LN|EXP)\(/g,'F.$1(');
  if(!/^(?:V|F\.[A-Z]+|[\d.]+|[-+*/()<>=!&|^])*$/.test(s))throw Error('bad expression: '+e);
- return Function('V','F','return ('+s+')')(V,FN)}
+ const r=Function('V','F','return ('+s+')')(V,FN);if(typeof r=='number'&&!isFinite(r))throw Error('Division by zero (or math error) in '+e);if(typeof r=='number'&&isNaN(r))throw Error('Math error (e.g. SQRT of a negative) in '+e);return r}
 function brEnd(s,i){let d=0;for(;i<s.length;i++){if(s[i]=='[')d++;else if(s[i]==']'&&--d==0)return i}return -1}
 function words(s){const w=[];let i=0;while(i<s.length){const L=s[i];if(!/[A-Z]/.test(L)){i++;continue}let j=i+1;if(s[j]=='-'||s[j]=='+')j++;
   if(s[j]=='['){j=brEnd(s,j)+1}else if(s[j]=='#'){j++;if(s[j]=='[')j=brEnd(s,j)+1;else while(/\d/.test(s[j]))j++}else while(/[\d.]/.test(s[j]))j++;
@@ -253,11 +261,11 @@ function interp(lines,o){o=o||{};const lathe=o.lathe,M=[],alarms=[],V={};const R
  const progStart=i=>{for(let k=i;k>=0;k--)if(/^O\d+/.test(cl[k].s))return k;return 0};
  const findN=(n,i)=>{const p=progStart(i);for(let k=p;k<cl.length;k++){if(k>p&&/^O\d+/.test(cl[k].s))break;if(new RegExp('^N'+n+'(?!\\d)').test(cl[k].s))return k}throw Error('N'+n+' not found')};
  const findO=n=>{const k=cl.findIndex(x=>new RegExp('^O0*'+n+'(?!\\d)').test(x.s));if(k<0)throw Error('O'+n+' not found');return k};
- let loc=[{}];const get=n=>{n=Math.round(n);if(n==0)return null;if(n<=33){const v=loc.at(-1)[n];return v==null?null:v}const v=V[n];return v==null?null:v};
- const set=(n,v)=>{n=Math.round(n);if(n<=33)loc.at(-1)[n]=v;else V[n]=v};
+ let loc=[{}];const VR=n=>{if(n<0||(n>33&&n<100)||(n>199&&n<500))throw Error('Variable #'+n+' is outside the legal ranges (#1-33, #100-199, #500-999, #1000+)')};const get=n=>{n=Math.round(n);if(n==0)return null;VR(n);if(n<=33){const v=loc.at(-1)[n];return v==null?null:v}const v=V[n];return v==null?null:v};
+ const set=(n,v)=>{n=Math.round(n);VR(n);if(n<=33)loc.at(-1)[n]=v;else V[n]=v};
  const ev=e=>mexpr(e,get);const val=x=>{const v=ev(x);return v==null?0:v};
  const RT=p=>{if(!o.rot||!o.ang||o.rot=='C')return[...p];const a=-o.ang*Math.PI/180,c=Math.cos(a),s=Math.sin(a);return o.rot=='A'?[p[0],p[1]*c-p[2]*s,p[1]*s+p[2]*c]:[p[0]*c+p[2]*s,p[1],-p[0]*s+p[2]*c]};
- const mv=(b,r,l)=>{const m={a:RT(pos),b:RT(b),r:r?1:0,f:feed,l,ang:o.ang||0};M.push(m);pos=[...b]};
+ const mv=(b,r,l)=>{const m={a:RT(pos),b:RT(b),r:r?1:0,f:feed,l,ang:o.ang||0};if(M.length<20000)m.vs=Object.assign({},V,loc.at(-1));M.push(m);pos=[...b]};let RD=0;
  function motion(s,i){const w=words(s);let g=[],P={};w.forEach(([L,x])=>{if(L=='G')g.push(+x);else P[L]=x});if(g.includes(21))met=1;if(g.includes(20))met=0;
   if(o.rot&&P[o.rot]!=null){o.ang=val(P[o.rot]);delete P[o.rot]}
   if(g.includes(67)){modal=null;return}
@@ -276,7 +284,7 @@ function interp(lines,o){o=o||{};const lathe=o.lathe,M=[],alarms=[],V={};const R
    return g.includes(71)?b+1:null}
   if(lathe&&g.includes(76)){if(P.X==null){g76={q:P.Q,r:P.R};return}const raw=x=>/\./.test(x)?U(val(x)):met?val(x)*0.001/25.4:val(x)*0.0001,k=raw(P.P||'0'),q1=raw(P.Q||'0.01'),st=[...pos],rf=U(val(P.X))/2,ze=U(val(P.Z))+shift[2];
    let n=1,dd=0;while(dd<k-1e-9&&n<200){dd=Math.min(k,q1*Math.sqrt(n));const r=rf+k-dd;mv([r,0,st[2]],1,i);M.at(-1).th=1;mv([r,0,ze],0,i);M.at(-1).th=1;mv([st[0],0,ze],1,i);mv(st,1,i);n++}return}
-  if(g.includes(65)){const pr=val(P.P),args={};Object.keys(P).forEach(k=>{if(k!='P'&&ARG[k])args[ARG[k]]=val(P[k])});loc.push(args);R.push(i);return findO(pr)}
+  if(g.includes(65)){const pr=val(P.P),args={};Object.keys(P).forEach(k=>{if(k!='P'&&ARG[k])args[ARG[k]]=val(P[k])});loc.push(args);(R.push(i),RD=Math.max(RD,R.length));return findO(pr)}
   g.forEach(x=>{if(x==0||x==1||x==2||x==3)mode=x;if(x==90)abs=1;if(x==91)abs=0;if(x==80)can=null;if(x==81||x==83||x==84)can=x;if(x==98||x==99)ret=x});
   if(P.F!=null)feed=U(val(P.F));
   if(g.includes(52)){['X','Y','Z'].forEach((k,n)=>{if(P[k]!=null)shift[n]=U(val(P[k]))});return}
@@ -298,12 +306,12 @@ function interp(lines,o){o=o||{};const lathe=o.lathe,M=[],alarms=[],V={};const R
    if(cw&&a1>=a0)a1-=2*Math.PI;if(!cw&&a1<=a0)a1+=2*Math.PI;const n=Math.max(4,Math.ceil(Math.abs(a1-a0)/0.15));
    for(let k=1;k<=n;k++){const an=a0+(a1-a0)*k/n,x=c[0]+r*Math.cos(an),y=c[1]+r*Math.sin(an),z=pos[2]+(t[2]-pos[2])/(n-k+1);mv(lathe?[y,0,x]:[x,y,lathe?pos[2]:z],0,i)}return}
   if(g.includes(31)&&o.contact){const c=o.contact(pos,t);const mk_=met?25.4:1;V[5061]=(lathe?c[0]*2:c[0])*mk_;V[5062]=c[1]*mk_;V[5063]=c[2]*mk_;mv(c,0,i);return}
-  mv(t,mode==0,i);if(modal&&mode!=0&&R.length<=modal.base){loc.push({...modal.args});R.push(i);return findO(modal.pr)}}
+  mv(t,mode==0,i);if(modal&&mode!=0&&R.length<=modal.base){loc.push({...modal.args});(R.push(i),RD=Math.max(RD,R.length));return findO(modal.pr)}}
  function stmt(s,i){
   if(/^#/.test(s)&&s.includes('=')){const k=s.indexOf('=');let L=s.slice(1,k);const n=L[0]=='['?val(L.slice(1,-1)):+L;const v=ev(s.slice(k+1));if(n==3000){alarms.push({n:v,msg:cl[i].c,l:i});throw{alarm:1}}set(n,v);return}
   if(/^GOTO/.test(s))return findN(val(s.slice(4)),i);
   if(/^(M30|M02)/.test(s)||/M30/.test(s.replace(/\[.*?\]/g,''))&&!/^G/.test(s)&&!/^#/.test(s)){throw{end:1}}
-  if(/^M98/.test(s)||/M98P/.test(s)){const pr=+(s.match(/P(\d+)/)||[])[1];loc.push(loc.at(-1));R.push(i);return findO(pr)}
+  if(/^M98/.test(s)||/M98P/.test(s)){const pr=+(s.match(/P(\d+)/)||[])[1];loc.push(loc.at(-1));(R.push(i),RD=Math.max(RD,R.length));return findO(pr)}
   if(/M99/.test(s)){const r=R.pop();loc.pop();if(r==null)throw{end:1};return r+1}
   return motion(s,i)}
  let i=0;try{
@@ -318,7 +326,7 @@ function interp(lines,o){o=o||{};const lathe=o.lathe,M=[],alarms=[],V={};const R
    else{const r=stmt(b,i);if(r!=null)nx=r}
    i=nx}
  }catch(e){if(!e.end&&!e.alarm)err=(e.message||String(e))+' (line '+(i+1)+')'}
- return{moves:M,alarms,err}}
+ return{moves:M,alarms,err,depth:RD}}
 // ---------- round 3: run sim from edited text
 const LET=Object.fromEntries(Object.entries(ARG).map(([k,v])=>[v,k]));
 function refresh(){const st=J.stock;let r;try{r=interp(txt(),{lathe:J.lathe,start:(J.moves[0]||{a:[0,0,2]}).a,contact:mkContact(J)})}catch(e){r={moves:[],alarms:[],err:e.message}}
@@ -432,7 +440,7 @@ const _req2=req;req=function(j){if(j&&OPN2[j.op]){const t=j.text,xy=t.match(/(?:
 const _ed=ed;ed=function(k){if(k=='Confirm write'){if(confirm('This program WRITES a work offset with G10. Wrong values move every later job on that offset. Confirm?')){J.p[k]={v:'YES',g:false};show()}return}_ed(k)};
 function g10(o){if(/^G5/.test(o))return'L2 P'+(+o.slice(1)-53);return'L20 P'+o.slice(1)}
 function genP(j){const p=k=>j.p[k]?j.p[k].v:0,c=[],L=s=>c.push(s),wo=offCode(p('Work offset')),T=p('Tool'),r=p('Tip Ø')/2,cz=p('Clear Z'),ro=p('Result offset');
- L('%');L('O3000 ('+OPN[j.op].toUpperCase()+' - DEMO)');L('(GENERIC FANUC-STYLE G31 PROBING - VERIFY SKIP AND G10 ON CONTROL)');L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06 (PROBE)`);L(`${wo} G00 X${f4(p('Center X')||p('Start X'))} Y${f4(p('Center Y')||p('Start Y'))}`);L(`G43 H${T} Z${f4(cz+1)}`);
+ L('%');L('O3000 ('+OPN[j.op].toUpperCase()+' - DEMO)');L('(GENERIC FANUC-STYLE G31 PROBING - VERIFY SKIP AND G10 ON CONTROL)');L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06 (PROBE)`);L(`${wo} G00 X${f4(p('Center X')||p('Start X'))} Y${f4(p('Center Y')||p('Start Y'))}`);L(`G43 H${T} Z${f4(cz+C(1))}`);
  L('(PROBE ON - MACHINE SPECIFIC M CODE HERE)');const ax=p('Axis');
  if(j.op=='pbore')L(`G65 P9300 X${f4(p('Center X'))} Y${f4(p('Center Y'))} Z${f4(p('Probe Z'))} D${f4(p('Dia'))} R${f4(r)} F${f4(p('Skip feed'))}`);
  if(j.op=='psurf')L(`G65 P9301 X${f4(p('Start X'))} Y${f4(p('Start Y'))} Z${f4(p('Probe Z'))} A${ax[0]=='X'?1:2} B${ax[1]=='+'?1:-1} R${f4(r)} F${f4(p('Skip feed'))}`);
@@ -480,7 +488,7 @@ function batch(){$('#ttl').textContent='Batch check';tabOn();const sample=S.jobs
 function splitProgs(t){const L=t.split('\n'),out=[];let cur=[];const push=()=>{if(cur.some(l=>l.trim()&&l.trim()!='%'))out.push(cur);cur=[]};let main=0;
  L.forEach(l=>{const s=l.trim();if(/^O\d+/.test(s)&&/O[0-8]\d{3}\b/.test(s)&&!/O9\d{3}/.test(s)){push()}cur.push(l)});push();return out}
 function doBatch(){const ps=splitProgs($('#bq').value);$('#bo2').innerHTML=ps.map((p,n)=>{const t=p.join('\n'),r=interp(p,{lathe:isL()}),name=(t.match(/O\d+\s*\(([^)]*)\)/)||[])[1]||('Program '+(n+1));
-  const c=[['Runs in simulator'+(r.err?': '+r.err:''),!r.err],['No alarm fires'+(r.alarms[0]?' ('+r.alarms[0].msg+')':''),!r.alarms.length],['WHILE/END match',(t.match(/DO\d/g)||[]).length==(t.match(/END\d/g)||[]).length],['Brackets balanced',(t.match(/\[/g)||[]).length==(t.match(/\]/g)||[]).length],['Ends with M30',/M30/.test(t)],['Safe start line',/G(17|18) G2[01]/.test(t)],['Unknown codes: '+((t.toUpperCase().replace(/\([^)]*\)/g,'').match(/G\d+(\.\d)?/g)||[]).filter(g=>!GD['G'+(g.includes('.')?g.slice(1):g.slice(1).padStart(2,'0'))]&&!/G1[1-2]\d/.test(g)).join(' ')||'none'),!((t.toUpperCase().replace(/\([^)]*\)/g,'').match(/G\d+(\.\d)?/g)||[]).some(g=>!GD['G'+(g.includes('.')?g.slice(1):g.slice(1).padStart(2,'0'))]&&!/G1[1-2]\d/.test(g)))]];
+  const c=[['Runs in simulator'+(r.err?': '+r.err:''),!r.err],['No alarm fires'+(r.alarms[0]?' ('+r.alarms[0].msg+')':''),!r.alarms.length],['WHILE/END match',(t.match(/DO\d/g)||[]).length==(t.match(/END\d/g)||[]).length],['Brackets balanced',(t.match(/\[/g)||[]).length==(t.match(/\]/g)||[]).length],unitsCheck(t,UN()),...ctrlChecks(t,isL()),['Ends with M30',/M30/.test(t)],['Safe start line',/G(17|18) G2[01]/.test(t)],['Unknown codes: '+((t.toUpperCase().replace(/\([^)]*\)/g,'').match(/G\d+(\.\d)?/g)||[]).filter(g=>!GD['G'+(g.includes('.')?g.slice(1):g.slice(1).padStart(2,'0'))]&&!/G1[1-2]\d/.test(g)).join(' ')||'none'),!((t.toUpperCase().replace(/\([^)]*\)/g,'').match(/G\d+(\.\d)?/g)||[]).some(g=>!GD['G'+(g.includes('.')?g.slice(1):g.slice(1).padStart(2,'0'))]&&!/G1[1-2]\d/.test(g)))]];
   const ok=c.filter(x=>x[1]).length;return`<div class="card"><div class="t">${esc(name)} <span class="chip ${ok==c.length?'g':'r'}">${ok}/${c.length}</span></div><div class="s">${p.length} lines · ${r.moves.length} moves · about ${fmt(time(r.moves,+((sv('Rapid rate (in/min)')||{v:400}).v)))}</div>${c.filter(x=>!x[1]).map(x=>`<div class="s">❌ ${esc(x[0])}</div>`).join('')}</div>`}).join('')||'<div class="card s">No programs found.</div>'}
 // §23 data management
 function data(){$('#ttl').textContent='Your data';tabOn();const sz=(localStorage.getItem('mc')||'').length;V.innerHTML=`<div class="card"><div class="t">On this phone only</div><div class="s">${S.m.length} machines · ${S.tools.length} tools · ${S.jobs.length} jobs · ${S.snips.length} snippets · ${(sz/1024).toFixed(1)} KB</div></div>
@@ -514,8 +522,8 @@ const _req5=req;req=function(j){if(j&&j.op=='index'){const xy=j.text.match(/(?:h
 UNIT.Z0='in (top of part; 4th axis: face height above rotary centerline)';
 const _gen5=gen;gen=function(j){const p=k=>j.p[k]?j.p[k].v:0;
  if(j.op=='index'){const c=[],L=s=>c.push(s),T=p('Tool'),ax=((sv('Rotary axis')||{v:'A'}).v||'A').toUpperCase()[0],H=p('Z0');
-  L('%');L('O1400 (4TH AXIS HOLES EVERY FACE - DEMO)');L('(GENERIC FANUC-STYLE - VERIFY ROTARY DIRECTION AND CENTERLINE)');L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06`);L(`${offCode(p('Work offset'))} G00 X0. Y0. ${ax}0. S${p('RPM')} M03`);L('(WORK ZERO: Y0 Z0 ON ROTARY CENTERLINE)');L(`G43 H${T} Z${f4(H+1)} M08`);
-  L(`G65 P9400 H${p('Faces')} X${f4(p('Hole X'))} Y${f4(p('Hole Y'))} W${f4(H)} Z${f4(p('Depth'))} R${f4(p('Clear Z'))} F${f4(p('Feed'))}`);L(`G00 Z${f4(H+1)} ${ax}0.`);L('G80 M09');L('G91 G28 Z0. (SAFE END)');L('G90 M05');L('M30');L('');
+  L('%');L('O1400 (4TH AXIS HOLES EVERY FACE - DEMO)');L('(GENERIC FANUC-STYLE - VERIFY ROTARY DIRECTION AND CENTERLINE)');L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06`);L(`${offCode(p('Work offset'))} G00 X0. Y0. ${ax}0. S${p('RPM')} M03`);L('(WORK ZERO: Y0 Z0 ON ROTARY CENTERLINE)');L(`G43 H${T} Z${f4(H+C(1))} M08`);
+  L(`G65 P9400 H${p('Faces')} X${f4(p('Hole X'))} Y${f4(p('Hole Y'))} W${f4(H)} Z${f4(p('Depth'))} R${f4(p('Clear Z'))} F${f4(p('Feed'))}`);L(`G00 Z${f4(H+C(1))} ${ax}0.`);L('G80 M09');L('G91 G28 Z0. (SAFE END)');L('G90 M05');L('M30');L('');
   L('O9400 (INDEX AND DRILL EVERY FACE)');[11,24,25,23,26,18,9].forEach(v=>L(`IF[#${v}EQ#0]GOTO99`));L('IF[#11LT1]GOTO99');L('#100=0');L('WHILE[#100LT#11]DO1');L(`G00 Z[#23+#18+1]`);L(`G00 ${ax}[360*#100/#11]`);L('G00 X#24 Y#25');L('G90 G99 G81 X#24 Y#25 Z[#23-#26] R[#23+#18] F#9');L('G80');L('#100=#100+1');L('END1');L('M99');L('N99 #3000=1 (MISSING ARGUMENT)');L('M99');L('%');
   if(ax=='B'){const hy=Math.max(0.75,Math.abs(p('Hole Y'))+0.5);j.stock=[-H,-hy,-H,H,hy,H];j.hmc=1}else j.stock=[p('Hole X')-1,-H,-H,p('Hole X')+1,H,H];j.rot=ax;return{code:c,moves:[{a:[0,0,H+1],b:[0,0,H+1],r:1,l:7}],out:0}}
  const g=_gen5(j);if(j.tap){g.code=g.code.map(l=>l.replace(/G8[13] Z-#26 R#18( Q#17)? F#9/,'G84 Z-#26 R#18 F#9'));const st=(sv('Rigid tap style')||{v:'M29 S'}).v;
@@ -698,13 +706,13 @@ const _parseL11=parseL;parseL=function(t){const l=t.toLowerCase();if(!isSw())ret
 const _req11=req;req=function(j){if(j&&j.op=='swiss'){j.p.Z0={v:num(/z0\s*(-?[\d.]+)/,j.text)};j.p['Work offset']={v:normOff(j.text)};['Flat depth','Flat L','Cross Ø','Cross at Z','Cross depth','End drill depth','Part-off W'].forEach(k=>{if(j.p[k]&&j.p[k].g)j.p[k].v=null});return j}return _req11(j)};
 function genS(j){const p=k=>j.p[k]?j.p[k].v:0,has=k=>j.p[k]&&j.p[k].v!=null,c=[],L=s=>c.push(s),st=p('Bar Ø'),fin=p('Finish Ø'),len=p('Length'),mx=+((sv('Max RPM (G50)')||{v:6000}).v),lm=((sv('Live tool M-code')||{v:'M51'}).v.match(/M\d+/)||['M51'])[0];
  L('%');L('O5000 (SWISS SAMPLE - MACRO CATCULATOR DEMO)');L('(GENERIC SLIDING-HEADSTOCK FANUC-STYLE - Z+ OUT OF GUIDE BUSHING)');L('G18 G20 G40 G80 G99 (SAFE START)');L(`G50 S${mx}`);L(`${offCode(p('Work offset'))} G52 Z${f4(p('Z0'))} (Z0 = PART FACE)`);
- L('T0101 (GANG: OD TURNING)');L(`G96 S${p('SFM')} M03`);L(`G00 X${f4(st+0.04)} Z0.02`);
+ L('T0101 (GANG: OD TURNING)');L(`G96 S${p('SFM')} M03`);L(`G00 X${f4(st+C(0.04))} Z0.02`);
  L(`G65 P9500 A${f4(st)} B${f4(fin)} Z${f4(len)} K${f4(p('Segment'))} F${f4(p('Feed/rev'))}`);
  if(has('End drill depth')){L('T0505 (END DRILL ON CENTER - ALONG Z)');L('G97 S2000 M03');L('G00 X0 Z0.05');L(`G01 Z-${f4(p('End drill depth'))} F0.002`);L('G00 Z0.05');}
- if(has('Flat depth')){const w=fin/2+0.05,xf=fin-2*p('Flat depth');L('M05 (MAIN SPINDLE STOP)');L('C0. (INDEX C - SPINDLE AS C-AXIS)');L('(C LOCK - MACHINE M CODE HERE)');L(`T0303 (LIVE END MILL - ALONG X)`);L(`${lm} S3000 (LIVE TOOL ON)`);L('G98 (FEED PER MIN)');
-  let z=-0.0;const step=0.08;L(`G00 X${f4(fin+0.1)} Y-${f4(w)} Z${f4(-step/2)}`);L(`G01 X${f4(xf)} F${p('Mill feed')}`);while(z>-p('Flat L')+1e-6){z=Math.max(-p('Flat L'),z-step);L(`G01 Z${f4(z)}`);L(`G01 Y${f4(w)}`);L(`G01 Y-${f4(w)}`)}L(`G00 X${f4(fin+0.1)}`);L('G00 Y0');L('G99')}
- if(has('Cross Ø')){L('M05');L(`T0404 (LIVE CROSS DRILL - ALONG X)`);L(`${lm} S3000`);L('G98');[0,180].forEach(cang=>{L(`C${cang}. (INDEX C)`);L(`G00 X${f4(fin+0.1)} Y0 Z-${f4(p('Cross at Z'))}`);L(`G01 X${f4(fin-2*p('Cross depth'))} F2.`);L(`G00 X${f4(fin+0.1)}`)});L('G99')}
- if(has('Part-off W')){L('T0202 (PART-OFF BLADE)');L(`G96 S${p('SFM')} M03`);L(`G00 X${f4(st+0.04)} Z-${f4(len+p('Part-off W'))} (PART OFF)`);L('G01 X0 F0.0015 (PART OFF)');L('G00 X'+f4(st+0.04));}
+ if(has('Flat depth')){const w=fin/2+C(0.05),xf=fin-2*p('Flat depth');L('M05 (MAIN SPINDLE STOP)');L('C0. (INDEX C - SPINDLE AS C-AXIS)');L('(C LOCK - MACHINE M CODE HERE)');L(`T0303 (LIVE END MILL - ALONG X)`);L(`${lm} S3000 (LIVE TOOL ON)`);L('G98 (FEED PER MIN)');
+  let z=-0.0;const step=C(0.08);L(`G00 X${f4(fin+C(0.1))} Y-${f4(w)} Z${f4(-step/2)}`);L(`G01 X${f4(xf)} F${f4(p('Mill feed'))}`);while(z>-p('Flat L')+1e-6){z=Math.max(-p('Flat L'),z-step);L(`G01 Z${f4(z)}`);L(`G01 Y${f4(w)}`);L(`G01 Y-${f4(w)}`)}L(`G00 X${f4(fin+C(0.1))}`);L('G00 Y0');L('G99')}
+ if(has('Cross Ø')){L('M05');L(`T0404 (LIVE CROSS DRILL - ALONG X)`);L(`${lm} S3000`);L('G98');[0,180].forEach(cang=>{L(`C${cang}. (INDEX C)`);L(`G00 X${f4(fin+C(0.1))} Y0 Z-${f4(p('Cross at Z'))}`);L(`G01 X${f4(fin-2*p('Cross depth'))} F2.`);L(`G00 X${f4(fin+C(0.1))}`)});L('G99')}
+ if(has('Part-off W')){L('T0202 (PART-OFF BLADE)');L(`G96 S${p('SFM')} M03`);L(`G00 X${f4(st+C(0.04))} Z-${f4(len+p('Part-off W'))} (PART OFF)`);L('G01 X0 F0.0015 (PART OFF)');L('G00 X'+f4(st+C(0.04)));}
  L('G52 Z0');L('G28 U0. (SAFE END)');L('M05');L('M30');L('');
  L('O9500 (TURN IN SHORT SEGMENTS NEAR THE BUSHING)');[1,2,26,6,9].forEach(v=>L(`IF[#${v}EQ#0]GOTO99`));L('IF[#2GE#1]GOTO98');L('#100=0');L('WHILE[#100LT#26]DO1');L('#100=#100+#6');L('IF[#100GT#26]THEN #100=#26');L('G00 X[#1+0.04]');L('G01 X#2 F#9');L('G01 Z-#100');L('G00 X[#1+0.04]');L('END1');L('M99');L('N98 #3000=2 (FINISH DIA NOT SMALLER THAN BAR)');L('N99 #3000=1 (MISSING ARGUMENT)');L('M99');L('%');
  const Lst=len+(p('Part-off W')||0)+0.3;j.stock=[-st/2,-st/2,-Lst,st/2,st/2,0];j.lb={R:st/2,L:Lst,z:0};j.swiss=1;return{code:c,moves:[{a:[st/2+0.3,0,0.3],b:[st/2+0.3,0,0.3],r:1,l:8}],out:0}}
@@ -753,7 +761,7 @@ const _isNTold=()=>/multitask/i.test((S.m[S.cur]||{}).type||'');
 const _genS14=genS;genS=function(j){const r=_genS14(j);if(!isNT())return r;j.nt=1;const c=[];r.code.forEach(x=>{x=x.replace('SWISS SAMPLE','MULTITASKING SAMPLE').replace(/\(GENERIC SLIDING-HEADSTOCK[^)]*\)/,'(GENERIC FIXED-HEADSTOCK TURNING CENTER FANUC-STYLE - X IN DIAMETER)').replace('GANG: OD TURNING','TURRET: OD TURN + FACE').replace('TURN IN SHORT SEGMENTS NEAR THE BUSHING','OD ROUGH IN Z STEPS').replace(/\(GANG/g,'(TURRET');
  if(/^T0202/.test(x)){c.push('(TRANSFER: SUB SPINDLE SYNC, ADVANCE, CLAMP - MACHINE M CODES HERE)');x='T0202 (PART-OFF BLADE - TRANSFER TO SUB)'}c.push(x);
  if(/^G00 X.* Z0\.02$/.test(x)&&c.filter(y=>/FACE TO Z0/.test(y)).length==0){c.push(`G01 X-0.03 Z0 F${f4(j.p['Feed/rev'].v)} (FACE TO Z0)`);c.push('G00 Z0.02');c.push(x)}});
- const o=[];let skip=0;c.forEach(x=>{if(/^O9500/.test(x))skip=1;if(skip&&x=='%')skip=0;if(skip)return;if(/^G65 P9500/.test(x)){const st=j.p['Bar Ø'].v,fin=j.p['Finish Ø'].v,len=j.p.Length.v,F=f4(j.p['Feed/rev'].v);o.push('(OD ROUGH - FULL-LENGTH PASSES, 0.04 DIA PER PASS)');let d=st;while(d>fin+1e-6){d=Math.max(fin,d-0.04);o.push(`G00 X${f4(d)}`);o.push(`G01 Z-${f4(len)} F${F}`);o.push(`G01 X${f4(st+0.04)}`);o.push('G00 Z0.02')}return}o.push(x)});
+ const o=[];let skip=0;c.forEach(x=>{if(/^O9500/.test(x))skip=1;if(skip&&x=='%')skip=0;if(skip)return;if(/^G65 P9500/.test(x)){const st=j.p['Bar Ø'].v,fin=j.p['Finish Ø'].v,len=j.p.Length.v,F=f4(j.p['Feed/rev'].v);o.push(`(OD ROUGH - FULL-LENGTH PASSES, ${GENMM?'1 MM':'0.04'} DIA PER PASS)`);let d=st;while(d>fin+1e-6){d=Math.max(fin,d-C(0.04));o.push(`G00 X${f4(d)}`);o.push(`G01 Z-${f4(len)} F${F}`);o.push(`G01 X${f4(st+C(0.04))}`);o.push('G00 Z0.02')}return}o.push(x)});
  r.code=o;return r};
 const _checks14=checks;checks=function(j){let c=_checks14(j);if(!(j&&j.nt))return c;c=c.filter(x=>!/bushing/i.test(x[0]));const ok=k=>{const x=sv(k);return x&&x.st=='user'};c.push(['Y-axis confirmed (flat uses Y)',ok('Y-axis')],['Sub spindle confirmed for transfer',ok('Sub spindle')]);return c};
 function ntFit(){const R=J.lb.R,L=J.lb.L,W=cv.clientWidth-20;const z0=-L-0.55,z1=0.9+0.45+0.45,r1=R+0.95,r0=-R-0.3;view.fs=Math.min(W/(z1-z0),270/(r1-r0));view.fz0=z0;view.fz=z1;view.fr=r1;view.fx=10;view.px=0;view.py=0;draw()}
@@ -768,9 +776,9 @@ const _parseL16=parseL;parseL=function(t){const l=t.toLowerCase();if(!/probe/.te
 const _req16=req;req=function(j){if(j&&j.op=='lprobe'){const need=j.p['Probe mode'].v=='Face Z'?['Probe at X']:['Probe at Z'];REQ.lprobe=['Probe mode','Touch at','Offset #','Write to',...need];j.p['Work offset']={v:normOff(j.text)};return j}return _req16(j)};
 function genLP(j){const p=k=>j.p[k]?j.p[k].v:0,c=[],L=s=>c.push(s),face=p('Probe mode')=='Face Z',n=p('Offset #'),w=p('Write to'),f=p('Probe feed'),tc=p('Touch at');
  L('%');L(`O3100 (LATHE PROBE ${face?'FACE Z':'OD X'} - MACRO CATCULATOR DEMO)`);L('(GENERIC FANUC-STYLE G31 SKIP - VERIFY SKIP CODE, #5061 DIA/RADIUS AND G10 FORMAT)');L('G18 G20 G40 G80 G99 (SAFE START)');L(`T${String(p('Tool')).padStart(2,'0')}${String(p('Tool')).padStart(2,'0')} (TOUCH PROBE)`);
- if(!face){L(`G00 X${f4(tc+0.3)} Z${f4(p('Probe at Z'))}`);L('G98 (FEED PER MIN)');L(`G31 X${f4(tc-0.2)} F${f}`);L('#100=#5061 (SKIP X - TREATED AS DIAMETER)');L(`#101=#100-${f4(tc)} (ERROR ON DIAMETER)`);L(`IF[ABS[#101]GT${p('Tol')}]GOTO90`);L(`G00 X${f4(tc+0.3)}`);
+ if(!face){L(`G00 X${f4(tc+C(0.3))} Z${f4(p('Probe at Z'))}`);L('G98 (FEED PER MIN)');L(`G31 X${f4(tc-C(0.2))} F${f4(f)}`);L('#100=#5061 (SKIP X - TREATED AS DIAMETER)');L(`#101=#100-${f4(tc)} (ERROR ON DIAMETER)`);L(`IF[ABS[#101]GT${f4(p('Tol'))}]GOTO90`);L(`G00 X${f4(tc+C(0.3))}`);
   if(w=='work')L('(OD TOUCH CANNOT SET WORK Z - USE FACE MODE)');else L(`G10 P${w=='geometry'?10000+n:n} U-#101 (WRITE ${w.toUpperCase()} OFFSET ${n} X - CONFIRM SIGN)`)}
- else{L(`G00 X${f4(p('Probe at X'))} Z${f4(tc+0.3)}`);L('G98 (FEED PER MIN)');L(`G31 Z${f4(tc-0.2)} F${f}`);L('#100=#5063 (SKIP Z)');L(`#101=#100-${f4(tc)} (ERROR IN Z)`);L(`IF[ABS[#101]GT${p('Tol')}]GOTO90`);L(`G00 Z${f4(tc+0.3)}`);
+ else{L(`G00 X${f4(p('Probe at X'))} Z${f4(tc+C(0.3))}`);L('G98 (FEED PER MIN)');L(`G31 Z${f4(tc-C(0.2))} F${f4(f)}`);L('#100=#5063 (SKIP Z)');L(`#101=#100-${f4(tc)} (ERROR IN Z)`);L(`IF[ABS[#101]GT${f4(p('Tol'))}]GOTO90`);L(`G00 Z${f4(tc+C(0.3))}`);
   if(w=='work')L(`G10 L2 P1 W#101 (SHIFT ${offLbl(j.p['Work offset'].v||'G54')} Z BY ERROR - CONFIRM)`);else L(`G10 P${w=='geometry'?10000+n:n} W-#101 (WRITE ${w.toUpperCase()} OFFSET ${n} Z - CONFIRM SIGN)`)}
  L('G99');L('G28 U0. (SAFE END)');L('M30');L('N90 #3000=1 (PROBE ERROR OVER TOLERANCE)');L('%');
  const R=face?0.75:tc/2;j.stock=[-R,-R,-1.5,R,R,face?tc:0];j.lb={R,L:1.5,z:face?tc:0};return{code:c,moves:[{a:[R+0.3,0,0.3],b:[R+0.3,0,0.3],r:1,l:5}],out:0}}
@@ -921,33 +929,34 @@ const mmLbl=s=>s=='surface ft/min (G96)'?'m/min cutting speed (G96)':s=='threads
 function relabel(){const mm=UN()=='mm';Object.keys(UNIT0).forEach(k=>UNIT[k]=mm?mmLbl(UNIT0[k]):UNIT0[k])}
 // program text conversion (only our generated programs, edits and inserts; imports are left as written)
 const ARGL={9100:'DZRFQ',9101:'UVZRFQ',9102:'XYDKEZF',9200:'ABCDZF',9201:'AKDF',9202:'AWKZIF',9203:'ZQF',9300:'XYZDRF',9301:'XYZRF',9302:'XYZWRF',9303:'XYZWRF',9400:'XYWZRF',9500:'ABZKF'};
+let NICEC=0;function fmtN(x,orig,f,mk){if(NICEC&&f>1&&!mk&&!/\d\.\d{6,}/.test(orig))x=nice(x);return fmtU(x,orig,f)}
 function fmtU(x,orig,f){const dec=f>1?3:4;let s=(+x).toFixed(dec).replace(/0+$/,'');if(s.endsWith('.')&&!/\./.test(orig))s=s.slice(0,-1);if(s=='-0'||s=='-0.')s=s.replace('-','');return s}
 function scaleExpr(e,f,motion){// numbers not part of a #variable or word
- return e.replace(/(#|[A-Z]{2,}|[A-Z])?(-?)(\d+\.\d*|\.\d+|\d+)(?![\d.])/g,(m,pre,neg,n,off,str)=>{if(pre=='#')return m;const before=str.slice(0,off).replace(/\s+$/,''),after=str.slice(off+m.length).replace(/^\s+/,''),pc=before.slice(-1),nc=after[0];
+ return e.replace(/(#|[A-Z]{2,}|[A-Z])?(-?)(\d+\.\d*|\.\d+|\d+)(?![\d.])(\u0002)?/g,(m,pre,neg,n,mk,off,str)=>{if(pre=='#')return m;const before=str.slice(0,off).replace(/\s+$/,''),after=str.slice(off+m.length).replace(/^\s+/,''),pc=before.slice(-1),nc=after[0];
   if(pre&&!/^(GT|LT|GE|LE|EQ|NE)$/.test(pre))return m;if(nc=='*'||pc=='/'||pc=='#')return m;if(!motion){if(!/\./.test(n))return m;if(pc=='*')return m}else if(/^(GT|LT|GE|LE|EQ|NE)$/.test(pre||''))return m;
-  return (pre||'')+neg+fmtU(+n*f,n,f)})}
+  return (pre||'')+neg+fmtN(+n*f,n,f,mk)})}
 function convLine(l,f){const parts=String(l).split(/(\([^)]*\))/);let code=parts.filter((_,i)=>i%2==0).join('\u0001');
  code=f>1?code.replace(/\bG20\b/g,'G21'):code.replace(/\bG21\b/g,'G20');
  if(/G76|G0?4\b/.test(code)){let k=0;return parts.map((x,i)=>i%2?x:code.split('\u0001')[k++]).join('')}
  const g65=code.match(/G6[56]\s*P0*(\d+)/);
- if(g65){const L=ARGL[+g65[1]]||'';code=code.replace(/([A-Z])(-?\d+\.?\d*|-?\.\d+)/g,(m,a,n,off)=>off<=g65.index+g65[0].length-1||!L.includes(a)?m:a+fmtU(+n*f,n,f))}
+ if(g65){const L=ARGL[+g65[1]]||'';code=code.replace(/([A-Z])(-?\d+\.?\d*|-?\.\d+)(\u0002)?/g,(m,a,n,mk,off)=>off<=g65.index+g65[0].length-1||!L.includes(a)?m:a+fmtN(+n*f,n,f,mk))}
  else{if(/G96/.test(code))code=code.replace(/S(\d+\.?\d*)/,(m,n)=>'S'+Math.round(f>1?n*0.3048:n/0.3048));
   // walk: motion-word brackets, other brackets, plain words
   let out='',i=0;while(i<code.length){const ch=code[i];
    if(/[XYZIJKRQUWF]/.test(ch)&&code[i+1]=='['&&!/[A-Z]/.test(code[i-1]||'')){let d=0,j=i+1;for(;j<code.length;j++){if(code[j]=='[')d++;if(code[j]==']'){d--;if(!d)break}}out+=ch+(ch=='F'?scaleExpr(code.slice(i+1,j+1),1,0):scaleExpr(code.slice(i+1,j+1),f,1));i=j+1;continue}
    if(ch=='['){let d=0,j=i;for(;j<code.length;j++){if(code[j]=='[')d++;if(code[j]==']'){d--;if(!d)break}}out+=(code[i-1]=='#')?code.slice(i,j+1):scaleExpr(code.slice(i,j+1),f,0);i=j+1;continue}
-   if(/[XYZIJKRQUWF]/.test(ch)&&!/[A-Z#]/.test(code[i-1]||'')){const m=code.slice(i+1).match(/^-?(\d+\.?\d*|\.\d+)/);if(m){out+=ch+fmtU(+m[0]*f,m[0],f);i+=1+m[0].length;continue}}
+   if(/[XYZIJKRQUWF]/.test(ch)&&!/[A-Z#]/.test(code[i-1]||'')){const m=code.slice(i+1).match(/^-?(\d+\.?\d*|\.\d+)(\u0002)?/);if(m){const nn=m[0].replace('\u0002','');out+=ch+fmtN(+nn*f,nn,f,m[2]);i+=1+m[0].length;continue}}
    if(ch=='='){const rest=code.slice(i+1);const m=rest.match(/^[^\[\u0001]*/)[0];out+='='+scaleExpr(m,f,0);i+=1+m.length;continue}
    out+=ch;i++}
   code=out}
  let k=0;const segs=code.split('\u0001');return parts.map((x,i)=>i%2?x:segs[k++]).join('')}
 // generators write in the active units
-function genU(fn,j){const mm=UN()=='mm'&&j.op!='import';const keep=GENMM;GENMM=mm?1:keep;let g;try{g=fn(j)}finally{GENMM=keep}if(!mm)return g;g.code=g.code.map(l=>convLine(l,25.4));
+function genU(fn,j){const mm=UN()=='mm'&&j.op!='import';const keep=GENMM;GENMM=mm?1:keep;let g;try{g=fn(j)}finally{GENMM=keep}if(!mm)return g;NICEC=1;try{g.code=g.code.map(l=>convLine(l,25.4).replace(/\u0002/g,''))}finally{NICEC=0}
  if(j.tap)g.code=g.code.map(l=>l.replace(/\(RIGID TAP ([\d.]+) TPI - FEED = RPM \/ TPI\)/,(m,t)=>`(RIGID TAP PITCH ${(25.4/t).toFixed(3)} MM - FEED = RPM X PITCH)`));return g}
 const _gen19=gen;gen=function(j){return genU(_gen19,j)};const _genL19=genL;genL=function(j){return genU(_genL19,j)};const _genP19=genP;genP=function(j){return genU(_genP19,j)};
 // parse/req: user numbers arrive in active units, stored canonical (inch)
 const _req19=req;req=function(j){if(!j)return j;if(UN()=='mm'&&!FORCE_IN){const pm=(j.text||'').match(/\bm\d+(?:\.\d+)?\s*x\s*([\d.]+)|pitch\s*([\d.]+)/);if(pm&&j.p&&'TPI' in j.p&&j.p.TPI.v==null)j.p.TPI={v:25.4/+(pm[1]||pm[2]),g:false}}
- j=_req19(j);if(!j||UN()!='mm'||FORCE_IN||j.__u)return j;Object.entries(j.p).forEach(([k,x])=>{if(!x||x.v==null||typeof x.v!='number'||x.calc||k=='TPI')return;const kd=kindOf(k);if(!kd)return;x.v=x.g?grayNice(k,x.v,'mm'):canonV(k,x.v)});
+ j=_req19(j);if(!j||UN()!='mm'||FORCE_IN||j.__u)return j;Object.entries(j.p).forEach(([k,x])=>{if(!x||x.v==null||typeof x.v!='number'||x.calc||x.lib||k=='TPI')return;const kd=kindOf(k);if(!kd)return;x.v=x.g?grayNice(k,x.v,'mm'):canonV(k,x.v)});
  if(j.tap&&j.p.Feed&&j.p.TPI&&j.p.TPI.v)j.p.Feed={v:+(j.p.RPM.v/j.p.TPI.v).toFixed(5),g:false,calc:1};j.__u=1;return j};
 const _parse19=parse;parse=function(t){return _parse19(UN()=='mm'?String(t).replace(/(\d)\s*mm\b/gi,'$1'):t)};
 const _parseL19=parseL;parseL=function(t){return _parseL19(UN()=='mm'?String(t).replace(/(\d)\s*mm\b/gi,'$1'):t)};
@@ -1038,6 +1047,249 @@ function setUnits(u){const prev=UN();localStorage.setItem(UKEY,u);syncUnits();sa
  if(J&&prev!=now){Object.entries(J.p||{}).forEach(([k,x])=>{if(x&&x.g&&typeof x.v=='number')x.v=grayNice(k,x.v,now)});if(J.op!='import'){const f=now=='mm'?25.4:1/25.4;Object.keys(J.edits||{}).forEach(i=>J.edits[i]=convLine(J.edits[i],f));(J.ins||[]).forEach(x=>x.lines=x.lines.map(l=>convLine(l,f)))}}
  const [n,a]=LASTV;if(n=='nw'||(J&&$('#out')&&$('#out').innerHTML&&n=='nw')){nw();if(J)show()}else if(typeof window[n]=='function')window[n](...a)}
 $('#u-in').onclick=()=>setUnits('in');$('#u-mm').onclick=()=>setUnits('mm');syncUnits();relabel();updU();
+
+// ---------- Round 20: mm clean-up (examples in mm, tool library units, batch units check)
+const EXMM={'6 hole bolt circle 3.0 dia 0.5 deep':'6 hole bolt circle 75 dia 12 deep',
+'G54 T1 face 0.05 off 2.0 bar z0 0':'G54 T1 face 1 off 50 bar z0 0',
+'G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 70 z0 0':'G54 T1 face 100 x 75 with 50 cutter take off 1.5 stepdown 0.5 stepover 70 z0 0',
+'G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0 chamfer 0.03':'G54 T1 turn 50 bar to 38 dia 75 long z0 0 chamfer 0.8',
+'G54 T2 3 x 4 grid 0.75 spacing start x0 y0 z0 0 0.4 deep drill':'G54 T2 3 x 4 grid 20 spacing start x0 y0 z0 0 10 deep drill',
+'G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1':'G54 T2 6 hole bolt circle 75 dia center x0 y0 z0 0 start 15 12 deep peck 2.5',
+'G54 T2 index 4 faces hole x1.0 y0 z0 0.75 0.3 deep drill':'G54 T2 index 4 faces hole x25 y0 z0 20 8 deep drill',
+'G54 T20 probe bore 2.0 dia center x0 y0 probe z -0.25 tip 0.157 write to g55':'G54 T20 probe bore 50 dia center x0 y0 probe z -6 tip 4 write to g55',
+'G54 T3 groove 0.25 wide 0.1 deep at z-1.0 2.0 bar insert 0.125 z0 0':'G54 T3 groove 6 wide 2.5 deep at z-25 50 bar insert 3 z0 0',
+'G54 T5 center drill 0.5 deep peck 0.1 z0 0':'G54 T5 center drill 12 deep peck 2.5 z0 0',
+'G54 T6 rigid tap 1/4-20 4 hole bolt circle 2.0 dia center x0 y0 z0 0 start 45 0.5 deep 600 rpm':'G54 T6 rigid tap m6x1 4 hole bolt circle 50 dia center x0 y0 z0 0 start 45 12 deep 600 rpm',
+'G54 lathe probe od 1.0 dia at z-0.5 write wear 1':'G54 lathe probe od 25 dia at z-12 write wear 1',
+'G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 flat 0.08 deep 0.5 long cross drill 0.25 at z-1.0 0.2 deep center drill 0.2 deep part off 0.125':'G54 multitask turn 25 bar to 19 dia 38 long z0 0 flat 2 deep 12 long cross drill 6 at z-25 5 deep center drill 5 deep part off 3',
+'G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 part off 0.125':'G54 multitask turn 25 bar to 19 dia 38 long z0 0 part off 3',
+'G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 flat 0.05 deep 0.3 long cross drill 0.125 at z-0.55 0.15 deep center drill 0.1 deep part off 0.062':'G54 swiss turn 12 bar to 10 dia 20 long z0 0 flat 1.2 deep 8 long cross drill 3 at z-14 4 deep center drill 2.5 deep part off 1.5',
+'G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 part off 0.062':'G54 swiss turn 12 bar to 10 dia 20 long z0 0 part off 1.5',
+'G54 T5 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1':'G54 T5 6 hole bolt circle 75 dia center x0 y0 z0 0 start 15 12 deep peck 2.5',
+'G55 T2 3 x 4 grid 0.75 spacing start x0.5 y0.5 z0 0 0.4 deep drill':'G55 T2 3 x 4 grid 20 spacing start x12 y12 z0 0 10 deep drill',
+'G54 T1 face 4 x 3 take off 0.06 stepdown 0.02 stepover 70 z0 0':'G54 T1 face 100 x 75 take off 1.5 stepdown 0.5 stepover 70 z0 0',
+'G54 T3 groove 0.25 wide 0.1 deep at z-1.0 2.0 bar z0 0':'G54 T3 groove 6 wide 2.5 deep at z-25 50 bar z0 0'};
+const EXIN=Object.fromEntries(Object.entries(EXMM).map(([a,b])=>[b,a]));
+function exText(s,u){u=u||UN();return u=='mm'?(EXMM[s]||s):(EXIN[s]||s)}
+// examples: the text box shows the active units and is read like typed text, so 'Make my macro' again gives the same job
+ex=function(s){const t=exText(EXIN[s]||s);if(UN()=='mm'&&t==s&&!EXIN[s])return _ex19(s);$('#q').value=t;go()};
+const _setUnits20=setUnits;setUnits=function(u){const q=$('#q'),qt=q&&q.value;if(J&&J.text&&(EXMM[J.text]||EXIN[J.text]))J.text=exText(J.text,u);_setUnits20(u);const q2=$('#q');if(q2&&qt&&(EXMM[qt]||EXIN[qt]))q2.value=exText(qt,u)};
+// tool library follows the units switch (stored in inch)
+const _tools20=tools;tools=function(){_tools20();const k=KU();if(k==1)return;V.querySelectorAll('label').forEach(l=>{if(l.firstChild&&l.firstChild.nodeType==3)l.firstChild.textContent=l.firstChild.textContent.replace(/\bin$/,'mm')});
+ V.querySelectorAll('[data-f="dia"],[data-f="len"]').forEach(el=>{const t=S.tools[el.dataset.i];el.value=+(t[el.dataset.f]*k).toFixed(3);el.onchange=()=>{if(isNaN(+el.value))return;t[el.dataset.f]=+el.value/k;save()}});
+ const s=V.querySelector('.s');if(s)s.textContent+=' Sizes shown in mm (kept in inch inside, converts both ways).'};
+// batch check: same units-mismatch check as the editor
+function unitsCheck(t,u){t=t.replace(/\([^)]*\)/g,'');const h21=/\bG21\b/.test(t),h20=/\bG20\b/.test(t);return[`Program units ${h21&&h20?'G20 and G21 both':h21?'G21 (mm)':h20?'G20 (inch)':'not set'} match this machine (${u=='mm'?'mm, G21':'inch, G20'})`,u=='mm'?h21&&!h20:h20&&!h21]}
+// ---------- Round 20 · spec items (§1–§34) built on top, nothing removed
+// §1/§19 mode indicator in the header (replaces the old "● Offline" connectivity dot: spec §19 says no connectivity indicators)
+function updMode(){const s=document.querySelector('.h .hr small');if(!s)return;s.id='mode';s.textContent=isL()?'Turning':'Milling'}
+const _tab20=tab;tab=function(t){_tab20(t);updMode()};
+const _cur20=cur;cur=function(i){if(S.m[i])S.m[i].used=Date.now();_cur20(i);updMode()};
+// §2 more control capability settings (all red until checked on the control), §6 free common variables
+const CAP20=[['Free common variables','#100-#149',1],['DPRNT support','check',1],['Custom M-codes','',1],['#100–#199 cleared at','reset / power off (typical)',1],['O9000 protection','check parameter',1]];
+S.m.forEach(m=>CAP20.forEach(([k,v,c])=>{if(!m.s.find(x=>x.k==k))m.s.push({k,v,st:c?'confirm':'suggested'})}));
+const _mk20=mk;mk=function(n,t,u){const m=_mk20(n,t,u);CAP20.forEach(([k,v,c])=>m.s.push({k,v,st:c?'confirm':'suggested'}));return m};
+// §2 popular presets: plain-text names only, generic data, every value still red/gray until you set it
+PRESETS['Vertical mills'].push('Haas VF-style VMC (generic)','Mazak VCN/VTC-style VMC (generic)','Okuma GENOS M-style VMC (generic)','DMG MORI CMX/NVX-style VMC (generic)','Fanuc Robodrill-style (generic)','Brother SPEEDIO-style (generic)','Enshu-style VMC (generic)','DN Solutions DNM-style VMC (generic)','Makino-style VMC (generic)','Tsugami VMC (generic)');
+PRESETS['Horizontal mills'].push('Haas EC-style HMC (generic)','Mazak HCN-style HMC (generic)','Okuma MA/MB-H-style HMC (generic)','DMG MORI NHX-style HMC (generic)','Makino a-series-style HMC (generic)','Kitamura-style HMC (generic)','Generic Fanuc HMC','Tsugami HMC (generic)');
+PRESETS['Lathes'].push('Haas ST-style lathe (generic)','Mazak Quick Turn-style lathe (EIA, generic)','Okuma LB/GENOS L-style lathe (generic)','DMG MORI NLX/CTX-style lathe (generic)','DN Solutions Puma-style lathe (generic)','Common Fanuc lathe (generic)','Tsugami lathe (generic)');
+PRESETS['Multitasking lathes'].push('Mazak Integrex-style multitasking (EIA, generic)');
+const PCTRL=[[/Haas/,'Haas NGC-style (verify)'],[/Robodrill|Common Fanuc|Generic Fanuc/,'Fanuc 0i-style (verify)'],[/Mazak/,'Mazatrol control in EIA/ISO mode (verify)'],[/Okuma/,'Okuma OSP (verify G-code mode)'],[/Brother/,'Brother CNC-C00-style (verify)'],[/DMG|DN Solutions|Makino|Kitamura|Enshu|Tsugami/,'Fanuc-style or maker control (verify)']];
+const _pick20=pick;pick=function(n,g){_pick20(n,g);const m=S.m.at(-1);if(!m||m.name!=n)return;const c=PCTRL.find(([r])=>r.test(n));if(c){m.s[0].v=c[1];m.s[0].st='confirm'}
+ m.opt=Object.assign({macroB:1,flood:1},isLT(m.type)?{}:{rigid:1,orient:1},/horizontal/.test(m.type)?{ax4:1,pallet:1}:{},/Robodrill|SPEEDIO/.test(n)?{hss:1}:{},/multitask/.test(m.type)?{live:1,yax:1,sub:1,cax:1}:{},m.opt||{});m.optOk=0;save();edit(S.m.length-1)};
+// §2 custom machine + §21 duplicate
+function addCustom(){const n=($('#cmn')||{}).value||'My machine',t=($('#cmt')||{}).value||'custom VMC';S.m.push(mk(n,t));const m=S.m.at(-1);m.opt={macroB:1};m.optOk=0;m.tools=JSON.parse(JSON.stringify((S.m[0]||{}).tools||[]));save();edit(S.m.length-1)}
+const _addM20=addM;addM=function(){_addM20();const c=document.createElement('div');c.className='card';c.innerHTML=`<div class="t">Custom machine</div><input id="cmn" placeholder="Name"><select id="cmt" style="margin-top:6px"><option>custom VMC</option><option>custom HMC</option><option>custom lathe</option><option>custom multitasking lathe</option></select><button class="btn" onclick="addCustom()">Create</button>`;V.appendChild(c)};
+function dupM(i){const c=JSON.parse(JSON.stringify(S.m[i]));c.id=Date.now()+Math.random();c.name=c.name+' copy';c.fav=0;S.m.push(c);save();edit(S.m.length-1)}
+// §2/§19/§21 favorites pinned, recent next, key options on the card
+const _machines20=machines;machines=function(){_machines20();const cards=[...V.querySelectorAll('.card[onclick^="edit("]')];if(!cards.length)return;const par=cards[0].parentNode,anchor=cards.at(-1).nextSibling;
+ const idx=el=>+el.getAttribute('onclick').match(/\d+/)[0];cards.sort((a,b)=>{const A=S.m[idx(a)],B=S.m[idx(b)];return (B.fav?1:0)-(A.fav?1:0)||(B.used||0)-(A.used||0)||idx(a)-idx(b)});
+ cards.forEach(el=>{const i=idx(el),m=S.m[i];const st=document.createElement('button');st.className='chip '+(m.fav?'y':'gr');st.textContent=m.fav?'★ Favorite':'☆ Favorite';st.onclick=e=>{e.stopPropagation();m.fav=m.fav?0:1;save();machines()};
+  const o=document.createElement('div');o.className='s';const on=ALLOPTS.filter(([k])=>m.opt&&m.opt[k]).map(x=>x[1]);o.textContent=(isLT(m.type)?'Turning':'Milling')+(on.length?' · '+on.slice(0,4).join(', ')+(on.length>4?' +'+(on.length-4):''):'');el.querySelector('.t').after(o);
+  const r=document.createElement('div');r.className='row';r.style.marginTop='6px';const u=document.createElement('button');u.className='chip y';u.textContent='Use';u.onclick=e=>{e.stopPropagation();cur(i)};r.append(st,u);el.appendChild(r);par.insertBefore(el,anchor)});
+ if(!S.guided){const g=document.createElement('div');g.className='card';g.id='fr';g.innerHTML=`<div class="t">First run — two steps</div><div class="s">1. Tap <b>+ Add machine</b> and pick a preset (or use a demo machine).<br>2. Tap <b>Use</b>, then in <b>Build</b> type what you want, or tap a sample. Red items get confirmed on the control.</div><button class="chip y" onclick="S.guided=1;save();machines()">Got it</button>`;V.prepend(g)}};
+// §4 options database (presets pre-check common ones; all editable)
+const OPTS20=[['Coolant & air',[['flood','Flood coolant'],['tsc','High-pressure through-spindle coolant (TSC/CTS)'],['air','Through-spindle air blast'],['mql','Mist / MQL'],['wash','Wash-down / coolant gun'],['shower','Overhead shower / chip flush']]],
+ ['Probing & measurement',[['tset','Tool setter (touch or laser)'],['btd','Broken-tool detection'],['insp','In-process part inspection']]],
+ ['Axes & workholding',[['ax5','Full 5-axis'],['pallet','Pallet changer'],['tomb','Tombstone / multi-fixture']]],
+ ['Spindle & performance',[['hss','High-speed spindle'],['orient','Spindle orientation'],['look','High-speed look-ahead / smoothing']]],
+ ['Chip & maintenance',[['conv','Chip conveyor'],['auger','Chip auger'],['skim','Oil skimmer'],['mistc','Mist collector'],['lube','Automatic lubrication']]],
+ ['Lathe-specific',[['live','Live tooling / driven tools'],['yax','Y-axis'],['sub','Sub-spindle'],['barf','Bar feeder'],['catch','Parts catcher'],['tail','Tailstock'],['steady','Steady rest'],['cax','C-axis'],['hpct','High-pressure coolant through tool']]],
+ ['Other',[['hpp','High-pressure coolant pump upgrade'],['cab','Electrical cabinet AC'],['scales','Linear scales'],['robot','Automation / robot interface']]]];
+OPTS20.forEach(([g,l])=>l.forEach(x=>OPTS.push([x[0],x[1],g])));const ALLOPTS=OPTS;
+const _edit20=edit;edit=function(i){_edit20(i);const m=S.m[i];if(!m)return;
+ // group headings in the options card
+ let last='';V.querySelectorAll('[data-o]').forEach(el=>{const o=OPTS.find(x=>x[0]==el.dataset.o),g=(o&&o[2])||'Control & programming';if(g=='Lathe-specific'&&!isLT(m.type)){el.closest('label').style.display='none';return}if(g!=last){const h=document.createElement('div');h.className='s';h.style.cssText='margin-top:8px;color:#ffd21f';h.textContent=g;el.closest('label').before(h);last=g}});
+ // §3 probes
+ m.probes=m.probes||[];const L=isLT(m.type),types=L?['Renishaw OLP-style spindle/turret probe','Renishaw RLP-style radio probe','Tool-setting arm (HPMA-style / tool eye)','Generic skip-signal probe','Custom']:['Renishaw OMP-style spindle probe','Renishaw RMP-style spindle probe','Tool setter (touch)','Tool setter (laser)','Blum-style probe','Generic skip-signal probe','Custom'];
+ const c=document.createElement('div');c.className='card';c.id='probes';c.innerHTML=`<div class="t">Probes on this machine</div>${m.probes.map((p,k)=>`<div class="row" style="margin-top:6px"><button class="chip ${p.def?'y':'gr'}" onclick="S.m[${i}].probes.forEach((q,n)=>q.def=n==${k}?1:0);save();edit(${i})">${p.def?'★ default':'☆'}</button><select data-p="${k}" data-f="type" style="flex:2">${types.map(t=>`<option ${t==p.type?'selected':''}>${t}</option>`).join('')}</select><input data-p="${k}" data-f="nick" placeholder="nickname" value="${esc(p.nick||'')}" style="flex:1"><button class="chip r" onclick="S.m[${i}].probes.splice(${k},1);save();edit(${i})">✕</button></div>`).join('')||'<div class="s">No probes yet.</div>'}
+ <button class="chip y" onclick="S.m[${i}].probes.push({type:'${types[0]}',nick:'',def:S.m[${i}].probes.length?0:1});save();edit(${i})">+ Add probe</button><div class="s">Probe names are plain text, not affiliated with any maker. Cycle numbers and wiring come from the probe maker's manual — the app does not store them (source: your manual). Turn on "Probing (G31 skip)" in options for probe jobs.</div>`;
+ const btn=V.querySelector('.btn');V.insertBefore(c,btn);c.querySelectorAll('[data-p]').forEach(el=>el.onchange=()=>{m.probes[el.dataset.p][el.dataset.f]=el.value;save()});
+ const d=document.createElement('button');d.className='btn o';d.textContent='Duplicate this machine';d.onclick=()=>dupM(i);V.querySelector('.btn.o').before(d)};
+// §5 tool library: full type list + custom form tool profile
+['Ball nose','Bull nose / corner radius','Spot / center drill','Chamfer mill','Face mill','Slot mill','Thread mill','Boring bar / head','Reamer','Tap','Custom form tool','OD turning tool','ID boring bar','Grooving / parting tool','Threading tool','Face grooving tool','Lathe drill'].forEach(t=>{if(!TT.includes(t))TT.push(t)});
+const _tools20b=tools;tools=function(){_tools20b();V.querySelectorAll('select[data-f="type"]').forEach(sel=>{const i=+sel.dataset.i,t=S.tools[i];if(!t)return;const card=sel.closest('.card');
+  const fl=document.createElement('div');fl.className='row';fl.style.marginTop='6px';fl.innerHTML=`<label style="flex:1">Flute / insert length ${UL()}<input inputmode="decimal" data-fl="${i}" value="${t.flL!=null?+(t.flL*KU()).toFixed(3):''}"></label>`;card.querySelector('.row').after(fl);fl.querySelector('input').onchange=e=>{if(!isNaN(+e.target.value)){t.flL=+e.target.value/KU();save()}};
+  if(t.type=='Custom form tool'){const p=document.createElement('div');p.innerHTML=`<label class="s">Profile: diameter@height pairs in ${UL()}, from the tip up (e.g. ${KU()>1?'6@0, 10@5, 10@20':'0.25@0, 0.4@0.2, 0.4@0.8'})<textarea data-pr="${i}" rows="2" style="font-family:ui-monospace,monospace">${esc((t.prof||[]).map(([d,h])=>+(d*KU()).toFixed(3)+'@'+(+(h*KU()).toFixed(3))).join(', '))}</textarea></label><div class="s" id="pe${i}"></div>`;fl.after(p);
+   p.querySelector('textarea').onchange=e=>{const pr=e.target.value.split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean).map(s=>s.split('@').map(Number));if(pr.some(x=>x.length!=2||x.some(isNaN))){$('#pe'+i).textContent='❌ Use diameter@height pairs, e.g. 0.25@0';return}t.prof=pr.map(([d,h])=>[d/KU(),h/KU()]);save();$('#pe'+i).textContent='✓ '+pr.length+' points saved on this phone'}}
+  sel.addEventListener('change',()=>setTimeout(tools,0))})};
+// §8 tester: live variables at the current step (local / common / permanent)
+function varsPanel(){const el=$('#vars');if(!el||!J||!J.M)return;const m=J.M[Math.max(0,view.n-1)],vs=(m&&m.vs)||{};const ks=Object.keys(vs).map(Number).filter(k=>vs[k]!=null).sort((a,b)=>a-b);
+ const grp=(t,f)=>{const l=ks.filter(f);return l.length?`<div class="s"><b>${t}</b> ${l.slice(0,24).map(k=>`#${k}=${+(+vs[k]).toFixed(4)}`).join(' · ')}${l.length>24?' …':''}</div>`:''};
+ el.innerHTML=`<div class="t">Variables at step ${view.n} of ${J.M.length}</div>`+(grp('Local #1–#33',k=>k<=33)+grp('Common #100–#199',k=>k>=100&&k<200)+grp('Permanent #500–#999',k=>k>=500&&k<1000)+grp('System',k=>k>=1000)||'<div class="s">No variables set yet at this step.</div>')+'<div class="s">Values as this app\'s generic interpreter sees them — your control may differ.</div>'}
+// §10 sim: speed, tool on/off, stock removal on/off (coarser for big programs), full screen
+view.sp=view.sp||1;view.tool=1;view.stk=0;
+play=function(){clearInterval(pl);let n=view.n>=J.M.length?0:view.n;pl=setInterval(()=>{if(n>=J.M.length)return clearInterval(pl);scrub(++n)},Math.max(4,4000/J.M.length/view.sp))};
+const _scrub20=scrub;scrub=function(n){_scrub20(n);varsPanel()};
+const _tool20=tool;tool=function(t){if(!view.tool)return;return _tool20(t)};
+function stockMap(){const M=J.M||[],n=Math.min(view.n,M.length),big=M.length>1500,key=M.length+'|'+(J.lathe?1:0);let S2=J._stk;
+ if(!S2||S2.key!=key||S2.n>n){if(J.lathe){const b=J.lb,N=big?80:200;S2={key,n:0,lathe:1,N,z0:b.z,z1:-b.L,r:Array(N+1).fill(b.R)}}else{const s=J.stock,N=big?28:56;S2={key,n:0,N,s,h:Array((N+1)*(N+1)).fill(s[5])}}J._stk=S2}
+ const tr=J.lathe?0:((J.p.Cutter||J.p['Drill Ø']||{v:.25}).v)/2;
+ for(;S2.n<n;S2.n++){const m=M[S2.n];if(m.r)continue;const L=Math.hypot(m.b[0]-m.a[0],m.b[1]-m.a[1],m.b[2]-m.a[2]);
+  if(S2.lathe){const dz=(S2.z0-S2.z1)/S2.N,k=Math.max(1,Math.ceil(L/(dz/2)));for(let e=0;e<=k;e++){const t=e/k,x=m.a[0]+(m.b[0]-m.a[0])*t,z=m.a[2]+(m.b[2]-m.a[2])*t,ix=Math.round((S2.z0-z)/dz);if(ix>=0&&ix<=S2.N&&x<S2.r[ix])S2.r[ix]=Math.max(0,x)}}
+  else{const s=S2.s,N=S2.N,cx=(s[3]-s[0])/N,cy=(s[4]-s[1])/N,k=Math.max(1,Math.ceil(L/(Math.min(cx,cy)/2)));for(let e=0;e<=k;e++){const t=e/k,x=m.a[0]+(m.b[0]-m.a[0])*t,y=m.a[1]+(m.b[1]-m.a[1])*t,z=m.a[2]+(m.b[2]-m.a[2])*t;if(z>=s[5])continue;
+   const i0=Math.max(0,Math.floor((x-tr-s[0])/cx)),i1=Math.min(N,Math.ceil((x+tr-s[0])/cx)),j0=Math.max(0,Math.floor((y-tr-s[1])/cy)),j1=Math.min(N,Math.ceil((y+tr-s[1])/cy));
+   for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++){const px=s[0]+i*cx,py=s[1]+j*cy;if((px-x)**2+(py-y)**2<=tr*tr+1e-9){const q=j*(N+1)+i;if(z<S2.h[q])S2.h[q]=Math.max(s[2],z)}}}}}
+ return S2}
+function drawStock(){if(!view.stk||!J||!cv)return;const S2=stockMap();ctx.save();
+ if(S2.lathe){const pts=S2.r.map((r,i)=>[r,0,S2.z0-i*(S2.z0-S2.z1)/S2.N]);ctx.fillStyle='rgba(160,160,170,.35)';ctx.beginPath();const f=view.rev?pts:pts;f.forEach((p,i)=>{const q=P(p);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});[[0,0,S2.z1],[0,0,S2.z0]].forEach(p=>{const q=P(p);ctx.lineTo(q[0],q[1])});ctx.closePath();ctx.fill()}
+ else{const s=S2.s,N=S2.N,cx=(s[3]-s[0])/N,cy=(s[4]-s[1])/N,depth=Math.max(1e-6,s[5]-s[2]);for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){const h=S2.h[j*(N+1)+i];if(h>=s[5]-1e-6)continue;const f=(s[5]-h)/depth;
+   const a=P([s[0]+i*cx-cx/2,s[1]+j*cy-cy/2,h]),b=P([s[0]+i*cx+cx/2,s[1]+j*cy+cy/2,h]);ctx.fillStyle=`rgba(${Math.round(80+150*f)},${Math.round(120-60*f)},${Math.round(200-120*f)},.55)`;ctx.fillRect(Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(1.5,Math.abs(b[0]-a[0])),Math.max(1.5,Math.abs(b[1]-a[1])))}}
+ ctx.restore()}
+const _draw20=draw;draw=function(){_draw20();try{drawStock()}catch(e){}};
+function simFS(){const c=$('#cv');if(!c)return;const on=!c.classList.contains('fs');c.classList.toggle('fs',on);document.body.classList.toggle('fsb',on);let x=$('#fsx');if(on&&!x){x=document.createElement('button');x.id='fsx';x.className='chip y';x.textContent='✕ Exit full screen';x.onclick=simFS;document.body.appendChild(x)}if(!on&&x)x.remove();initCv();scrub(view.n)}
+// §19 editor: highlighting, line numbers, inline warnings, find, undo/redo, sticky summary
+function hlLine(l){return esc(l).replace(/(\([^)]*\))|(#\d+|#\[)|\b(IF|THEN|GOTO|WHILE|DO\d*|END\d*|EQ|NE|GT|GE|LT|LE|AND|OR|XOR|SIN|COS|TAN|ATAN|ASIN|ACOS|SQRT|ABS|ROUND|FIX|FUP|LN|EXP|DPRNT)\b|\b([GM]\d+(?:\.\d)?)|\b(N\d+|O\d+)\b/g,(m,c,v,k,g,n)=>c?`<span class="hc">${c}</span>`:v?`<span class="hv">${v}</span>`:k?`<span class="hk">${k}</span>`:g?`<span class="hg">${g}</span>`:`<span class="hn">${n}</span>`)}
+function lintLine(l){const s=String(l).replace(/\([^)]*\)/g,''),w=[];if((s.match(/\[/g)||[]).length!=(s.match(/\]/g)||[]).length)w.push('brackets [ ] not balanced on this line');if(/\/\s*0+(\.0*)?(?![\d.])/.test(s))w.push('division by zero');
+ const vs=(s.match(/#(\d+)/g)||[]).map(x=>+x.slice(1)).filter(n=>(n>33&&n<100)||(n>199&&n<500));if(vs.length)w.push('#'+vs[0]+' is outside the usual legal ranges');(s.toUpperCase().match(/\bG\d+(\.\d)?/g)||[]).forEach(g=>{const k='G'+(g.includes('.')?g.slice(1):g.slice(1).padStart(2,'0'));if(!GD[k]&&!/G1[1-2]\d/.test(g))w.push(g+' not in the code library');});return w}
+function decorate(){const ed=$('#ed');if(!ed)return;ed.querySelectorAll('.ln').forEach(el=>{if(document.activeElement!==el){const t=el.textContent;el.innerHTML=hlLine(t)}const w=lintLine(el.textContent);el.classList.toggle('warn',!!w.length);el.title=w.join('; ');if(w.length)el.dataset.w='⚠ '+w[0];else delete el.dataset.w})}
+function edSnap(){if(!J)return;J.undo=J.undo||[];const s=JSON.stringify(J.edits||{});if(J.undo.at(-1)!==s){J.undo.push(s);if(J.undo.length>60)J.undo.shift()}J.redo=[]}
+function undoEd(){if(!J||!J.undo||!J.undo.length)return;const cur=JSON.stringify(J.edits||{});let s=J.undo.pop();if(s===cur&&J.undo.length)s=J.undo.pop();(J.redo=J.redo||[]).push(cur);J.edits=JSON.parse(s);show()}
+function redoEd(){if(!J||!J.redo||!J.redo.length)return;(J.undo=J.undo||[]).push(JSON.stringify(J.edits||{}));J.edits=JSON.parse(J.redo.pop());show()}
+function findEd(q){const ed=$('#ed');if(!ed)return;let first=null;ed.querySelectorAll('.ln').forEach(el=>{const h=!!q&&el.textContent.toUpperCase().includes(q.toUpperCase());el.classList.toggle('hit',h);if(h&&!first)first=el});if(first)ed.scrollTop=first.offsetTop-ed.offsetTop-40;const c=$('#fcount');if(c)c.textContent=q?ed.querySelectorAll('.ln.hit').length+' found':''}
+// §19 builder: live "understood so far" while typing
+function understood(){const q=$('#q'),o=$('#us');if(!q||!o)return;const t=q.value.trim();if(!t){o.innerHTML='';return}let j=null;try{j=(isL()?parseL:parse)(t)}catch(e){}
+ if(!j||!j.op){o.innerHTML='<span class="s">Understood so far: nothing yet — say what to make (bolt circle, grid, face, turn, probe…)</span>';return}
+ const got=Object.entries(j.p||{}).filter(([k,x])=>x&&x.v!=null&&!x.g),miss=Object.entries(j.p||{}).filter(([k,x])=>!x||x.v==null);
+ o.innerHTML=`<div class="s">Understood so far: <b>${esc(OPN[j.op]||j.op)}</b>${got.length?' · '+got.map(([k,x])=>esc(k)+' '+esc(typeof x.v=='number'?String(+(+dispV(k,x.v)).toFixed(4)):String(x.v))).join(' · '):''}${miss.length?` · <span style="color:#ff8a8a">still need ${miss.length}: ${miss.slice(0,5).map(([k])=>esc(k)).join(', ')}</span>`:''}</div>`}
+const _nw20=nw;nw=function(){_nw20();const q=$('#q');if(q&&!$('#us')){const d=document.createElement('div');d.id='us';d.style.margin='4px 0';q.after(d);q.addEventListener('input',understood);understood()}};
+// §6/§12 more checks: common variables confirmed free, DPRNT, codes in the library (source check), nesting depth
+function freeRanges(){const x=sv('Free common variables');if(!x||x.st!='user')return null;return String(x.v).split(/[,;\s]+/).map(r=>r.replace(/#/g,'').split('-').map(Number)).filter(r=>!isNaN(r[0])).map(r=>[r[0],isNaN(r[1])?r[0]:r[1]])}
+function commonUsed(t){return [...new Set((t.replace(/\([^)]*\)/g,'').match(/#(\d+)/g)||[]).map(x=>+x.slice(1)).filter(n=>(n>=100&&n<200)||(n>=500&&n<1000)))].sort((a,b)=>a-b)}
+function confirmFree(){const t=txt().join('\n'),u=commonUsed(t),x=sv('Free common variables');if(!x||!u.length)return;const lo=u.filter(n=>n<200),hi=u.filter(n=>n>=500),r=[];if(lo.length)r.push('#'+lo[0]+'-#'+lo.at(-1));if(hi.length)r.push('#'+hi[0]+'-#'+hi.at(-1));const old=freeRanges();x.v=(old&&x.st=='user'?String(x.v)+', ':'')+r.join(', ');x.st='user';save();refresh()}
+const _checks20=checks;checks=function(j){const c=_checks20(j);let t='';try{t=txt().join('\n')}catch(e){}const code=t.replace(/\([^)]*\)/g,'');
+ const u=commonUsed(t),fr=freeRanges(),bad=u.filter(n=>!(fr||[]).some(([a,b])=>n>=a&&n<=b));if(u.length)c.push([`Common variables ${u.length>3?'#'+u[0]+'…#'+u.at(-1)+' ('+u.length+')':u.map(n=>'#'+n).join(' ')} confirmed free on this machine`+(bad.length?' — tap "These are free" below once checked':''),!bad.length]);
+ if(/DPRNT/.test(code)){const d=sv('DPRNT support');c.push(['DPRNT supported (machine setting)',!!d&&d.st=='user'&&/yes|on|ok/i.test(d.v)])}
+ const unk=[...new Set((code.toUpperCase().match(/\bG\d+(\.\d)?/g)||[]).filter(g=>!GD['G'+(g.includes('.')?g.slice(1):g.slice(1).padStart(2,'0'))]&&!/G1[1-2]\d/.test(g)))];c.push(['Every G-code is in the sourced library'+(unk.length?': not found '+unk.join(' '):''),!unk.length]);
+ const dp=(j.run&&j.run.depth)||0;if(dp)c.push([`Call nesting ${dp} deep (generic limit 4 for G65/G66)`,dp<=4]);return c};
+// ready badge (§7) and sticky "N issues — tap to review" summary (§19)
+const _refresh20=refresh;refresh=function(){_refresh20();const ck=$('#ck');if(!ck)return;const hh=document.querySelector('.h');if(hh)ck.style.top=hh.offsetHeight+'px';const n=[...$('#cl').querySelectorAll('.s')].filter(x=>/❌/.test(x.textContent)).length;J.readyOk=!n;
+ ck.textContent=n?`⚠ ${n} issue${n>1?'s':''} — tap to review · `+ck.textContent.replace(/^⚠\s*/,''):ck.textContent;
+ let rb=$('#ready');if(!rb){rb=document.createElement('div');rb.id='ready';rb.className='row';rb.style.margin='6px 0';ck.after(rb)}
+ rb.innerHTML=n?(J.override?`<span class="chip y">Ready by your override</span><button class="chip gr" onclick="J.override=0;refresh()">Undo override</button>`:`<span class="chip r">Not ready</span><button class="chip gr" onclick="if(confirm('Mark ready even though checks fail? Only if you have proven it on the control.')){J.override=1;refresh()}">Override…</button>`):'<span class="chip g">✓ Ready — all checks pass</span>';
+ if($('#cl')&&commonUsed(txt().join('\n')).length&&[...$('#cl').querySelectorAll('.s')].some(x=>/❌ Common variables/.test(x.textContent))){const b=document.createElement('button');b.className='chip y';b.textContent='These are free on this machine';b.onclick=e=>{e.stopPropagation();confirmFree()};$('#cl').appendChild(b)}
+ decorate();varsPanel()};
+// §17 #3006 message preview
+const _alarmPreview20=alarmPreview;alarmPreview=function(){let h=_alarmPreview20();const m=[];txt().forEach((l,i)=>{const x=l.match(/#3006\s*=\s*(\d+)\s*\(([^)]*)\)/);if(x)m.push(`<div class="s"><b style="color:#ffd21f">MESSAGE ${x[1]}: ${esc(x[2])}</b> — line ${i+1}. Program stops, operator presses cycle start to go on.</div>`)});
+ return h+(m.length?'<div class="t" style="margin-top:6px">Operator messages (#3006)</div>'+m.join(''):'')+'<div class="s">Screen layout differs by control — text is what the operator reads.</div>'};
+// §18/§25/§34 export: .eia, optional header comment, optional dry-run reminder
+S.hdr=S.hdr||0;S.dry=S.dry||0;
+function hdrLines(){const m=S.m[S.cur]||{name:'?',s:[{v:'?'}]};return[`(MACHINE: ${String(m.name).toUpperCase().replace(/[()]/g,'')})`,`(DATE: ${new Date().toISOString().slice(0,10)})`,`(UNITS: ${UN()=='mm'?'MM G21':'INCH G20'})`,`(CONTROL: ${String(m.s[0].v).toUpperCase().replace(/[()]/g,'')})`]}
+const _progText20=progText;progText=function(){const t=_progText20();if(!S.hdr)return t;const eol=S.eol=='LF'?'\n':'\r\n',L=t.split(eol),k=L.findIndex(l=>/^O\d/.test(l.trim()));L.splice(k>=0?k+1:1,0,...hdrLines());return L.join(eol)};
+const dryOK=()=>!S.dry||confirm('Have you single-blocked or dry-run this on the machine?');
+const _dl20=dl;dl=function(e){if(!dryOK())return;_dl20(e)};const _share20=share;share=async function(){if(!dryOK())return;return _share20()};
+const _copy20=copy;copy=function(){if(!dryOK())return;if(S.hdr){navigator.clipboard?.writeText(progText());$('#cp').textContent='Copied ✓';return}_copy20()};
+// show(): add the new controls around the existing layout
+const DISC20='Verify on the machine in dry-run / single-block before production use. This app is an aid, not a substitute for proven programs or machine documentation.';
+function srcNotes(){const t=txt().join('\n').replace(/\([^)]*\)/g,'').toUpperCase(),codes=[...new Set((t.match(/\b[GM]\d+(\.\d)?/g)||[]).map(c=>c[0]+(c.includes('.')?c.slice(1):c.slice(1).padStart(2,'0'))))].sort();
+ const mb=REFMB.filter(x=>{const k=String(x.k).toUpperCase();return /^[A-Z]+$/.test(k)?new RegExp('\\b'+k+'\\b').test(t):/^#\d+$/.test(k)&&t.includes(k+'=')||t.includes(k+'=')});
+ return `<details id="srcn" class="card"><summary class="s">Source notes (${codes.length+mb.length}) — tap to open</summary>${codes.map(c=>`<div class="s"><b class="v" style="color:#14b8a6">${c}</b> ${esc(GD[c]||'not in library — check the manual')} · source: generic Fanuc-style code list in this app (verify on your control)</div>`).join('')}${mb.slice(0,30).map(x=>`<div class="s"><b style="color:#14b8a6">${esc(x.k)}</b> ${esc(x.m)} · source: ${esc(x.s||'public Macro B reference')}</div>`).join('')}</details>`}
+const _show20=show;show=function(){_show20();if(!J||!$('#ed'))return;const ed=$('#ed'),cvx=$('#cv');
+ // editor tools row above code
+ const er=document.createElement('div');er.className='row';er.id='edt';er.style.margin='6px 0';er.innerHTML=`<input id="fq" placeholder="Find in code" style="flex:2"><span class="s" id="fcount" style="flex:0 0 auto"></span><button class="chip gr" onclick="undoEd()">↶ Undo</button><button class="chip gr" onclick="redoEd()">↷ Redo</button><button class="chip gr" onclick="$('#alm').scrollIntoView({block:'center'})">Alarm preview</button>`;ed.before(er);$('#fq').oninput=e=>findEd(e.target.value);
+ ed.querySelectorAll('.ln').forEach(el=>el.addEventListener('focus',edSnap));
+ ed.after(document.createRange().createContextualFragment(srcNotes()));
+ // sim chips
+ if(cvx){const r=document.createElement('div');r.className='row';r.id='simc';r.style.marginTop='6px';r.innerHTML=`<button class="chip ${view.tool?'y':'gr'}" id="tTool">Tool ${view.tool?'on':'off'}</button><button class="chip ${view.stk?'y':'gr'}" id="tStk">Stock ${view.stk?'on':'off'}</button><button class="chip gr" id="tSp">${view.sp}×</button><button class="chip gr" onclick="simFS()">⛶ Full</button>`;
+  const pr=[...V.querySelectorAll('.row')].find(x=>/Play/.test(x.textContent));(pr||cvx).after(r);
+  $('#tTool').onclick=()=>{view.tool=view.tool?0:1;$('#tTool').className='chip '+(view.tool?'y':'gr');$('#tTool').textContent='Tool '+(view.tool?'on':'off');draw()};
+  $('#tStk').onclick=()=>{view.stk=view.stk?0:1;J._stk=null;$('#tStk').className='chip '+(view.stk?'y':'gr');$('#tStk').textContent='Stock '+(view.stk?'on':'off');draw()};
+  $('#tSp').onclick=()=>{const L=[0.25,0.5,1,2,4];view.sp=L[(L.indexOf(view.sp)+1)%L.length];$('#tSp').textContent=view.sp+'×'};
+  const vp=document.createElement('div');vp.className='card';vp.id='vars';$('#info').after(vp);varsPanel()}
+ // export: .eia + header + dry-run toggles
+ const g=V.querySelector('.gate.o');if(g&&!$('#eia')){const b=document.createElement('button');b.className='btn o gate';b.id='eia';b.textContent='⬇ .eia';b.disabled=!($('#vf')&&$('#vf').checked);b.onclick=()=>dl('eia');g.after(b);
+  const o=document.createElement('div');o.className='row';o.innerHTML=`<label class="s" style="flex:1"><input type="checkbox" id="hdr" style="width:auto" ${S.hdr?'checked':''}> Header comment (machine, date, units, control)</label><label class="s" style="flex:1"><input type="checkbox" id="dry" style="width:auto" ${S.dry?'checked':''}> Ask "dry-run?" on export</label>`;g.parentNode.after(o);$('#hdr').onchange=e=>{S.hdr=e.target.checked?1:0;save()};$('#dry').onchange=e=>{S.dry=e.target.checked?1:0;save()}}
+ // library fields (§13/§28)
+ const sb=[...V.querySelectorAll('.btn.o')].find(b=>/Save to Recent|Save to Library/.test(b.textContent));if(sb&&!$('#jn')){sb.textContent='Save to Library';const f=document.createElement('div');f.className='card';f.innerHTML=`<div class="t">Save to Library</div><input id="jn" placeholder="Name (same name = new version)" value="${esc(J.name||'')}"><input id="jno" placeholder="Notes" style="margin-top:6px" value="${esc(J.note||'')}"><input id="jl" placeholder="Tool life / last measured wear (note)" style="margin-top:6px" value="${esc(J.life||'')}">`;sb.before(f)}
+ const ft=V.querySelector('.foot');if(ft&&!/aid, not a substitute/.test(ft.textContent))ft.textContent='⚠ '+DISC20+' Generic Fanuc-style Macro B. Not for any specific machine.';
+ decorate()};
+// §13 library: names, notes, versions, change log (§33), tool-life note (§28), search (§21)
+function chNote(a,b){a=a||[];b=b||[];const A=new Set(a),B=new Set(b),add=b.filter(l=>!A.has(l)),rem=a.filter(l=>!B.has(l)),n=[];
+ const va=new Set((a.join(' ').match(/#\d+/g)||[])),nv=[...new Set((add.join(' ').match(/#\d+/g)||[]))].filter(v=>!va.has(v)&&+v.slice(1)>=100);if(nv.length)n.push('switched to / added '+nv.slice(0,3).join(' '));
+ if(add.some(l=>/IF\[.*(GT|LT|GE|LE).*\]\s*GOTO|#3000/.test(l))&&!rem.some(l=>/#3000/.test(l)))n.push('added tolerance / alarm check');if(add.some(l=>/WHILE/.test(l)))n.push('added loop');
+ const fe=add.filter(l=>/F\d/.test(l)).length;if(fe)n.push('changed feed on '+fe+' line'+(fe>1?'s':''));if(!n.length&&(add.length||rem.length))n.push(`${add.length} line${add.length==1?'':'s'} added/changed, ${rem.length} removed`);return n.join('; ')||'no code change'}
+saveJob=function(){const name=(($('#jn')||{}).value||'').trim()||((OPN[J.op]||'Job')+' · '+((S.m[S.cur]||{}).name||'')),note=($('#jno')||{}).value||'',life=($('#jl')||{}).value||'',code=txt();
+ const {undo,redo,_stk,...jj}=J;const rec={...JSON.parse(JSON.stringify(jj)),name,note,life,date:Date.now(),machine:(S.m[S.cur]||{}).name,saved:code};const k=S.jobs.findIndex(x=>x.name==name);
+ if(k>=0){const old=S.jobs[k],vers=old.versions||[];const {versions,...ov}=old;rec.versions=[...vers,{...ov}].slice(-15);rec.change=chNote(old.saved||old.code,code);S.jobs.splice(k,1)}else{rec.versions=[];rec.change='first save'}
+ S.jobs.unshift(rec);save();tab('recent')};
+function reopenV(i,v){const j=S.jobs[i],x=j.versions[v];J=JSON.parse(JSON.stringify({...x,versions:undefined}));const k=S.m.findIndex(m=>m.name==J.machine);if(k>=0)S.cur=k;tab('new');show()}
+const _recent20=recent;recent=function(){_recent20();$('#ttl').textContent='Library';if(!S.jobs.length)return;
+ V.innerHTML=`<input id="lq" placeholder="Search saved macros and programs…"><div id="lo"></div>`;const up=()=>{const q=$('#lq').value.toLowerCase();
+  $('#lo').innerHTML=S.jobs.map((j,i)=>({j,i})).filter(({j})=>!q||[j.name,j.note,j.text,j.machine,(j.saved||j.code||[]).join('\n')].join(' ').toLowerCase().includes(q)).map(({j,i})=>`<div class="card"><div onclick="reopen(${i})"><div class="t">${esc(j.name||OPN[j.op])} · ${esc(j.machine||'')}</div><div class="s">${new Date(j.date).toLocaleString()}${j.versions&&j.versions.length?' · v'+(j.versions.length+1):''}</div>${j.note?`<div class="s">📝 ${esc(j.note)}</div>`:''}${j.life?`<div class="s">🔧 Tool life / wear: ${esc(j.life)}</div>`:''}<div class="s">${esc(j.text||'')}</div>${j.change?`<div class="s" style="color:#ffd21f">Change: ${esc(j.change)}</div>`:''}</div>
+   ${j.versions&&j.versions.length?`<details><summary class="s">Version history (${j.versions.length} earlier)</summary>${j.versions.map((v,k)=>`<div class="s">v${k+1} · ${new Date(v.date).toLocaleString()}${v.change?' · '+esc(v.change):''} <button class="chip gr" onclick="reopenV(${i},${k})">Open</button></div>`).reverse().join('')}</details>`:''}</div>`).join('')||'<div class="card s">Nothing matches.</div>'};$('#lq').oninput=up;up()};
+document.querySelectorAll('.tabs button').forEach(b=>{if(b.dataset.t=='new')b.textContent='Build';if(b.dataset.t=='recent')b.textContent='Library'});
+// §9 scanner suggestions: before/after, plain reason, source note, accept or copy
+function scanSug(src){const L=src.split('\n'),out=[],U=l=>l.replace(/\([^)]*\)/g,'').trim().toUpperCase(),m=S.m[S.cur]||{},macro=opt('macroB');
+ // duplicate back-to-back blocks
+ for(let i=1;i<L.length;i++){if(U(L[i])&&U(L[i])==U(L[i-1])&&!/^(%|M\d+|G80)$/.test(U(L[i]))){out.push({t:'Duplicate block',why:'The same block twice in a row does nothing the second time.',src:'general programming practice',a:i-1,b:i+1,after:[L[i-1]]})}}
+ // consecutive rapids on the same single axis: the first is wasted
+ for(let i=1;i<L.length;i++){const a=U(L[i-1]).match(/^G0?0\s*([XYZ])(-?[\d.]+)$/),b=U(L[i]).match(/^G0?0\s*([XYZ])(-?[\d.]+)$/);if(a&&b&&a[1]==b[1])out.push({t:'Wasted rapid move',why:`Two rapids on ${a[1]} back to back — only the second matters.`,src:'general programming practice',a:i-1,b:i+1,after:[L[i]]})}
+ // drilling pattern written long-hand -> canned cycle
+ const hole=[];for(let i=0;i+2<L.length;i++){const p=U(L[i]).match(/^G0?0\s*X(-?[\d.]+)\s*Y(-?[\d.]+)$/),d=U(L[i+1]).match(/^G0?1\s*Z(-[\d.]+)\s*F([\d.]+)$/),r=U(L[i+2]).match(/^G0?0\s*Z([\d.]+)$/);if(p&&d&&r){hole.push({i,x:p[1],y:p[2],z:d[1],f:d[2],r:r[1]});i+=2}}
+ for(let k=0;k<hole.length;){let e=k;while(e+1<hole.length&&hole[e+1].i==hole[e].i+3&&hole[e+1].z==hole[k].z&&hole[e+1].r==hole[k].r)e++;if(e-k>=1){const h=hole.slice(k,e+1);out.push({t:'Drill pattern → G81 canned cycle',why:`${h.length} holes written move by move. One G81 line plus X Y per hole is shorter and easier to edit.`,src:'G81/G80 drilling cycle, generic Fanuc-style reference (verify)',a:h[0].i,b:h.at(-1).i+3,after:[`G98 G81 X${h[0].x} Y${h[0].y} Z${h[0].z} R${h[0].r} F${h[0].f}`,...h.slice(1).map(x=>`X${x.x} Y${x.y}`),'G80']})}k=e+1}
+ // repeated passes stepping one value -> WHILE loop (needs Macro B)
+ if(macro){for(let k=1;k<=4;k++){for(let i=0;i+3*k<=L.length;i++){const blk=n=>L.slice(i+n*k,i+n*k+k).map(U),sh=x=>x.join('|').replace(/-?\d+\.?\d*/g,'#');const b0=blk(0);if(!b0.every(x=>/^G0?[01]\b/.test(x)))continue;let n=1;while(i+(n+1)*k<=L.length&&sh(blk(n))==sh(b0)&&blk(n).join('|')!=b0.join('|'))n++;if(n<3)continue;
+   const nums=t=>(t.join('|').match(/-?\d+\.?\d*/g)||[]).map(Number),N=[...Array(n)].map((_,q)=>nums(blk(q))),dif=N[0].map((v,c)=>N[1][c]-v),idx=dif.map((d,c)=>Math.abs(d)>1e-9?c:-1).filter(c=>c>=0);
+   if(idx.length!=1)continue;const c0=idx[0],stp=dif[c0];if(!N.every((r,q)=>Math.abs(r[c0]-(N[0][c0]+q*stp))<1e-6&&r.every((v,c)=>c==c0||Math.abs(v-N[0][c])<1e-9)))continue;
+   let cnt=-1;const body=L.slice(i,i+k).map(l=>{const u=U(l);return u.replace(/-?\d+\.?\d*/g,mm=>{cnt++;return cnt==c0?'#100':mm})});
+   out.push({t:`${n} repeated passes → WHILE loop`,why:`${n} copies of the same ${k}-line pass, one value stepping by ${+stp.toFixed(4)}. A loop keeps it to one copy; change the count or step in one place.`,src:'WHILE[…]DOn / ENDn, Fanuc Custom Macro B (public references); uses #100 — confirm it is free',a:i,b:i+n*k,after:[`#100=${+N[0][c0].toFixed(4)} (START)`,`#101=${n} (PASSES)`,'WHILE[#101GT0]DO1',...body,`#100=#100+${+stp.toFixed(4)}`.replace('+-','-'),'#101=#101-1','END1']});i+=n*k-1}}}
+ // machine options the program does not use
+ const t=U(src);if(m.opt&&m.opt.tsc&&/G83/.test(t))out.push({t:'Through-spindle coolant is on this machine',why:'Deep peck drilling (G83) often needs fewer pecks with through-spindle coolant. The M-code for it is machine-specific — look it up in your manual.',src:'machine option ticked in your profile',a:-1});
+ if(m.opt&&m.opt.air&&!/M0?[78]\b/.test(t))out.push({t:'Air blast available, no coolant in program',why:'This machine lists through-spindle air blast; dry cuts may clear chips better with it. M-code is machine-specific.',src:'machine option ticked in your profile',a:-1});
+ const zs=(t.match(/G0?0[^\n]*Z(\d+\.?\d*)/g)||[]).map(x=>+x.match(/Z(\d+\.?\d*)$/)[1]);if(zs.length>2&&Math.min(...zs)>(UN()=='mm'?25:1))out.push({t:'Clearance moves are high',why:`Every rapid Z is at least ${Math.min(...zs)} above zero. A lower clearance plane between features saves time — only if fixtures allow.`,src:'general programming practice',a:-1});
+ return out}
+function sugHtml(src,list){const L=src.split('\n');return list.map((s,n)=>`<div class="card"><div class="t">💡 ${esc(s.t)}</div><div class="s">${esc(s.why)}</div><div class="s">source: ${esc(s.src)}</div>${s.a>=0?`<pre class="code diff" style="padding:6px;margin:6px 0">${L.slice(s.a,s.b).map(l=>`<div class="dm">- ${esc(l)}</div>`).join('')}${s.after.map(l=>`<div class="dp">+ ${esc(l)}</div>`).join('')}</pre><div class="row"><button class="chip y" onclick="acceptSug(${n})">Accept</button><button class="chip gr" onclick="navigator.clipboard?.writeText(SUG[${n}].after.join('\\n'));this.textContent='Copied'">Copy block</button></div>`:''}</div>`).join('')}
+let SUG=[];function acceptSug(n){const q=$('#sq'),s=SUG[n];if(!q||!s||s.a<0)return;const L=q.value.split('\n');L.splice(s.a,s.b-s.a,...s.after);q.value=L.join('\n');scan()}
+const _scan20=scan;scan=function(){_scan20();const src=$('#sq').value;SUG=scanSug(src);const d=document.createElement('div');d.id='sug';d.innerHTML=`<div class="t" style="margin:10px 0 4px">Suggestions (${SUG.length})</div>`+(sugHtml(src,SUG)||'<div class="card s">No suggestions — nothing obvious to tighten.</div>')+'<div class="s">Only suggests things your machine profile allows. Check every change in single-block.</div>';$('#so').appendChild(d)};
+// §11 reference filter by mode and control
+const _reference20=reference;reference=function(){_reference20();const rq=$('#rq');if(!rq)return;const f=document.createElement('div');f.className='row';f.style.marginTop='6px';const k=ctrlKey();
+ f.innerHTML=['All','Mill','Turn'].map(x=>`<button class="chip ${x=='All'?'y':'gr'}" data-rf="${x}">${x}</button>`).join('')+(k?`<button class="chip gr" data-rf="ctrl">${k=='haas'?'Haas':'Fanuc 0i'} notes</button>`:'');rq.after(f);let mode='All';
+ const up0=rq.oninput,apply=()=>{up0&&up0();if(mode=='ctrl'){const C=CTRL[k]||{};$('#ro').innerHTML=Object.entries(C).filter(([a,b])=>typeof b!='object'||Array.isArray(b)).map(([a,b])=>`<div class="card" style="padding:10px"><b style="color:#14b8a6">${esc(a)}</b><div class="s" style="color:#ddd">${esc(Array.isArray(b)?b.join(' · '):String(b))}</div><div class="s">source: cnc-macro-db (public) · verify on your control</div></div>`).join('');return}
+  $('#ro').querySelectorAll('.card').forEach(c=>{const t=c.textContent,code=(c.querySelector('b')||{}).textContent||'',lo=LONLY.includes(code)||/\(lathe\)|^Lathe|lathe:/i.test(t)&&!/mill/i.test(t),mo=(typeof MONLY!='undefined'&&MONLY.includes(code))||/\(mill\)/i.test(t)&&!/lathe/i.test(t);c.style.display=(mode=='Mill'&&lo)||(mode=='Turn'&&mo)?'none':''})};
+ rq.oninput=apply;f.querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>{mode=b.dataset.rf;f.querySelectorAll('[data-rf]').forEach(x=>x.className='chip '+(x==b?'y':'gr'));apply()});if(isL()){mode='Turn';f.querySelector('[data-rf="Turn"]').click()}};
+// §16 calculators: drop a result into the editor as a #variable or a comment
+function toEditor(lines){if(!J||!J.code){alert('Make a job first (Build tab), then send values to it.');return}const at=J.focus!=null?+J.focus+1:Math.max(0,J.code.findIndex(l=>/^M30/.test(l)));const ne={};Object.entries(J.edits).forEach(([k,v])=>{ne[+k>=at?+k+lines.length:k]=v});lines.forEach((l,n)=>ne[at+n]=l);J.edits=ne;(J.ins=J.ins||[]).push({at,lines});tab('new');show()}
+const _calc20=calc;calc=function(){_calc20();const c=document.createElement('div');c.className='card';c.innerHTML=`<div class="t">Send to the editor</div><div class="row"><label style="flex:1">Variable #<input id="cvn" value="110" inputmode="numeric"></label><select id="cvw" style="flex:2"><option value="rpm">RPM (speeds & feeds)</option><option value="feed">Feed (speeds & feeds)</option><option value="tap">Tap drill Ø</option><option value="bc">Bolt circle X/Y list</option></select></div><div class="row"><button class="chip y" id="cAsV">As #variable</button><button class="chip gr" id="cAsC">As comment</button></div><div class="s">Goes in after the line you last tapped in the editor (or before M30).</div>`;V.querySelector('.btn.o').before(c);
+ const val=()=>{const w=$('#cvw').value,co=$('#co').textContent,to=$('#to').textContent;if(w=='rpm')return[(co.match(/RPM ≈ (\d+)/)||[])[1],'RPM'];if(w=='feed')return[(co.match(/Feed ≈ ([\d.]+)/)||[])[1],'FEED '+UL().toUpperCase()+'/MIN'];if(w=='tap')return[(to.match(/≈ ([\d.]+)/)||[])[1],'TAP DRILL '+(UN()=='mm'?'MM':'IN')];return['bc','BC']};
+ $('#cAsV').onclick=()=>{const [v,l]=val();if(v=='bc'){const r=[...$('#bo').querySelectorAll('tr')].slice(1).map(tr=>[...tr.children].map(td=>td.textContent));toEditor(r.map((x,k)=>`#${+$('#cvn').value+2*k}=${x[1]} #${+$('#cvn').value+2*k+1}=${x[2]} (HOLE ${x[0]} X Y)`));return}toEditor([`#${$('#cvn').value}=${v} (${l})`])};
+ $('#cAsC').onclick=()=>{const [v,l]=val();if(v=='bc'){const r=[...$('#bo').querySelectorAll('tr')].slice(1).map(tr=>[...tr.children].map(td=>td.textContent));toEditor(r.map(x=>`(HOLE ${x[0]} X${x[1]} Y${x[2]})`));return}toEditor([`(${l} ${v})`])}};
+// §15 star snippets: starred float to the top of the list and of the insert menu
+const _snips20=snips;snips=function(){S.snips.sort((a,b)=>(b.fav?1:0)-(a.fav?1:0));_snips20();V.querySelectorAll('.card .t').forEach((t,i)=>{const s=S.snips[i];if(!s)return;t.textContent=(s.fav?'★ ':'☆ ')+s.n;t.style.cursor='pointer';t.onclick=()=>{s.fav=s.fav?0:1;save();snips()}})};
+// §30 setup sheet: probes and key variables
+const _sheet20=sheet;sheet=function(){_sheet20();const sh=$('#sheet');if(!sh)return;const m=S.m[S.cur]||{},t=txt(),vs=[];t.forEach(l=>{const x=l.match(/^(#\d+)\s*=\s*([^(]*)\(([^)]*)\)/);if(x&&+x[1].slice(1)>=100&&vs.length<12)vs.push(`${x[1]} = ${x[2].trim()} (${x[3]})`)});
+ const tb=sh.querySelector('table');if(!tb)return;tb.insertAdjacentHTML('beforeend',`<tr><td>Probes</td><td>${(m.probes||[]).map(p=>esc((p.nick?p.nick+' — ':'')+p.type+(p.def?' (default)':''))).join('<br>')||'none listed'}</td></tr><tr><td>Key variables</td><td>${vs.map(esc).join('<br>')||'—'}</td></tr><tr><td>Common vars used</td><td>${commonUsed(t.join('\n')).map(n=>'#'+n).join(' ')||'none'}</td></tr>`)};
+// §29 batch check against two machines
+const _batch20=batch;batch=function(){_batch20();const b=$('#bq');if(!b)return;const r=document.createElement('div');r.className='row';r.style.marginTop='6px';const opts=k=>S.m.map((m,i)=>`<option value="${i}" ${i==k?'selected':''}>${esc(m.name)}</option>`).join('');
+ r.innerHTML=`<label style="flex:1" class="s">Machine A<select id="bmA">${opts(S.cur)}</select></label><label style="flex:1" class="s">Machine B<select id="bmB"><option value="">— none —</option>${opts(-1)}</select></label>`;b.before(r)};
+const _doBatch20=doBatch;doBatch=function(){const A=$('#bmA'),B=$('#bmB');const ms=[A?+A.value:S.cur];if(B&&B.value!=='')ms.push(+B.value);const keep=S.cur,parts=[];
+ try{ms.forEach(i=>{S.cur=i;_doBatch20();parts.push(`<div class="t" style="margin:8px 0 4px">${esc(S.m[i].name)} <span class="s">· ${esc(S.m[i].s[0].v)} · ${UN(S.m[i])=='mm'?'mm':'inch'}</span></div>`+$('#bo2').innerHTML)})}finally{S.cur=keep}
+ let diff='';if(ms.length==2){const a=$('#bo2'),tmp=document.createElement('div');tmp.innerHTML=parts[0];const fa=new Set([...tmp.querySelectorAll('.s')].filter(x=>/❌/.test(x.textContent)).map(x=>x.textContent));tmp.innerHTML=parts[1];const fb=[...tmp.querySelectorAll('.s')].filter(x=>/❌/.test(x.textContent)).map(x=>x.textContent);
+  const only=fb.filter(x=>!fa.has(x)),onlyA=[...fa].filter(x=>!fb.includes(x));diff=`<div class="card"><div class="t">Differences A vs B</div>${onlyA.map(x=>`<div class="s">A only: ${esc(x)}</div>`).join('')}${only.map(x=>`<div class="s">B only: ${esc(x)}</div>`).join('')}${onlyA.length+only.length?'':'<div class="s">Same warnings on both machines.</div>'}</div>`}
+ $('#bo2').innerHTML=diff+parts.join('')};
+// §25 transfer notes
+function xfer(){$('#ttl').textContent='Transfer notes';tabOn();V.innerHTML=[['USB stick','Save the .nc file to the stick root or the folder your control reads. Many controls want short file names and % at start and end. Check the line-ending setting (CRLF/LF) on the export.'],['Memory card (CF/SD)','Same as USB. Older controls may need the card formatted FAT16/FAT32 and the file named O####.'],['RS-232 / DNC','Send as plain text. Match baud, parity, stop bits and handshake to the control parameters. Keep % at both ends. Use the .txt export if your DNC software wants it.'],['Network share','Copy the file to the share your control mounts. Check the control has the share enabled and the file name rules.'],['Email / AirDrop','Use Share… or the .txt export, then move it to USB on a shop PC. Do not paste into the email body — line endings can change.']].map(([t,d])=>`<div class="card"><div class="t">${t}</div><div class="s">${d}</div></div>`).join('')+'<div class="s">General notes, not for a specific control. Your control manual is the source for its settings.</div><button class="btn o" onclick="more()">Back</button>'}
+const _more20=more;more=function(){_more20();const c=document.createElement('div');c.className='card';c.setAttribute('onclick','xfer()');c.innerHTML='<div class="t">📤 Transfer notes (USB, card, RS-232, network)</div>';const f=V.querySelector('.card');f?f.after(c):V.appendChild(c)};
+LOG.unshift(['1.5 · Oct 13','mm clean-up: round metric clearances, mm examples and comments, tool library in mm, batch units check. Spec items: favorites, recent and duplicate machines, brand-name generic presets, probe list, full options list, tool types and form-tool profile, live variables, sim speed / tool / stock removal / full screen, editor highlighting, line numbers, warnings, find, undo/redo, scanner suggestions, reference filter, library versions and change notes, calculators to editor, #3006 preview, .eia, header comment, dry-run prompt, two-machine batch, transfer notes.']);
 if('serviceWorker'in navigator&&location.protocol!='file:')navigator.serviceWorker.register('sw.js');
 tab('machines');lockScreen();
 if(/[?&]debug=1\b/.test(location.search)){
