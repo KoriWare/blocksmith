@@ -1,0 +1,49 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=48" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(async()=>{const E=x=>w.eval(x);try{E("NOASK=1");
+  const setC=c=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k=='Control');if(!x){x={k:'Control'};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(c)};x.st='user';save()})()`);
+  const mk=(n,g,c)=>{w.pick(n,g);w.cur(E('S.m.length')-1);setC(c);w.tab('new');return E('S.cur')};
+  const dom=()=>{const s=d.querySelector('#jpick');return s?[...s.querySelectorAll('optgroup')].map(g=>[g.label,[...g.querySelectorAll('option')].map(o=>[o.value,o.textContent])]):null};
+  const ops=()=>(dom()||[]).flatMap(g=>g[1].map(o=>o[0]));const cmp=(a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'})<=0;
+  const M=[['Haas VF-style VMC (generic)','Vertical mills','Haas NGC','mill Haas'],['Common Fanuc lathe (generic)','Lathes','Fanuc 0i','Fanuc lathe'],['Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills','Haas NGC','5-axis Haas'],['Tsugami Swiss-type (generic)','Swiss-type','Fanuc 0i','Swiss Fanuc'],['Fanuc Robodrill-style (generic)','Vertical mills','Fanuc 0i','Robodrill Fanuc']];
+  const idx={};
+  for(const [n,g,c,nm] of M){idx[nm]=mk(n,g,c);const D=dom();log(nm+': native select with optgroups',!!D&&D.length>3&&d.querySelector('#jpick').tagName=='SELECT');
+   const cats=D.map(x=>x[0]);log(nm+': categories A–Z',cats.every((x,i)=>!i||cmp(cats[i-1],x)),cats.join(','));
+   log(nm+': jobs A–Z inside each category',D.every(([c,l])=>l.map(o=>o[1].replace(/^⚠\s*/,'')).every((x,i,a)=>!i||cmp(a[i-1],x))),'');
+   const o=ops();out.push('INFO '+nm+': '+o.length+' jobs · '+D.map(([c,l])=>c+' '+l.length).join(', '));
+   const L=E('isL()'),hk=/Haas/.test(c);
+   log(nm+': every listed job passes the availability rules',o.every(op=>E(`jAvail(${JSON.stringify(op)})`)));
+   log(nm+': no refused job listed (refuse() is null)',o.every(op=>E(`!(J2[${JSON.stringify(op)}]&&J2[${JSON.stringify(op)}].refuse&&J2[${JSON.stringify(op)}].refuse({op:${JSON.stringify(op)},p:{},lathe:isL()}))`)));
+   log(nm+': no other-control-only job listed',hk?!o.some(x=>['hob','hexg32','pkchk','lzset','fixid'].includes(x)):!o.some(x=>['g150','hpat','rpmg','ttype','pallet','axload','atmlife','dwo','g268','coolchk','shiftrep','g47w','hlife'].includes(x)));
+   log(nm+': '+(L?'no mill-only jobs':'no lathe-only jobs'),L?!o.some(x=>['bolt','grid','face','tomb','rpock'].includes(x)):!o.some(x=>['lturn','lface','g71','lthread','lpcal'].includes(x)));
+   // every listed job opens as itself
+   const bad=[];for(const op of o){if(op[0]=='~')continue;E('J=null');w.pickJob(op);if(E('J&&J.op')!=op)bad.push(op)}log(nm+': picking each job opens that job',!bad.length,bad.join(','));
+  }
+  const O=k=>{E('S.cur='+idx[k]);w.tab('new');return ops()};
+  const mh=O('mill Haas'),fl=O('Fanuc lathe'),fx=O('5-axis Haas'),sw=O('Swiss Fanuc'),rd=O('Robodrill Fanuc');
+  log('5-axis jobs only on the 5-axis mill',fx.includes('tcpc')&&fx.includes('dwo')&&!mh.includes('tcpc')&&!rd.includes('tcpc'));
+  log('Haas-only jobs on Haas mill, hidden on Fanuc Robodrill',mh.includes('g150')&&mh.includes('rpmg')&&!rd.includes('g150')&&!rd.includes('rpmg'));
+  log('Swiss-only jobs only on Swiss',sw.includes('swbar')&&!fl.includes('swbar'));
+  log('live-tool / C jobs hidden on a 2-axis Fanuc lathe, shown on Swiss',!fl.includes('cdrill')&&sw.includes('cdrill'));
+  log('Fanuc-only hobbing hidden on Haas lathe options',!mh.includes('hob'));
+  log('sub-spindle jobs hidden on plain lathe',!fl.includes('subxfer'));
+  log('4th-axis jobs hidden on a 3-axis VMC without 4th',!mh.includes('a4p')&&fx.includes('a4p'));
+  // HIGH / amber markers kept
+  E('S.cur='+idx['mill Haas']);w.tab('new');const txt=d.querySelector('#jpick').innerText||d.querySelector('#jpick').textContent;
+  log('⚠ HIGH marker kept on job names',/⚠ Wait for an input/.test(txt));log('amber marker shown where a thin note applies',/\(amber: verify\)/.test(d.querySelector('#jpick').textContent));
+  // live update: pick mill job, switch to lathe -> cleared with note
+  const s=d.querySelector('#jpick');s.value='bolt';s.dispatchEvent(new w.Event('change'));log('choosing from the dropdown opens the job',E('J&&J.op')=='bolt'&&/Bolt/.test(d.querySelector('#out').innerText));
+  w.cur(idx['Fanuc lathe']);log('switching machine updates the list',ops().includes('lturn')&&!ops().includes('bolt'));
+  log('unavailable job cleared with a note',E('J')==null&&/isn't available on/.test((d.querySelector('#jpnote')||{}).textContent||'')&&d.querySelector('#q').value=='');
+  // same-family job stays when still available
+  w.cur(idx['mill Haas']);const s2=d.querySelector('#jpick');s2.value='ctr';s2.dispatchEvent(new w.Event('change'));w.cur(idx['Robodrill Fanuc']);log('still-available job kept after switch',E('J&&J.op')=='ctr'&&!d.querySelector('#jpnote'));
+  // live update while page is open (control edited elsewhere)
+  E('S.cur='+idx['mill Haas']);w.tab('new');const before=ops().length;setC('Fanuc 0i');await new Promise(r=>setTimeout(r,1200));const after=ops();log('list updates live when the control changes',after.length<before&&!after.includes('g150'),before+'->'+after.length);setC('Haas NGC');
+  // control not set: control-only jobs hidden
+  w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);E("S.m[S.cur].s=S.m[S.cur].s.filter(x=>x.k!='Control');save()");w.tab('new');const nc=ops();log('no control set: Haas-only / Fanuc-only jobs hidden + hint',!nc.includes('g150')&&!nc.includes('dwo')&&/set Control/.test(d.querySelector('#jpbox').textContent));
+  log('help topic pickjob',E("HELP.some(h=>h[0]=='pickjob')"));log('sw cache mc-v45',true);
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>

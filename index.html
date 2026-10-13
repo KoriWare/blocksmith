@@ -3745,4 +3745,71 @@ const _calc39=calc;calc=function(){_calc39();const d=document.createElement('div
  const ro=()=>{const r=oee39(+$('#o1').value,+$('#o2').value,+$('#o3').value/60,+$('#o4').value,+$('#o5').value);$('#o6').innerHTML=r?`Availability ${pc(r.A)} · Performance ${pc(r.P)} · Quality ${pc(r.Q)}<br><b>OEE ${pc(r.O)}</b>${r.raw>1?'<br><span style="color:#ff9f1a">⚠ performance over 100% — check the ideal cycle time</span>':''}`:'Check the numbers: run time must be more than 0, good ≤ total.'};
  ['q1','q2','q3','q4'].forEach(k=>$('#'+k).oninput=rq);['o1','o2','o3','o4','o5'].forEach(k=>$('#'+k).oninput=ro);rq();ro()};
 </script>
+<script>
+// ---- Round 40 · preset job picker: categorized, alphabetical, only jobs this machine can run (refused / unsupported jobs hidden)
+const JCAT={
+ 'Probing':'pbore psurf pweb ppocket lprobe pboss corner rotp a4p rotcl ppos pcal g31z lpcal lzset lpwear',
+ 'Quality':'insp ppcd pstock pdist pnth spcavg drift lgrw lcbore rprep fa nstop',
+ 'Tool setting':'tlen tdia tsman tsauto ltset lbrk life hlife atmlife awear lawear lfb rpmg ttype tlog',
+ 'Drilling / Patterns':'bolt grid index peck2 cbpat hcham hpat mdipat bback ldrill cdrill cface',
+ 'Milling':'face cpock cboss rpock slot hbore keyway troch sphcap ellip polyb g150 plunge peel rollin crest hsm',
+ 'Turning':'lturn lface lgroove lpeck ltaper mgroove g71 g72 lg73 lg74 lg75 swiss xcpock yflat poly ~lc:g71 ~nt0 ~nt1 ~sw0 ~sw1 ~lc:m98',
+ 'Threading':'thmill lthread cbthr ~lc:g76',
+ '5-axis':'tp32 tpdrill rcchk runw tcpc dwo g268 pivchk',
+ 'Setup aids':'mvise family wocopy tomb offexp offimp alias sstart lstart shome lhome verdet',
+ 'Safety / Interlocks':'ppres pflag waitin pulse coolchk rmguard fhlock fixid sload lload',
+ 'Automation':'barloop palloop pcatch subxfer pkchk cochk barlast swbar sweject swmulti robot pallet',
+ 'Production':'ctr lotc ctime eos shiftrep maint axload warm idlew swwarm',
+ 'Engraving':'engrave ~en0 ~en1 serial datec g47w',
+ 'Risky':'knurlx splm19 kwbro splbro hob hexg32'};
+// built-in (non-J2) jobs: [machine kind, sample text]
+const JB={bolt:['mill','G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1'],grid:['mill','G54 T2 3 x 4 grid 0.75 spacing start x0 y0 z0 0 0.4 deep drill'],face:['mill','G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 70 z0 0'],
+ index:['mill','G54 T2 index 4 faces hole x1.0 y0 z0 0.75 0.3 deep drill'],pbore:['mill','G54 T20 probe bore 2.0 dia center x0 y0 probe z -0.25 tip 0.157 write to g55'],
+ psurf:['mill','G54 T20 probe surface z'],pweb:['mill','G54 T20 probe web 1.0 wide center x0 y0'],ppocket:['mill','G54 T20 probe pocket 2.0 x 1.0 center x0 y0'],tlen:['mill','check tool length tool 8'],
+ lturn:['lnosw','G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0 chamfer 0.03'],lface:['lnosw','G54 T1 face 0.05 off 2.0 bar z0 0'],lgroove:['lnosw','G54 T3 groove 0.25 wide 0.1 deep at z-1.0 2.0 bar insert 0.125 z0 0'],
+ ldrill:['lnosw','G54 T5 center drill 0.5 deep peck 0.1 z0 0'],lprobe:['lnosw','G54 lathe probe od 1.0 dia at z-0.5 write wear 1'],
+ swiss:['sw','G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 flat 0.05 deep 0.3 long cross drill 0.125 at z-0.55 0.15 deep center drill 0.1 deep part off 0.062'],engrave:['both',null]};
+// samples / editor examples (kept from the old buttons)
+const JX={'~lc:g71':['lathe','G71/G70 cycle (sample into editor)',()=>lcyc('g71')],'~lc:g76':['lathe','G76 thread (sample into editor)',()=>lcyc('g76')],'~lc:m98':['lathe','M98 + G66 (sample into editor)',()=>lcyc('m98')],
+ '~nt0':['nt','Multitask sample',()=>ex('G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 flat 0.08 deep 0.5 long cross drill 0.25 at z-1.0 0.2 deep center drill 0.2 deep part off 0.125')],
+ '~nt1':['nt','Turn + transfer',()=>ex('G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 part off 0.125')],
+ '~sw0':['swo','Combined sample',()=>ex('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 flat 0.05 deep 0.3 long cross drill 0.125 at z-0.55 0.15 deep center drill 0.1 deep part off 0.062')],
+ '~sw1':['swo','Turn + part-off',()=>ex('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 part off 0.062')],
+ '~en0':['both','Engrave shaft',()=>exE(0)],'~en1':['both','Text in a circle',()=>exE(1)]};
+// control-only jobs (documented refusals in their block / refuse)
+const JHAAS=new Set('hlife g47w g150 hpat coolchk rmguard verdet shiftrep rpmg ttype pallet axload atmlife dwo g268'.split(' ')),JFAN=new Set('pkchk hob hexg32 lzset fixid'.split(' '));
+const JNEED={index:'ax4',a4p:'ax4',rotcl:'ax4',g47w:'ax4',cface:'live',cdrill:'live',xcpock:'live',poly:'live',kwbro:'live',splbro:'live',hob:'live',lcbore:'live',yflat:'y',subxfer:'sub',pkchk:'sub'};
+const JNEEDL={ax4:'4th axis',live:'live tool + C axis',y:'Y axis',sub:'sub-spindle'};
+function mHas(k){const m=S.m[S.cur]||{},t=(m.name||'')+' '+(m.type||''),o=m.opt||{},sub=String((sv('Sub spindle')||{v:''}).v);
+ if(k=='ax4')return !!o.ax4||is5()||/4th|horizontal|hmc/i.test(t);
+ if(k=='live')return !!(o.live||o.cax)||/live|multitask|swiss|integrex|nakamura/i.test(t);
+ if(k=='y')return !!o.yax||/multitask|integrex|nakamura/i.test(t);
+ if(k=='sub')return /sub-?spindle|multitask|integrex|nakamura/i.test(t)||/^y/i.test(sub);return true}
+function jKind(op){if(JX[op])return JX[op][0];if(JB[op])return JB[op][0];const s=J2[op];if(!s)return null;if(s.m)return s.m;if(typeof R35!='undefined'&&R35.includes(op))return'five';if(s.swiss)return'swonly';return s.lathe?'lathe':'mill'}
+function jAvail(op){const k=jKind(op),L=isL(),sw=isSwM(S.m[S.cur]),c=ctrlKey();if(!k)return false;
+ const ok={mill:!L,lathe:L,lnosw:L&&!isSw(),both:true,five:is5(),sw:isSw(),swo:isSw()&&!isNT(),nt:isNT(),swonly:L&&sw}[k];if(!ok)return false;
+ if(JNEED[op]&&!mHas(JNEED[op]))return false;
+ if(JHAAS.has(op)&&c!='haas')return false;if(JFAN.has(op)&&c!='fanuc0i')return false;
+ const s=J2[op];if(s&&s.refuse&&c){try{if(s.refuse({op,p:{},lathe:L,text:''}))return false}catch(e){}}return true}
+const jName=op=>JX[op]?JX[op][1]:String(OPN[op]||op);
+function jLabel(op){let n=jName(op);try{if(J2[op]&&thinFor(S.m[S.cur]||{},op).length)n+=' (amber: verify)'}catch(e){}return n}
+function jCats(){const out=[];Object.keys(JCAT).sort((a,b)=>a.localeCompare(b)).forEach(c=>{const l=JCAT[c].split(' ').filter(jAvail).sort((a,b)=>jName(a).replace(/^⚠\s*/,'').localeCompare(jName(b).replace(/^⚠\s*/,''),undefined,{sensitivity:'base'}));if(l.length)out.push([c,l])});return out}
+function pickerHTML(){const cs=jCats(),n=cs.reduce((a,c)=>a+c[1].length,0),m=S.m[S.cur]||{name:'?'},cur=J&&J.op;
+ return `<label for="jpick" class="s" style="display:block;width:100%">Preset job · ${n} for <b>${esc(m.name)}</b>${ctrlKey()?'':' · set Control to see Haas-only / Fanuc-only jobs'}</label><select id="jpick" aria-label="Preset job" style="width:100%;min-height:44px" onchange="pickJob(this.value)"><option value="">Choose a job…</option>${cs.map(([c,l])=>`<optgroup label="${c}">${l.map(op=>`<option value="${op}"${op==cur?' selected':''}>${esc(jLabel(op))}</option>`).join('')}</optgroup>`).join('')}</select>`}
+function pickJob(op){if(!op)return;if(!jAvail(op))return;if(JX[op])return JX[op][2]();if(JB[op]){if(op=='engrave')return exE(0);$('#q').value=JB[op][1];const pb=(isL()?parseL:parse)(JB[op][1]);if(pb&&pb.op!=op&&isL()){const j=req(_parseL28(JB[op][1]));if(j&&j.op==op){J={...j,date:Date.now(),edits:{}};show();return}}return go()}
+ const nm=jName(op).replace(/^⚠\s*/,'').replace(/\s*\([^)]*\)/g,'').trim(),q=$('#q');q.value=nm;const pj=(isL()?parseL:parse)(nm);if(pj&&pj.op==op){go();return}
+ const j=req(parseJ2(nm.replace(/\d/g,' '),op));j.text=nm;J={...j,date:Date.now(),edits:{}};show();const s=$('#jpick');if(s)s.value=op}
+let pickSig='';const pSig=()=>{const m=S.m[S.cur]||{};return [S.cur,m.name,m.type,JSON.stringify(m.opt||{}),ctrlKey(),String((sv('Sub spindle')||{v:''}).v)].join('|')};
+const _nw40=nw;nw=function(){_nw40.apply(this,arguments);const q=$('#q');if(!q)return;
+ const row=[...V.querySelectorAll('.row')].find(r=>r.querySelector('button.chip[onclick^="ex("],button.chip[onclick^="lcyc("],button.chip[onclick^="exE("]'));
+ const box=document.createElement('div');box.id='jpbox';box.style.margin='6px 0 0';
+ let note='';if(J&&J.op&&(J2[J.op]||JB[J.op])&&!jAvail(J.op)){note=`<div class="ok bad" id="jpnote" style="margin-top:6px">“${esc(jName(J.op))}” isn't available on ${esc((S.m[S.cur]||{name:'this machine'}).name)} — cleared. Pick another job.</div>`;J=null;q.value='';const o=$('#out');if(o)o.innerHTML='';const us=$('#us');if(us)us.innerHTML=''}
+ box.innerHTML=pickerHTML()+note;if(row)row.replaceWith(box);else q.after(box);pickSig=pSig()};
+// live update when the machine changes while the job page is open
+setInterval(()=>{if($('#jpick')&&pSig()!=pickSig)nw()},700);
+HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='build')+1),0,['pickjob','Picking a preset job',()=>`<p>On <b>New job</b>, the <b>Preset job</b> list groups jobs by category (Automation, Drilling / Patterns, Engraving, Milling, Probing, Quality, Risky…). Categories and the jobs inside each are in A–Z order.</p><p>It shows <b>only jobs your selected machine can run</b>: mill, lathe, 5-axis or Swiss / multitask, the Control (Haas or Fanuc 0i) and options such as 4th axis, live tool + C axis, Y axis and sub-spindle (ticked in Options or named in the preset). Jobs the app refuses for that control are hidden, not shown greyed. If Control is not set yet, Haas-only and Fanuc-only jobs stay hidden.</p><p>The list updates as soon as you switch machines. If the job you had open can't run on the new machine, it is cleared with a short note.</p><p><b>⚠</b> = HIGH-risk job (typed risk confirm). <b>(amber: verify)</b> = a thin-source hint applies — verify it on your machine. Picking a job only fills the job; red values still need you. You can still type a job in your own words in the box.</p>`]);
+// batch check timing reads J; with no open job (e.g. cleared after a machine change) use an empty one
+const _time40=time;time=function(m,rr){if(J)return _time40(m,rr);J={p:{},lathe:isL()};try{return _time40(m,rr)}finally{J=null}};
+const _ct40=curTopic;curTopic=function(){const t=_ct40();return t=='build'&&$('#jpick')&&!J?'pickjob':t};
+</script>
 </body></html>

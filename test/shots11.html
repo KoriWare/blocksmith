@@ -1,0 +1,11 @@
+<!doctype html><body style="margin:0;background:#111"><iframe id="f" src="../index.html?v=48" style="width:390px;height:844px;border:0"></iframe><script>
+let first=1;const q=new URLSearchParams(location.search),v=q.get('v');
+const M={mill:['Haas VF-style VMC (generic)','Vertical mills','Haas NGC'],lathe:['Common Fanuc lathe (generic)','Lathes','Fanuc 0i'],five:['Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills','Haas NGC'],swiss:['Tsugami Swiss-type (generic)','Swiss-type','Fanuc 0i']};
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
+ setTimeout(()=>{const E=x=>w.eval(x),D=f.contentDocument;E('NOASK=1');
+  if(v=='help'){w.help();setTimeout(()=>{D.querySelectorAll('#hl details').forEach(x=>x.open=false);const d=[...D.querySelectorAll('#hl details')].find(x=>/Picking a preset job/.test(x.textContent));d.open=true;D.scrollingElement.scrollTop=d.getBoundingClientRect().top+D.scrollingElement.scrollTop-80},300);return}
+  const [n,g,c]=M[q.get('m')];w.pick(n,g);w.cur(E('S.m.length')-1);E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k=='Control');if(!x){x={k:'Control'};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(c)};x.st='user';save()})()`);w.tab('new');
+  if(v=='clear'){w.cur(0);w.pickJob('bolt');w.cur(E('S.m.length')-1);return}
+  if(v=='open'){const s=D.querySelector('#jpick');s.size=16;s.style.height='auto';s.scrollIntoView();if(q.get('g')){const og=[...s.querySelectorAll('optgroup')].find(o=>o.label==q.get('g'));og.firstElementChild.selected=true;s.scrollTop=og.offsetTop-4;}}
+ },1500)};
+</script></body>
