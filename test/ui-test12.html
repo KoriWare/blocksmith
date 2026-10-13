@@ -1,4 +1,4 @@
-<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=21" style="width:390px;height:844px"></iframe><script>
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=22" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
  setTimeout(()=>{const d=w.document,E=x=>w.eval(x);try{
@@ -10,7 +10,11 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   r=I(E('LCYC.g76'));const th=r.moves.filter(m=>m.th&&!m.r);log('G76 thread passes: '+th.length,th.length>=5&&!r.err);
   log('G76 final depth at minor Ø',Math.abs(Math.min(...th.map(m=>m.b[0]))*2-0.9188)<1e-3);
   r=I(E('LCYC.m98'));log('M98 sub runs (face to X-0.03)',!r.err&&r.moves.some(m=>Math.abs(m.b[0]+0.015)<1e-6));
-  log('G66 modal call dips at both points, not after G67',r.moves.filter(m=>!m.r&&Math.abs(m.b[0]-0.45)<1e-6).length==2);
+  log('G66 fires after the 2 cutting moves only (not the rapid)',r.moves.filter(m=>!m.r&&Math.abs(m.b[0]-0.45)<1e-6).length==2);
+  const arc='O1\nG00 X1.2 Z0.1\nG71 U0.05 R0.01\nG71 P10 Q20 U0 W0 F0.01\nN10 G00 X0.4\nG01 Z0\nG03 X1.0 Z-0.3 R0.3\nG01 Z-0.8\nN20 X1.2\nG70 P10 Q20\nM30';r=I(arc);
+  const fin=r.moves.filter(m=>!m.r&&m.b[2]<-0.01&&m.b[2]>-0.29&&m.b[0]>0.21&&m.b[0]<0.5);const onArc=fin.filter(m=>Math.abs(Math.hypot(m.b[0]-0.2,m.b[2]+0.3)-0.3)<2e-3);
+  log('G71/G70 arc: finish follows true arc ('+onArc.length+' pts)',!r.err&&onArc.length>=8);
+  const rough=r.moves.filter(m=>!m.r&&Math.abs(m.a[0]-m.b[0])<1e-9&&m.b[2]<m.a[2]&&m.b[0]<0.5&&m.b[0]>0.2);log('G71 arc: roughing stops at the arc',rough.length>0&&rough.every(m=>Math.hypot(m.b[0]-0.2,m.b[2]+0.3)>=0.3-0.01));
   w.lcyc('g71');let cl=d.querySelector('#cl').textContent;log('checker: G71 two-block + P/Q exist',/✅ G71 has two blocks/.test(cl)&&/✅ G70\/G71 P and Q/.test(cl));
   w.lcyc('m98');cl=d.querySelector('#cl').textContent;log('checker: M98 sub exists, G66 cancelled',/✅ M98 subprograms exist/.test(cl)&&/✅ G66 modal call is cancelled/.test(cl));
   w.ex('G54 lathe probe od 1.0 dia at z-0.5 write wear 1');let t=E("txt().join('\\n')");

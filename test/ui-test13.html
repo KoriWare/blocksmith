@@ -1,4 +1,4 @@
-<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=21" style="width:390px;height:844px"></iframe><script>
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=22" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
  setTimeout(()=>{const d=w.document,E=x=>w.eval(x);try{
@@ -10,7 +10,7 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   log('Fanuc: #300 flagged out of range',has(/All #variables valid for Fanuc 0i: #300/,false));
   log('Fanuc: #100-#199 not retained warning',has(/clears #100–#199/,false));
   log('Fanuc: dwell P with decimal flagged',has(/P1\.5 has a decimal/,false));
-  log('Fanuc: nest depth 6 > 5 flagged',has(/nesting 6 deep \(Fanuc 0i limit 5\)/,false));
+  log('Fanuc: nest depth 6 > 5 flagged',has(/nesting \(G65\/G66\/M98\) 6 deep \(Fanuc 0i limit 5\)/,false));
   c=CK('O1\nG71 U0.06 R0.02\nG71 P10 Q20 U0.02 W0.005 F0.01\nM30');log('Fanuc: two-block G71 ok',has(/Fanuc 0i uses two-block G71/,true));
   setC('Haas NGC');c=CK('O1\nG71 U0.06 R0.02\nG71 P10 Q20 U0.02 W0.005 F0.01\n#709=1\n#5061=2\nG65 P9000 A1 B2.\nG04 P10\nM30\nO9000\nM99');
   log('Haas: two-block G71 flagged',has(/Haas uses one-block G71/,false));log('Haas: #709 forbidden flagged',has(/#709/,false));
