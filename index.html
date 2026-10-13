@@ -315,7 +315,7 @@ function alarmPreview(){const t=txt(),out=[];t.forEach((l,i)=>{const m=l.match(/
  const a=J.run&&J.run.alarms[0];return `<div class="t">Alarm preview</div>${out.join('')}<div class="s" style="margin-top:6px">This run: ${a?'<span style="color:#ff8a8a">stops at alarm '+a.n+' (line '+(a.l+1)+')</span>':'no alarm fires ✓'}</div>`}
 // ---------- view: fit / pan / zoom
 function vw(k){if(k=='top')view.rx=0,view.rz=0;if(k=='front')view.rx=-Math.PI/2,view.rz=0;if(k=='iso')view.rx=-0.9,view.rz=-0.6;if(k=='iso2')view.rx=-1.2,view.rz=0.9;view.px=0;view.py=0;
- const st=J.stock,M=J.M||J.moves;view.c=[(st[0]+st[3])/2,(st[1]+st[4])/2,(st[2]+st[5])/2];view.s=Math.min(cv.clientWidth,300)*0.75/Math.max(st[3]-st[0],st[4]-st[1],st[5]-st[2],2.5);
+ const st=J.stock,M=J.M||J.moves;view.c=[(st[0]+st[3])/2,(st[1]+st[4])/2,(st[2]+st[5])/2];view.s=Math.min(cv.clientWidth,300)*0.8/Math.max(Math.hypot(st[3]-st[0],st[4]-st[1],st[5]-st[2])*(J.rot||(!J.lathe&&rotAx())?1.35:1),2.5);
  if(J.lathe){let z0=st[2],z1=st[5],r1=J.lb.R;M.forEach(m=>[m.a,m.b].forEach(p=>{z0=Math.min(z0,p[2]);z1=Math.max(z1,p[2]);r1=Math.max(r1,p[0])}));z1+=0.25;z0-=0.15;r1+=0.8;const r0=-0.15;
   view.fs=Math.min((cv.clientWidth-20)/(z1-z0),270/(r1-r0));view.fz=z1;view.fz0=z0;view.fr=r1;view.fx=10+((cv.clientWidth-20)-(z1-z0)*view.fs)/2}draw()}
 function P(p){if(J.lathe&&!view.rev)return[view.fx+(p[2]-view.fz0)*view.fs+view.px,15+(view.fr-p[0])*view.fs+view.py];
