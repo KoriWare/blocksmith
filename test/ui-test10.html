@@ -1,0 +1,15 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=12" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
+ setTimeout(()=>{const d=w.document,E=x=>w.eval(x);try{
+  w.addM();log('Swiss presets listed + not affiliated',/Tsugami Swiss-type \(generic\)/.test(d.body.textContent)&&/Not affiliated/.test(d.body.textContent));
+  w.pick('Generic Swiss-type','Swiss-type');const m=E('S.m.at(-1)');log('swiss red confirms',['Control','Guide bushing','C-axis','Live tools','Sub spindle','Max RPM (G50)','Diameter mode'].every(k=>m.s.find(x=>x.k==k).st=='confirm'));
+  E('S.cur=S.m.length-1');w.tab('new');log('swiss example buttons',/Combined sample/.test(d.body.textContent));
+  w.ex('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 flat 0.05 deep 0.3 long cross drill 0.125 at z-0.55 0.15 deep center drill 0.1 deep part off 0.062');
+  const t=E("txt().join('\\n')");log('code has segments, C index, live M-code, part-off',/O9500/.test(t)&&/C180\./.test(t)&&/M51 S3000/.test(t)&&/PART OFF/.test(t)&&/T0505/.test(t));
+  log('sim runs, no error',!E('J.run.err')&&E('J.M.length')>20);log('flat uses Y moves',E('J.M.some(m=>Math.abs(m.b[1])>0.1)'));
+  const cl=d.querySelector('#cl').textContent;log('checks: bushing reach, C/live, part-off last',/✅ Turning segments within bushing reach/.test(cl)&&/❌ C-axis confirmed/.test(cl)&&/✅ Part-off is the last cut/.test(cl));
+  log('cycle time shown',/Cycle time about \d+:\d\d/.test(d.querySelector('#info').textContent));
+  w.ex('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 cross drill 0.125');log('cross drill missing Z/depth -> need card',/Need 2 more/.test(d.body.textContent));
+ }catch(e){out.push('ERROR '+e.message+' '+(e.stack||'').split('\n')[1])}o.textContent=out.join('\n')},800)};
+</script></body>
