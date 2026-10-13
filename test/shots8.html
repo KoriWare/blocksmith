@@ -1,0 +1,8 @@
+<!doctype html><body style="margin:0;background:#111"><iframe id="f" src="../index.html?v=28" style="width:390px;height:844px;border:0"></iframe><script>
+let first=1;const q=new URLSearchParams(location.search),k=q.get('k'),vw=q.get('v')||'build';
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
+ setTimeout(()=>{const E=x=>w.eval(x);E('NOASK=1');w.confirm=()=>true;const M={vmc:['Generic 3-axis VMC','Vertical mills'],ax4:['Generic VMC w/ 4th axis','Vertical mills'],nt:['Nakamura-Tome multitasking lathe (generic)','Multitasking lathes'],sw:['Generic Swiss-type','Swiss-type']}[q.get('m')];
+  w.pick(...M);E('S.cur=S.m.length-1');w.tab('new');if(k=='need')w.ex('engrave lettering on a round shaft');else w.exE(+k);
+  setTimeout(()=>{const D=f.contentDocument;if(vw=='sim'){w.tab('sim');setTimeout(()=>{if(q.get('m')=='nt'||q.get('m')=='sw'){}w.scrub(Math.floor(E('J.M.length')*0.8));w.zoom(1.6);D.scrollingElement.scrollTop=D.querySelector('#cv').getBoundingClientRect().top+D.scrollingElement.scrollTop-60},500)}
+   else{const p=D.querySelector('#eprev')||D.querySelector('#out');D.scrollingElement.scrollTop=p.getBoundingClientRect().top+D.scrollingElement.scrollTop-(k=='need'?60:330)}},600)},1200)};
+</script></body>

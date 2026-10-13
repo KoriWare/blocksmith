@@ -1428,4 +1428,204 @@ if(/[?&]debug=1\b/.test(location.search)){
 let H=decodeURIComponent(location.hash.slice(1));if(H.startsWith('more:')){const f=H.slice(5);({tools,calc,snips,about,more,reference,compare,batch,data,scanner:()=>scanner('O1234\nG17 G20 G90 G54.1 P2\nG43 H1 Z1.\nG96 S400\nG71 U0.05 R0.02\nG81 X1 Y1 Z-0.5 R0.1 F8\nG12.1\nM30')})[f]();H=''}else if(H.startsWith('edit:')){H=H.slice(5);window.__edit=1}if(H.startsWith('L:')){S.cur=S.m.findIndex(m=>isLT(m.type));H=H.slice(2)}if(H=='presets')addM();else if(H=='recent'){tab('new');ex('6 hole bolt circle 3.0 dia 0.5 deep');saveJob()}else if(H){tab('new');ex(H);if(window.__edit&&J&&J.code){J.code.forEach((l,i)=>{if(l=='#102=#7/2*COS[#101]')J.edits[i]='#102=#7*COS[#101]';if(l=='G01 Z-#26 F#9'&&J.lathe)J.edits[i]='G01 Z[-#26+1.0] F#9'});show()}const q=new URLSearchParams(location.search);if(q.has('opt')&&J){const m=S.m[S.cur];m.opt.ax4=1;m.opt.rigid=1;show()}if(q.has('teach')&&J&&J.code){J.teach=1;show();const e=[...V.querySelectorAll('.ln')].find(e=>/^G65/.test(e.textContent));e.click();e.classList.add('cur')}if(q.has('cw')&&J){window.confirm=()=>true;ed('Confirm write');if(J.M)scrub(Math.floor(J.M.length*.4))}if(J&&J.M){if(q.has('rev'))rev();if(q.has('n'))scrub(Math.floor(J.M.length*+q.get('n')));if(q.has('sheet'))sheet();}}
 
 }
+// ===== Round 23: Engrave job (own single-stroke font, shaft wrap / flat / face / text in a circle)
+// Font: our own single-stroke design on a 4 wide x 6 tall grid. Each glyph = strokes separated by '|', points 'x,y' separated by ' '.
+const EFONT={A:'0,0 2,6 4,0|0.7,2 3.3,2',B:'0,0 0,6 3,6 4,5 4,4 3,3 0,3|3,3 4,2 4,1 3,0 0,0',C:'4,5 3,6 1,6 0,5 0,1 1,0 3,0 4,1',D:'0,0 0,6 2.5,6 4,4.5 4,1.5 2.5,0 0,0',E:'4,6 0,6 0,0 4,0|0,3 3,3',F:'4,6 0,6 0,0|0,3 3,3',G:'4,5 3,6 1,6 0,5 0,1 1,0 3,0 4,1 4,3 2,3',H:'0,0 0,6|4,0 4,6|0,3 4,3',I:'1,6 3,6|2,6 2,0|1,0 3,0',J:'4,6 4,1 3,0 1,0 0,1',K:'0,0 0,6|4,6 0,2|1.3,3.3 4,0',L:'0,6 0,0 4,0',M:'0,0 0,6 2,3 4,6 4,0',N:'0,0 0,6 4,0 4,6',O:'1,0 0,1 0,5 1,6 3,6 4,5 4,1 3,0 1,0',P:'0,0 0,6 3,6 4,5 4,4 3,3 0,3',Q:'1,0 0,1 0,5 1,6 3,6 4,5 4,1 3,0 1,0|2.5,1.5 4,0',R:'0,0 0,6 3,6 4,5 4,4 3,3 0,3|2,3 4,0',S:'4,5 3,6 1,6 0,5 0,4 1,3 3,3 4,2 4,1 3,0 1,0 0,1',T:'0,6 4,6|2,6 2,0',U:'0,6 0,1 1,0 3,0 4,1 4,6',V:'0,6 2,0 4,6',W:'0,6 1,0 2,4 3,0 4,6',X:'0,0 4,6|0,6 4,0',Y:'0,6 2,3 4,6|2,3 2,0',Z:'0,6 4,6 0,0 4,0',
+'0':'1,0 0,1 0,5 1,6 3,6 4,5 4,1 3,0 1,0|0.5,0.5 3.5,5.5','1':'1,5 2,6 2,0|1,0 3,0','2':'0,5 1,6 3,6 4,5 4,4 0,0 4,0','3':'0,5 1,6 3,6 4,5 4,4 3,3 4,2 4,1 3,0 1,0 0,1|1.5,3 3,3','4':'3,0 3,6 0,2 4,2','5':'4,6 0,6 0,3.5 3,3.5 4,2.5 4,1 3,0 0,0','6':'3.5,6 1.5,6 0,4.5 0,1 1,0 3,0 4,1 4,2.5 3,3.5 0,3.5','7':'0,6 4,6 1.5,0','8':'1,3 0,4 0,5 1,6 3,6 4,5 4,4 3,3 1,3 0,2 0,1 1,0 3,0 4,1 4,2 3,3','9':'0.5,0 2.5,0 4,1.5 4,5 3,6 1,6 0,5 0,3.5 1,2.5 4,2.5',
+'-':'0.8,3 3.2,3','.':'1.8,0 2.2,0 2.2,0.4 1.8,0.4 1.8,0',',':'2.2,0.4 2.2,0 1.6,-1','/':'0.5,0 3.5,6',':':'2,1 2,1.4|2,4 2,4.4','#':'1,0 1.5,6|2.5,0 3,6|0,2 4,2|0,4 4,4','+':'2,1 2,5|0,3 4,3','&':'4,0 1,5 1.5,6 2.5,6 3,5 0,2 0,1 1,0 2.5,0 4,2','(':'2.5,6 1.5,4.5 1.5,1.5 2.5,0',')':'1.5,6 2.5,4.5 2.5,1.5 1.5,0',"'":'2,6 2,4.5','"':'1.4,6 1.4,4.5|2.6,6 2.6,4.5','!':'2,6 2,1.5|2,0.2 2,0',' ':''};
+function eGlyphs(t){return [...String(t).toUpperCase()].map(c=>EFONT[c]??null)}
+function eBad(t){return [...String(t||'').toUpperCase()].filter(c=>EFONT[c]==null)}
+// local text strokes: x along baseline from 0..W, y up from baseline 0..H
+function eLayout(text,H,gap){const s=H/6,out=[];let x=0;const g=eGlyphs(text);g.forEach((d,i)=>{if(d)d.split('|').filter(Boolean).forEach(st=>out.push(st.split(' ').map(p=>{const [a,b]=p.split(',').map(Number);return[x+a*s,b*s]})));x+=4*s+(i<g.length-1?gap:0)});return{strokes:out,W:x}}
+const ER=d=>d*Math.PI/180,ED=r=>r*180/Math.PI;
+const EV=k=>{const x=J&&J.p[k];return x?x.v:undefined};
+function eKind(j){j=j||J;return j.emode}
+// method by machine
+function eMeth(j){j=j||J;const m=S.m[S.cur]||{};if(j.lathe){return j.emode=='shaft'?'lwrap':'lface'}if(j.emode=='shaft')return opt('ax4')?'awrap':'flat';return'mface'}
+const EMN={flat:'Flat on top of the shaft (3-axis, Z follows the curve)',awrap:'Wrapped around the 4th (A) axis',lwrap:'Wrapped around C on the OD (live tool)',lface:'On the part face with X/C (live tool)',mface:'On a flat face (XY)'};
+function eYes(k){const x=sv(k);return !!(x&&x.st=='user'&&/^\s*(yes|y|on|1|true)/i.test(String(x.v)))}
+function eLatheOK(){const m=S.m[S.cur]||{};return isSw()||isNT()||(m.opt&&m.opt.live&&m.opt.cax)}
+function eTool(){const n=EV('Tool');return S.tools.find(t=>t.n==n)}
+function eWidth(t,d){if(!t)return null;if(t.ang>0)return (t.tip||0)+2*d*Math.tan(ER(t.ang/2));return t.tip||t.dia||null}
+// all text points in surface coords. returns {strokes:[[{...machine coords}]], W, sa:[min,max], ...}
+function eGeom(j){j=j||J;const p=k=>{const x=j.p[k];return x?x.v:undefined};const H=p('Letter height'),gap=p('Letter spacing')??H*0.25,mir=/^Y/i.test(p('Mirror')||''),meth=eMeth(j);
+ const L=eLayout(p('Text')||'',H,gap),W=L.W;let st=L.strokes.map(s=>s.map(([x,y])=>[mir?W-x:x,y]));
+ const sub=(s)=>{const o=[s[0]];for(let i=1;i<s.length;i++){const a=s[i-1],b=s[i],n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/(H/8)));for(let k=1;k<=n;k++)o.push([a[0]+(b[0]-a[0])*k/n,a[1]+(b[1]-a[1])*k/n])}return o};
+ st=st.map(sub);const g={W,H,meth,mir};
+ if(j.emode=='circle'){const Rc=p('Arc radius'),cx=p('Arc center X'),cy=p('Arc center Y'),cw=/^CW/i.test(p('Direction')||''),out=!/^IN/i.test(p('Placement')||''),dir=cw?-1:1;let a0=p('Start angle');if(/^C/i.test(p('Angle is')||''))a0=a0-dir*ED(W/2/Rc);
+  g.span=ED(W/Rc);g.Rc=Rc;g.cx=cx;g.cy=cy;g.dir=dir;g.out=out;g.a0=a0;
+  // reading along +dir; tops out: r=Rc+y; tops in: r=Rc-y. Viewed from +Z, CW+outside and CCW+inside read normally.
+  g.uv=st.map(s=>s.map(([x,y])=>{const f=ER(a0)+dir*x/Rc,r=out?Rc+y:Rc-y;return[cx+r*Math.cos(f),cy+r*Math.sin(f)]}));
+  g.norm=(cw==out)?'reads normally from the front (+Z view)':'reads mirrored-looking from the front - pick the other direction or Mirror if that is not what you want';return g}
+ const th=ER(p('Baseline rotation')||0),c=Math.cos(th),s=Math.sin(th);st=st.map(q=>q.map(([x,y])=>[x*c-y*s,x*s+y*c]));g.rot=p('Baseline rotation')||0;
+ if(j.emode=='face'){const tx=p('Text start X'),ty=p('Text start Y');g.uv=st.map(q=>q.map(([u,v])=>[tx+u,ty+v]));return g}
+ // shaft: surface (ax, arc)
+ const along=/^AL/i.test(p('Reading')||'');let sa=st.map(q=>q.map(([u,v])=>along?[u,v]:[v,u]));const arcs=sa.flat().map(q=>q[1]);const amin=Math.min(...arcs),amax=Math.max(...arcs);
+ const R=p('Shaft Ø')/2;let a0=ER(p('Start angle')||0)*R;if(/^C/i.test(p('Angle is')||''))a0-= (amin+amax)/2;else a0-=amin;
+ const ax0=p('Start along axis');g.R=R;g.arcSpan=amax-amin;g.along=along;
+ g.uv=sa.map(q=>q.map(([a,b])=>[a,b+a0]));g.ax0=ax0;return g}
+// direction words for "up" and "reads toward"
+function eOrient(j){j=j||J;const g=eGeom(j);const meth=g.meth;if(j.emode=='circle')return `Letters are turned tangent to the circle, tops facing ${g.out?'out (away from the center)':'in (toward the center)'}, text runs ${g.dir<0?'clockwise':'counter-clockwise'} seen from +Z (looking at the face), spacing measured along the arc. It ${g.norm}.`;
+ const th=ER(g.rot),r=[Math.cos(th),Math.sin(th)],u=[-Math.sin(th),Math.cos(th)];if(g.mir)r[0]=-r[0],r[1]=-r[1];
+ const nm=(v)=>{const f=([a,b])=>j.emode=='face'?[a,b]:g.along?[a,b]:[b,a];const [a,b]=f(v);const big=Math.abs(a)>=Math.abs(b);
+  if(j.emode=='face')return big?(a>0?'+X':'−X'):(b>0?'+Y':'−Y');
+  if(big){if(meth=='lwrap')return a>0?'−Z (toward the chuck)':'+Z (toward the face)';return a>0?'+X (along the shaft)':'−X (along the shaft)'}
+  const ax=meth=='lwrap'?'C':meth=='awrap'?'A':'Y';return (b>0?'+':'−')+ax+(meth=='flat'?' (across the top)':' (around the shaft)')};
+ return `Text reads toward ${nm(r)}. Tops of the letters point toward ${nm(u)}.${g.mir?' Mirrored (reads backward, as in a stamp or mold).':''} ${j.emode=='face'?'Seen from +Z looking down on the work offset.':meth=='lwrap'?'Seen from outside the bar; C0 is the machine C zero — the text starts/centers at the C angle you gave.':'Seen from above (+Z); angle 0° = straight up on top of the shaft, A rotates about X.'}`}
+// tiny live preview (SVG) of how the text will read on the part
+function ePreview(j){j=j||J;let g;try{g=eGeom(j)}catch(e){return''}if(!g.uv||!g.uv.length)return'';const P=g.uv.flat();let xs=P.map(p=>p[0]),ys=P.map(p=>p[1]);
+ if(j.emode=='circle'){xs.push(g.cx-g.Rc,g.cx+g.Rc);ys.push(g.cy-g.Rc,g.cy+g.Rc)}
+ const flipX=g.meth=='lwrap';const X=p=>flipX?-p:p;xs=xs.map(X);const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),sp=Math.max(x1-x0,y1-y0,1e-3),k=200/sp,w=(x1-x0)*k+40,h=(y1-y0)*k+40;
+ const T=p=>[(X(p[0])-x0)*k+20,(y1-p[1])*k+20];let s=`<svg viewBox="0 0 ${w.toFixed(0)} ${h.toFixed(0)}" style="width:100%;max-height:170px;background:#0b1620;border-radius:8px">`;
+ if(j.emode=='circle'){const c=T([g.cx,g.cy]);s+=`<circle cx="${c[0]}" cy="${c[1]}" r="${g.Rc*k}" fill="none" stroke="#456" stroke-dasharray="4 4"/><circle cx="${c[0]}" cy="${c[1]}" r="2" fill="#888"/>`}
+ s+=g.uv.map(q=>`<polyline fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" points="${q.map(p=>T(p).map(v=>v.toFixed(1)).join(',')).join(' ')}"/>`).join('');
+ const f=T(g.uv[0][0]);s+=`<circle cx="${f[0]}" cy="${f[1]}" r="4" fill="#facc15"/>`;s+='</svg>';
+ const lab=j.emode=='shaft'?(g.meth=='lwrap'?'← +Z (face) · −Z (chuck) →   ↑ around C':'→ +X along the shaft   ↑ '+(g.meth=='awrap'?'around A (unrolled)':'+Y across the top')):'→ +X   ↑ +Y   (looking down +Z)';
+ return `<div class="card" id="eprev"><div class="t">Live preview — how the text reads</div>${s}<div class="s">${lab} · yellow dot = first stroke start.</div><div class="s">${esc(eOrient(j))}</div></div>`}
+// ---- requirements
+const ECH={'Reading':['ALONG','AROUND'],'Mirror':['NO','YES'],'Angle is':['START','CENTER'],'Direction':['CW','CCW'],'Placement':['OUTSIDE','INSIDE']};
+const ECHL={ALONG:'along the axis',AROUND:'around the shaft',NO:'not mirrored',YES:'mirrored',START:'angle = where text starts',CENTER:'angle = text centered on it',CW:'clockwise',CCW:'counter-clockwise',OUTSIDE:'outside (tops out)',INSIDE:'inside (tops in)'};
+function eZeroTxt(j){return j.lathe?'X0 ON SPINDLE CENTERLINE, Z0 ON PART FACE':j.emode=='shaft'?'Y0 Z0 ON SHAFT CENTERLINE, X0 AT SHAFT END':'Z0 ON TOP OF FACE, X Y AS PROGRAMMED'}
+function eReq(j){const r=['Text','Letter height','Depth','Tool','Work offset','Zero point','Mirror'];if(j.emode=='shaft'){r.push('Shaft Ø','Start along axis','Start angle','Angle is','Reading','Baseline rotation');if(eMeth(j)=='flat')r.push('Depth tolerance')}
+ else if(j.emode=='face')r.push('Text start X','Text start Y','Baseline rotation');else r.push('Arc radius','Arc center X','Arc center Y','Start angle','Angle is','Direction','Placement');return r}
+Object.assign(UNIT,{'Text':'letters A–Z 0–9 - . , / : # + & ( ) \' " !','Letter height':'in','Shaft Ø':'in','Start along axis':'in, where the text starts','Start angle':'deg','Angle is':'start / center','Reading':'along axis / around','Baseline rotation':'deg, 0/90/180/270 or any','Mirror':'yes / no','Zero point':'confirm','Depth tolerance':'in, allowed depth error','Text start X':'in','Text start Y':'in','Arc radius':'in, baseline circle','Arc center X':'in','Arc center Y':'in','Direction':'cw / ccw','Placement':'outside / inside','Letter spacing':'in, gap between letters','Plunge feed':'in/min','Clearance':'in above the surface','Tool':'tool #'});
+['Letter height','Shaft Ø','Start along axis','Depth tolerance','Text start X','Text start Y','Arc radius','Arc center X','Arc center Y','Letter spacing','Clearance'].forEach(k=>KL.add(k));KF.add('Plunge feed');
+OPN.engrave='Engrave text';REQ.engrave=['Text'];
+function isEng(t){return /\b(engrav\w*|lettering|letters?|mark(ing)?|etch\w*)\b/i.test(t)&&!/\b(bolt circle|grid|thread|tap)\b/i.test(t)}
+function parseE(t){const l=t.toLowerCase(),L=isL(),mm=UN()=='mm',c=(k,v)=>mm&&v!=null?canonV(k,v):v,p={},G=(k,v,g)=>p[k]={v,g:!!g};
+ const mode=/\b(circle|radius|ring|arc)\b/.test(l)?'circle':/\b(shaft|round|diameter|dia|cylinder|od|bar)\b/.test(l)?'shaft':'face';const j={op:'engrave',emode:mode,lathe:L,text:t};
+ const q=t.match(/"([^"]+)"|“([^”]+)”|'([^']+)'/);const n=(re)=>{const m=l.match(re);return m?+m[1]:null};
+ G('Text',q?(q[1]||q[2]||q[3]).toUpperCase():null);G('Letter height',c('Letter height',n(/([\d.]+)\s*(?:mm|in|")?\s*(?:tall|high)\b/)??n(/(?:letter|text|char\w*)\s*height\s*([\d.]+)/)));
+ G('Depth',c('Depth',n(/([\d.]+)\s*(?:mm|in)?\s*deep/)??n(/depth\s*([\d.]+)/)));const tm=l.match(/\bt(\d+)\b/);G('Tool',tm?+tm[1]:null);const om=t.match(/\b(G5[4-9](?:\.1\s*P\d+)?|P\d+)\b/i);G('Work offset',om?normOff(om[1].toUpperCase()):null);
+ G('Zero point',/zero (?:is |on |at )?(?:the )?(centerline|center line|top|face|part face)/.test(l)?eZeroTxt(j):null);
+ G('Mirror',/not mirror\w*|no mirror|mirror(?:ed)? no\b/.test(l)?'NO':/\bmirror(ed)?\b/.test(l)?'YES':null);
+ const ang=l.match(/centered (?:on|at)\s*(-?[\d.]+)/),sa=l.match(/(?:start(?:ing)? angle|angle|at)\s*(-?[\d.]+)\s*(?:deg|°)/)||l.match(/start(?:ing)? angle\s*(-?[\d.]+)/);
+ if(mode!='face'){G('Start angle',ang?+ang[1]:sa?+sa[1]:null);G('Angle is',ang?'CENTER':sa?'START':null)}
+ if(mode=='shaft'){G('Shaft Ø',c('Shaft Ø',n(/([\d.]+)\s*(?:mm|in)?\s*(?:dia|diameter|ø)\b/)??n(/(?:dia|diameter|ø)\s*([\d.]+)/)));G('Start along axis',c('Start along axis',n(L?/start\s*z\s*(-?[\d.]+)/:/start\s*x\s*(-?[\d.]+)/)));
+  G('Reading',/along (?:the )?(?:axis|shaft|length)/.test(l)?'ALONG':/\baround\b/.test(l)?'AROUND':null);G('Baseline rotation',n(/(?:rotate[d]?|rotation|baseline)\s*(-?[\d.]+)/));
+  if(eMeth(j)=='flat')G('Depth tolerance',c('Depth tolerance',n(/tol(?:erance)?\s*([\d.]+)/)))}
+ else if(mode=='face'){G('Text start X',c('Text start X',n(/start\s*x\s*(-?[\d.]+)/)));G('Text start Y',c('Text start Y',n(/\by\s*(-?[\d.]+)/)));G('Baseline rotation',n(/(?:rotate[d]?|rotation|baseline)\s*(-?[\d.]+)/))}
+ else{G('Arc radius',c('Arc radius',n(/radius\s*([\d.]+)/)??n(/\br\s*([\d.]+)/)));const cm=l.match(/center\s*x\s*(-?[\d.]+)\s*y\s*(-?[\d.]+)/);G('Arc center X',cm?c('Arc center X',+cm[1]):null);G('Arc center Y',cm?c('Arc center Y',+cm[2]):null);
+  G('Direction',/counter[- ]?clockwise|\bccw\b/.test(l)?'CCW':/\bclockwise\b|\bcw\b/.test(l)?'CW':null);G('Placement',/\boutside\b|tops? out/.test(l)?'OUTSIDE':/\binside\b|tops? in/.test(l)?'INSIDE':null)}
+ const H=p['Letter height'].v;const gy=(k,v)=>G(k,mm?grayNice(k,v,'mm'):v,1);
+ gy('Letter spacing',H?+(H*0.25).toFixed(4):0.03);G('RPM',L?3000:8000,1);gy('Feed',10);gy('Plunge feed',3);gy('Clearance',0.05);
+ j.p=p;return j}
+const _go23=go;go=function(){const t=$('#q').value;if(!isEng(t))return _go23();const j=parseE(t);J={...j,date:Date.now(),edits:{}};show()};
+// reasons we will not write code
+function eBlock(j){j=j||J;if(j.lathe&&!eLatheOK())return 'This lathe has no live tooling + C-axis. Engraving on a lathe needs both: tick “Live tooling” and “C-axis” in Machines → Options after checking the control, or use a mill.';
+ const bad=eBad(EV('Text'));if(bad.length)return 'The built-in font has no letter for: '+[...new Set(bad)].join(' ')+'. Use A–Z, 0–9 and - . , / : # + & ( ) \' " !';
+ const g=eGeom(j);if(j.emode=='circle'&&g.span>360)return `Text needs ${g.span.toFixed(0)}° of the circle — more than 360°. Use a bigger radius, smaller letters or less spacing.`;
+ if(g.meth=='awrap'||g.meth=='lwrap'){if(g.arcSpan>2*Math.PI*g.R*0.97)return `Text is ${dispV('Shaft Ø',g.arcSpan)} around but the shaft is only ${dispV('Shaft Ø',2*Math.PI*g.R)} around. Shorten it or make the letters smaller.`}
+ if(g.meth=='flat'){const e=eFlatErr(g);if(e.ang>35)return `Text reaches ${e.ang.toFixed(0)}° off the top of the shaft — too far for flat 3-axis engraving. Center it on 0°, make it read along the shaft, or use a 4th axis.`;if(e.err>EV('Depth tolerance')+1e-9)return `Flat engraving on a curved top: Z follows the curve, but the tool tilts relative to the surface and the depth across the letters varies by ${dispV('Depth',e.err)} — more than your tolerance ${dispV('Depth',EV('Depth tolerance'))}. Make the text narrower around the shaft, raise the tolerance, or use a 4th axis.`}
+ return null}
+function eFlatErr(g){let ang=0,err=0;const t=eTool(),half=(eWidth(t,EV('Depth'))||0)/2;g.uv.flat().forEach(([x,y])=>{ang=Math.max(ang,ED(Math.asin(Math.min(1,Math.abs(y)/g.R))));
+ // flat-bottom tool edge sits on the chord: depth error at tool edge = sagitta change across the tool width
+ const y2=Math.min(g.R,Math.abs(y)+half);err=Math.max(err,Math.abs(Math.sqrt(g.R*g.R-y*y)-Math.sqrt(g.R*g.R-y2*y2)))});return{ang,err}}
+// ---- code generation (inch values via f4; genU converts for mm)
+function genE(j){J=j;const g=eGeom(j),v=k=>j.p[k].v,d=v('Depth'),clr=v('Clearance'),fd=v('Feed'),pf=v('Plunge feed'),rpm=v('RPM'),T=v('Tool'),off=offCode(v('Work offset')),hk=ctrlKey()=='haas',K=GENMM?25.4:1,C=[],mv=[];
+ const g93=eYes('G93 inverse time'),cyl=eYes('Cylindrical interp (G07.1/G107)'),pol=eYes('Polar interp (G12.1/G112)'),fr=x=>f4(x/K);
+ const pre=(x,lim)=>Math.max(lim,x);C.push('%',`O${j.lathe?6100:6000} (ENGRAVE TEXT - MACRO BUILDER)`,`(TEXT: ${v('Text')})`,`(METHOD: ${EMN[g.meth].toUpperCase()})`,`(ZERO: ${v('Zero point')})`);
+ if(!j.lathe){C.push('G17 G20 G40 G49 G80 G90 G94 (SAFE START)',`T${T} M06 (ENGRAVING TOOL)`);
+  const zc=g.meth=='mface'?clr:g.R+clr;const P=g.uv.map(q=>q.map(([a,b])=>{if(g.meth=='mface')return{x:a,y:b,z:-d};if(g.meth=='flat'){const y=b;return{x:g.ax0+a,y,z:Math.sqrt(Math.max(0,g.R*g.R-y*y))-d}}return{x:g.ax0+a,a:ED(b/g.R),z:g.R-d}}));
+  const w=g.meth=='awrap',st=P[0][0];C.push(`${off} G00 X${f4(st.x)} ${w?'A'+st.a.toFixed(3):'Y'+f4(st.y)} S${rpm} M03`,`G43 H${T} Z${f4(zc)}`);if(w&&g93)C.push('(G93 INVERSE TIME - F = 1 / MINUTES PER MOVE)');if(w&&!g93)C.push('(INVERSE TIME NOT CONFIRMED - COMBINED X/A FEED, CHECK ON CONTROL)');
+  P.forEach(q=>{const s=q[0];C.push(`G00 X${f4(s.x)} ${w?'A'+s.a.toFixed(3):'Y'+f4(s.y)}`,`G00 Z${f4(pre(s.z+clr,s.z+0.01))}`);C.push(`G01 Z${f4(s.z)} F${f4(pf)}`);if(w&&g93)C.push('G93');
+   for(let i=1;i<q.length;i++){const a=q[i-1],b=q[i];if(w){const dx=(b.x-a.x)*K,dA=b.a-a.a,Lm=Math.hypot(b.x-a.x,ER(dA)*g.R)||1e-6;let F;if(g93)F=`F${fr(Math.min(99999,fd/Lm))}`;else F=`F${fr(fd*K*Math.hypot(dx,dA)/(Lm*K))}`;C.push(`G01 X${f4(b.x)} A${b.a.toFixed(3)} ${F}`)}else C.push(`G01 X${f4(b.x)} Y${f4(b.y)} Z${f4(b.z)}${i==1?' F'+f4(fd):''}`)}
+   if(w&&g93)C.push('G94');C.push(`G00 Z${f4(zc)}`)});
+  C.push(`G00 Z${f4(zc+0.5)}`,'M05',w?'G00 A0.':'','G91 G28 Z0.','G90','M30','%')}
+ else{const sw=isSw();C.push(`G18 G20 G40 G80 G99 (SAFE START)`,`T${String(T).padStart(2,'0')}${String(T).padStart(2,'0')} (LIVE ENGRAVING TOOL)`,off);
+  const lm=sv('Live tool M-code'),lmOk=lm&&lm.st=='user';C.push('(C-AXIS ENGAGE - USE YOUR MACHINE CODE)',hk?`M133 P${rpm} (LIVE TOOL ON)`:lmOk?`${String(lm.v).split(' ')[0]} S${rpm} (LIVE TOOL ON)`:`(LIVE TOOL ON S${rpm} - SET LIVE TOOL M-CODE IN MACHINE)`,'G98 (FEED PER MINUTE)');
+  if(g.meth=='lwrap'){const P=g.uv.map(q=>q.map(([a,b])=>({z:g.ax0-a,c:ED(b/g.R)}))),xc=2*(g.R+clr),xd=2*(g.R-d);const Rout=(g.R*K);
+   if(cyl)C.push(hk?`G107 C${Rout.toFixed(4)} (CYLINDRICAL INTERPOLATION - VERIFY FORMAT)`:`G07.1 C${Rout.toFixed(4)} (CYLINDRICAL INTERPOLATION ON, RADIUS)`);
+   P.forEach(q=>{const s=q[0];C.push(`G00 X${f4(xc)} Z${f4(s.z)} C${s.c.toFixed(3)}`,`G01 X${f4(xd)} F${f4(pf)}`);if(!cyl&&g93)C.push('G93');
+    for(let i=1;i<q.length;i++){const a=q[i-1],b=q[i],Lm=Math.hypot(b.z-a.z,ER(b.c-a.c)*g.R)||1e-6;let F;if(cyl)F=i==1?' F'+f4(fd):'';else if(g93)F=' F'+fr(Math.min(99999,fd/Lm));else F=' F'+fr(fd*K*Math.hypot((b.z-a.z)*K,b.c-a.c)/(Lm*K));C.push(`G01 Z${f4(b.z)} C${b.c.toFixed(3)}${F}`)}
+    if(!cyl&&g93)C.push('G94');C.push(`G00 X${f4(xc)}`)});if(cyl)C.push(hk?'G107 C0 (CANCEL)':'G07.1 C0 (CYLINDRICAL INTERPOLATION OFF)')}
+  else{const P=g.uv.map(q=>q.map(([x,y])=>({x,y,r:Math.hypot(x,y),c:ED(Math.atan2(y,x))})));if(pol)C.push(hk?'G112 (XY TO XC INTERPOLATION ON - X AND C AS CARTESIAN, VERIFY)':'G12.1 (POLAR INTERPOLATION ON - X AND C AS CARTESIAN, CHECK X RADIUS/DIA)');
+   P.forEach(q=>{const s=q[0];C.push(pol?`G00 X${f4(s.x)} C${(s.y*K).toFixed(4)}`:`G00 X${f4(2*s.r)} C${s.c.toFixed(3)}`,`G00 Z${f4(clr)}`,`G01 Z${f4(-d)} F${f4(pf)}`);let pc=s.c;
+    for(let i=1;i<q.length;i++){const a=q[i-1],b=q[i];if(pol){C.push(`G01 X${f4(b.x)} C${(b.y*K).toFixed(4)}${i==1?' F'+f4(fd):''}`);continue}let c=b.c;while(c-pc>180)c-=360;while(c-pc<-180)c+=360;const Lm=Math.hypot(b.x-a.x,b.y-a.y)||1e-6,dX=(2*b.r-2*a.r)*K;C.push(`G01 X${f4(2*b.r)} C${c.toFixed(3)} F${fr(fd*K*Math.hypot(dX,c-pc)/(Lm*K))}`);pc=c}
+    C.push(`G00 Z${f4(clr)}`)});if(pol)C.push(hk?'G113 (CANCEL)':'G13.1 (POLAR INTERPOLATION OFF)')}
+  C.push(`G00 Z${f4(j.emode=='shaft'?clr:0.5)}`,hk?'M135 (LIVE TOOL OFF)':'(LIVE TOOL OFF)','(C-AXIS RELEASE - USE YOUR MACHINE CODE)','G28 U0. W0.','M30','%')}
+ return{code:C.filter(x=>x!==''),moves:[]}}
+const _gen23=gen;gen=function(j){return j.op=='engrave'?genU(genE,j):_gen23(j)};
+const _genL23=genL;genL=function(j){return j.op=='engrave'?genU(genE,j):_genL23(j)};
+// ---- own sim reader for engrave code (X Y Z A C, G93, G07.1/G12.1). Returns moves in inch, 3D.
+function simE(lines){const M=[];let s={X:0,Y:0,Z:2,A:0,C:0},g=0,met=0,pol=0,first=1;const L=J.lathe;
+ const pt=o=>{if(!L){if(J.emode=='shaft'&&eMeth()=='awrap'){const a=ER(o.A);return[o.X,-o.Z*Math.sin(a),o.Z*Math.cos(a)]}return[o.X,o.Y,o.Z]}if(pol)return[o.X,o.C,o.Z];const r=o.X/2,c=ER(o.C);return[r*Math.cos(c),r*Math.sin(c),o.Z]};
+ lines.forEach((ln,li)=>{const t=ln.replace(/\(.*?\)/g,'').toUpperCase();if(/G21/.test(t))met=1;if(/G20/.test(t))met=0;if(/G12\.1|G112/.test(t))pol=1;if(/G13\.1|G113/.test(t))pol=0;if(/G07\.1|G107/.test(t))return;const gm=t.match(/G0?([01])(?!\d|\.)/);if(gm)g=+gm[1];
+  const n={...s};let any=0;t.replace(/([XYZAC])(-?[\d.]+)/g,(_,a,b)=>{any=1;n[a]=+b/((met&&/[XYZ]/.test(a))||(met&&pol&&a=='C')?25.4:1)});if(!any||/G28|M06|G43/.test(t)&&!/G43 H\d+ Z/.test(t))return;
+  if(/G28/.test(t))return;if(first&&/G00/.test(t)&&!/Z/.test(t)){Object.assign(s,n);first=0;n.Z=s.Z}
+  const da=Math.abs(n.A-s.A)+Math.abs(n.C-s.C),k=Math.max(1,Math.ceil(da/3));for(let i=1;i<=k;i++){const f=i/k,m0={},m1={};for(const a of 'XYZAC'){m0[a]=s[a]+(n[a]-s[a])*(i-1)/k;m1[a]=s[a]+(n[a]-s[a])*f}M.push({a:pt(m0),b:pt(m1),r:g==0,l:li,f:(J.p.Feed&&J.p.Feed.v)||10})}s=n});return M}
+const _time23=time;time=function(m,rr){if(!(J&&J.op=='engrave'))return _time23(m,rr);let s=0;m.forEach(x=>{const d=Math.hypot(x.b[0]-x.a[0],x.b[1]-x.a[1],x.b[2]-x.a[2]);s+=x.r?d/rr*60:d/x.f*60});return s};
+const _interp23=interp;interp=function(lines,o){if(J&&J.op=='engrave')return{moves:simE(lines),alarms:[],err:null};return _interp23(lines,o)};
+// stock + view setup for engrave
+function eStock(j){const g=eGeom(j),P=g.uv.flat();if(!j.lathe){if(g.meth=='mface'){const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]);j.stock=[Math.min(...xs)-0.3,Math.min(...ys)-0.3,-0.3,Math.max(...xs)+0.3,Math.max(...ys)+0.3,0]}else{const xs=P.map(p=>g.ax0+p[0]);const R=g.R;j.stock=[Math.min(0,...xs)-0.1,-R,-R,Math.max(...xs)+0.5,R,R]}}
+ else{if(g.meth=='lwrap'){const zs=P.map(p=>g.ax0-p[0]),Lz=Math.max(0.5,-Math.min(...zs)+0.4);j.lb={R:g.R,L:Lz,z:0};j.stock=[-g.R,-g.R,-Lz,g.R,g.R,0]}else{const R=Math.max(...P.map(p=>Math.hypot(p[0],p[1])))+0.2;j.lb={R,L:0.6,z:0};j.stock=[-R,-R,-0.6,R,R,0]}}}
+function drawE(){ctx.clearRect(0,0,cv.width,cv.height);const M=J.M||[],n=Math.min(view.n,M.length),g=eGeom(J),s=J.stock;ctx.lineWidth=1;ctx.strokeStyle='#5b6b7a';ctx.setLineDash([]);
+ const ring=(f)=>{ctx.beginPath();for(let i=0;i<=48;i++){const q=P(f(i/48*2*Math.PI));i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke()};
+ if(!J.lathe&&g.meth!='mface'){const R=g.R;[s[0],s[3]].forEach(x=>ring(t=>[x,R*Math.cos(t),R*Math.sin(t)]));for(let i=0;i<12;i++){const t=i/12*2*Math.PI;ln([s[0],R*Math.cos(t),R*Math.sin(t)],[s[3],R*Math.cos(t),R*Math.sin(t)])}}
+ else if(J.lathe){const R=J.lb.R;[0,-J.lb.L].forEach(z=>ring(t=>[R*Math.cos(t),R*Math.sin(t),z]));for(let i=0;i<12;i++){const t=i/12*2*Math.PI;ln([R*Math.cos(t),R*Math.sin(t),0],[R*Math.cos(t),R*Math.sin(t),-J.lb.L])}}
+ else{const b=[[s[0],s[1]],[s[3],s[1]],[s[3],s[4]],[s[0],s[4]]];[s[2],s[5]].forEach(z=>b.forEach((p,i)=>ln([...p,z],[...b[(i+1)%4],z])));b.forEach(p=>ln([...p,s[2]],[...p,s[5]]))}
+ for(let i=0;i<n;i++){const m=M[i];ctx.strokeStyle=m.r?'#facc15':'#2dd4bf';ctx.lineWidth=m.r?1:2.2;ctx.setLineDash(m.r?[4,4]:[]);ln(m.a,m.b)}ctx.setLineDash([]);
+ const c=n?M[n-1].b:(M[0]||{a:[0,0,1]}).a;let tip=c;const ax=!J.lathe?(g.meth=='awrap'?(()=>{const r=Math.hypot(c[1],c[2])||1;return[0,c[1]/r,c[2]/r]})():[0,0,1]):(g.meth=='lwrap'?(()=>{const r=Math.hypot(c[0],c[1])||1;return[c[0]/r,c[1]/r,0]})():[0,0,1]);
+ const L=0.6*(g.R||g.Rc||0.5),top=[tip[0]+ax[0]*L,tip[1]+ax[1]*L,tip[2]+ax[2]*L];ctx.strokeStyle='#e5e7eb';ctx.lineWidth=4;ln(tip,top);ctx.lineWidth=1}
+const _draw23=draw;draw=function(){if(J&&J.op=='engrave'&&typeof cv!='undefined'&&cv)return drawE();return _draw23.apply(this,arguments)};
+// ---- checks
+const _checks23=checks;checks=function(j){if(j.op!='engrave')return _checks23(j);REQ.engrave=eReq(j);let c=_checks23(j).filter(([l])=>!/#3000|M99|outside stock|Feed per rev|Feed\/rev|Stock Ø|nose|Tolerance alarm|Sub spindle confirmed|Spindle on before/.test(l));
+ const g=eGeom(j),t=eTool(),d=EV('Depth'),H=EV('Letter height'),w=eWidth(t,d),meth=g.meth;
+ c.push(['Tool T'+EV('Tool')+' is an engraving tool with tip width set'+(t&&t.type!='Engraving tool'?' (it is a '+t.type+')':''),!!(t&&t.type=='Engraving tool'&&t.tip>0)],
+  ['Letter height vs tool: line width '+(w?dispV('Depth',w):'?')+' ≤ ⅕ of letter height',!!(w&&w<=H/5+1e-9)],
+  ['Depth vs tool: depth ≤ ¼ of letter height'+(t&&t.ang>0?' and V-tip line stays narrow':''),d>0&&d<=H/4+1e-9]);
+ if(meth=='awrap'||meth=='lwrap')c.push(['Text fits around the shaft ('+(g.arcSpan/(2*Math.PI*g.R)*100).toFixed(0)+'% of the circumference)',g.arcSpan<=2*Math.PI*g.R*0.97]);
+ if(meth=='flat'){const e=eFlatErr(g);c.push(['Flat on a curve: depth error '+dispV('Depth',e.err)+' within tolerance, '+e.ang.toFixed(0)+'° off top',e.err<=EV('Depth tolerance')+1e-9&&e.ang<=35])}
+ if(j.emode=='circle')c.push(['Text fits within 360° (uses '+g.span.toFixed(0)+'°)',g.span<=360],['Letter height vs radius: '+(H/g.Rc*100).toFixed(0)+'% — keep ≤ 30% so letters don\'t fan out',H/g.Rc<=0.3+1e-9]);
+ if(meth=='awrap')c.push(['Rotary (4th axis) option confirmed on this machine',opt('ax4')&&!!(S.m[S.cur]||{}).optOk]);
+ if(j.lathe)c.push(['Live tooling + C-axis on this machine',!!eLatheOK()],['Live tool M-code confirmed'+(ctrlKey()=='haas'?' (Haas M133/M135, sourced)':''),ctrlKey()=='haas'||!!((sv('Live tool M-code')||{}).st=='user')]);
+ if(isSw()&&!isNT()&&meth=='lwrap'){const r=sv('Bushing reach Z (in)'),zs=g.uv.flat().map(p=>g.ax0-p[0]),zmin=Math.min(...zs);c.push(['Text within guide-bushing reach '+(r?r.v:'?')+' (deepest Z '+dispV('Depth',zmin)+')',!!r&&zmin>=-Math.abs(parseFloat(r.v))])}
+ const tx=txt().map(l=>l.replace(/\(.*?\)/g,'')).join('\n');if(/G93/.test(tx))c.push(['G93 inverse time confirmed on this machine',eYes('G93 inverse time')]);if(/G07\.1|G107/.test(tx))c.push(['G07.1/G107 cylindrical interpolation confirmed',eYes('Cylindrical interp (G07.1/G107)')]);if(/G12\.1|G112/.test(tx))c.push(['G12.1/G112 polar interpolation confirmed',eYes('Polar interp (G12.1/G112)')]);
+ if(meth=='awrap'&&!/G93/.test(tx))c.push(['No G93 confirmed: F is a combined X/A feed — check the actual feed on the control',false]);
+ if(j.lathe&&meth=='lwrap'&&!/G93|G07\.1|G107/.test(tx))c.push(['No G93/G07.1 confirmed: point-by-point C with combined feed — check the actual feed',false]);
+ return c};
+// ---- show: requirements, choice selects, block card, preview, view
+const _show23=show;show=function(){if(!J||J.op!='engrave')return _show23();const need=eReq(J);REQ.engrave=need;need.forEach(k=>{if(!J.p[k])J.p[k]={v:null,g:false}});
+ Object.keys(J.p).forEach(k=>{if(!need.includes(k)&&!['Letter spacing','RPM','Feed','Plunge feed','Clearance'].includes(k))delete J.p[k]});
+ const order=[...need,'Letter spacing','RPM','Feed','Plunge feed','Clearance'];const np={};order.forEach(k=>{if(J.p[k])np[k]=J.p[k]});J.p=np;
+ const miss=need.filter(k=>J.p[k].v==null);const blk=miss.length?null:eBlock(J);
+ if(!miss.length&&!blk)eStock(J);
+ if(blk){const h=`<div class="card"><div class="t">${OPN.engrave}</div>${Object.entries(J.p).map(([k,x])=>`<button class="chip ${x.v==null?'r':x.g?'gr':'y'}" onclick="ed('${k}')">${chipTxt(k,x)}</button>`).join('')}</div><div class="ok bad">⛔ Not written: ${esc(blk)}</div>`;$('#out').innerHTML=h+ePreviewSafe();return}
+ _show23.call(this);eAfter(miss)};
+function ePreviewSafe(){try{return EV('Text')&&EV('Letter height')&&(J.emode!='shaft'||EV('Shaft Ø'))&&(J.emode!='circle'||EV('Arc radius'))?ePreview():''}catch(e){return''}}
+function eAfter(miss){const o=$('#out');if(!o)return;o.querySelectorAll('input[data-k]').forEach(inp=>{const k=inp.dataset.k;if(ECH[k]){const s=document.createElement('select');s.dataset.k=k;s.style.width='40%';s.innerHTML='<option value="">pick…</option>'+ECH[k].map(v=>`<option value="${v}">${ECHL[v]}</option>`).join('');inp.replaceWith(s)}
+ if(k=='Zero point'){const s=document.createElement('select');s.dataset.k=k;s.style.width='40%';s.innerHTML=`<option value="">confirm…</option><option value="${eZeroTxt(J)}">${eZeroTxt(J).toLowerCase()}</option>`;inp.replaceWith(s)}if(k=='Baseline rotation')inp.placeholder='0 / 90 / 180 / 270 / any';if(k=='Text')inp.placeholder='e.g. SN-1024'});
+ const card=o.querySelector('.card');if(card){const m=document.createElement('div');m.className='s';m.textContent='Method: '+EMN[eMeth()]+(J.lathe&&!eLatheOK()?' — needs live tools + C-axis':'');card.appendChild(m)}
+ const pv=ePreviewSafe();if(pv){const d=document.createElement('div');d.innerHTML=pv;const ref=o.querySelector('#ck')||null;ref?o.insertBefore(d.firstChild,ref):o.appendChild(d.firstChild)}
+ if(!miss.length&&J.lathe&&!view.rev&&typeof rev=='function'){rev()}else if(!miss.length&&typeof vw=='function'){try{vw('iso');draw()}catch(e){}}}
+// chip text for choice values
+const _chipTxt23=chipTxt;chipTxt=function(k,x){if(J&&J.op=='engrave'&&x&&x.v!=null&&ECHL[x.v])return k+': '+ECHL[x.v];return _chipTxt23(k,x)};
+// GD library for the new codes (generic meaning; machine-specific use stays red-confirmed)
+Object.assign(GD,{'G07.1':'Cylindrical interpolation (Fanuc-style; option)','G12.1':'Polar coordinate interpolation on (Fanuc-style; option)','G13.1':'Polar coordinate interpolation off','G93':'Inverse time feed (F = 1/minutes)','G94':'Feed per minute','G107':'Cylindrical mapping (Haas)','G112':'XY to XC interpolation on (Haas lathe)','G113':'XY to XC interpolation off (Haas lathe)'});
+// machine settings: confirm-only capability flags
+const ECAP=[['G93 inverse time','check'],['Cylindrical interp (G07.1/G107)','check'],['Polar interp (G12.1/G112)','check']];
+function eCaps(m){if(!m||!m.s)return;ECAP.forEach(([k,v])=>{if(/lathe/i.test(m.type)||k=='G93 inverse time'){if(!m.s.find(x=>x.k==k))m.s.push({k,v,st:'confirm'})}})}
+S.m.forEach(eCaps);const _mk23=mk;mk=function(){const m=_mk23.apply(this,arguments);eCaps(m);return m};
+// engraving tool type + 4th-axis preset fix
+if(!TT.includes('Engraving tool'))TT.push('Engraving tool');
+function eDemoTool(m){if(m&&m.tools&&!m.tools.find(t=>t.n==7))m.tools.push({n:7,type:'Engraving tool',dia:0.125,len:2,fl:1,tip:0.01,ang:60})}
+S.m.forEach(eDemoTool);
+const _pick23=pick;pick=function(n,g){_pick23(n,g);const m=S.m.at(-1);if(m&&m.name==n){if(/4th|4-axis|rotary/i.test(n)&&!/lathe/i.test(m.type)){m.opt=m.opt||{macroB:1};m.opt.ax4=1}eDemoTool(m);save();if(typeof edit=='function'&&/^Machine|^Edit/.test($('#ttl').textContent||''))edit(S.m.length-1)}};
+const _tools23=tools;tools=function(){_tools23();V.querySelectorAll('select[data-f="type"]').forEach(sel=>{const i=+sel.dataset.i,t=S.tools[i];if(!t||t.type!='Engraving tool')return;const card=sel.closest('.card');if(!card||card.querySelector('.etip'))return;const k=KU(),u=k==1?'in':'mm';const d=document.createElement('div');d.className='row etip';
+ d.innerHTML=`<label style="flex:1">Tip width ${u}<input type="number" step="any" value="${t.tip!=null?+(t.tip*k).toFixed(4):''}" onchange="S.tools[${i}].tip=this.value===''?null:+this.value/${k};save()"></label><label style="flex:1">Included angle °<input type="number" step="any" value="${t.ang??''}" placeholder="0 = flat tip" onchange="S.tools[${i}].ang=this.value===''?null:+this.value;save()"></label>`;card.appendChild(d)})};
+// example buttons (added at the end of the existing sample row)
+const EXE={mill:['G54 T7 engrave "SN-1024" 0.125 tall 0.004 deep on 1.0 dia shaft start x0.5 centered on 0 deg along axis rotate 0 not mirrored zero on centerline tolerance 0.002','G54 T7 engrave "MACRO BUILDER" in a circle radius 1.0 center x0 y0 0.125 tall 0.005 deep centered on 90 deg cw outside not mirrored zero on top'],
+ lathe:['G54 T7 engrave "LOT 7" 0.1 tall 0.004 deep on 1.0 dia shaft start z-0.25 centered on 0 deg around rotate 0 not mirrored zero on centerline','G54 T7 engrave "NT 2026" in a circle radius 0.4 center x0 y0 0.08 tall 0.004 deep centered on 90 deg cw outside not mirrored zero on face'],
+ swiss:['G54 T7 engrave "A1-B2" 0.06 tall 0.003 deep on 0.375 dia shaft start z-0.1 centered on 0 deg around rotate 0 not mirrored zero on centerline','G54 T7 engrave "SWISS" in a circle radius 0.12 center x0 y0 0.04 tall 0.002 deep centered on 90 deg cw outside not mirrored zero on face']};
+Object.assign(EXMM,{[EXE.mill[0]]:'G54 T7 engrave "SN-1024" 3 tall 0.1 deep on 25 dia shaft start x12 centered on 0 deg along axis rotate 0 not mirrored zero on centerline tolerance 0.05',[EXE.mill[1]]:'G54 T7 engrave "MACRO BUILDER" in a circle radius 25 center x0 y0 3 tall 0.12 deep centered on 90 deg cw outside not mirrored zero on top',
+ [EXE.lathe[0]]:'G54 T7 engrave "LOT 7" 2.5 tall 0.1 deep on 25 dia shaft start z-6 centered on 0 deg around rotate 0 not mirrored zero on centerline',[EXE.lathe[1]]:'G54 T7 engrave "NT 2026" in a circle radius 10 center x0 y0 2 tall 0.1 deep centered on 90 deg cw outside not mirrored zero on face',
+ [EXE.swiss[0]]:'G54 T7 engrave "A1-B2" 1.5 tall 0.08 deep on 10 dia shaft start z-2.5 centered on 0 deg around rotate 0 not mirrored zero on centerline',[EXE.swiss[1]]:'G54 T7 engrave "SWISS" in a circle radius 3 center x0 y0 1 tall 0.05 deep centered on 90 deg cw outside not mirrored zero on face'});
+function exE(i){const s=(isSw()&&!isNT())?EXE.swiss[i]:isL()?EXE.lathe[i]:EXE.mill[i];ex(exText(s))}
+const _nw23=nw;nw=function(){_nw23.apply(this,arguments);const row=V.querySelector('#q')&&V.querySelector('#q').nextElementSibling;if(row&&row.classList.contains('row')&&!row.querySelector('.eex')){row.insertAdjacentHTML('beforeend',`<button class="chip gr eex" onclick="exE(0)">Engrave shaft</button><button class="chip gr eex" onclick="exE(1)">Text in a circle</button>`)}};
+// Help topic
+HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='faq')),0,['engrave','Engraving text (shaft, face, circle)',()=>`<p>Type something like <i>engrave "SN-1024" 0.125 tall 0.004 deep on a 1.0 dia shaft</i>, or tap <b>Engrave shaft</b> / <b>Text in a circle</b> under the Build box. Put the text in quotes. The letters come from our own single-stroke font: A–Z, 0–9 and - . , / : # + &amp; ( ) ' " !</p>
+<p><b>How it's cut depends on the machine:</b> 3-axis mill = flat on top of the shaft, Z follows the curve (you give a depth tolerance; too wide text is blocked). Mill with a confirmed 4th axis = wrapped around A (arc length turned into degrees, Z at radius minus depth; G93 inverse time only if you confirm it in the machine, otherwise a combined feed with a warning). Lathe with live tools and C, NT and Swiss = wrapped around C on the OD (G07.1/G107 only if confirmed, else point-by-point C), or on the part face with X/C (G12.1/G112 only if confirmed, else point-by-point C). A lathe without live tools + C is blocked.</p>
+<p><b>Always red (you give it):</b> text, letter height, depth, tool, work offset, zero point (shaft: Y0 Z0 on the centerline; lathe: X0 on the spindle center, Z0 on the face), mirrored yes/no. Shaft: shaft Ø, start along the axis, start angle and whether it is the start or the center, reading direction (along the axis or around), baseline rotation (0/90/180/270 or any angle). Flat face: text start X/Y and baseline rotation. <b>Text in a circle:</b> arc radius, arc center X/Y, start or centered-on angle, clockwise or counter-clockwise, and letters outside (tops out) or inside (tops in). Each letter is turned tangent to the circle and spacing is measured along the arc.</p>
+<p><b>Gray suggestions:</b> letter spacing, RPM, feed, plunge feed, clearance.</p><p>The <b>live preview</b> card shows how the text will read and says in words which way the tops of the letters point. Checks: text fits around the shaft / within 360°, letter height vs. tool line width, depth vs. letter height, letter height vs. circle radius, rotary option and G93/G07.1/G12.1 confirmed when used. Add an <b>Engraving tool</b> in Tools with its tip width and included angle.</p>`]);
+
 </script></body></html>
