@@ -27,6 +27,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
     log(`${hk?'Haas':'Fanuc'} ${op}: recognised, code written`,j0==op&&!!code,'op='+j0+' miss='+miss.join(','));
     if(code)log(`${hk?'Haas':'Fanuc'} ${op}: sim runs, no alarm`,!sim[0]&&!sim[1],JSON.stringify(sim));
     if(code)log(`${hk?'Haas':'Fanuc'} ${op}: all checks pass`,ck.length==0,ck.join(' | '));
+    if(code){const xx=[...d.querySelectorAll('#cl .s')].filter(x=>/❌/.test(x.textContent)).map(x=>x.textContent);log(`${hk?'Haas':'Fanuc'} ${op}: no ❌ in panel`,!xx.length,xx.join(' | '))}
     
     
    });
@@ -37,7 +38,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
    LJOBS.forEach(([op,t])=>{w.tab('new');d.querySelector('#q').value=t;w.go();const j0=E('J&&J.op'),miss=E('J?Object.entries(J.p).filter(([k,x])=>x.v==null).map(([k])=>k):[]');
     const code=E('J&&J.code?txt().join("\\n"):""');let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{lathe:1});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
     const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+d.querySelector('#out').innerText.slice(0,300)];
-    log(nm+' '+op+': recognised, code written',j0==op&&!!code,'op='+j0+' miss='+miss.join(','));if(code){log(nm+' '+op+': sim runs, no alarm',!sim[0]&&!sim[1]&&sim[2]>3,JSON.stringify(sim));log(nm+' '+op+': all checks pass',!ck.length,ck.join(' | '))}
+    log(nm+' '+op+': recognised, code written',j0==op&&!!code,'op='+j0+' miss='+miss.join(','));if(code){log(nm+' '+op+': sim runs, no alarm',!sim[0]&&!sim[1]&&sim[2]>3,JSON.stringify(sim));log(nm+' '+op+': all checks pass',!ck.length,ck.join(' | '));const xx=[...d.querySelectorAll('#cl .s')].filter(x=>/❌/.test(x.textContent)).map(x=>x.textContent);log(nm+' '+op+': no ❌ in panel',!xx.length,xx.join(' | '))}
     if(code&&op=='lthread')log(nm+' lthread: '+(hk?'one-block':'two-block'),hk?/G76 X0\.6734 Z-0\.75 K0\.0383 D0\.012 F0\.0625 A60/.test(code):/G76 P010060 Q20 R0\.001/.test(code)&&/G76 X0\.6734 Z-0\.75 P383 Q120 F0\.0625/.test(code),code.split('\n').filter(l=>/G76/.test(l)).join(' / '));
    });
   });
