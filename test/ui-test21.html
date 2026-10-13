@@ -1,0 +1,44 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=33" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+  const mach=(n,g)=>{w.pick(n,g);w.cur(E('S.m.length')-1)};const setv=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(${JSON.stringify(v)}!==null)x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  const run=(t,ex,tol)=>{w.tab('new');d.querySelector('#q').value=t;w.go();d.querySelectorAll('#out [data-k]').forEach(el=>{if(el.dataset.k=='Expected length'&&ex!=null)el.value=ex;if(el.dataset.k=='Tolerance'&&tol!=null)el.value=tol});if(d.querySelector('#out [data-k]'))w.fill();return E('J&&J.code?txt().join("\\n"):""')};
+  const RQ="I'm on a Robodrill vertical mill, can you measure the tool length with the probe and compare the length in the offset page to the length and tolerance in the program? It's tool number 8.";
+  mach('Fanuc Robodrill-style (generic)','Vertical mills');
+  log('Robodrill gets red empty setter + Fanuc memory fields',['Tool setter type','Tool setter macro call','Setter writes length to','Setter moves to itself','Tool offset memory (Fanuc)','Offset variables (Fanuc)','Param 6000 bit 3 V15 (Fanuc)'].every(k=>{const x=E('S.m[S.cur].s').find(x=>x.k==k);return x&&x.st=='confirm'&&x.v===''}));
+  log('Lathe has no setter fields',(()=>{mach('Generic 2-axis lathe','Lathes');const ok=!E('S.m[S.cur].s').some(x=>x.k=='Tool setter type');w.cur(E('S.m.length')-2);return ok})());
+  let j=E('parse('+JSON.stringify(RQ)+')');log('Role-play request → Tool length check, T8',j&&j.op=='tlen'&&j.p.Tool.v==8);
+  ['measure tool length T3','tool setter check T12','broken tool check T5','compare length T2 tolerance 0.001','check tool length on the setter T4'].forEach(t=>log('Recognised: '+t,(E('parse('+JSON.stringify(t)+')')||{}).op=='tlen'));
+  log('Broken phrase → broken mode',E('parse("broken tool check T5")').p.Mode.v=='Broken-tool check');
+  log('Picks up length and tolerance from words',(()=>{const p=E('parse("tool length check T8 expected length 4.125 tolerance 0.002")').p;return p['Expected length'].v==4.125&&p.Tolerance.v==0.002})());
+  let c=run(RQ);log('No code before setup: missing list asks length + tolerance with units',!c&&/Expected length \(in, the tool length/.test(d.querySelector('#out').textContent)&&/Tolerance \(in, ±/.test(d.querySelector('#out').textContent));
+  c=run(RQ,'4.125','0.002');log('Still no code while setter setup is red',!c&&/Machine setup still red/.test(d.querySelector('#out').textContent)&&/Tool offset memory \(Fanuc\)/.test(d.querySelector('#out').textContent));
+  setv('Control',null);E("S.m[S.cur].opt.tset=1;save()");setv('Tool setter type','contact TEST');setv('Tool setter macro call','G65 P9853 B1. T<T>');setv('Setter writes length to','geometry');setv('Setter moves to itself','yes');setv('Tool offset memory (Fanuc)','C');setv('Offset variables (Fanuc)','5-digit #10001+');setv('Param 6000 bit 3 V15 (Fanuc)','0');
+  c=run(RQ,'4.125','0.002');log('Memory C 5-digit: geometry #11008 wear #10008',/#10=#11008\+#10008/.test(c));
+  log('Compare logic ABS > tol → #3000',/IF\[ABS\[#10-4\.125\]GT0\.002\]GOTO91/.test(c)&&/IF\[ABS\[#12-4\.125\]GT0\.002\]GOTO92/.test(c)&&/N91 #3000=11/.test(c)&&/#3000=12/.test(c));
+  log('Setter call from your setting, T filled',/G65 P9853 B1\. T8\. \(TOOL SETTER/.test(c));
+  log('No positions written when macro moves itself',!/G53/.test(c)&&!/X-?\d/.test(c.replace(/\([^)]*\)/g,'')));
+  log('Offset restored when update not confirmed',/#11008=#11 \(PUT OLD VALUE BACK - UPDATE/.test(c));
+  log('Sim runs with no alarm',E('(()=>{const r=interp(txt(),{});return !r.err&&!r.alarms.length})()'));
+  w.ed('Update offset');c=E('txt().join("\\n")');log('Update confirmed → keeps setter value, no restore on pass',/KEPT, YOU CONFIRMED/.test(c)&&!/UPDATE NOT CONFIRMED/.test(c));
+  setv('Param 6000 bit 3 V15 (Fanuc)','1');c=run(RQ,'4.125','0.002');log('V15=1 swaps: geometry #10008 wear #11008',/#10=#10008\+#11008/.test(c));
+  setv('Param 6000 bit 3 V15 (Fanuc)','0');setv('Offset variables (Fanuc)','4-digit #2001+');c=run(RQ,'4.125','0.002');log('4-digit: geometry #2208 wear #2008',/#10=#2208\+#2008/.test(c));
+  setv('Tool offset memory (Fanuc)','A');c=run(RQ,'4.125','0.002');log('Memory A: one value #2008',/#10=#2008 \(/.test(c)&&!/#2208/.test(c));
+  setv('Tool offset memory (Fanuc)','C');setv('Offset variables (Fanuc)','4-digit #2001+');c=run('tool length check T8 H201 expected length 4.1 tolerance 0.002');log('4-digit blocks H201',!c&&/H1–H200/.test(d.querySelector('#out').textContent));
+  setv('Offset variables (Fanuc)','5-digit');setv('Setter moves to itself','no');c=run(RQ,'4.125','0.002');log('Setter not self-moving: position asked, never guessed',!c&&/Setter X Y \(G53 machine\)/.test(d.querySelector('#out').textContent));
+  setv('Setter X Y (G53 machine)','X-12.5 Y-3.25');setv('Setter clear Z (G53 machine)','-0.5');c=run(RQ,'4.125','0.002');log('Uses only your G53 setter position',/G53 G00 Z-0\.5/.test(c)&&/G53 G00 X-12\.5 Y-3\.25/.test(c));
+  setv('Setter moves to itself','yes');c=run('broken tool check T8 tolerance 0.01');log('Broken mode needs Broken-tool option',!c&&/Broken-tool detection/.test(d.querySelector('#out').textContent));
+  E("S.m[S.cur].opt.btd=1;save()");c=run('broken tool check T8 tolerance 0.01');log('Broken mode: measured vs saved offset → BROKEN TOOL',/IF\[ABS\[#12-#11\]GT0\.01\]GOTO93/.test(c)&&/#3000=13 \(BROKEN TOOL\)/.test(c)&&!/GOTO91/.test(c));
+  setv('Setter writes length to','#149');c=run(RQ,'4.125','0.002');log('Variable output: no restore needed, measured from #149',/#12=#149/.test(c)&&!/PUT OLD/.test(c));
+  E("setUnits&&0");
+  mach('Haas VF-style VMC (generic)','Vertical mills');setv('Control',null);E("S.m[S.cur].opt.tset=1;save()");setv('Tool setter type','contact TEST');setv('Tool setter macro call','G65 P9853 B1. T<T>');setv('Setter writes length to','geometry');setv('Setter moves to itself','yes');
+  c=run(RQ,'4.125','0.002');log('Haas: geometry #2008 wear #2208, no Fanuc fields asked',/#10=#2008\+#2208/.test(c));
+  log('Haas checks all pass except tool library',E('checks(J).every(c=>c[1])'));
+  c=run('make me a coffee');log('Unsupported: plain “not supported yet” + close matches',/Not supported yet/.test(d.querySelector('#out').textContent)&&d.querySelectorAll('#out .row .chip').length>=1&&!/Try “/.test(d.querySelector('#out').textContent));
+  c=run('find the edge of the vise');log('Unsupported suggests probe',/Probe/.test(d.querySelector('#out .row').textContent));
+  log('Help has tool length topic + ? opens it',E("HELP.some(h=>h[0]=='tlen')")&&(run(RQ),E('curTopic()')=='tlen'));
+  log('No page errors',!errs.length);
+ }catch(e){out.push('FAIL exception '+e.message+' '+e.stack)}o.textContent=out.join('\n')},1500)}
+</script></body>

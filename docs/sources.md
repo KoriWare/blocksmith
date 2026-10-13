@@ -151,3 +151,17 @@ Items tagged **official** rest on the control maker's own public manual (allowed
 - Haas mill M07 (shower coolant) vs Fanuc-style mist M07: builder-specific, left out.
 - Fanuc rigid-tap M-code number (M29 typical): builder parameter — described as "set by the builder", not a default.
 - Haas lathe M154 / M155 do not appear on the Haas lathe M-code web page; added from the Haas live-tool training PDF + a forum program (2 sources), tagged Haas.
+
+## Round 26 · Tool length check (Oct 13)
+
+| Item | What we use | Sources |
+|---|---|---|
+| Fanuc H length offsets, memory A/B/C | A: #10001+ (alias #2001+ for 1–200) is the single value. B/C: wear #10000+H, geometry #11000+H (aliases #2000+H / #2200+H, offsets 1–200) | Fanuc 30i/31i parameter manual, No. 6000 table (official, cncmanuals.com copy) + zappettiniconsulting.com Fanuc system variables |
+| Fanuc param 6000 bit 3 V15 | 1 = Series 15 numbering: geometry and wear swap for B/C | same two sources |
+| Fanuc D radius offsets (memory C) | wear #12000+D, geometry #13000+D | same two sources (reference only, not used by the job) |
+| Haas mill tool offsets | length geometry #2000+H, length wear #2200+H, diameter #2401+, diameter wear #2601+ (1–200) | Haas mill operator manual, Macros (official) + inventcom.net + practicalmachinist.com thread |
+| Setter call hint (gray, not a default) | Renishaw contact: G65 P9853 B1. T__ sets length; H = tolerance; cycle ends with G28 that cancels the tool offset | Renishaw contact tool setting programming manual (official, hosted by haascnc.com) + eMastercam forum threads |
+| Laser setter hint (gray, not a default) | Renishaw laser cycles use G65 P9862 (length), P9863 (plunge broken-tool check) | Renishaw NC1/NC4 programming guides (official) + eMastercam thread |
+| #3000 ranges | Fanuc 0–200, 26 chars; Haas 1–999 | Round 25 (above) |
+
+Not used (only one source or builder-specific): Haas WIPS tool-setting macro numbers; Blum macro numbers; setter positions (always from the user's setup sheet).

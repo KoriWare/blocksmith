@@ -1698,4 +1698,147 @@ HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='faq')),0,['sources','Where the c
 <p><b>Timers and clock:</b> #3001 milliseconds, #3002 hours (set to 0 to start timing), #3011 date as YYYYMMDD, #3012 time as HHMMSS. Fanuc G54.1 P1–P48 live at #7001–#7948, and the 300-set option at #14001–#19988 (20 per offset).</p>
 <p><b>New setup fields</b> start red and empty: lathe G-code system, spindle orient M-code, through-spindle coolant on/off and 4th-axis brake on/off. <span style="color:#999">The hints show public Haas examples only — they are not defaults, and the app never writes these codes for you.</span></p>`]);
 })();
-</script></body></html>
+</script>
+<script>
+// ---- Round 26 · Tool length check (table tool setter), offset memory type, plain "not supported yet" ----
+// Every variable number here is sourced (docs/sources.md, Round 26). No setter position or macro number is ever filled in by the app.
+const TLS=[
+ ['Tool setter type','e.g. contact (Renishaw TS27R/OTS-style), laser (Renishaw NC4 / Blum-style), Haas probe-style, other'],
+ ['Tool setter macro call','e.g. Renishaw contact: G65 P9853 B1. T<T> — type yours; <T> = tool, <H> = offset no.'],
+ ['Setter writes length to','geometry, wear, or a variable like #149 — from your setter manual'],
+ ['Setter moves to itself','yes = the macro goes to the setter, no = this program moves there first'],
+ ['Setter X Y (G53 machine)','only if the macro does not move there — from your own setup sheet'],
+ ['Setter clear Z (G53 machine)','only if the macro does not move there — from your own setup sheet'],
+ ['Tool offset memory (Fanuc)','A, B or C — one column = A; geometry + wear = B; H and D apart = C',1],
+ ['Offset variables (Fanuc)','5-digit #10001+ (offsets 1–999) or 4-digit #2001+ (1–200)',1],
+ ['Param 6000 bit 3 V15 (Fanuc)','0 = Series 16 numbering, 1 = Series 15 (swaps geometry and wear)',1]];
+const TLPOS=['Setter X Y (G53 machine)','Setter clear Z (G53 machine)'];
+const addTL=m=>{if(!m||!m.s||isLT(m.type||''))return;TLS.forEach(([k])=>{if(!m.s.find(x=>x.k==k))m.s.push({k,v:'',st:'confirm'})})};S.m.forEach(addTL);
+const _mk26=mk;mk=function(){const m=_mk26.apply(this,arguments);addTL(m);return m};
+const mCtrl=m=>{const c=String(((m&&m.s.find(x=>x.k=='Control'))||{v:''}).v);return /haas/i.test(c)?'haas':/0i|0-i/i.test(c)?'fanuc0i':null};
+const TV=k=>{const x=sv(k);return x&&x.st=='user'&&String(x.v).trim()?String(x.v).trim():null};
+// machine screen: hints, show setter rows only when the Tool setter option is ticked, Fanuc rows only on Fanuc, option notes
+const _ed26=edit;edit=function(i){_ed26(i);const m=S.m[i];if(!m||isLT(m.type||''))return;const fan=mCtrl(m)!='haas',own=!/^\s*n/i.test(((m.s.find(x=>x.k=='Setter moves to itself'))||{}).v||'');
+ V.querySelectorAll('input[data-j]').forEach(el=>{const x=m.s[+el.dataset.j],t=x&&TLS.find(y=>y[0]==x.k);if(!t)return;if(!x.v)el.placeholder=t[1];const row=el.closest('.set');if(!row)return;
+  const show=!!(m.opt&&m.opt.tset)&&(!t[2]||fan)&&(!TLPOS.includes(x.k)||!own);row.style.display=show?'':'none'});
+ [['tset','Turns on the Tool length check job and the tool setter fields in Setup above.'],['btd','Lets the Tool length check job run in broken-tool mode.']].forEach(([k,n])=>{const el=V.querySelector(`input[data-o="${k}"]`);if(!el)return;const sp=el.closest('label').querySelector('span');if(sp&&!sp.querySelector('.tln'))sp.insertAdjacentHTML('beforeend',`<div class="s tln">${n}</div>`);el.addEventListener('change',()=>setTimeout(()=>edit(i),0))})};
+// offset variables for an H number, by control + memory type (sourced)
+function tlVars(h){const k=ctrlKey();h=+h;
+ if(k=='haas'){if(!(h>=1&&h<=200))return{err:'Haas length offsets are #2001–#2200 (H1–H200); H'+h+' is outside that'};return{geo:2000+h,wear:2200+h,name:'Haas'}}
+ if(k=='fanuc0i'){const mt=((TV('Tool offset memory (Fanuc)')||'').toUpperCase().match(/^(?:TYPE\s*|MEMORY\s*)?([ABC])\b/)||[])[1],vs=TV('Offset variables (Fanuc)')||'',vf=TV('Param 6000 bit 3 V15 (Fanuc)')||'';
+  const five=/10001|5/.test(vs)?1:/2001|4/.test(vs)?0:null,v15=/^\s*1/.test(vf)?1:/^\s*0/.test(vf)?0:null;if(!mt||five==null||v15==null)return{err:'setup'};
+  const w=five?10000:2000,g=five?11000:2200,max=five?999:200;if(!(h>=1&&h<=max))return{err:`${five?'5-digit #10001+':'4-digit #2001+'} variables cover H1–H${max}; H${h} is outside that`};
+  if(mt=='A')return{single:w+h,mem:'A',name:'Fanuc memory A'};const geo=v15?w+h:g+h,wear=v15?g+h:w+h;return{geo,wear,mem:mt,v15,name:'Fanuc memory '+mt}}
+ return{err:'Control is not Haas-style or Fanuc 0i-style — the offset variables are not known for it'}}
+function tlReg(vr){const t=(TV('Setter writes length to')||'').toLowerCase(),n=t.match(/#\s*(\d+)/);if(n)return{kind:'var',n:+n[1]};
+ if(/geo/.test(t))return{kind:'off',n:vr.single||vr.geo,w:'geometry'};if(/wear/.test(t))return{kind:'off',n:vr.single||vr.wear,w:'wear'};return null}
+const TLRE=/tool\s*length|length\s*(?:of\s*(?:the\s*)?tool|check|compare)|measure\s*(?:the\s*)?(?:tool|length)|tool\s*-?\s*setter|\bsetter\b|broken\s*tool|tool\s*break(?:age)?|compare\s*(?:the\s*)?(?:tool\s*)?length|\btlo\b|tool\s*eye|laser\s*(?:tool|setter)/i;
+const isTL=t=>TLRE.test(t||'')&&!isL();
+OPN.tlen='Tool length check';
+['Expected length','Tolerance'].forEach(k=>KL.add(k));
+Object.assign(UNIT,{'Expected length':'in, the tool length from your program','Tolerance':'in, ± allowed difference, from your program','Offset no. (H)':'H number, usually the tool number','Mode':'measure + compare, or broken-tool check','Offset page value':'what “the length on the offset page” means','Update offset':'tap to confirm a write'});
+function parseT(t){const l=t.toLowerCase(),mm=UN()=='mm',c=(k,v)=>mm&&v!=null?canonV(k,v):v,p={},G=(k,v,g)=>p[k]={v,g:!!g},n=re=>{const m=l.match(re);return m?+m[1]:null};
+ const tl=n(/\b(?:t|tool\s*(?:number|no\.?|num|#)?)\s*#?\s*(\d{1,3})\b/);G('Tool',tl);
+ const h=n(/\b(?:h|offset\s*(?:number|no\.?|#))\s*#?\s*(\d{1,3})\b/);G('Offset no. (H)',h??tl,h==null);
+ const br=/broken|break/.test(l);G('Mode',br?'Broken-tool check':'Measure + compare',!/broken|break|compare/.test(l));
+ G('Expected length',c('Expected length',n(/(?:expected|nominal|programm?ed|program)\s*(?:tool\s*)?(?:length)?\s*(?:of|is|=|:)?\s*(\d+\.?\d*)/)??n(/length\s*(?:of|is|=|:)?\s*(\d+\.\d*|\d*\.\d+)/)));
+ G('Tolerance',c('Tolerance',n(/(?:tol(?:erance)?|±|\+\/-|plus\s*or\s*minus)\s*(?:of|is|=|:)?\s*(\d*\.?\d+)/)));
+ G('Offset page value','Geometry + wear',true);G('Update offset','NO — put the old value back',true);
+ const j={op:'tlen',p,text:l};tlNorm(j);return j}
+function tlNorm(j){const br=j.p.Mode&&j.p.Mode.v=='Broken-tool check';if(br)delete j.p['Expected length'];else if(!j.p['Expected length'])j.p['Expected length']={v:null};
+ const order=['Tool','Offset no. (H)','Mode','Expected length','Tolerance','Offset page value','Update offset'],np={};order.forEach(k=>{if(j.p[k])np[k]=j.p[k]});
+ if(np['Offset no. (H)']&&np['Offset no. (H)'].g&&np.Tool)np['Offset no. (H)'].v=np.Tool.v;j.p=np;REQ.tlen=order.filter(k=>k in np&&!['Offset page value','Update offset','Mode','Offset no. (H)'].includes(k))}
+const _parse26=parse;parse=function(t){return isTL(t)?parseT(t):_parse26(t)};
+const _req26=req;req=function(j){return j&&j.op=='tlen'?j:_req26(j)};
+// what is missing on the machine (never guessed)
+function tlSetupMiss(j){j=j||J;const m=[],cx=sv('Control');
+ if(!cx||cx.st!='user')m.push(['Control','confirm Haas-style or Fanuc 0i-style — the offset variables depend on it']);
+ if(!opt('tset'))m.push(['Option: Tool setter (touch or laser)','tick it in Options once you have checked the machine has one']);
+ if(j.p.Mode&&j.p.Mode.v=='Broken-tool check'&&!opt('btd'))m.push(['Option: Broken-tool detection','tick it in Options for broken-tool mode']);
+ const tx=k=>TLS.find(x=>x[0]==k)[1];['Tool setter type','Tool setter macro call','Setter writes length to','Setter moves to itself'].forEach(k=>{if(!TV(k))m.push([k,tx(k)])});
+ if(/^\s*n/i.test(TV('Setter moves to itself')||''))TLPOS.forEach(k=>{if(!TV(k))m.push([k,tx(k)])});
+ if(ctrlKey()=='fanuc0i')['Tool offset memory (Fanuc)','Offset variables (Fanuc)','Param 6000 bit 3 V15 (Fanuc)'].forEach(k=>{if(!TV(k))m.push([k,tx(k)])});
+ if(TV('Setter writes length to')&&!tlReg({single:1,geo:1,wear:1}))m.push(['Setter writes length to','type geometry, wear, or a variable like #149']);
+ return m}
+function tlBlock(j){j=j||J;if(isL())return'This job is for mills with a table tool setter. Lathe tool-eye arms are not covered yet.';const H=j.p['Offset no. (H)'].v,vr=tlVars(H);
+ if(vr.err&&vr.err!='setup')return vr.err;const tol=j.p.Tolerance.v;if(tol!=null&&!(tol>0))return'Tolerance must be more than 0.';const e=(j.p['Expected length']||{}).v;if(e!=null&&!(e>0))return'Expected length must be more than 0.';
+ const call=TV('Tool setter macro call');if(call&&!/^\s*(G65|M98|G\d|M\d)/i.test(call))return'Tool setter macro call should start with the call code from your manual (like G65 P____ or M98 P____).';
+ if(/^\s*n/i.test(TV('Setter moves to itself')||'')){const xy=TV(TLPOS[0])||'',z=TV(TLPOS[1])||'';if(!/x\s*-?[\d.]+/i.test(xy)||!/y\s*-?[\d.]+/i.test(xy))return'Setter X Y needs both numbers, like X-12.5 Y-3.2 (machine coordinates from your setup).';if(!/-?\d*\.?\d+/.test(z))return'Setter clear Z needs a number (machine coordinate).'}
+ return null}
+const _ed26b=ed;ed=function(k){if(!J||J.op!='tlen')return _ed26b(k);
+ if(k=='Update offset'){if(J.p[k].v!='YES'&&confirm('This program will then KEEP or WRITE the measured length into the tool length offset. A wrong reading changes every later cut with this tool. Confirm?'))J.p[k]={v:'YES',g:false};else if(J.p[k].v=='YES')J.p[k]={v:'NO — put the old value back',g:true};show();return}
+ if(k=='Mode'){J.p.Mode={v:J.p.Mode.v=='Broken-tool check'?'Measure + compare':'Broken-tool check',g:false};tlNorm(J);show();return}
+ if(k=='Offset page value'){J.p[k]={v:J.p[k].v=='Geometry only'?'Geometry + wear':'Geometry only',g:false};show();return}
+ if(k=='Tool'){const v=prompt('Tool number',J.p.Tool.v??'');if(v==null)return;J.p.Tool={v:+v||null,g:false};tlNorm(J);show();return}
+ _ed26b(k)};
+const _fill26=fill;fill=function(){if(!J||J.op!='tlen')return _fill26();V.querySelectorAll('[data-k]').forEach(el=>{if(el.value!==''){const k=el.dataset.k,v=+el.value;J.p[k]={v:isNaN(v)?el.value:(KL.has(k)?canonV(k,v):v),g:false}}});tlNorm(J);show()};
+const _show26=show;show=function(){if(!J||J.op!='tlen')return _show26();tlNorm(J);
+ const miss=Object.entries(J.p).filter(([k,x])=>x.v==null),sm=tlSetupMiss(J),blk=miss.length?null:tlBlock(J),mn=(S.m[S.cur]||{}).name||'this machine';
+ const smCard=sm.length?`<div class="card" id="tlsm"><div class="t">Machine setup still red — ${sm.length} item${sm.length>1?'s':''}</div><div class="s">These come from your machine, setter manual and setup sheet. The app never fills them in, so no code is written until they are confirmed.</div>${sm.map(([k,w])=>`<div class="set"><span>${esc(k)} <span class="s">(${esc(w)})</span></span><span class="chip r">!</span></div>`).join('')}<button class="btn o" onclick="edit(S.cur)">Open ${esc(mn)} setup</button></div>`:'';
+ if(miss.length){_show26();$('#out').insertAdjacentHTML('beforeend',smCard);return}
+ if(sm.length||blk){$('#out').innerHTML=`<div class="card"><div class="t">${OPN.tlen}</div>${Object.entries(J.p).map(([k,x])=>`<button class="chip ${x.v==null?'r':x.g?'gr':'y'}" onclick="ed('${k}')">${chipTxt(k,x)}</button>`).join('')}<div class="s">Yellow = from your words · gray = suggested, tap to change.</div></div>`+smCard+(blk?`<div class="ok bad">⛔ Not written: ${esc(blk)}</div>`:'');return}
+ _show26()};
+// code (inch numbers through f4 so mm programs convert)
+function genT(j){const v=k=>(j.p[k]||{}).v,T=v('Tool'),H=v('Offset no. (H)')||T,hk=ctrlKey()=='haas',vr=tlVars(H),reg=tlReg(vr),C=[],L=s=>C.push(s);
+ const br=v('Mode')=='Broken-tool check',upd=v('Update offset')=='YES',tol=v('Tolerance'),ex=v('Expected length'),geoOnly=v('Offset page value')=='Geometry only';
+ const page=vr.single?`#${vr.single}`:geoOnly?`#${vr.geo}`:`#${vr.geo}+#${vr.wear}`,call=TV('Tool setter macro call').replace(/<T>/gi,T+'.').replace(/<H>/gi,H+'.');
+ const tgt=reg.kind=='off'?reg.n:(vr.single||vr.geo),K=UN()=='mm'?25.4:1,num=s=>{const x=parseFloat(s);return isNaN(x)?null:x/K};
+ L('%');L(`O7000 (TOOL LENGTH ${br?'BROKEN-TOOL CHECK':'CHECK'} - MACRO BUILDER)`);L(`(T${T} H${H} - ${hk?'HAAS-STYLE':'FANUC 0I-STYLE MEMORY '+vr.mem+(vr.v15?' V15=1':'')} - VERIFY ON CONTROL)`);
+ L(vr.single?`(H${H} OFFSET #${vr.single} - MEMORY A HAS ONE VALUE)`:`(H${H} GEOMETRY #${vr.geo} WEAR #${vr.wear})`);
+ L(br?'(BROKEN-TOOL: MEASURED VS OFFSET BEFORE MEASURING)':'(EXPECTED LENGTH AND TOLERANCE ARE FROM YOUR PROGRAM)');
+ L('G17 G20 G40 G49 G80 G90 (SAFE START)');L('G91 G28 Z0.');L('G90');L(`T${T} M06`);
+ L(`#10=${page} (LENGTH ON OFFSET PAGE)`);if(reg.kind=='off')L(`#11=#${reg.n} (SAVE ${reg.w.toUpperCase()} BEFORE SETTER)`);
+ if(!br)L(`IF[ABS[#10-${f4(ex)}]GT${f4(tol)}]GOTO91 (OFFSET VS PROGRAM)`);
+ if(/^\s*n/i.test(TV('Setter moves to itself')||'')){const xy=TV(TLPOS[0]),x=num((xy.match(/x\s*(-?[\d.]+)/i)||[])[1]),y=num((xy.match(/y\s*(-?[\d.]+)/i)||[])[1]),z=num((TV(TLPOS[1]).match(/-?\d*\.?\d+/)||[])[0]);
+  L(`G53 G00 Z${f4(z)} (YOUR SETTER CLEAR Z)`);L(`G53 G00 X${f4(x)} Y${f4(y)} (YOUR SETTER X Y)`)}
+ L(`${call} (TOOL SETTER - YOUR CONFIRMED CALL)`);L(`#12=#${reg.n} (MEASURED LENGTH)`);
+ const ref=br?(reg.kind=='off'?'#11':'#10'):f4(ex),lab=br?93:92;L(`IF[ABS[#12-${ref}]GT${f4(tol)}]GOTO${lab} (${br?'MEASURED VS OFFSET':'MEASURED VS PROGRAM'})`);
+ if(upd){if(reg.kind=='off')L('(SETTER WROTE THE NEW LENGTH - KEPT, YOU CONFIRMED UPDATE)');else L(`#${tgt}=#12 (WRITE MEASURED LENGTH - YOU CONFIRMED UPDATE)`)}
+ else if(reg.kind=='off')L(`#${reg.n}=#11 (PUT OLD VALUE BACK - UPDATE NOT CONFIRMED)`);
+ L('GOTO90');if(!br)L('N91 #3000=11 (OFFSET LEN OUT OF TOL)');
+ L(`N${lab}`+(reg.kind=='off'?` #${reg.n}=#11 (PUT OLD VALUE BACK)`:''));L(br?'#3000=13 (BROKEN TOOL)':'#3000=12 (MEASURED LEN OUT OF TOL)');
+ L('N90 G91 G28 Z0.');L('G90');L('M30');L('%');j.stock=[-1,-1,-1,1,1,0];
+ return{code:C,moves:[{a:[0,0,2],b:[0,0,2],r:1,l:6}],out:0}}
+const _gen26=gen;gen=function(j){return j.op=='tlen'?genU(genT,j):_gen26(j)};
+// simulator: the setter is not simulated — the offset starts at the expected length and the setter reads the same value
+const _interp26=interp;interp=function(lines,o){if(!J||J.op!='tlen'||!lines||!lines.some(l=>/TOOL SETTER - YOUR CONFIRMED CALL/.test(l)))return _interp26(lines,o);
+ const vr=tlVars(J.p['Offset no. (H)'].v),reg=tlReg(vr),first=vr.single||vr.geo,ifl=lines.find(l=>/^IF\[ABS\[#10-/.test(l)),e=ifl?ifl.match(/#10-([\d.]+)/)[1]:'1.';
+ const ci=lines.findIndex((l,i)=>i>1&&/^\(H\d+ /.test(l)),c0=lines.findIndex((l,i)=>i>1&&/^\(T\d+ H\d+/.test(l));const ls=lines.map((l,i)=>i==c0?`#${first}=${e} (SIM: OFFSET STARTS AT EXPECTED)`:i==ci&&vr.wear?`#${vr.wear}=0 (SIM: WEAR STARTS AT 0)`:/TOOL SETTER - YOUR CONFIRMED CALL/.test(l)?(reg&&reg.kind=='var'?`#${reg.n}=#${first} (SETTER NOT SIMULATED)`:'(SETTER NOT SIMULATED)'):l);return _interp26(ls,o)};
+// checks
+const _checks26=checks;checks=function(j){if(j.op!='tlen')return _checks26(j);const t=txt().join('\n'),H=j.p['Offset no. (H)'].v,vr=tlVars(H),hk=ctrlKey()=='haas',upd=j.p['Update offset'].v=='YES',br=j.p.Mode.v=='Broken-tool check';
+ const c=[['Safe start line (G17 '+GU()+' G40 G49 G80 G90)',/G17 G2[01] G40 G49 G80 G90/.test(t)],['WHILE / END pairs match',(t.match(/DO\d/g)||[]).length==(t.match(/END\d/g)||[]).length],['Balanced [ ] brackets',(t.match(/\[/g)||[]).length==(t.match(/\]/g)||[]).length],...ctrlChecks(t,0),['Ends with M30',/M30/.test(t)],['Custom Macro B option on',opt('macroB')]];
+ const al=[...t.matchAll(/#3000=(\d+)\s*\(([^)]*)\)/g)],okA=al.every(m=>hk?(+m[1]>=1&&+m[1]<=999):(+m[1]>=0&&+m[1]<=200&&m[2].length<=26));
+ c.push(['Tool setter option ticked on this machine',opt('tset')],['Setter type, macro call and output register confirmed by you',['Tool setter type','Tool setter macro call','Setter writes length to'].every(k=>TV(k))],
+  ['Setter position: '+(/^\s*n/i.test(TV('Setter moves to itself')||'')?'only from your confirmed G53 X Y / Z':'the setter macro moves there itself (you confirmed)'),true],
+  [hk?`Haas H${H}: geometry #${vr.geo}, wear #${vr.wear} (Haas manual)`:vr.single?`Fanuc memory A: H${H} is #${vr.single} (one value)`:`Fanuc memory ${vr.mem}${vr.v15?' with V15=1':''}: H${H} geometry #${vr.geo}, wear #${vr.wear}`,!vr.err],
+  [br?'Compares ABS(measured − offset) with the tolerance':'Compares ABS(offset − expected) and ABS(measured − expected) with your tolerance',br?/IF\[ABS\[#12-#1[01]\]GT/.test(t):/IF\[ABS\[#10-/.test(t)&&/IF\[ABS\[#12-[\d.]/.test(t)],
+  ['Out of tolerance raises a #3000 alarm ('+(hk?'1–999 on Haas':'0–200, 26 characters on Fanuc')+')',al.length>0&&okA],
+  [upd?'Offset update: you confirmed it':'Offset left as it was (setter value put back) — update not confirmed',upd||!/WRITE MEASURED/.test(t)],
+  ['Expected length and tolerance typed by you',(br||!j.p['Expected length'].g)&&!j.p.Tolerance.g]);
+ if(!hk)c.push(['Offset count option on your control covers H'+H,H<=(/10001|5/.test(TV('Offset variables (Fanuc)')||'')?999:200)&&H<=400||null]);
+ return c.filter(x=>x[1]!==null)};
+// requests the app has no job for: say so plainly, suggest close ones
+const TLNEAR=[['Tool length check','tool length check T1',/tool|length|setter|broken|offset|measure/],['Probe bore center','probe bore',/probe|measure|find|bore|center|hole/],['Probe single surface','probe surface',/probe|surface|edge|find|measure|zero/],['Bolt circle','bolt circle',/hole|circle|bolt|drill|pcd/],['Hole grid','grid',/grid|holes|array|drill|pattern/],['Face mill','face mill',/face|flat|skim|surface|top/],['Rigid tap','rigid tap 1/4-20 bolt circle',/tap|thread/],['Engrave text','engrave "ABC"',/engrav|text|letter|mark|serial|number/],['4th-axis holes','index 4 faces',/4th|rotary|index|indexer/]];
+const TLNEARL=[['OD turn','turn',/turn|od|diameter|shaft/],['Lathe face','face',/face|facing/],['OD groove','groove',/groove|slot|neck/],['Center drill','center drill',/drill|hole|center/],['Engrave text','engrave "ABC"',/engrav|text|letter|mark/]];
+const _go26=go;go=function(){const t=($('#q')||{}).value||'';if(isTL(t)){J={...parseT(t),date:Date.now(),edits:{}};show();return}
+ if(TLRE.test(t)&&isL()){$('#out').innerHTML='<div class="ok bad">Not supported yet: tool length checking with a tool-eye arm on a lathe isn\'t in the app yet, so nothing was written. On a mill with a table tool setter, use “tool length check”.</div>';return}
+ _go26();const bad=[...document.querySelectorAll('#out .ok.bad')].find(e=>/Try “/.test(e.textContent));if(!bad)return;
+ const l=t.toLowerCase(),list=(isL()?TLNEARL:TLNEAR).map(([n,s,re])=>[n,s,(l.match(new RegExp(re.source,'g'))||[]).length]).sort((a,b)=>b[2]-a[2]),top=(list[0][2]?list.filter(x=>x[2]):list).slice(0,3);
+ bad.outerHTML=`<div class="ok bad" id="unsup">Not supported yet: the app doesn't have a job for that request, so it wrote nothing. ${list[0][2]?'Closest jobs it can make:':'Jobs it can make:'}</div><div class="row" style="margin-top:6px">${top.map(([n,s])=>`<button class="chip gr" onclick="ex(${esc(JSON.stringify(s)).replace(/"/g,'&quot;')})">${esc(n)}</button>`).join('')}</div>`};
+// help
+const _ct26=curTopic;curTopic=function(){const t=_ct26();if(t=='build'&&J&&J.op=='tlen'&&/^New job/.test($('#ttl').textContent))return'tlen';return t};
+REFMB.push(
+ {k:'#10001+H / #11001+H (Fanuc)',m:'Tool length offset H: memory B/C wear = #10000+H, geometry = #11000+H (offsets 1–999). Memory A: #10000+H is the only value.',n:'Parameter 6000 bit 3 (V15) = 1 swaps geometry and wear.',s:'✅ sourced · Fanuc 30i/31i parameter manual (No. 6000 V15 table) + zappettiniconsulting.com',st:'sourced'},
+ {k:'#2001+H / #2201+H (Fanuc)',m:'Same as #10001+H / #11001+H for offsets 1–200 only.',n:'Older 4-digit numbers.',s:'✅ sourced · Fanuc 30i/31i parameter manual + zappettiniconsulting.com',st:'sourced'},
+ {k:'#12001+D / #13001+D (Fanuc)',m:'Memory C only: cutter radius D wear = #12000+D, geometry = #13000+D.',n:'',s:'✅ sourced · Fanuc 30i/31i parameter manual + zappettiniconsulting.com',st:'sourced'},
+ {k:'#2001+H / #2201+H (Haas)',m:'Haas mill: tool length geometry = #2000+H, length wear = #2200+H (H1–H200). Diameter #2401+, diameter wear #2601+.',n:'',s:'✅ sourced · Haas mill operator manual, Macros + inventcom.net + practicalmachinist.com',st:'sourced'});
+LOG.unshift(['1.8 · Oct 13','Tool length check job (table tool setter): compare the offset page and the measured length with your program\'s length and tolerance, #3000 alarm, optional broken-tool mode, offset written only if you confirm. New red setup fields for the setter and Fanuc offset memory A/B/C. Requests without a job now say “not supported yet”.']);
+HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='faq')),0,['tlen','Tool length check (tool setter)',()=>`<p>Say it plainly, e.g. “measure tool length with the setter and compare to the program, T8, length 4.125, tolerance 0.002”. The job measures the tool on your table tool setter and checks two things against the length and tolerance from your program: the length on the offset page, and the measured length. If either is off by more than the tolerance it stops with a #3000 alarm.</p>
+<p><b>Broken-tool mode</b> (needs the <i>Broken-tool detection</i> option) compares the measured length with what was on the offset page before measuring, and alarms BROKEN TOOL if it moved more than the tolerance.</p>
+<p><b>Offsets are not changed unless you say so.</b> Many setter macros write the measured length straight into the offset. The program saves the old value first and puts it back afterwards, unless you tap <i>Update offset</i> and confirm.</p>
+<p><b>Machine setup (all red until you confirm, never guessed):</b> tick <i>Tool setter</i> in Options, then fill in setter type, the macro call from your setter manual (use &lt;T&gt; for the tool number), where the setter puts the length (geometry, wear or a #variable), and whether the macro moves to the setter itself. If not, give the setter X Y and clear Z in machine coordinates (G53) from your own setup sheet.</p>
+<p><b>Fanuc offset memory:</b> A = one value per offset, B = geometry + wear, C = geometry + wear with H and D apart. H length variables: wear #10000+H, geometry #11000+H (offsets 1–999), or #2000+H / #2200+H for offsets 1–200. Parameter 6000 bit 3 (V15) = 1 swaps geometry and wear. Memory A: #10000+H is the only value. <b>Haas:</b> geometry #2000+H, wear #2200+H (H1–H200).</p>
+<p><span style="color:#999">Public examples only, not defaults: Renishaw's contact tool-setting manual (hosted by Haas) uses G65 P9853 B1. T__ to set a length; Renishaw laser manuals use G65 P9862. Your setter software, its option and its variable settings decide the real call. Some setter macros finish with a G28 that cancels the tool offset.</span></p>
+<p>The simulator does not run the setter: it starts the offset at your expected length and assumes the setter reads the same, so you can step through the logic. Lathe tool-eye arms are not covered yet.</p>`]);
+</script>
+</body></html>
