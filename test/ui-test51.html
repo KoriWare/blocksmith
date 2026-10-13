@@ -1,0 +1,74 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=67" style="width:390px;height:844px"></iframe><script>
+// Round 67 · Programs list (per machine): save on build, versions, out of date, edit-append-rebuild, deleted list recreate, backups, isolation, perf
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;
+ if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;w.alert=()=>{};w.prompt=()=>null;
+  E("S.cur=0;{const c=S.m[0].s.find(x=>x.k=='Control');c.v='Haas NGC';c.st='user';S.m[0].s.forEach(x=>{if(x.st=='confirm'||x.st=='suggested')x.st='user'})}save()");
+  E("window.__fill=l=>l.entries.forEach(e=>{const p=e.job.p;Object.keys(p).forEach(k=>{if(p[k].v==null)p[k]={v:k=='Work offset'?'G54':k=='Tool'?1:/X|Y|Z0|Center|Start/.test(k)?0:k=='Dia'?2:k=='Cutter'?0.5:k=='Depth'?0.1:k=='Stepdown'?0.05:k=='Holes'?6:k=='RPM'?2000:k=='Feed'?8:k=='Length'?3:k=='Width'?2:k=='Stepover %'?50:1,g:false}})})");
+  E("window.__L=jmNew('Bracket op1');['op:face','op:bolt'].forEach(v=>jmAdd(__L,v));__fill(__L);jmOpen(__L.id)");
+  let o=E("jmBuildUI()");
+  log('build ok',o&&!o.err.length,o&&o.err.join('|'));
+  log('saved on build (1 program)',E("S.progs.length")==1);
+  const p1=E("S.progs[0]");
+  log('record fields',p1.name=='Bracket op1'&&p1.prog==1000&&p1.ver==1&&p1.ct>0&&/HAAS NGC/.test(p1.ctrl)&&p1.mode=='inline'&&p1.lines.length>10&&p1.lid==E("__L.id")&&p1.snap.entries.length==2&&p1.mid==E("S.m[0].id"),JSON.stringify({...p1,lines:p1.lines.length}).slice(0,300));
+  log('saved banner',!!d.querySelector('#pgsaved'));
+  E("jmBuildUI()");log('same build no duplicate',E("S.progs.length")==1);
+  log('rebuild label',/Rebuild/.test(E("jmOpen(__L.id);$('#jmbuild').textContent")));
+  log('not out of date',E("pgStale(S.progs[0])")===false);
+  E("__L.entries[1].job.p['Holes']={v:8,g:false};save()");
+  log('entry change -> out of date',E("pgStale(S.progs[0])")===true);
+  E("pgList()");log('list shows amber out of date',!!d.querySelector('.pgood')&&/O1000/.test(d.querySelector('.pgrow').textContent)&&/v1/.test(d.querySelector('.pgrow').textContent));
+  // edit -> append -> rebuild = v2
+  E("pgOpen(S.progs[0].id)");log('open shows code + edit',!!d.querySelector('#pgcode')&&!!d.querySelector('#pgedit')&&!!d.querySelector('#pgstale'));
+  E("pgEdit()");log('edit reopens list',/^Job manager/.test(d.querySelector('#ttl').textContent)&&E("JML")==E("__L.id"));
+  E("jmAdd(__L,'op:cpock');__fill(__L);jmOpen(__L.id)");o=E("jmBuildUI()");
+  log('rebuild ok',o&&!o.err.length,o&&o.err.join('|'));
+  log('v2 saved, v1 kept',E("S.progs.length")==2&&E("S.progs.map(p=>p.ver).join()")=='1,2'&&E("S.progs[0].gid==S.progs[1].gid"));
+  log('v2 snapshot has 3 jobs',E("S.progs[1].snap.entries.length")==3&&E("S.progs[0].snap.entries.length")==2);
+  log('v2 current, v1 stale',E("pgStale(S.progs[1])")===false&&E("pgStale(S.progs[0])")===true);
+  E("pgList()");log('one row, 2 versions',d.querySelectorAll('.pgrow').length==1&&/v2 \(2 versions\)/.test(d.querySelector('.pgrow').textContent));
+  // compare
+  E("pgOpen(S.progs[1].id);pgCompare()");log('compare versions',/^Compare/.test(d.querySelector('#ttl').textContent)&&E("$('#ca').value")==E("S.progs[0].lines.join('\\n')")&&E("$('#cb').value")==E("S.progs[1].lines.join('\\n')")&&!!E("$('#cmo').textContent"));
+  // simulate
+  E("pgOpen(S.progs[1].id);pgSim()");log('open in Simulate',/^Simulate/.test(d.querySelector('#ttl').textContent)&&E("txt().length")>10&&!!d.querySelector('#jmsimck'));
+  log('export still behind verify gate',E("(()=>{const v=document.querySelector('#vf');return !!v&&!v.checked})()"));
+  // rename
+  w.prompt=()=>'Bracket OP-1';E("pgOpen(S.progs[1].id);pgRename()");w.prompt=()=>null;log('rename all versions',E("S.progs.every(p=>p.name=='Bracket OP-1')"));
+  // backup round trip (replace + merge)
+  const bk=E("JSON.stringify(S)");E("S.progs=[];save()");E("Object.assign(S,JSON.parse("+JSON.stringify(bk)+"));save()");log('backup replace keeps programs',E("S.progs.length")==2);
+  const n0=E("S.progs.length");E("mergeBackup(JSON.parse("+JSON.stringify(bk)+"))");log('merge no duplicates',E("S.progs.length")==n0);
+  const b2=JSON.parse(bk);b2.progs.forEach(p=>p.date+=1);E("mergeBackup("+JSON.stringify(JSON.stringify(b2))+".constructor===String?JSON.parse("+JSON.stringify(JSON.stringify(b2))+"):0)");
+  log('merge adds + maps machine + new list id',E("S.progs.length")==n0+2&&E("S.progs.slice(-2).every(p=>p.mid==S.m[0].id&&p.lid&&p.lid!=__L.id&&jmGet(p.lid))"));
+  E("S.progs.splice(2);S.jlists.splice(1);save()");
+  // deleted list -> recreate
+  E("jmDel(__L.id)");log('list deleted',!E("jmGet(__L.id)"));
+  E("pgOpen(S.progs[1].id)");log('still opens, recreate offered',!!d.querySelector('#pgcode')&&!!d.querySelector('#pgrec')&&/deleted/.test(d.querySelector('#pghead').textContent));
+  E("pgList()");log('list tag job list deleted',/job list deleted/.test(d.querySelector('.pgrow').textContent));
+  const nl=E("pgRecreate().id");log('recreated list',E("jmGet('"+nl+"').entries.length")==3&&E("S.progs.every(p=>p.lid=='"+nl+"')")&&E("pgStale(S.progs[1])")===false);
+  o=E("jmBuildUI()");log('recreated list builds same code, no new version',!o.err.length&&E("S.progs.length")==2);
+  // share uses job list (not code)
+  E("pgOpen(S.progs[1].id)");const sr=E("(async()=>{})()");E("pgShare().then(r=>window.__sr=r)");
+  // isolation
+  w.pick('Haas ST-style lathe (generic)','Lathes');E("S.cur=S.m.length-1");E("pgList()");
+  log('other machine sees none',!!d.querySelector('#pgnone')&&E("pgGroups(S.cur).length")==0);
+  E("S.cur=0");E("pgList()");log('first machine still 1 group',d.querySelectorAll('.pgrow').length==1);
+  // single job saved as program
+  E("tab('new');pickJob('face')");E("Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k=='Work offset'?'G54':1,g:false}});show()");
+  w.prompt=()=>'Face only';E("pgList()");log('save-job button',!!d.querySelector('#pgjob'));E("pgSaveJob()");w.prompt=()=>null;
+  log('single job program',E("S.progs.at(-1).kind")=='single'&&E("S.progs.at(-1).lines.length")>3&&E("pgStale(S.progs.at(-1))")===false);
+  E("pgOpen(S.progs.at(-1).id)");log('single job recreate list offered',!!d.querySelector('#pgrec'));
+  // delete with confirm
+  let asked=0;w.confirm=()=>{asked++;return false};E("pgDel(0)");log('delete cancelled keeps it',asked==1&&E("S.progs.length")==3);w.confirm=()=>true;E("pgDel(0)");log('delete',E("S.progs.length")==2);
+  // entry points + help
+  E("tab('recent')");log('Library entry',!!d.querySelector('#pgopen'));E("jobMgr()");log('Job manager entry',!!d.querySelector('#pgopen2'));
+  log('help topic',E("HELP.some(h=>h[0]=='programs')"));E("pgList()");log('help routes',E("curTopic()")=='programs');
+  // perf 50 programs
+  E("{const b=S.progs[1];for(let i=0;i<50;i++)S.progs.push({...JSON.parse(JSON.stringify(b)),id:pgUid(),gid:'g'+(i%25),ver:Math.floor(i/25)+1,date:Date.now()+i});save()}");
+  const t=E("(()=>{const t0=performance.now();pgList();const t1=performance.now();pgOpen(S.progs.at(-1).id);return [t1-t0,performance.now()-t1]})()");
+  log('perf 50 programs list '+t[0].toFixed(1)+'ms open '+t[1].toFixed(1)+'ms',t[0]<300&&t[1]<300);
+  log('sw.js is mc-v63',E("(()=>{var x=new XMLHttpRequest();x.open('GET','sw.js',false);x.send();return /mc-v63/.test(x.responseText)})()"));
+  setTimeout(()=>{log('share returns (job list file)',w.__sr&&/"kind":"joblist"/.test(w.__mbLast||'')&&!/O1000 \(/.test(w.__mbLast||''),w.__sr);log('no console errors',!errs.length,errs.join('|'));d.defaultView&&0;document.getElementById('o').textContent=out.join('\n')},1500);
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '));document.getElementById('o').textContent=out.join('\n')}},8000)};
+</script></body>

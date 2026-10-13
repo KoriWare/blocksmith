@@ -5031,4 +5031,90 @@ LOG.unshift(['3.4 · Oct 13','Program headers name the selected control (HAAS NG
 LOG.unshift(['3.3 · Oct 13','Job manager: Simulate shows the whole-program checks for a combined program (single-job checks hidden); Haas layouts (inline default, M97 local subprograms, M98 + separate files) and 📦 export as separate program files (.zip or share) on both controls; per-machine Tool change time (s) — gray 5 s until set — used in every cycle-time estimate; stronger #500+ and HIGH-risk tests.']);
 </script>
 
+<script>
+// ---- Round 67 · Programs: every Job manager build is saved as a Program record on its machine (keyed by machine id).
+//      Versions (v1, v2…) are kept; each links to its job list (by list id) + a snapshot of the entries used.
+S.progs=Array.isArray(S.progs)?S.progs:[];
+const pgA=()=>{if(!Array.isArray(S.progs))S.progs=[]};
+const pgUid=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const pgEnc=new TextEncoder();
+function pgSig(l){if(!l)return '';return crc32(pgEnc.encode(JSON.stringify([l.name,l.mode,+l.prog||1000,(l.entries||[]).map(e=>[e.on!==false,e.label||'',e.job])]))).toString(36)}
+const pgGroups=k=>{pgA();const m=S.m[k];if(!m)return [];const g={};S.progs.filter(p=>p.mid==m.id).forEach(p=>(g[p.gid]=g[p.gid]||[]).push(p));return Object.values(g).map(v=>v.sort((a,b)=>a.ver-b.ver)).sort((a,b)=>b.at(-1).date-a.at(-1).date)};
+const pgVers=gid=>(pgA(),S.progs).filter(p=>p.gid==gid).sort((a,b)=>a.ver-b.ver);
+const pgGet=id=>(pgA(),S.progs).find(p=>p.id==id);
+// is this version out of date vs its job list?  'gone' | true | false
+function pgStale(p){if(!p.lid)return false;const l=jmGet(p.lid);if(!l)return 'gone';return pgSig(l)!==p.sig}
+function pgSnap(l){return {name:l.name,mode:l.mode,prog:+l.prog||1000,entries:JSON.parse(JSON.stringify(l.entries||[]))}}
+function pgSave(l,o){pgA();if(!l||!o||!o.lines||!o.lines.length||(o.err&&o.err.length))return null;const k=jmMI(l);if(k<0)return null;const m=S.m[k],sig=pgSig(l);
+ let gid=null;const prev=S.progs.filter(p=>p.lid==l.id&&p.mid==m.id).sort((a,b)=>b.ver-a.ver)[0];
+ if(prev){gid=prev.gid;if(prev.sig==sig&&prev.lines.join('\n')==o.lines.join('\n'))return prev}   // same list + same code: no duplicate version
+ const vers=gid?pgVers(gid):[];const p={id:pgUid(),gid:gid||pgUid(),ver:vers.length?Math.max(...vers.map(v=>v.ver))+1:1,name:vers.length?vers.at(-1).name:l.name,mid:m.id,lid:l.id,prog:+l.prog||1000,date:Date.now(),
+  ct:+o.ct||0,ctrl:jmSand(k,()=>{try{return ctrlLbl()}catch(e){return ''}}),mode:o.mode||'inline',lathe:!!o.lathe,lines:o.lines.slice(),files:o.nsub>0?jmFiles(o).map(f=>({name:f.name,text:f.text})):null,sig,snap:pgSnap(l),kind:'list'};
+ S.progs.push(p);save();return p}
+{const _b=jmBuildUI;jmBuildUI=function(){const o=_b.apply(this,arguments);try{const l=jmL();const p=pgSave(l,o);if(p&&o){o.pg=p;const r=$('#jmres');if(r&&$('#jmout'))$('#jmout').insertAdjacentHTML('afterbegin',`<div class="ok" id="pgsaved">📑 Saved as program <b>${esc(p.name)}</b> v${p.ver} — <a href="#" onclick="pgList();return false">Programs</a></div>`)}}catch(e){console.warn(e)}return o}}
+// Rebuild label when this list already has programs
+{const _o=jmOpen;jmOpen=function(id){const r=_o.apply(this,arguments);try{const l=jmGet(id),b=$('#jmbuild');if(l&&b){const v=(S.progs||[]).filter(p=>p.lid==l.id);if(v.length){const n=Math.max(...v.map(p=>p.ver));b.textContent=`🔁 Rebuild one program (saves v${n+1} if changed)`}}}catch(e){}return r}}
+// single job from Build → program (optional, from the Programs screen)
+function pgSaveJob(){pgA();if(!J||!J.op||!J.code||!J.code.length)return null;const k=S.cur,m=S.m[k];if(!m)return null;const nm=prompt('Program name:',J.name||jName(J.op)||'Program');if(nm==null)return null;
+ const job=jmClean(J);delete job.name;const lines=txt().map(String),pn=+((lines.join('\n').match(/^\s*O0*(\d+)/m)||[])[1])||null;
+ const p={id:pgUid(),gid:pgUid(),ver:1,name:mbClean(nm,60)||'Program',mid:m.id,lid:null,prog:pn,date:Date.now(),ct:+J.ct||0,ctrl:(()=>{try{return ctrlLbl()}catch(e){return ''}})(),mode:'single',lathe:!!J.lathe,lines,files:null,sig:'',snap:{name:mbClean(nm,60)||'Program',mode:'inline',prog:pn||1000,entries:[{id:jmUid(),label:mbClean(J.name||jName(J.op),60),job,on:true}]},kind:'single'};
+ S.progs.push(p);save();return p}
+// ---- screens
+const pgMode=p=>p.mode=='single'?'single job':p.mode=='sub'?'M98':p.mode=='m97'?'M97':'inline';
+function pgTag(p){const s=pgStale(p);return s=='gone'?'<span class="chip y pgtag" style="background:#ffb020;color:#111;min-height:0;padding:2px 8px;font-size:12px">job list deleted</span>':s?'<span class="chip y pgtag pgood" style="background:#ffb020;color:#111;min-height:0;padding:2px 8px;font-size:12px">out of date</span>':''}
+function pgList(){const k=S.cur,m=S.m[k];$('#ttl').textContent='Programs · '+((m||{}).name||'?');tabOn();
+ if(!m){V.innerHTML='<div class="card"><div class="s">Add a machine first.</div></div>';return}
+ const G=pgGroups(k),canJob=J&&J.op&&J.code&&J.code.length&&J.op!='import'&&!J.jmList;
+ V.innerHTML=`<div class="card"><div class="t">📑 Programs for ${esc(m.name)}</div><div class="s">Every program the Job manager builds is saved here with its job list. Rebuilding saves a new version and keeps the old ones. Programs belong to this machine — switch machine to see its programs.</div>
+ ${G.length?G.map(v=>{const p=v.at(-1);return `<div class="set pgrow" data-gid="${p.gid}" style="flex-wrap:wrap;gap:4px"><span style="flex:1;min-width:150px;cursor:pointer" onclick="pgOpen('${p.id}')"><b>${esc(p.name)}</b> ${pgTag(p)}<br><span class="s">${p.prog?'O'+String(p.prog).padStart(4,'0')+' · ':''}v${p.ver}${v.length>1?' ('+v.length+' versions)':''} · ${new Date(p.date).toLocaleString()} · ~${fmt(p.ct)}</span></span><button class="chip y" onclick="pgOpen('${p.id}')">Open</button></div>`}).join(''):'<div class="s" id="pgnone">No programs on this machine yet. Build one in the Job manager.</div>'}
+ ${canJob?`<button class="chip gr" id="pgjob" onclick="if(pgSaveJob())pgList()">📑 Save the job open in Build as a program</button>`:''}</div>
+ <button class="btn o" onclick="jobMgr()">📋 Job manager</button><button class="btn o" onclick="help('programs')">How it works</button><button class="btn o" onclick="navBack(()=>tab('recent'))">‹ Back</button>`}
+let PGC=null;
+function pgOpen(id){const p=pgGet(id);if(!p)return pgList();const k=S.m.findIndex(m=>m.id==p.mid);if(k>=0&&k!=S.cur){S.cur=k;save();try{updMode()}catch(e){}}PGC=p.id;
+ const vs=pgVers(p.gid),st=pgStale(p),l=p.lid&&jmGet(p.lid);$('#ttl').textContent='Program · '+p.name;tabOn();
+ V.innerHTML=`<div class="card" id="pghead"><div class="t">📑 ${esc(p.name)} · v${p.ver} ${pgTag(p)}</div>
+ <div class="s">${p.prog?'O'+String(p.prog).padStart(4,'0')+' · ':''}${esc(p.ctrl||'')} · ${pgMode(p)} · ${new Date(p.date).toLocaleString()} · cycle time about ${fmt(p.ct)} · ${p.lines.length} lines${p.files?' · '+p.files.length+' files':''}</div>
+ <div class="s">${p.kind=='single'?'Saved from a single job in Build.':l?`From job list <b>${esc(l.name)}</b> (${p.snap.entries.length} job${p.snap.entries.length==1?'':'s'} when built).`:`Its job list was deleted. The program and a snapshot of its ${p.snap.entries.length} job${p.snap.entries.length==1?'':'s'} are kept.`}</div>
+ ${st===true?'<div class="s" id="pgstale" style="color:#ffb020">The job list changed since this version was built. Rebuild to get a new version — this one is kept.</div>':''}
+ ${vs.length>1?`<label class="s">Version <select id="pgver" style="min-height:44px" onchange="pgOpen(this.value)">${vs.map(v=>`<option value="${v.id}"${v.id==p.id?' selected':''}>v${v.ver} · ${new Date(v.date).toLocaleString()}</option>`).join('')}</select></label>`:''}</div>
+ <div class="code" id="pgcode" style="max-height:300px;overflow:auto">${p.lines.map(x=>`<div class="ln">${esc(x)||'&nbsp;'}</div>`).join('')}</div>
+ ${p.files?`<div class="s">Separate files: ${p.files.map(f=>esc(f.name)).join(', ')}</div>`:''}
+ <button class="btn" id="pgsim" onclick="pgSim()">▶ Open in Simulate (copy / export there after “I'll verify”)</button><button class="btn o" onclick="pgSim('edit')">Open in Editor</button>
+ ${l?`<button class="btn o" id="pgedit" onclick="pgEdit()">✏️ Edit jobs (add / reorder / fix, then Rebuild)</button>`:`<button class="btn o" id="pgrec" onclick="pgRecreate()">♻️ Recreate job list from snapshot</button>`}
+ ${vs.length>1?`<button class="btn o" id="pgcmp" onclick="pgCompare()">⇄ Compare versions</button>`:''}
+ <div class="row"><button class="btn o" onclick="pgRename()">Rename</button><button class="btn o" onclick="pgShare()">📤 Share job list</button></div>
+ <div class="row"><button class="btn o" id="pgdelv" onclick="pgDel(0)">Delete v${p.ver}</button>${vs.length>1?`<button class="btn o" onclick="pgDel(1)">Delete all ${vs.length} versions</button>`:''}</div>
+ <div class="foot">⚠ Saved code is a record of what was built. Copy / export only from Simulate after “I'll verify on the control”; dry-run and single-block first.</div>
+ <button class="btn o" onclick="navBack(()=>pgList())">‹ Back</button>`}
+const pgC=()=>pgGet(PGC);
+function pgSim(pg){const p=pgC();if(!p)return;const k=S.m.findIndex(m=>m.id==p.mid);if(k>=0){S.cur=k;save()}NAV.d++;try{tab('new');importToEditor(p.lines.join('\n'));J.name=p.name+' v'+p.ver;J.text='(program: '+p.name+' v'+p.ver+')';if(p.kind!='single')J.jmList=p.lid||'x';J.pgId=p.id}finally{NAV.d--}tab(pg=='edit'?'edit':'sim')}
+function pgEdit(){const p=pgC();if(!p||!p.lid||!jmGet(p.lid))return;jmOpen(p.lid)}
+function pgRecreate(){const p=pgC();if(!p)return null;const k=S.m.findIndex(m=>m.id==p.mid);if(k<0){alert('This program\'s machine was deleted.');return null}
+ let nm=p.snap.name||p.name,i=2;const base=nm;while(S.jlists.some(x=>x.mid==p.mid&&x.name==nm))nm=base+' ('+(i++)+')';
+ const l={id:jmUid(),name:nm,mid:p.mid,mode:p.snap.mode=='sub'||p.snap.mode=='m97'?p.snap.mode:'inline',prog:p.snap.prog||1000,entries:JSON.parse(JSON.stringify(p.snap.entries)).map(e=>({...e,id:jmUid()})),date:Date.now()};
+ S.jlists.push(l);pgVers(p.gid).forEach(v=>v.lid=l.id);p.sig=pgSig(l);save();jmOpen(l.id);return l}
+function pgCompare(){const p=pgC();if(!p)return;const vs=pgVers(p.gid);const a=vs.indexOf(p)>0?vs[vs.indexOf(p)-1]:vs[1]||p,[A,B]=a.ver<p.ver?[a,p]:[p,a];compare();$('#ttl').textContent='Compare · '+p.name+' v'+A.ver+' → v'+B.ver;$('#ca').value=A.lines.join('\n');$('#cb').value=B.lines.join('\n');
+ const s=document.querySelectorAll('#v .s, .s');try{V.querySelectorAll('.s').forEach(x=>{if(/Both start as the current job/.test(x.textContent))x.textContent=`A = v${A.ver}, B = v${B.ver}.`})}catch(e){}doCmp()}
+function pgRename(){const p=pgC();if(!p)return;const n=prompt('New program name:',p.name);if(n==null)return;const nm=mbClean(n,60);if(!nm)return;pgVers(p.gid).forEach(v=>v.name=nm);save();pgOpen(p.id)}
+function pgDel(all){const p=pgC();if(!p)return;const vs=pgVers(p.gid);if(!confirm(all?`Delete all ${vs.length} versions of “${p.name}”? The job list is not touched.`:`Delete version v${p.ver} of “${p.name}”? Other versions and the job list are not touched.`))return;
+ (all?vs:[p]).forEach(v=>S.progs.splice(S.progs.indexOf(v),1));save();const left=pgVers(p.gid);if(left.length)pgOpen(left.at(-1).id);else pgList()}
+async function pgShare(){const p=pgC();if(!p)return;const l=(p.lid&&jmGet(p.lid))||{...p.snap,mid:p.mid};const f=jmFile(l),txt=JSON.stringify(f),fn=mbFname(p.name).replace(/\.mbjob$/,'-list.mbjob');if(txt.length>MBJ.max){alert('Too big to share (over 512 KB).');return 'too big'}
+ try{const file=new File([txt],fn,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:p.name,text:'Macro Builder job list — open it with Library → Import job'});return 'shared'}}catch(e){if(e&&e.name=='AbortError')return 'cancelled'}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));a.download=fn;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);window.__mbLast=txt;return 'downloaded'}
+// entry points: Library (inside the Job lists card) and Job manager (list screen)
+{const _l=jmLibUI;jmLibUI=function(){const r=_l.apply(this,arguments);try{const b=$('#jmopenmgr');if(b&&!$('#pgopen'))b.insertAdjacentHTML('afterend',` <button class="chip gr" id="pgopen" onclick="pgList()">📑 Programs</button>`)}catch(e){}return r}}
+{const _j=jobMgr;jobMgr=function(){const r=_j.apply(this,arguments);try{const b=$('#jmnewb');if(b&&!$('#pgopen2')&&S.m[S.cur])b.closest('.card').insertAdjacentHTML('beforeend',`<button class="chip gr" id="pgopen2" style="margin-top:6px" onclick="pgList()">📑 Programs (${pgGroups(S.cur).length})</button>`)}catch(e){}return r}}
+{const a=pgList,b=pgOpen;pgList=function(){const r=a.apply(this,arguments);try{helpBtn()}catch(e){}return r};pgOpen=function(){const r=b.apply(this,arguments);try{helpBtn()}catch(e){}return r}}
+['pgList','pgOpen'].forEach(navWrap);
+{const _c=curTopic;curTopic=function(){return /^Program/.test($('#ttl').textContent)?'programs':_c()}}
+// backups: backup() writes all of S (progs travel). Merge: map machine by name, list id to the merged list
+{const _m=mergeBackup;mergeBackup=function(d){const n0=(S.jlists||[]).length,r=_m.apply(this,arguments);if(!Array.isArray(S.progs))S.progs=[];if(!Array.isArray(S.jlists))S.jlists=[];const idName={};(d.m||[]).forEach(m=>{if(m&&m.id!=null)idName[m.id]=m.name});
+ const lm={};(Array.isArray(d.jlists)?d.jlists:[]).filter(l=>l&&Array.isArray(l.entries)).forEach((l,i)=>{const nl=S.jlists[n0+i];if(nl)lm[l.id]=nl.id});const gm={};let added=0;
+ (Array.isArray(d.progs)?d.progs:[]).forEach(p=>{if(!p||!Array.isArray(p.lines)||!p.snap)return;const m=S.m.find(x=>x.name==idName[p.mid]);if(!m)return;if(S.progs.some(x=>x.mid==m.id&&x.date==p.date&&x.lines.join('\n')==p.lines.join('\n')))return;
+  gm[p.gid]=gm[p.gid]||pgUid();S.progs.push({...JSON.parse(JSON.stringify(p)),id:pgUid(),gid:gm[p.gid],mid:m.id,lid:p.lid&&lm[p.lid]||null});added++});if(r)r.p=added;save();return r}}
+// Help + log
+HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='faq')),0,['programs','Programs (saved builds, versions)',()=>`<p><b>Open it</b> from Library → 📋 Job lists → <b>📑 Programs</b>, or from the Job manager. Each machine has its own Programs list.</p><p><b>Saved on build.</b> Every time the Job manager builds a program it is saved with its name, O-number, date, cycle time, control, layout (inline / M97 / M98), the code (and the separate files when there are subprograms), a link to its job list and a snapshot of the jobs used. Building the same list again with no change doesn't add a copy.</p><p><b>Versions.</b> <b>✏️ Edit jobs</b> reopens the job list — add, reorder or fix jobs — then <b>🔁 Rebuild</b> saves <b>v2, v3…</b>. Old versions are kept, so you never lose a program that already ran. <b>⇄ Compare versions</b> opens Compare with the two versions.</p><p><b style="color:#ffb020">out of date</b> means the job list (or any job in it) changed since that version was built. If the job list was deleted the program still opens and offers <b>♻️ Recreate job list from snapshot</b>.</p><p><b>Open</b> shows the code; copy or export only from Simulate after “I'll verify on the control”. A single job open in Build can also be saved as a program (button on the Programs screen).</p><p><b>Rename</b> renames every version; <b>Delete</b> asks first. Programs are in backups (Merge maps them to machines by name). <b>📤 Share job list</b> shares the jobs as a normal .mbjob list — never the saved code — so positions arrive red and code is rebuilt on the other machine.</p>`]);
+LOG.unshift(['3.5 · Oct 13','Programs: every Job manager build is saved per machine with code, cycle time, layout and a snapshot of its job list; Edit jobs → Rebuild saves new versions (old ones kept), Compare versions, amber “out of date”, recreate a deleted job list from the snapshot, save a single job as a program, backups, share as a job list.']);
+</script>
+
 </body></html>

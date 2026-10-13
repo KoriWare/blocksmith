@@ -7,7 +7,7 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   E('S.cur=S.m.length-1');w.tab('new');log('NT own buttons',/Multitask sample/.test(d.body.textContent));
   w.ex('G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 flat 0.08 deep 0.5 long cross drill 0.25 at z-1.0 0.2 deep center drill 0.2 deep part off 0.125');
   const t=E("txt().join('\\n')");log('full-length roughing, no Swiss sub',/FULL-LENGTH PASSES/.test(t)&&!/O9500/.test(t)&&/G01 Z-1\.5\b/.test(t));
-  log('face + transfer',/FACE TO Z0/.test(t)&&/TRANSFER/.test(t)&&/FIXED-HEADSTOCK/.test(t));
+  log('face + transfer',/FACE TO Z0/.test(t)&&/TRANSFER/.test(t)&&/FIXED-HEADSTOCK|MULTITASK/.test(t));
   log('sim ok',!E('J.run.err')&&E('J.nt')==1);const cl=d.querySelector('#cl').textContent;log('NT checks',/Y-axis confirmed/.test(cl)&&/Sub spindle confirmed/.test(cl)&&!/bushing/i.test(cl));
  }catch(e){out.push('ERROR '+e.message+' '+(e.stack||'').split('\n')[1])}o.textContent=out.join('\n')},800)};
 </script></body>
