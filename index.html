@@ -694,7 +694,13 @@ const _checks11=checks;checks=function(j){const c=_checks11(j);if(j.op!='swiss')
  const L=t.split('\n'),pi=L.map((l,i)=>/PART OFF/.test(l)?i:-1).filter(i=>i>=0).pop(),mi=L.findIndex(l=>/^M30/.test(l));c.push(['Part-off is the last cut before M30',pi!=null&&pi>=0&&pi<mi&&!L.slice(pi+1,mi).some(l=>/^G0?1\b/.test(l))]);return c};
 // sim: bushing, gang tools, C angle
 function swTool(l){const L=txt();const e=L.findIndex(x=>/^M30/.test(x));if(e>=0&&l>e)return 1;for(let i=l;i>=0;i--){const m=(L[i]||'').match(/^T(\d\d)/);if(m)return +m[1]}return 1}
-const _draw11=draw;draw=function(){if(!J||!J.swiss||!ctx)return _draw11();const M0=J.M||[],m0=M0[Math.min(view.n,M0.length)-1],sh=(!view.rev&&m0)?m0.b[2]+1.0:0,fs0=view.fs;if(!view.rev)view.fs=fs0*0.7;view.fz0+=sh;try{_draw11()}finally{view.fz0-=sh}if(!view.rev)view.fz0+=sh;try{sw2()}finally{if(!view.rev)view.fz0-=sh;view.fs=fs0}};
+const _draw11=draw;draw=function(){if(!J||!J.swiss||!ctx)return _draw11();const M0=J.M||[],m0=M0[Math.min(view.n,M0.length)-1],sh=(!view.rev&&m0)?m0.b[2]:0;view.fz0+=sh;try{_draw11()}finally{view.fz0-=sh}if(!view.rev)view.fz0+=sh;try{sw2()}finally{if(!view.rev)view.fz0-=sh}};
+// Swiss Fit: bounds in machine frame (bar slides; machine z = bar z - tool z)
+const _vw13=vw;vw=function(k){_vw13(k);if(!J||!J.swiss||view.rev||!cv)return;const M=J.M||[],R=J.lb.R;let ext=0;M.forEach(m=>ext=Math.max(ext,-m.b[2]));
+ const sub=sv('Sub spindle'),hasSub=sub&&!/^no|^none|^0/i.test(String(sub.v));
+ let z0=-0.45-0.6,z1=Math.max(0.6,ext+0.1);if(hasSub)z1=Math.max(z1,0.02+ext+0.45);
+ const W=cv.clientWidth-20,lblIn=0.75;// room for tool / sub spindle labels
+ let r1=R+0.95,r0=-R-0.3;view.fs=Math.min(W/(z1-z0+lblIn),270/(r1-r0));view.fz0=z0;view.fz=z1;view.fr=r1;view.fx=10;view.px=0;view.py=0;draw()};
 function sw2(){const M=J.M||[],n=Math.min(view.n,M.length),m=M[n-1],t=m?m.b:[J.lb.R+0.3,0,0.3],R=J.lb.R,flat=!view.rev;
  const lines=txt();let ca=0;if(m)for(let i=m.l;i>=0;i--){const q=(lines[i]||'').toUpperCase().match(/\bC(-?[\d.]+)/);if(q){ca=+q[1];break}}
  const zb=Math.min(0,t[2])-0.06;// bushing fixed in machine, just behind the cut; bar slides
