@@ -1,0 +1,9 @@
+<!doctype html><body style="margin:0;background:#111"><iframe id="f" src="../index.html?v=31" style="width:390px;height:844px;border:0"></iframe><script>
+let first=1;const q=new URLSearchParams(location.search),v=q.get('v');
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
+ setTimeout(()=>{const E=x=>w.eval(x),D=f.contentDocument;E('NOASK=1');
+  if(v=='ref'){w.reference();D.querySelector('#rq').value=q.get('s')||'G70';D.querySelector('#rq').oninput()}
+  if(v=='mach'){w.pick('Generic 3-axis VMC','Vertical mills');setTimeout(()=>{const el=[...D.querySelectorAll('.set')].find(x=>/Spindle orient/.test(x.textContent));D.scrollingElement.scrollTop=el.getBoundingClientRect().top+D.scrollingElement.scrollTop-380},300)}
+  if(v=='help'){w.help&&w.help();setTimeout(()=>{const d=[...D.querySelectorAll('#hl details')].find(x=>/Where the codes/.test(x.querySelector('summary').textContent));D.querySelectorAll('#hl details').forEach(x=>x.open=false);if(d){d.open=true;D.scrollingElement.scrollTop=d.getBoundingClientRect().top+D.scrollingElement.scrollTop-100}},300)}
+ },1200)};
+</script></body>

@@ -1,0 +1,24 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=31" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");
+  log('64 added codes all have a source',E("Object.keys(GDS).length>=74&&Object.values(GDS).every(s=>s&&s.length>5)"));
+  log('G70 meaning mentions Haas mill bolt circle',/bolt-hole circle/.test(E("GD.G70")));
+  log('G112 meaning covers Haas mill offset #9',/offset #9/.test(E("GD.G112")));
+  log('Fanuc G54.1 P48 range ends at #7948',E("CTRL.fanuc0i.r.some(r=>r[0]==7001&&r[1]==7948&&r[5]=='sourced')"));
+  log('Fanuc 300-set range sourced',E("CTRL.fanuc0i.r.some(r=>r[0]==14001&&r[1]==19988&&r[5]=='sourced')"));
+  log('No verify left on timers/date (Haas + Fanuc)',E("[...CTRL.haas.r,...CTRL.fanuc0i.r].filter(r=>r[0]>=3001&&r[1]<=3027).every(r=>r[5]=='sourced')"));
+  const mach=(n,g)=>{w.pick(n,g);w.cur(E('S.m.length')-1)};const setv=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  mach('Generic 3-axis VMC','Vertical mills');setv('Control','Fanuc 0i');
+  let c=E("ctrlChecks('O1\\nG47 P0 (X)\\n#3000=250(THIS MESSAGE IS FAR TOO LONG FOR FANUC)\\nM30',0)").map(x=>x[0]+'|'+x[1]).join('\n');
+  log('Fanuc: Haas-only G47 flagged',/Codes from a different control: G47[^\n]*\|false/.test(c));
+  log('Fanuc: #3000 over 200 flagged',/outside\|false/.test(c));log('Fanuc: message over 26 chars flagged',/26 characters.*\|false/.test(c));
+  log('Fanuc: #7948 valid, #7949 not checked as bad',/All #variables valid/.test(E("ctrlChecks('#7948=1',0)")[0][0])&&E("ctrlChecks('#7948=1',0)")[0][1]);
+  setv('Control','Haas NGC');c=E("ctrlChecks('G15\\n#3000=15(OK)',0)").map(x=>x[0]+'|'+x[1]).join('\n');log('Haas: Fanuc-only G15 flagged, #3000=15 ok',/G15/.test(c)&&/1–999 on Haas\|true/.test(c));
+  log('New setup fields red and empty on mill',['Spindle orient M-code','Through-spindle coolant on / off','4th-axis brake on / off'].every(k=>{const x=E('S.m[S.cur].s').find(x=>x.k==k);return x&&x.st=='confirm'&&x.v===''}));
+  mach('Generic 2-axis lathe','Lathes');log('Lathe has red G-code system field',(()=>{const x=E('S.m[S.cur].s').find(x=>x.k=='Lathe G-code system');return x&&x.st=='confirm'})());
+  setv('Control','Fanuc 0i');c=E("ctrlChecks('G90 X1. Z-1. F0.01',1)").map(x=>x[0]+'|'+x[1]).join('\n');log('Fanuc lathe G90 asks for G-code system',/G-code system\|false/.test(c));
+  log('Reference lists sources for new codes',(()=>{w.reference();d.querySelector('#rq').value='G187';d.querySelector('#rq').oninput();return /haascnc/.test(d.querySelector('#ro').textContent)})());
+  log('Help has sources topic',E("HELP.some(h=>h[0]=='sources')"));
+ }catch(e){out.push('FAIL exception '+e.message+' '+e.stack)}o.textContent=out.join('\n')},1200)}
+</script></body>
