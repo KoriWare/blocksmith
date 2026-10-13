@@ -1,0 +1,47 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=45" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+
+
+const LJ=[['lg73','g73 pattern repeat profile x0.8,z0; x0.8,z-0.5; x1.2,z-0.8; x1.2,z-1.5 start x1.6 z0.2 x relief 0.1 z relief 0.05 3 passes t1 finish t2'],
+['lg74','g74 face peck start x2.0 z0.1 to x1.6 depth z-0.3 peck 0.05 step 0.1 t3'],
+['lg75','g75 wide groove start x1.6 z-0.5 to z-0.8 to x1.2 peck 0.05 insert 0.125 z step 0.1 t4'],
+['cbthr','g92 thread od 1.0 dia lead 0.0625 height 0.0383 z0.2 to z-1.0 first depth 0.01 t5'],
+['lload','spindle load watch while turning cut x1.5 2.0 bar z0 to z-2.0 limit 120% 4 segments t1'],
+['lbrk','broken tool check on setter t3 start x5.0 z5.0 offset #2103 tol 0.01 tip 3 z axis'],
+['barlast','last part of bar 12 parts per bar o5000 count #COUNT remnant'],
+['pkchk','pickup check start 5.0 pickup at 1.5 tol 0.002 feed 40'],
+['cochk','cut-off confirm pull back 0.2 tol 0.02 feed 20']];
+const MJ=[['rollin','roll-in cut x0 to x4 line y0 cut z-0.05 arc radius 0.5 side +y t1 g54'],['crest','corner rest corner x0 y0 into pocket x+ y+ previous tool 0.5 new tool 0.25 z top 0 0.5 deep t2 g54']];
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+  const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)},v:''};S.m[S.cur].s.push(x)}if(${JSON.stringify(v)}!==null)x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  const okall=()=>E("S.m[S.cur].s.forEach(x=>{if(x.st=='confirm'&&x.v)x.st='user'});save()");
+  const go=t=>{w.tab('new');d.querySelector('#q').value=t;w.go();E('show()');return{op:E('J&&J.op'),code:E('J&&J.code?txt().join("\\n"):""'),out:d.querySelector('#out').innerText}};
+  const run=(nm,jobs,hk)=>jobs.forEach(([op,t])=>{t=t.replace('#COUNT',hk?'#600':'#500');const r=go(t),code=r.code;const miss=E('J?Object.entries(J.p).filter(([k,x])=>x.v==null).map(([k])=>k):[]');
+    if(!hk&&false)return;if(hk&&(op=='pkchk'||op=='cochk')){log(`${nm} ${op}: refused on Haas`,r.op==op&&/Haas: no documented/.test(r.out),r.op+' '+r.out.slice(0,200));return}
+    let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{contact:mkContact(J),lathe:J.lathe});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
+    const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+r.out.slice(0,400).replace(/\s+/g,' ')];
+    log(`${nm} ${op}: recognised, code written`,r.op==op&&!!code,'op='+r.op+' miss='+miss.join(',')+' '+ck.join('|'));if(!code)return;
+    log(`${nm} ${op}: sim runs`,!sim[0]&&!sim[1]&&sim[2]>0,JSON.stringify(sim));log(`${nm} ${op}: checks pass`,!ck.length,ck.join(' | '));
+    const C={lg73:hk?/G73 P10 Q20 I0\.1 K0\.05 U0\.02 W0\.005 D3/:/G73 U0\.1 W0\.05 R3[^\n]*\nG73 P10 Q20 U0\.02 W0\.005/,lg74:hk?/G74 X1\.6 Z-0\.3 I0\.1 K0\.05/:/G74 R0\.01[^\n]*\nG74 X1\.6 Z-0\.3 P500 Q500/,lg75:hk?/G75 X1\.2 Z-0\.8 I0\.05 K0\.1/:/G75 R0\.01[^\n]*\nG75 X1\.2 Z-0\.8 P500 Q1000/,
+     cbthr:/G92 X0\.98 Z-1\.0 F0\.0625[\s\S]*X0\.9234 \(DEPTH 0\.0383\)[\s\S]*SPRING/,lload:/IF\[#\d+GT120\.?0?\]GOTO98[\s\S]*N98/,lbrk:hk?/#21=#2103[\s\S]*G212 H3[\s\S]*#3000=1/:/#21=#2103[\s\S]*G37 Z[\s\S]*#3000=1/,barlast:/#(5|6)00=#(5|6)00\+1[\s\S]*LT12\]GOTO10[\s\S]*M199/,
+     pkchk:/M70[\s\S]*G98 G31 P99 B1\.5 F40\.0[\s\S]*M71[\s\S]*IF\[ABS\[#5042-\[1\.5\]\]LE0\.002\]GOTO10/,cochk:/#21=#5042[\s\S]*G31 P99 W0\.2[\s\S]*GE0\.18\]GOTO10/,
+     rollin:/G03 X0\.0 Y0\.0 I0\.5 J0\.[\s\S]*G01 X4\.0[\s\S]*G03 X4\.5 Y0\.5 I0\. J0\.5/,crest:/G00 X0\.125 Y0\.125[\s\S]*G01 X0\.145 Y0\.145[\s\S]*X0\.25 Y0\.125/};
+    log(`${nm} ${op}: codes`,C[op].test(code),code.split('\n').join(' / '));
+  });
+  [['Haas NGC','Haas lathe'],['Fanuc 0i','Fanuc lathe']].forEach(([ctl,nm])=>{const hk=/Haas/.test(nm);w.pick('Generic 2-axis lathe','Lathes');w.cur(E('S.m.length')-1);setv('Control',ctl);setv('Max RPM (G50)','3000');
+   const r0=go(LJ[7][1]);log(nm+' pickup red until setup',!r0.code);
+   setv('Spindle load variable',hk?'#1098':'#510');setv('Tool setter arm down / up','M104 / M105');setv('Setter Z position (G37)','4.0');setv('Bar feed code',hk?'G105':'M150');setv('Bar remnant / new bar code','M199');
+   setv('Torque limit on / off (sub axis)','M70 / M71');setv('Torque-limit skip code','G31 P99');setv('Sub axis position variable','#5042');setv('Sub spindle axis','B');okall();run(nm,LJ,hk);
+   let r=go('thread od m10 z0.2 to z-0.6 height 0.035 first depth 0.008 t5');log(nm+' thread M10 lookup',r.op=='lthread'&&Math.abs(E("J.p['Thread Ø'].v")-0.3937)<1e-4&&Math.abs(E("J.p['Lead'].v")-0.059055)<1e-5,r.op+' '+E("JSON.stringify(J.p)"));
+   r=go('thread 1/2-13 unc od z0.2 to z-0.6 height 0.04 first depth 0.008 t5');log(nm+' thread 1/2-13 lookup',E("J.p['Thread Ø'].v")==0.5&&Math.abs(E("J.p['Lead'].v")-1/13)<1e-5,E("JSON.stringify(J.p)"));
+   r=go('thread #10 unf od z0.2 to z-0.6 t5');log(nm+' #10 UNF lookup, height red',E("J.p['Thread Ø'].v")==0.19&&Math.abs(E("J.p['Lead'].v")-1/32)<1e-5&&E("J.p['Thread height'].v")==null,E("JSON.stringify(J.p)"));
+   r=go('thread 1/2-17 od z0.2 to z-0.6 t5');log(nm+' non-table pitch not filled',E("J.p['Lead'].v")==null||Math.abs(E("J.p['Lead'].v")-1/17)<1e-5);
+  });
+  [['Haas VF-style VMC (generic)','Haas NGC','Haas mill'],['Generic 3-axis VMC','Fanuc 0i','Fanuc mill']].forEach(([p,ctl,nm])=>{w.pick(p,'Vertical mills');w.cur(E('S.m.length')-1);setv('Control',ctl);okall();run(nm,MJ,/Haas/.test(nm))});
+  w.calc();const a=d.querySelector('a[href="https://koriware.github.io/team-kori-shop-calc/"]');log('chip link readable',a&&w.getComputedStyle(a).color=='rgb(124, 196, 255)');
+  log('help jobs37',E("HELP.some(h=>h[0]=='jobs37')"));log('old phrases unchanged',[['thread od 1.0 dia lead 0.0625 height 0.0383 z0.2 to z-1.0 first depth 0.01 t3','lthread']].every(([t,o])=>{w.pick('Generic 2-axis lathe','Lathes');w.cur(E('S.m.length')-1);return go(t).op==o}));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>

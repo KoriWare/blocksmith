@@ -404,3 +404,15 @@ All rewritten in our own words; generic Haas / Fanuc 0i only.
 - Face milling patterns: Sandvik face-milling page + Sandvik trajectory article + Caltech machine-shop PDF (agree → not thin).
 - THIN (amber, never auto-filled): high-feed lead angle (one page), Taylor n (one calculator page), Fanuc AICC R level, Haas T pre-staging, Haas G72 start-hole count, Haas lathe G73/G74/G75 (not built), adaptive feed by spindle load (builder option).
 - Unsourced defaults (gray, editable): G71/G72 retract 0.02, allowances 0.02/0.005, feeds 0.01/0.005, SFM 400; start point = stock + 0.1 dia; plunge feed 4, peel chip load 0.002; back bore Start Z 0.1.
+
+## Round 37 — lathe cycles & checks, roll-in, corner rest (Oct 13, 2026)
+- Haas lathe G73 / G74 / G75 (official haascnc.com pages, opened): G73 P Q D I K U W F (D whole number, I radius), G74 X Z I(diameter) K F (D warning, Setting 22), G75 X Z I(radius) K F. Official → gray hints; still flagged "verify" in Help per Kori.
+- Fanuc G73 two-block U W R / P Q U W F: mentorcnc.com, mfgrobots.com, gcodetutor.com, kezuriba.net (agree). Fanuc G74/G75 R / X Z P Q F, P/Q no decimal: Zappettini Fanuc turning page (Round 36). Fanuc G74 P radius-vs-diameter not stated clearly → we write the X shift as radius; verify.
+- G92 thread cycle (system A / Haas) and B/C = G78: Fanuc 30i manual p.45 (Round 36 source).
+- Thread tables: Wikipedia UTS + ISO metric pages and engineeringtoolbox UNC/UNF + ISO 724 pages agree on major Ø and pitch (UNC/UNF #4–1-1/2, metric coarse M3–M48). Thread depth disagrees (0.541·P basic vs 0.614·P) → height stays user-entered.
+- Torque-limit skip G31 P99 / P98: Fanuc 21i-TB operator manual p.88–89 (official copy) — torque limit must be set first, no consecutive G31 P99 blocks. Pickup check and cut-off confirmation method: PMPA Tsugami macro presentation + Practical Machinist G31 torque skip thread → THIN, high risk. Haas: no documented sub-spindle torque skip → refused.
+- Setter breakage check: G212 (Haas) / G36 G37 (Fanuc) official from earlier rounds; compare-offset method from Practical Machinist breakage macro thread → THIN.
+- Bar last part: builder logic → THIN; Haas G105 page.
+- Spindle load watch: Haas macros chapter #1098; Fanuc var builder-specific → red + THIN.
+- Arc roll-in: Sandvik face-milling page + Caltech PDF (Round 36). Corner rest plunge: Sandvik plunge milling + shop practice → THIN.
+- Unsourced defaults (gray): G74/G75 retract 0.01, feeds 0.002–0.003/rev, RPM 600; G92 min depth 0.002, depth schedule first·√n; load watch feed 0.008; crest hook 0.02, plunge feed 4; roll-in feed 20.
