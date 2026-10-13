@@ -10,7 +10,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   const fill=o=>E(`Object.entries(${JSON.stringify(o)}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);const code=()=>E('(J.code||[]).join("\\n")'),outT=()=>(d.querySelector('#out')||{textContent:''}).textContent;
   const mmm=()=>{w.tab('new');const q=d.querySelector('#q');if(q)q.value=E('J.text');w.go()};
   // ---------- (1) Make my macro keeps a drawing job
-  w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);setv('Control','Haas NGC');const mill=E('S.cur');
+  w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);setv('Control','Haas NGC');/* §62: explicit tool */E("S.m[S.cur].tools.push({n:4,type:'End mill',dia:0.25,len:3,fl:3});save()");const mill=E('S.cur');
   L('plate_r12.dxf');conf('in','w','4',0,0,0,'none');
   const shp=E('dxModel().loops.filter(l=>!l.circle)').findIndex(l=>l.segs.length==4);d.querySelectorAll('.dxpf')[shp].click();
   const P0={'Side':'outside','Side OK':'YES','Cut direction':'climb (G41)','Cutter':0.25,'Lead-in':0.25,'Lead-in OK':'YES','Z0':0,'Depth':0.1,'Stepdown':0.1,'Clear Z':0.1,'Feed':20,'Plunge feed':5,'RPM':5000,'Tool':4,'Work offset':'G54'};

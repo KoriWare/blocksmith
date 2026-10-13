@@ -3,7 +3,7 @@ const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let step=0;
 f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
  const errs=[];w.addEventListener('error',e=>errs.push(e.message));
  setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");
-  const mach=(n,g)=>{w.pick(n,g);w.cur(E('S.m.length')-1)};
+  const mach=(n,g)=>{w.pick(n,g);w.cur(E('S.m.length')-1);/* §62: explicit tools (new machines start empty) */E("eDemoTool(S.m.at(-1));save()")};
   const run=s=>{w.tab('new');w.ex(s);return{J:E('J'),code:(E('J').code||[]).join('\n'),out:d.querySelector('#out').textContent,html:d.querySelector('#out').innerHTML}};
   const setv=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});x.v=${JSON.stringify(v)};x.st='user';save()})()`);
   const ck=()=>[...d.querySelectorAll('#cl div, #cl li, #cl .set')].map(x=>x.textContent).join('\n')||d.querySelector('#cl').textContent;

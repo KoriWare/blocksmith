@@ -1,0 +1,15 @@
+<!doctype html><body style="margin:0"><iframe id="f" src="../index.html?v=62s" style="width:390px;height:844px;border:0"></iframe><script>
+const S0=+new URLSearchParams(location.search).get('s');let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+setTimeout(()=>{const E=x=>w.eval(x);E("NOASK=1;S.tip42=1");w.confirm=()=>true;
+ E("S.m[0].name='VF-2';S.m[0].tools=[{id:'a1',n:1,type:'End mill',name:'1/2 3FL',dia:0.5,len:3,fl:3,H:1,D:21},{id:'a2',n:2,type:'Tap',name:'1/4-20 spiral point',dia:0.25,len:3,fl:3},{id:'a3',n:3,type:'Drill',name:'#7 jobber',dia:0.201,len:4,fl:2,H:3}];save()");
+ w.pick('Haas VF-style VMC (generic)','Vertical mills');const N=E('S.m.length')-1;E(`S.m[${N}].name='VF-4 (new)';save()`);w.cur(N);
+ if(S0==1){E("tools()");setTimeout(()=>w.scrollTo(0,0),50)}
+ if(S0==2){E("tools();tlNewForm('')");d.querySelector('#tn_n').value='1';d.querySelector('#tn_name').value='2in face mill'}
+ if(S0==3){E("tools();tlFromPick()")}
+ if(S0==4){E("tools();tlFromList(0)")}
+ if(S0==5){E("tools();tlFromList(0);tlFromGo(0)")}
+ if(S0==6){E("tools();tlFromList(0);tlFromGo(0);tlClose();tools()");setTimeout(()=>{const c=d.querySelector('input.tlred');if(c)c.closest('.card').scrollIntoView({block:'start'})},50)}
+ if(S0==7){w.help('tools');setTimeout(()=>{const p=[...d.querySelectorAll('p')].find(p=>/empty tool list/.test(p.textContent));if(p)p.scrollIntoView({block:'center'})},50)}
+},1500)};
+</script></body>

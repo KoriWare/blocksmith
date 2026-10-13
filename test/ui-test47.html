@@ -1,0 +1,36 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=62" style="width:390px;height:844px"></iframe><script>
+// Round 62 · new machines start with an empty tool list; empty-list hint; copy from another machine
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;
+ if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;w.alert=()=>{};w.prompt=()=>null;
+  const before=E("JSON.stringify(S.m.map(m=>m.tools))");
+  E("S.m[0].tools.push({id:'s1',n:11,type:'End mill',dia:0.375,len:2.5,fl:4,H:11,D:31,name:'3/8 4FL'},{id:'s2',n:12,type:'Turning insert',nr:0.031});save()");
+  const b2=E("JSON.stringify(S.m.map(m=>m.tools))");
+  w.pick('Generic 3-axis VMC','Vertical mills');const N=E('S.m.length')-1;
+  log('new mill starts with an empty tool list',E(`S.m[${N}].tools.length`)===0,E(`JSON.stringify(S.m[${N}].tools)`));
+  log('existing machines untouched',E(`JSON.stringify(S.m.slice(0,${N}).map(m=>m.tools))`)==b2);
+  w.pick('Generic 2-axis lathe','Lathes');const Lt=E('S.m.length')-1;log('new lathe starts empty',E(`S.m[${Lt}].tools.length`)===0);
+  w.pick('Haas VF-style VMC (generic)','Vertical mills');log('Haas preset starts empty (no demo engraving tool)',E('S.m.at(-1).tools.length')===0);
+  w.cur(N);E("tools()");log('empty hint shown',!!d.querySelector('#tlempty')&&/No tools/.test(d.querySelector('#tlempty').textContent));
+  log('hint has + New tool and Copy from another machine',!!d.querySelector('#tlenew')&&!!d.querySelector('#tlefrom'));
+  E("tlNewForm('')");log('library new-tool form opens without a job',!!d.querySelector('#tn_save')&&/Save tool$/.test(d.querySelector('#tn_save').textContent));
+  d.querySelector('#tn_n').value='4';d.querySelector('#tn_dia').value='0.5';E("tlNewSave('')");
+  log('library new tool saved to this machine',E(`S.m[${N}].tools.length`)==1&&E(`S.m[${N}].tools[0].n`)==4&&!d.querySelector('#tlmod'));
+  log('hint gone once list has a tool',!d.querySelector('#tlempty'));
+  E(`S.m[${N}].tools=[];save();tools()`);E("tlFromPick()");const srcs=[...d.querySelectorAll('#tlmod [data-src]')].map(b=>+b.dataset.src);
+  log('source list: machines with fitting tools, not itself, not lathes-only',srcs.length>0&&!srcs.includes(N)&&!srcs.includes(Lt)&&srcs.includes(0),JSON.stringify(srcs));
+  E("tlFromList(0)");const fl=[...d.querySelectorAll('#tlfl input[data-fid]')].map(x=>x.dataset.fid);
+  log('only compatible tools listed (no lathe insert)',fl.includes('s1')&&!fl.includes('s2'),fl.join());
+  d.querySelectorAll('#tlfl input[data-fid]').forEach(x=>x.checked=x.dataset.fid=='s1');E("tlFromGo(0)");
+  const c=E(`S.m[${N}].tools[0]`);
+  log('copied one tool',E(`S.m[${N}].tools.length`)==1&&c.n==11&&c.dia==0.375&&c.fl==4&&c.name=='3/8 4FL');
+  log('machine-specific values red, not carried',c.red&&c.red.n&&c.red.len&&c.red.H&&c.red.D&&c.len==null&&c.H==null&&c.D==null);
+  log('source unchanged',E("S.m[0].tools.find(t=>t.id=='s1').H")==11);
+  log('summary shown',/Copied to/.test(d.querySelector('#tlmod').textContent));
+  w.cur(Lt);E("tools();tlFromPick()");log('lathe: mill-only sources excluded',![...d.querySelectorAll('#tlmod [data-src]')].map(b=>+b.dataset.src).includes(N));E("tlClose()");
+  E("help('tools')");log('Help mentions empty list + copy from',/empty tool list/.test(d.body.textContent)&&/Copy from another machine/.test(d.body.textContent));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>

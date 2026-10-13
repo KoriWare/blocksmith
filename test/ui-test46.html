@@ -76,7 +76,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   E(`S.cur=${C}`);E("J={op:'face',p:{Tool:{v:null}},edits:{},code:[]}");E("tlPick('Tool')");log('unconfirmed copied tool disabled in picker',!!d.querySelector('#tlpl button[disabled]'));E("tlClose()");
   // backup round trip
   const bk=E("JSON.stringify(S)");const nt=JSON.parse(bk);log('backup includes per-machine tools + Unassigned',nt.m.every(m=>Array.isArray(m.tools))&&Array.isArray(nt.utools)&&nt.utools.length==1);
-  E(`S=JSON.parse(${JSON.stringify(bk)});bindTools();save()`);log('backup replace round trip keeps tools',E("JSON.stringify(S.m.map(m=>m.tools))")==JSON.stringify(nt.m.map(m=>m.tools)));
+  E(`S=JSON.parse(${JSON.stringify(bk)});bindTools();save()`);log("backup replace round trip keeps tools",E("JSON.stringify(S.m.map(m=>m.tools))")==JSON.stringify(nt.m.map(m=>m.tools)),E("JSON.stringify(S.m.map(m=>m.tools))")+" VS "+JSON.stringify(nt.m.map(m=>m.tools)));
   const clash=JSON.parse(bk);clash.m.forEach(m=>(m.tools||[]).forEach(t=>t.dia=9));const before=E("S.utools.length");E(`mergeBackup(${JSON.stringify(clash)})`);
   log('merge: number clashes go to Unassigned, not dropped',E("S.utools.length")>before,E("S.utools.length")+'/'+before);
   log('legacy backup tools merged into Unassigned',(E(`mergeBackup(${JSON.stringify(LEG)})`),E("S.utools.filter(t=>t.n==8).length"))>=1);
