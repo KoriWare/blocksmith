@@ -1,0 +1,18 @@
+<!doctype html><body style="margin:0"><iframe id="f" src="../index.html?v=61s" style="width:390px;height:844px;border:0"></iframe><script>
+const S0=+new URLSearchParams(location.search).get('s');let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+setTimeout(()=>{const E=x=>w.eval(x);E("NOASK=1;S.tip42=1");w.prompt=()=>'5';w.confirm=()=>true;
+ const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)}};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+ w.pick('Haas VF-style VMC (generic)','Vertical mills');const A=E('S.m.length')-1;w.cur(A);setv('Control','Haas NGC');E("S.m[S.cur].name='VF-2';S.m[S.cur].opt=Object.assign(S.m[S.cur].opt||{},{macroB:1,probe:1,g10:1,rigid:1});S.m[S.cur].tools=[{id:'a1',n:1,type:'End mill',name:'1/2 3FL',dia:0.5,len:3,fl:3,H:1,D:21,rpm:6000,feed:30,mat:'Carbide AlTiN'},{id:'a2',n:2,type:'Tap',name:'1/4-20 spiral point',dia:0.25,len:3,fl:3},{id:'a3',n:3,type:'Drill',name:'#7 jobber',dia:0.201,len:4,fl:2,H:3},{id:'a5',n:5,type:'Spot drill',name:'1/2 90°',dia:0.5,len:3,fl:2},{id:'a4',n:20,type:'Probe',name:'OMP40',dia:0.236}];S.utools=[{id:'u1',n:8,type:'Drill',dia:0.25,from:'older backup (no machine)'}];save()");
+ w.pick('Haas VF-style VMC (generic)','Vertical mills');const B=E('S.m.length')-1;E(`S.m[${B}].name='VF-4';S.m[${B}].tools=[{id:'b1',n:1,type:'Face mill',dia:2}];save()`);w.pick('Generic 2-axis lathe','Lathes');w.cur(A);
+ const bolt=()=>{w.tab('new');d.querySelector('#q').value='6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep';w.go()};
+ if(S0==1){E("tools()");setTimeout(()=>w.scrollTo(0,0),50)}
+ if(S0==2){bolt();E("tlPick('Tool')")}
+ if(S0==3){bolt();E("tlPick('Tool');tlNewForm('Tool')");d.querySelector('#tn_n').value='14';d.querySelector('#tn_name').value='17/64 jobber'}
+ if(S0==4){bolt();E("tlPicked('Tool','a3')");setTimeout(()=>w.scrollTo(0,0),50)}
+ if(S0==5){E("TLSEL={a1:true,a2:true};tools();tlCopyPick()")}
+ if(S0==6){E(`TLSEL={a1:true,a2:true};tools();tlCopy(${B})`)}
+ if(S0==7){E(`TLSEL={a1:true,a2:true};tlCopy(${B});tlClose();S.cur=${B};tools()`);setTimeout(()=>{const c=d.querySelector('input.tlred');if(c)c.closest('.card').scrollIntoView({block:'start'})},50)}
+ if(S0==8){w.help('tools')}
+},1500)};
+</script></body>

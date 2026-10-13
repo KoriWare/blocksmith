@@ -1,0 +1,86 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=61" style="width:390px;height:844px"></iframe><script>
+// Round 61 · per-machine tool lists, picker, new tool, copy, migration, backup
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+const LEG={m:[{name:'Old VMC',type:'demo VMC',s:[],jobs:[]}],jobs:[],cur:0,snips:[],tools:[{n:7,type:'Tap',dia:0.25,len:3,fl:4},{n:8,type:'Drill',dia:0.201,len:4,fl:2}]};
+f.onload=()=>{const w=f.contentWindow,d=w.document;
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc',JSON.stringify(LEG));w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");const P=[];w.prompt=()=>P.length?P.shift():null;w.confirm=()=>true;w.alert=()=>{};
+  // migration
+  log('legacy global tools assigned to the current machine (not copied everywhere, not lost)',E("S.m[S.cur].name")=='Old VMC'&&E("S.m[S.cur].tools.map(t=>t.n).join()")=='7,8',E("JSON.stringify(S.m.map(m=>m.tools))"));
+  E(`S=${JSON.stringify(Object.assign({},LEG,{m:[{name:'Old VMC',type:'demo VMC',s:[],tools:[{n:1,type:'Drill',dia:0.1}]}]}))};bindTools();save()`);
+  log('older backup global list -> Unassigned (machine already had tools)',E("S.utools.length")==2&&E("S.utools.map(t=>t.n).join()")=='7,8'&&E("S.m[0].tools.length")==1,E("JSON.stringify(S.utools)"));
+  log('every machine has a stable id + own array',E("S.m.every(m=>m.id!=null&&Array.isArray(m.tools))"));
+  log('every tool has an id',E("S.utools.every(t=>t.id)"));
+  log('migration persisted to storage',JSON.parse(w.localStorage.getItem('mc')).utools.length==2&&!('tools' in JSON.parse(w.localStorage.getItem('mc'))));
+  E("tools()");log('Unassigned section shown',!!d.querySelector('#tlun'));
+  E("tlMoveU(0)");log('move unassigned -> current machine, number red to confirm',E("S.m[S.cur].tools.some(t=>t.n==7&&t.red&&t.red.n)")&&E("S.utools.length")==1);
+  // per machine isolation
+  const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)}};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  w.pick('Generic 3-axis VMC','Vertical mills');const A=E('S.m.length')-1;w.cur(A);setv('Control','Haas NGC');setv('Max RPM','8000');E("S.m[S.cur].opt=Object.assign(S.m[S.cur].opt||{},{macroB:1,probe:1,g10:1,rigid:1});S.m[S.cur].tools=[{id:'a1',n:1,type:'End mill',dia:0.5,len:3,fl:3,H:1,D:21,rpm:6000,feed:30,mat:'Carbide AlTiN',notes:'x'},{id:'a2',n:2,type:'Tap',dia:0.25,len:3,fl:4},{id:'a3',n:3,type:'Drill',dia:0.201,len:4,fl:2},{id:'a4',n:20,type:'Probe',dia:0.236}];save()");
+  w.pick('Generic 3-axis VMC','Vertical mills');const B=E('S.m.length')-1;E(`S.m[${B}].name='Mill twin';S.m[${B}].tools=[{id:'b1',n:1,type:'Face mill',dia:2}];S.m[${B}].s.find(x=>x.k=='Control')||S.m[${B}].s.push({k:'Control'});S.m[${B}].s.find(x=>x.k=='Control').v='Haas NGC';save()`);
+  w.pick('Generic 3-axis VMC','Vertical mills');const C=E('S.m.length')-1;E(`S.m[${C}].name='Mill twin';S.m[${C}].tools=[];save()`);
+  log('same-name machines keep separate tool lists (id, not name)',E(`S.m[${B}].id!=S.m[${C}].id&&S.m[${B}].tools.length==1&&S.m[${C}].tools.length==0`));
+  w.cur(A);log('S.tools follows selected machine',E("S.tools.length")==4);w.cur(B);log('…and switches',E("S.tools.length")==1&&E("S.tools[0].type")=='Face mill');w.cur(A);
+  // picker filtering
+  E("J={op:'tapx',p:{Tool:{v:null}},edits:{},code:[]}");
+  log('tap job wants taps',JSON.stringify(E("tlWant('tap','Tool')"))=='["Tap"]');
+  log('probe tool key wants probes',E("tlWant('x','Probe tool')[0]")=='Probe');
+  log('lathe types hidden on a mill',E("tlFits('Turning insert',S.m[S.cur])")===false&&E("tlFits('Probe',S.m[S.cur])")===true);
+  // real job: bolt circle
+  w.tab('new');d.querySelector('#q').value='6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep';w.go();
+  log('bolt job asks for Tool (red)',E("J.p.Tool&&J.p.Tool.v==null"),E("JSON.stringify(Object.keys(J.p))"));
+  log('🔧 Pick shown beside the Tool input',!!d.querySelector('#out .tlpk'));
+  E("tlPick('Tool')");const ids=[...d.querySelectorAll('#tlpl [data-pick]')].map(b=>b.dataset.pick);
+  log('drill job picker shows drills only',ids.join()=='a3',ids.join());
+  log('+ New tool button in picker',!!d.querySelector('#tlnew'));
+  E("tlPicked('Tool','a3')");log('pick fills Tool green (lib, not guessed)',E("J.p.Tool.v==3&&J.p.Tool.lib&&!J.p.Tool.g"));
+  const chip=[...d.querySelectorAll('#out .chip')].find(c=>c.getAttribute('onclick')=="ed('Tool')");log('Tool chip is green',chip&&chip.classList.contains('g'),chip&&chip.className);
+  E("window._SH=show;show=()=>{}");// synthetic jobs: no render
+  // fill diameter where job uses it: face job with Cutter
+  E("J={op:'face',p:{Tool:{v:null},Cutter:{v:null},'Cutter Ø':{v:null},'D offset #':{v:null}},edits:{},code:[]}");E("tlFill('Tool',S.tools.find(t=>t.id=='a1'))");
+  log('picked end mill fills Cutter Ø + D # green',E("J.p['Cutter Ø'].v==0.5&&J.p['Cutter Ø'].lib&&J.p['D offset #'].v==21"));
+  E("J={op:'face',p:{Tool:{v:null},'Cutter Ø':{v:null},'D offset #':{v:null}},edits:{},code:[]}");E("tlFill('Tool',S.tools.find(t=>t.id=='a3'))");
+  log('tool without D # leaves D offset red (never guessed)',E("J.p['D offset #'].v==null&&J.tlMiss.includes('D offset #')"));
+  E("J={op:'face',p:{Tool:{v:null},'Cutter Ø':{v:1.25,g:false}},edits:{},code:[]}");E("tlFill('Tool',S.tools.find(t=>t.id=='a1'))");log('user-set value not overwritten',E("J.p['Cutter Ø'].v")==1.25);
+  E("J={op:'face',p:{Tool:{v:null}},edits:{},code:[]}");E("ed.manual=1;");P.push('9');E("ed('Tool')");E("ed.manual=0");log('manual typing still works',E("J.p.Tool.v")==9);
+  E("show=window._SH;J=null");
+  // new tool flow
+  w.tab('new');d.querySelector('#q').value='6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep';w.go();E("tlPick('Tool');tlNewForm('Tool')");
+  d.querySelector('#tn_n').value='2';E("tlNewSave('Tool')");log('new tool refuses a taken number',/already used/.test(d.querySelector('#tn_err').textContent)&&E("S.tools.length")==4);
+  d.querySelector('#tn_n').value='14';d.querySelector('#tn_name').value='Jobber 17/64';d.querySelector('#tn_dia').value='0.2656';E("tlNewSave('Tool')");
+  log('new tool saved to this machine only',E("S.tools.some(t=>t.n==14&&t.type=='Drill')")&&E(`S.m[${B}].tools.length`)==1);
+  log('new tool fills job',E("J.p.Tool.v==14&&J.p.Tool.lib"));
+  log('mbjob carries no tool list or tool id',(()=>{const s=E("JSON.stringify(mbFile(Object.assign({},J,{name:'x'})))");return !/tid|Jobber|"tools"/.test(s)})());
+  // delete warning
+  E("S.jobs.push({name:'Saved bolt',op:J.op,machine:S.m[S.cur].name,mid:S.m[S.cur].id,p:{Tool:{v:14}}});save()");let msg='';w.confirm=m=>{msg=m;return true};E("tools()");const i14=E("S.tools.findIndex(t=>t.n==14)");E(`tlDel(${i14})`);
+  log('delete confirms and warns a saved job uses it',/1 saved job/.test(msg)&&/Saved bolt/.test(msg)&&!E("S.tools.some(t=>t.n==14)"),msg);
+  // copy
+  E("TLSEL={a1:true,a2:true};tools()");log('copy button appears for selection',/Copy 2/.test(d.querySelector('#tlbar').textContent));
+  E("tlCopyPick()");const tg=[...d.querySelectorAll('#tlmod [data-tgt]')].map(b=>+b.dataset.tgt);const lathes=E("S.m.map((m,i)=>isLT(m.type)?i:-1).filter(i=>i>=0)");
+  log('only mill-type machines offered for mill tools',tg.length>0&&tg.every(i=>!lathes.includes(i))&&!tg.includes(A),JSON.stringify([tg,lathes]));
+  P.push('5');const r=E(`JSON.stringify(tlCopy(${B}))`);const bt=E(`JSON.stringify(S.m[${B}].tools)`);const T=JSON.parse(bt);
+  log('number conflict (T1 taken) asks for a new number, never overwrites',T.find(t=>t.id=='b1').type=='Face mill'&&T.some(t=>t.n==5&&t.type=='End mill'),bt);
+  const em=T.find(t=>t.type=='End mill');
+  log('physical props copied as-is',em.dia==0.5&&em.fl==3&&em.mat=='Carbide AlTiN'&&em.notes=='x');
+  log('machine-specific red: number, length, H/D',em.red.n&&em.red.H&&em.red.D&&em.red.len&&em.H==null&&em.D==null&&em.len==null);
+  log('same control → RPM/feed kept gray',em.rpm==6000&&em.feed==30);
+  log('copy is independent',(E(`S.m[${A}].tools.find(t=>t.id=='a1').dia=0.75`),E(`S.m[${B}].tools.find(t=>t.type=='End mill').dia`))==0.5);
+  log('summary shown',/Copied to/.test(d.querySelector('#tlmod').textContent)&&/Red/.test(d.querySelector('#tlmod').textContent));
+  E(`S.m[${C}].s.push({k:'Control',v:'Fanuc 0i'});TLSEL={a1:true};S.cur=${A}`);E(`tlCopy(${C})`);log('different control → RPM/feed cleared',E(`S.m[${C}].tools[0].rpm==null&&S.m[${C}].tools[0].feed==null`));
+  w.pick('Generic 2-axis lathe','Lathes');const Lt=E('S.m.length')-1;log('mill tools cannot go to a lathe',E(`tlFits('End mill',S.m[${Lt}])`)===false&&E(`tlFits('Turning insert',S.m[${Lt}])`)===true);
+  log('live tool needs live tooling',E(`tlFits('Live drill',S.m[${Lt}])`)===!!E(`mLive(S.m[${Lt}])`));
+  E(`S.cur=${B};tools()`);log('copied tool shows red inputs in target list',d.querySelectorAll('input.tlred').length>0);
+  const bi=E("S.tools.findIndex(t=>t.n==5)");E(`tlConfirm(${bi})`);log('✓ Values checked clears red',!E("S.tools.find(t=>t.n==5).red"));
+  // picker blocks unconfirmed copied number
+  E(`S.cur=${C}`);E("J={op:'face',p:{Tool:{v:null}},edits:{},code:[]}");E("tlPick('Tool')");log('unconfirmed copied tool disabled in picker',!!d.querySelector('#tlpl button[disabled]'));E("tlClose()");
+  // backup round trip
+  const bk=E("JSON.stringify(S)");const nt=JSON.parse(bk);log('backup includes per-machine tools + Unassigned',nt.m.every(m=>Array.isArray(m.tools))&&Array.isArray(nt.utools)&&nt.utools.length==1);
+  E(`S=JSON.parse(${JSON.stringify(bk)});bindTools();save()`);log('backup replace round trip keeps tools',E("JSON.stringify(S.m.map(m=>m.tools))")==JSON.stringify(nt.m.map(m=>m.tools)));
+  const clash=JSON.parse(bk);clash.m.forEach(m=>(m.tools||[]).forEach(t=>t.dia=9));const before=E("S.utools.length");E(`mergeBackup(${JSON.stringify(clash)})`);
+  log('merge: number clashes go to Unassigned, not dropped',E("S.utools.length")>before,E("S.utools.length")+'/'+before);
+  log('legacy backup tools merged into Unassigned',(E(`mergeBackup(${JSON.stringify(LEG)})`),E("S.utools.filter(t=>t.n==8).length"))>=1);
+  E("help('tools')");log('Help topic',/Copy to another machine/.test(d.body.textContent)&&/Unassigned/.test(d.body.textContent));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>
