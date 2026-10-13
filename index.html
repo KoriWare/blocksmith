@@ -4032,4 +4032,263 @@ HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='more')+1),0,['theme','Theme: Dar
 </script>
 
 
+<script>
+// ---- Round 54 · Import a drawing (DXF), phase 1 (mill). Our own small ASCII DXF reader (R12–2018): LINE, ARC, CIRCLE, LWPOLYLINE, POLYLINE (bulge),
+//      INSERT (blocks, scale, rotation, arrays). Layer picker; units red + both-units size + one known dimension; origin / rotation / mirror picked on the
+//      drawing with an axis overlay (red until confirmed); join tolerance shown, duplicates removed, gaps listed; preview; circles grouped by Ø -> drill
+//      point list (depth / tool / work offset / cycle red); closed shapes -> G41/G42 part-line profile with a gray side suggestion you confirm and a
+//      lead-in you confirm. Open shapes are refused. Read on the phone only — the file is never uploaded. Sources: docs/sources.md Round 54.
+const DXF={max:5*1024*1024,maxEnt:50000,
+ ver:{AC1009:'R11/R12',AC1012:'R13',AC1014:'R14',AC1015:'2000',AC1018:'2004',AC1021:'2007',AC1024:'2010',AC1027:'2013',AC1032:'2018'},
+ units:{0:'unitless',1:'in',2:'ft',3:'mi',4:'mm',5:'cm',6:'m',8:'microinch',9:'mil',10:'yd',14:'dm'},
+ skip:/^(TEXT|MTEXT|DIMENSION|HATCH|LEADER|MLEADER|MULTILEADER|POINT|ATTDEF|ATTRIB|SOLID|TRACE|VIEWPORT|IMAGE|WIPEOUT|TOLERANCE|XLINE|RAY|SHAPE|OLE2FRAME|OLEFRAME|ACAD_TABLE|TABLE|LIGHT|SUN|UNDERLAY|PDFUNDERLAY|DGNUNDERLAY|DWFUNDERLAY|ARCALIGNEDTEXT|RTEXT|ACAD_PROXY_ENTITY)$/,
+ solid3d:/^(3DSOLID|BODY|REGION|MESH|3DFACE|SURFACE|PLANESURFACE|EXTRUDEDSURFACE|LOFTEDSURFACE|REVOLVEDSURFACE|SWEPTSURFACE|NURBSURFACE|POLYFACE)$/,
+ curves:/^(SPLINE|ELLIPSE|HELIX)$/,offLy:/dim|text|anno|title|border|frame|hidden|\bhid|center|centre|^cl$|constr|defpoints|hatch|note|sheet|viewport/i};
+const DXH={};  // entity handlers by type: (e, emit, ctx) -> refusal text or null. Later rounds add SPLINE / ELLIPSE.
+function dxClean(s,n){return String(s==null?'':s).replace(/[\u0000-\u001f\u007f<>"'`\\&]/g,' ').replace(/\s+/g,' ').trim().slice(0,n||60)}
+function dxKind(name,head){const n=String(name||'').toLowerCase(),h=String(head||'').slice(0,32);
+ if(/^AutoCAD Binary DXF/.test(h))return {err:'This is a binary DXF. Only ASCII (text) DXF can be read. In your CAD program export again as “DXF (ASCII)”, version R12 to 2018.'};
+ if(/\.dwg$/.test(n)||/^AC1\d{3}/.test(h))return {err:'This is a DWG drawing, not a DXF. Export it as an ASCII DXF (R12 to 2018) from your CAD program.'};
+ if(/\.(step|stp|iges|igs|stl|3mf|obj|sldprt|sldasm|x_t|x_b|sat|f3d|ipt|iam|prt|catpart|3dm|skp|dae|fbx|ply)$/.test(n)||/^ISO-10303-21/.test(h)||/^solid\s/i.test(h))return {err:'3D model files (STEP, IGES, STL and the like) are refused. The app only reads flat 2D drawings saved as ASCII DXF.'};
+ if(n&&!/\.dxf$/.test(n))return {err:'Pick a .dxf file (2D drawing, ASCII).'};return {ok:1}}
+// group-code pairs; never evaluates anything from the file
+function dxPairs(t){const L=t.split(/\r\n|\r|\n/),P=[];let i=0;while(i<L.length){const c=L[i].trim();if(c===''&&i>=L.length-2)break;if(!/^-?\d{1,4}$/.test(c))return {err:'Not a readable ASCII DXF (line '+(i+1)+' should be a group code number).'};if(i+1>=L.length)break;P.push([+c,L[i+1].trim()]);i+=2}return {P}}
+function dxGroup(P,i,stop){const out=[];let e=null;for(;i<P.length;i++){const [c,v]=P[i];if(c==0){if(stop.test(v))break;e={t:v.toUpperCase(),g:[]};out.push(e)}else if(e)e.g.push([c,v])}return [out,i]}
+function dxFold(list){const out=[];let pl=null;for(const e of list){if(e.t=='VERTEX'&&pl){pl.v.push(e);continue}if(e.t=='SEQEND'){pl=null;continue}pl=null;if(e.t=='POLYLINE'){e.v=[];pl=e}out.push(e)}return out}
+function dxRead(text,name){if(typeof text!='string')return {err:'Not a drawing file.'};if(text.length>DXF.max)return {err:'File is over the 5 MB limit, not opened. Export only the part (one sketch or view), not the whole sheet.'};
+ const k=dxKind(name,text);if(k.err)return k;const pr=dxPairs(text);if(pr.err)return pr;const P=pr.P;const r={name:dxClean(name||'drawing.dxf',60),ver:null,ins:null,meas:null,layers:{},blocks:{},raw:[],skipped:{},refused:[],warn:[]};
+ if(!P.some(([c,v])=>c==0&&v=='EOF'))r.warn.push('The file has no EOF marker, so it may be cut short. Check that every shape you expect is in the preview.');
+ for(let i=0;i<P.length;i++){if(!(P[i][0]==0&&P[i][1]=='SECTION'))continue;const nm=(P[i+1]||[])[1];i+=2;
+  if(nm=='HEADER'){for(;i<P.length&&!(P[i][0]==0&&P[i][1]=='ENDSEC');i++){if(P[i][0]==9){const v=P[i][1],x=P[i+1];if(!x)continue;if(v=='$ACADVER')r.ver=x[1];if(v=='$INSUNITS')r.ins=+x[1];if(v=='$MEASUREMENT')r.meas=+x[1]}}}
+  else if(nm=='TABLES'){let ly=null;for(;i<P.length&&!(P[i][0]==0&&P[i][1]=='ENDSEC');i++){const [c,v]=P[i];if(c==0){ly=v=='LAYER'?{}:null;continue}if(!ly)continue;if(c==2){ly.n=dxClean(v,40);r.layers[ly.n]={n:ly.n,count:0,off:false}}if(ly.n&&c==62&&+v<0)r.layers[ly.n].off=true;if(ly.n&&c==70&&(+v&1))r.layers[ly.n].off=true}}
+  else if(nm=='BLOCKS'){for(;i<P.length&&!(P[i][0]==0&&P[i][1]=='ENDSEC');i++){if(P[i][0]==0&&P[i][1]=='BLOCK'){let b={n:'',x:0,y:0};i++;for(;i<P.length&&P[i][0]!=0;i++){const [c,v]=P[i];if(c==2&&!b.n)b.n=v;if(c==10)b.x=+v;if(c==20)b.y=+v}
+     const [l,j]=dxGroup(P,i,/^(ENDBLK|ENDSEC)$/);b.e=dxFold(l);r.blocks[b.n]=b;i=j}}}
+  else if(nm=='ENTITIES'){const [l,j]=dxGroup(P,i,/^ENDSEC$/);r.raw=dxFold(l);i=j}
+  else{for(;i<P.length&&!(P[i][0]==0&&P[i][1]=='ENDSEC');i++);}}
+ if(r.ver&&!DXF.ver[r.ver]){const n=+String(r.ver).replace(/\D/g,'');return {err:(n&&n<1009?'This DXF is older than R12 ('+dxClean(r.ver,8)+'). ':n>1032?'This DXF is newer than the 2018 format ('+dxClean(r.ver,8)+'). ':'Unknown DXF version “'+dxClean(r.ver,8)+'”. ')+'Export again as ASCII DXF, version R12 to 2018.'}}
+ if(!r.ver)r.warn.push('No version in the header (common for minimal R12 files) — read as R12.');
+ if(r.raw.some(e=>DXF.solid3d.test(e.t)))return {err:'This file holds 3D model data ('+[...new Set(r.raw.filter(e=>DXF.solid3d.test(e.t)).map(e=>e.t))].join(', ')+'). 3D is refused — export a flat 2D sketch or drawing view as DXF.'};
+ r.prims=[];r.nEnt=0;const emit=(p,ly)=>{if(r.prims.length>=DXF.maxEnt){r.cap=1;return}p.ly=ly;r.prims.push(p);(r.layers[ly]=r.layers[ly]||{n:ly,count:0,off:false}).count++};
+ const ctx={depth:0,stack:[]};for(const e of r.raw){if(r.cap)break;r.nEnt++;dxEnt(e,emit,ctx,r,null)}
+ if(r.cap)return {err:'Over 50,000 shapes, not opened. Export only the part you want to cut.'};
+ Object.values(r.layers).forEach(l=>{l.on=!l.off&&!DXF.offLy.test(l.n)&&l.count>0;l.why=l.off?'off or frozen in the file':DXF.offLy.test(l.n)?'looks like dimensions, text, title block or center lines':''});
+ r.unitHint=r.ins==1?'in':r.ins==4?'mm':null;r.verName=r.ver?DXF.ver[r.ver]:'R12 (assumed)';return r}
+const dxN=(e,c,d)=>{const x=e.g.find(p=>p[0]==c);return x?+x[1]:d};
+function dxExt(e){const x=dxN(e,210,0),y=dxN(e,220,0),z=dxN(e,230,1);if(Math.abs(x)<1e-9&&Math.abs(y)<1e-9)return z<0?-1:1;return 0}
+const dxA=(c,r,a)=>[c[0]+r*Math.cos(a*Math.PI/180),c[1]+r*Math.sin(a*Math.PI/180)];
+function dxArcP(c,r,s,e){const sw=((e-s)%360+360)%360;return {k:'A',c,r,p:dxA(c,r,s),q:dxA(c,r,s+(sw||360)),ccw:true,sw:sw||360}}
+// polyline bulge -> arc: included angle = 4·atan(|b|), b>0 counter-clockwise, radius = chord·(1+b²)/(4|b|)  (sources: Round 54)
+function dxBulge(p,q,b){const dx=q[0]-p[0],dy=q[1]-p[1],d=Math.hypot(dx,dy);if(!(d>1e-12))return null;const r=d*(1+b*b)/(4*Math.abs(b)),h=(d/2)*(1-b*b)/(2*b),mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2;
+ const c=[mx-dy/d*h,my+dx/d*h];return {k:'A',c,r,p:[...p],q:[...q],ccw:b>0,sw:4*Math.atan(Math.abs(b))*180/Math.PI}}
+function dxRef(r,why,t){const x=r.refused.find(z=>z.why==why);if(x)x.n++;else r.refused.push({why,t,n:1})}
+function dxEnt(e,emit0,ctx,r,xf){const ly0=dxClean((e.g.find(p=>p[0]==8)||[0,'0'])[1],40)||'0';const ly=xf&&ly0=='0'?xf.ly:ly0;
+ const emit=p=>{if(xf){p=xf.f(p);if(!p){dxRef(r,'Block scaled unevenly (would turn arcs into ellipses) — not read',e.t);return}}emit0(p,ly)};
+ if(DXF.skip.test(e.t)){r.skipped[e.t]=(r.skipped[e.t]||0)+1;return}
+ const ex=dxExt(e);const flat=(...zs)=>zs.every(z=>Math.abs(z||0)<1e-9);
+ if(DXH[e.t]){const w=DXH[e.t](e,emit,ex,r);if(w)dxRef(r,w,e.t);return}
+ if(DXF.curves.test(e.t)){dxRef(r,'SPLINE / ELLIPSE curves are not read yet — export with “splines as polylines” (or arcs) in your CAD program',e.t);return}
+ if(e.t=='LINE'){if(!flat(dxN(e,30),dxN(e,31)))return dxRef(r,'Not flat (Z is not 0) — 3D or tilted geometry refused',e.t);const p=[dxN(e,10,0),dxN(e,20,0)],q=[dxN(e,11,0),dxN(e,21,0)];if(Math.hypot(q[0]-p[0],q[1]-p[1])<1e-12)return;emit({k:'L',p,q});return}
+ if(e.t=='CIRCLE'||e.t=='ARC'){if(!ex)return dxRef(r,'Tilted (extrusion not along Z) — 3D or tilted geometry refused',e.t);if(!flat(dxN(e,30)))return dxRef(r,'Not flat (Z is not 0) — 3D or tilted geometry refused',e.t);
+  let c=[dxN(e,10,0),dxN(e,20,0)],rr=dxN(e,40,0);if(!(rr>0))return;let s=dxN(e,50,0),en=dxN(e,51,360);if(ex<0){c=[-c[0],c[1]];[s,en]=[180-en,180-s]}
+  if(e.t=='CIRCLE'){emit({k:'C',c,r:rr});return}const a=dxArcP(c,rr,s,en);if(a.sw>=359.9999){emit({k:'C',c,r:rr});return}emit(a);return}
+ if(e.t=='LWPOLYLINE'||e.t=='POLYLINE'){let V=[],fl=dxN(e,70,0);
+  if(e.t=='LWPOLYLINE'){let v=null;for(const [c,x] of e.g){if(c==10){v={x:+x,y:0,b:0};V.push(v)}else if(v&&c==20)v.y=+x;else if(v&&c==42)v.b=+x}if(Math.abs(dxN(e,38,0))>1e-9)return dxRef(r,'Not flat (elevation is not 0) — 3D or tilted geometry refused',e.t)}
+  else{if(fl&(8|16|64))return dxRef(r,'3D polyline or mesh — refused',e.t);for(const v of e.v||[]){const vf=dxN(v,70,0);if(vf&16)continue;if(!flat(dxN(v,30)))return dxRef(r,'Not flat (Z is not 0) — 3D or tilted geometry refused',e.t);V.push({x:dxN(v,10,0),y:dxN(v,20,0),b:dxN(v,42,0)})}if(!flat(dxN(e,30)))return dxRef(r,'Not flat (elevation is not 0) — 3D or tilted geometry refused',e.t)}
+  if(!ex)return dxRef(r,'Tilted (extrusion not along Z) — 3D or tilted geometry refused',e.t);if(ex<0)V=V.map(v=>({x:-v.x,y:v.y,b:-v.b}));
+  const cl=!!(fl&1),n=V.length;for(let i=0;i<(cl?n:n-1);i++){const a=V[i],b=V[(i+1)%n],p=[a.x,a.y],q=[b.x,b.y];if(Math.hypot(q[0]-p[0],q[1]-p[1])<1e-12)continue;if(Math.abs(a.b)>1e-12){const s=dxBulge(p,q,a.b);if(s)emit(s)}else emit({k:'L',p,q})}return}
+ if(e.t=='INSERT'){const nm=(e.g.find(p=>p[0]==2)||[0,''])[1],b=r.blocks[nm];if(!b)return dxRef(r,'Block reference to a missing block',e.t);if(ctx.depth>=8||ctx.stack.includes(nm))return dxRef(r,'Blocks nested too deep or inside themselves — not read',e.t);
+  if(!ex)return dxRef(r,'Tilted block (extrusion not along Z) — refused',e.t);if(!flat(dxN(e,30)))return dxRef(r,'Block not at Z0 — 3D or tilted geometry refused',e.t);
+  const ix=dxN(e,10,0),iy=dxN(e,20,0),sx=dxN(e,41,1),sy=dxN(e,42,1),rot=dxN(e,50,0)*Math.PI/180,nc=Math.max(1,dxN(e,70,1)),nr=Math.max(1,dxN(e,71,1)),cs=dxN(e,44,0),rs=dxN(e,45,0);
+  if(nc*nr>2000)return dxRef(r,'Block array over 2000 copies — not read',e.t);
+  for(let ci=0;ci<nc;ci++)for(let ri=0;ri<nr;ri++){const cr=Math.cos(rot),sr=Math.sin(rot),fl=ex<0?-1:1,uni=Math.abs(Math.abs(sx)-Math.abs(sy))<1e-9,det=sx*sy*fl;
+   const T=pt=>{let x=(pt[0]-b.x)*sx+ci*cs,y=(pt[1]-b.y)*sy+ri*rs;let X=ix+x*cr-y*sr,Y=iy+x*sr+y*cr;return [fl*X,Y]};
+   const f=p=>{if(p.k=='L')p={...p,p:T(p.p),q:T(p.q)};else{if(!uni)return null;const sc=Math.abs(sx);p=p.k=='C'?{...p,c:T(p.c),r:p.r*sc}:{...p,c:T(p.c),p:T(p.p),q:T(p.q),r:p.r*sc,ccw:det<0?!p.ccw:p.ccw}}return xf?xf.f(p):p};
+   ctx.depth++;ctx.stack.push(nm);try{for(const be of b.e)dxEnt(be,emit0,ctx,r,{f,ly})}finally{ctx.depth--;ctx.stack.pop()}}return}
+ r.skipped[e.t]=(r.skipped[e.t]||0)+1}
+// ---------- geometry
+const dxD=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+function dxRev(s){return s.k=='L'?{...s,p:s.q,q:s.p}:{...s,p:s.q,q:s.p,ccw:!s.ccw}}
+function dxSamp(s,step){if(s.k=='L')return [s.p,s.q];const a0=Math.atan2(s.p[1]-s.c[1],s.p[0]-s.c[0]),sw=s.sw*Math.PI/180*(s.ccw?1:-1),n=Math.max(2,Math.ceil(Math.abs(sw)/(step||Math.PI/36)));const o=[];for(let i=0;i<=n;i++){const a=a0+sw*i/n;o.push([s.c[0]+s.r*Math.cos(a),s.c[1]+s.r*Math.sin(a)])}return o}
+function dxPoly(segs){const o=[];segs.forEach(s=>{const p=dxSamp(s);o.push(...p.slice(0,-1))});return o}
+function dxArea(pl){let a=0;for(let i=0;i<pl.length;i++){const p=pl[i],q=pl[(i+1)%pl.length];a+=p[0]*q[1]-q[0]*p[1]}return a/2}
+function dxIn(pt,pl){let c=false;for(let i=0,j=pl.length-1;i<pl.length;j=i++){const a=pl[i],b=pl[j];if((a[1]>pt[1])!=(b[1]>pt[1])&&pt[0]<(b[0]-a[0])*(pt[1]-a[1])/(b[1]-a[1])+a[0])c=!c}return c}
+function dxBox(pts){let b=[1e18,1e18,-1e18,-1e18];pts.forEach(p=>{b[0]=Math.min(b[0],p[0]);b[1]=Math.min(b[1],p[1]);b[2]=Math.max(b[2],p[0]);b[3]=Math.max(b[3],p[1])});return b}
+function dxPrimPts(p){return p.k=='C'?[[p.c[0]-p.r,p.c[1]-p.r],[p.c[0]+p.r,p.c[1]+p.r]]:dxSamp(p,Math.PI/18)}
+function dxSame(a,b,t){if(a.k!=b.k)return false;if(a.k=='C')return dxD(a.c,b.c)<=t&&Math.abs(a.r-b.r)<=t;const fw=dxD(a.p,b.p)<=t&&dxD(a.q,b.q)<=t,bw=dxD(a.p,b.q)<=t&&dxD(a.q,b.p)<=t;if(!fw&&!bw)return false;if(a.k=='L')return true;return dxD(a.c,b.c)<=t&&Math.abs(a.r-b.r)<=t&&Math.abs(a.sw-b.sw)<=1e-3+t}
+// build: layer filter, dedupe, chain within the join tolerance (drawing units), gaps, loops + nesting, hole groups
+function dxBuild(r,o){const t=o.tol,on=o.layers;const P0=r.prims.filter(p=>on.has(p.ly));const key=p=>Math.round(p[0]/(t*8))+','+Math.round(p[1]/(t*8));
+ const kept=[];let dup=0;const H=new Map();for(const p of P0){const pts=p.k=='C'?[p.c]:[p.p];const kk=key(pts[0]);let same=false;for(let dx=-1;dx<=1&&!same;dx++)for(let dy=-1;dy<=1&&!same;dy++){const [a,b]=kk.split(',').map(Number);const l=H.get((a+dx)+','+(b+dy))||[];if(l.some(x=>dxSame(x,p,t)))same=true}
+  if(!same&&p.k!='C'){const k2=key(p.q),[a,b]=k2.split(',').map(Number);for(let dx=-1;dx<=1&&!same;dx++)for(let dy=-1;dy<=1&&!same;dy++){const l=H.get((a+dx)+','+(b+dy))||[];if(l.some(x=>dxSame(x,p,t)))same=true}}
+  if(same){dup++;continue}kept.push(p);[p.k=='C'?p.c:p.p,...(p.k=='C'?[]:[p.q])].forEach(pt=>{const k=key(pt);if(!H.has(k))H.set(k,[]);H.get(k).push(p)})}
+ const circles=kept.filter(p=>p.k=='C'),segs=kept.filter(p=>p.k!='C');
+ // endpoint index
+ const E=new Map(),add=(pt,i,end)=>{const k=key(pt);if(!E.has(k))E.set(k,[]);E.get(k).push([i,end])};segs.forEach((s,i)=>{add(s.p,i,0);add(s.q,i,1)});
+ const near=(pt,skip)=>{const [a,b]=key(pt).split(',').map(Number),o=[];for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)(E.get((a+dx)+','+(b+dy))||[]).forEach(([i,end])=>{if(i!==skip&&dxD(end?segs[i].q:segs[i].p,pt)<=t)o.push([i,end])});return o};
+ const used=new Uint8Array(segs.length),chains=[],branches=[];
+ for(let i=0;i<segs.length;i++){if(used[i])continue;used[i]=1;let ch=[segs[i]],ix=[i],br=false,closedHit=false;
+  for(let dir=0;dir<2&&!closedHit;dir++){for(let guard=0;guard<segs.length;guard++){const tail=dir==0?ix.at(-1):ix[0],end=dir==0?ch.at(-1).q:ch[0].p;const others=near(end,tail);if(others.length>1)br=true;
+    if(ch.length>1&&dxD(ch[0].p,ch.at(-1).q)<=t){closedHit=true;break}const free=others.filter(([j])=>!used[j]);if(!free.length)break;const [j,e2]=free[0];used[j]=1;let s=segs[j];
+    if(dir==0){if(e2==1)s=dxRev(s);ch.push(s);ix.push(j)}else{if(e2==0)s=dxRev(s);ch.unshift(s);ix.unshift(j)}}}
+  const closed=dxD(ch[0].p,ch.at(-1).q)<=t&&(ch.length>1||(ch[0].k=='A'&&ch[0].sw>=359));
+  for(let k=1;k<ch.length;k++){const m=[(ch[k-1].q[0]+ch[k].p[0])/2,(ch[k-1].q[1]+ch[k].p[1])/2];ch[k-1]={...ch[k-1],q:m};ch[k]={...ch[k],p:m}}
+  if(closed){const m=[(ch.at(-1).q[0]+ch[0].p[0])/2,(ch.at(-1).q[1]+ch[0].p[1])/2];ch[ch.length-1]={...ch.at(-1),q:m};ch[0]={...ch[0],p:m}}
+  if(br)branches.push(ch[0].p);chains.push({segs:ch,closed,branch:br})}
+ const open=chains.filter(c=>!c.closed),ends=[];open.forEach((c,ci)=>{ends.push([c.segs[0].p,ci]);ends.push([c.segs.at(-1).q,ci])});
+ const gaps=[];const gmax=Math.max(t*200,o.gapMax||0);for(let a=0;a<ends.length;a++){let best=null;for(let b=0;b<ends.length;b++){if(a==b)continue;const d=dxD(ends[a][0],ends[b][0]);if(d>t&&d<=gmax&&(!best||d<best.d))best={d,b}}
+  if(best){if(a<best.b||!gaps.some(g=>g.pair==best.b+','+a))gaps.push({at:ends[a][0],to:ends[best.b][0],d:best.d,pair:a+','+best.b})}else gaps.push({at:ends[a][0],d:null})}
+ const loops=[];chains.forEach((c,i)=>{if(!c.closed)return;const pl=dxPoly(c.segs);loops.push({segs:c.segs,pl,area:dxArea(pl),box:dxBox(pl),branch:c.branch,circle:false})});
+ circles.forEach(c=>{const s1={k:'A',c:c.c,r:c.r,p:[c.c[0]+c.r,c.c[1]],q:[c.c[0]-c.r,c.c[1]],ccw:true,sw:180},s2={k:'A',c:c.c,r:c.r,p:s1.q,q:s1.p,ccw:true,sw:180};const pl=dxPoly([s1,s2]);loops.push({segs:[s1,s2],pl,area:dxArea(pl),box:dxBox(pl),circle:true,d:2*c.r,c:c.c})});
+ loops.forEach(L=>{const pt=L.pl[0];L.depth=loops.filter(M=>M!==L&&Math.abs(M.area)>Math.abs(L.area)&&dxIn(pt,M.pl)).length;L.sug=L.depth%2?'inside':'outside'});
+ const groups=[];circles.slice().sort((a,b)=>a.r-b.r).forEach(c=>{const d=2*c.r;let g=groups.find(g=>Math.abs(g.d-d)<=Math.max(t,1e-9)*2);if(!g){g={d,pts:[],conc:0};groups.push(g)}g.pts.push(c.c)});
+ groups.forEach(g=>{g.conc=g.pts.filter(p=>circles.some(c=>Math.abs(2*c.r-g.d)>t*2&&dxD(c.c,p)<=t)).length});
+ const all=kept.flatMap(dxPrimPts);const box=all.length?dxBox(all):[0,0,0,0];
+ return {kept,dup,chains,open,gaps,branches,loops,groups,circles,box,n0:P0.length}}
+// part transform: drawing -> part inches. P = k · Rot(Mirror(D − O))
+function dxXf(o){const k=o.units=='mm'?1/25.4:1,a=(o.rot||0)*Math.PI/180,c=Math.cos(a),s=Math.sin(a),mx=o.mir=='X'?-1:1,my=o.mir=='Y'?-1:1,flip=mx*my<0;
+ const T=p=>{const x=(p[0]-o.ox)*mx,y=(p[1]-o.oy)*my;return [k*(x*c-y*s),k*(x*s+y*c)]};
+ return {T,k,flip,seg:z=>z.k=='L'?{k:'L',p:T(z.p),q:T(z.q)}:{k:'A',p:T(z.p),q:T(z.q),c:T(z.c),r:z.r*k,ccw:flip?!z.ccw:z.ccw,sw:z.sw}}}
+// ---------- screen
+let DX=null;
+const dxU=()=>DX&&DX.o.units,dxFmt=v=>(Math.abs(v)<5e-5?0:v).toFixed(dxU()=='mm'?3:4).replace(/\.?0+$/,'')||'0';
+function dxState(r){return {r,o:{units:null,unitsOk:false,tol:null,layers:new Set(Object.values(r.layers).filter(l=>l.on).map(l=>l.n)),ox:null,oy:null,rot:null,mir:null,originOk:false,known:null},sel:null,msg:''}}
+function dxTolIn(){return DX.o.tol!=null?DX.o.tol:(dxU()=='mm'?0.02/25.4:0.001)}
+function dxTolRaw(){const t=dxTolIn();return dxU()=='mm'?t*25.4:t}
+function dxModel(){if(!DX||!DX.r||DX.r.err)return null;const k=JSON.stringify([...DX.o.layers].sort())+'|'+dxTolRaw();if(DX.mk!==k){DX.m=dxBuild(DX.r,{tol:dxTolRaw(),layers:DX.o.layers});DX.mk=k}return DX.m}
+function dxOK(){return !!(DX&&DX.o.unitsOk&&DX.o.originOk)}
+function dxImp(){$('#ttl').textContent='Import drawing (DXF)';document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t=='new'));
+ if(isL()&&!DXL_ON){V.innerHTML=`<div class="card"><div class="t">📐 Import a drawing (DXF)</div><div class="ok bad" id="dxlathe">Lathe import is not in this version yet. Pick a mill to import a 2D drawing.</div></div>`;return}
+ const h=[`<div class="card" id="dxfile"><div class="t">📐 Import a drawing (DXF)</div><div class="s">A flat <b>2D</b> drawing saved as <b>ASCII DXF</b> (R12 to 2018), up to 5 MB. It is read on this phone only and never uploaded. Use only drawings that are yours, never ones from work.</div>
+ <label class="btn o" style="display:block;text-align:center">Choose a .dxf file<input type="file" id="dxf" accept=".dxf,application/dxf,image/vnd.dxf,application/octet-stream" style="display:none"></label><div id="dxmsg">${DX&&DX.msg?DX.msg:''}</div>
+ <div class="s"><a href="#" onclick="help('dxf');return false">How importing works</a></div></div>`];
+ if(DX&&DX.r&&!DX.r.err)h.push(dxCards());V.innerHTML=h.join('');$('#dxf').onchange=e=>{dxFile(e.target.files[0]);e.target.value=''};dxWire()}
+function dxFile(f){if(!f)return;if(f.size>DXF.max){DX={msg:`<div class="ok bad" id="dxerr">⛔ ${esc(f.name.slice(0,60))} is over the 5 MB limit, not opened. Export only the part (one sketch or view), not the whole sheet.</div>`};dxImp();return}
+ const k=dxKind(f.name,'');if(k.err){DX={msg:`<div class="ok bad" id="dxerr">⛔ ${esc(k.err)}</div>`};dxImp();return}
+ const rd=new FileReader();rd.onload=()=>dxLoad(String(rd.result),f.name);rd.readAsText(f,'latin1')}
+function dxLoad(text,name){const r=dxRead(text,name);if(r.err){DX={msg:`<div class="ok bad" id="dxerr">⛔ ${esc(r.err)}</div>`};dxImp();return r}
+ DX=dxState(r);if(!r.prims.length)DX.msg=`<div class="ok bad" id="dxerr">⛔ Nothing to cut was found (only text, dimensions or skipped items).</div>`;dxImp();return r}
+const dxChip=(ok,t)=>`<span class="chip ${ok?'g':'r'}">${ok?'✓':'!'} ${t}</span>`;
+function dxCards(){const r=DX.r,o=DX.o,m=dxModel(),u=dxU(),b=m.box,W=b[2]-b[0],Hh=b[3]-b[1],sk=Object.entries(r.skipped);
+ const lay=Object.values(r.layers).filter(l=>l.count).sort((a,b)=>a.n.localeCompare(b.n));
+ let h=`<div class="card" id="dxsum"><div class="t">${esc(r.name)}</div><div class="s">DXF ${esc(r.verName)} · ${r.prims.length} shapes read${sk.length?' · skipped: '+sk.map(([t,n])=>esc(t)+' ×'+n).join(', '):''}</div>${r.refused.map(x=>`<div class="ok bad dxref">⛔ ${esc(x.why)} (${esc(x.t)} ×${x.n})</div>`).join('')}${r.warn.map(w=>`<div class="thin">${esc(w)}</div>`).join('')}<div class="s">Text and dimensions are never turned into cuts or engraving.</div></div>`;
+ h+=`<div class="card" id="dxlay"><div class="t">Layers</div>${lay.map(l=>`<label class="set" style="display:flex"><span><input type="checkbox" class="dxly" data-n="${esc(l.n)}"${o.layers.has(l.n)?' checked':''} style="width:auto"> ${esc(l.n)} <span class="s">(${l.count})</span></span><span class="s">${l.why?esc(l.why)+' — off':''}</span></label>`).join('')}</div>`;
+ const kd=o.known,both=`<div class="s" id="dxbb">Size of what's on: <b>${W.toFixed(4)} × ${Hh.toFixed(4)}</b> drawing units → if inches: ${W.toFixed(4)} × ${Hh.toFixed(4)} in (${(W*25.4).toFixed(2)} × ${(Hh*25.4).toFixed(2)} mm) · if mm: ${W.toFixed(3)} × ${Hh.toFixed(3)} mm (${(W/25.4).toFixed(4)} × ${(Hh/25.4).toFixed(4)} in)</div>`;
+ const hint=r.unitHint?`<span class="chip gr">~ file says ${r.unitHint} ($INSUNITS ${r.ins}) — suggestion only</span>`:`<span class="chip r">! file has no usable unit (${r.ins==null?'no $INSUNITS':'$INSUNITS '+r.ins+' = '+(DXF.units[r.ins]||'?')}) — you must pick</span>`;
+ h+=`<div class="card" id="dxunits"><div class="t">Units ${dxChip(o.unitsOk,o.unitsOk?'confirmed '+u:'confirm')}</div>${hint}${both}
+  <div class="set"><span>Drawing units</span><select id="dxu" style="width:45%"><option value="">pick…</option><option value="in"${u=='in'?' selected':''}>inches</option><option value="mm"${u=='mm'?' selected':''}>mm</option></select></div>
+  <div class="s">Check one dimension you know from your print, so a 25.4× mistake can't get through:</div><div class="row"><select id="dxkd" style="flex:1"><option value="w">Overall width (X)</option><option value="h">Overall height (Y)</option>${m.groups.map((g,i)=>`<option value="g${i}">Hole Ø group ${i+1} (${g.pts.length} holes)</option>`).join('')}</select><input id="dxkv" inputmode="decimal" placeholder="${u||'size'}" style="width:30%"><button class="chip y" id="dxkb">Check</button></div><div id="dxkr">${kd?kd.html:''}</div></div>`;
+ const tl=dxTolIn();h+=`<div class="card" id="dxtol"><div class="t">Join tolerance <span class="chip ${o.tol==null?'gr':'g'}">${o.tol==null?'~ suggested':'✓ yours'} ${u=='mm'?(tl*25.4).toFixed(3)+' mm':tl.toFixed(4)+' in'}</span></div><div class="s">Ends closer than this are joined. Bigger gaps are listed, never bridged.</div><div class="set"><span>Tolerance (${u||'in'})</span><input id="dxt" inputmode="decimal" style="width:30%" value="${u=='mm'?(tl*25.4).toFixed(3):tl.toFixed(4)}"></div>
+  <div class="s" id="dxstat">${m.dup} duplicate${m.dup==1?'':'s'} removed · ${m.loops.filter(l=>!l.circle).length} closed shape${m.loops.filter(l=>!l.circle).length==1?'':'s'} · ${m.circles.length} circle${m.circles.length==1?'':'s'} · ${m.open.length} open chain${m.open.length==1?'':'s'}${m.branches.length?' · '+m.branches.length+' branch point(s)':''}</div>
+  ${m.gaps.length?`<div class="ok bad" id="dxgaps">Gaps / open ends:<br>${m.gaps.slice(0,20).map(g=>g.d!=null?`gap ${dxFmt(g.d)} at X${dxFmt(g.at[0])} Y${dxFmt(g.at[1])}`:`open end at X${dxFmt(g.at[0])} Y${dxFmt(g.at[1])}`).join('<br>')}${m.gaps.length>20?'<br>…':''}<br><span class="s">Drawing coordinates. Fix them in CAD; the app won't bridge a gap bigger than the tolerance.</span></div>`:''}</div>`;
+ const oo=o.ox!=null;h+=`<div class="card" id="dxorg"><div class="t">Origin X0 Y0, rotation, mirror ${dxChip(o.originOk,o.originOk?'confirmed':'confirm')}</div><div class="s">Tap the drawing to pick X0 Y0 (it snaps to the nearest corner, end point or circle center), or use a button. Nothing is picked for you.</div>
+  ${dxSVG(m)}<div class="row"><button class="chip gr" id="dxll">Lower-left of size box</button><button class="chip gr" id="dxcc">Center of size box</button><button class="chip gr" id="dxty">Type X0 Y0…</button></div>
+  <div class="s" id="dxo">${oo?`X0 Y0 at drawing X${dxFmt(o.ox)} Y${dxFmt(o.oy)}`:'X0 Y0: not picked'}</div>
+  <div class="set"><span>Rotation</span><select id="dxr" style="width:45%"><option value="">pick…</option>${[0,90,180,270].map(a=>`<option value="${a}"${o.rot===a?' selected':''}>${a}°</option>`).join('')}</select></div>
+  <div class="set"><span>Mirror</span><select id="dxm" style="width:45%"><option value="">pick…</option><option value="none"${o.mir=='none'?' selected':''}>none</option><option value="X"${o.mir=='X'?' selected':''}>mirror X (flip left–right)</option><option value="Y"${o.mir=='Y'?' selected':''}>mirror Y (flip top–bottom)</option></select></div>
+  <div class="s">Red arrow = +X, green arrow = +Y of the part as the machine will see it.</div><button class="btn${o.originOk?' o':''}" id="dxoc"${oo&&o.rot!=null&&o.mir?'':' disabled'}>${o.originOk?'✓ Origin confirmed (tap to re-confirm)':'Confirm origin, rotation and mirror'}</button></div>`;
+ h+=dxFeat(m);return h}
+function dxFeat(m){const ok=dxOK(),u=dxU();let h=`<div class="card" id="dxholes"><div class="t">Holes (circles by Ø)</div>${m.groups.length?'':'<div class="s">No circles on the layers that are on.</div>'}`;
+ m.groups.forEach((g,i)=>{h+=`<div class="set dxg"><span>Ø ${dxFmt(g.d)} ${u||''} × ${g.pts.length}${g.conc?` <span class="thin" style="display:inline">${g.conc} concentric with another circle (counterbore or chamfer?) — not assumed</span>`:''}<br><span class="s">Ø is a hint only — no drill, tap or tool is picked from it.</span>${dxPat(g,i)}</span><button class="chip y dxdr" data-i="${i}"${ok?'':' disabled'}>Drill these</button></div>`});
+ h+=`</div><div class="card" id="dxshapes"><div class="t">Shapes</div>`;const L=m.loops.filter(l=>!l.circle);
+ L.forEach((l,i)=>{const W=l.box[2]-l.box[0],Hh=l.box[3]-l.box[1];h+=`<div class="set dxs"><span>Shape ${i+1}: ${dxFmt(W)} × ${dxFmt(Hh)} ${u||''} · ${l.segs.length} segment${l.segs.length==1?'':'s'} · closed<br><span class="chip gr">~ ${l.sug} (suggestion — you confirm)</span>${l.branch?' <span class="ok bad">lines cross or branch — check in CAD</span>':''}</span><span>${dxShapeBtns(l,i,ok)}</span></div>`});
+ m.open.forEach((c,i)=>{h+=`<div class="set dxopen"><span>Open chain ${i+1}: ${c.segs.length} segment${c.segs.length==1?'':'s'} from X${dxFmt(c.segs[0].p[0])} Y${dxFmt(c.segs[0].p[1])} to X${dxFmt(c.segs.at(-1).q[0])} Y${dxFmt(c.segs.at(-1).q[1])}</span><span class="ok bad">⛔ open — can't profile</span></div>`});
+ if(!L.length&&!m.open.length)h+='<div class="s">No lines or arcs on the layers that are on.</div>';
+ h+=(ok?'':`<div class="ok bad" id="dxlock">Confirm units (with one known dimension) and origin first — then the job buttons unlock.</div>`)+`</div>`;return h}
+let dxPat=(g,i)=>'';  // pattern detection hook (phase 2)
+let dxShapeBtns=(l,i,ok)=>l.branch?'':`<button class="chip y dxpf" data-i="${i}"${ok?'':' disabled'}>Profile</button>`;
+function dxSVG(m){const b=m.box,o=DX.o,W=Math.max(b[2]-b[0],1e-6),Hh=Math.max(b[3]-b[1],1e-6),pad=Math.max(W,Hh)*0.06,vb=[b[0]-pad,-(b[3]+pad),W+2*pad,Hh+2*pad],sw=Math.max(W,Hh)/300;
+ const pathOf=s=>s.k=='L'?`M${s.p[0]} ${-s.p[1]}L${s.q[0]} ${-s.q[1]}`:s.k=='C'?`M${s.c[0]+s.r} ${-s.c[1]}A${s.r} ${s.r} 0 1 0 ${s.c[0]-s.r} ${-s.c[1]}A${s.r} ${s.r} 0 1 0 ${s.c[0]+s.r} ${-s.c[1]}`:`M${s.p[0]} ${-s.p[1]}A${s.r} ${s.r} 0 ${s.sw>180?1:0} ${s.ccw?0:1} ${s.q[0]} ${-s.q[1]}`;
+ const cl=m.loops.filter(l=>!l.circle).flatMap(l=>l.segs).map(pathOf).join(''),op=m.open.flatMap(c=>c.segs).map(pathOf).join(''),ci=m.circles.map(pathOf).join('');
+ let ax='';if(o.ox!=null){const a=-(o.rot||0)*Math.PI/180,mx=o.mir=='X'?-1:1,my=o.mir=='Y'?-1:1,L=Math.max(W,Hh)*0.18,dx=[Math.cos(a)*mx,Math.sin(a)*my],dy=[-Math.sin(a)*mx,Math.cos(a)*my],X=o.ox,Y=o.oy;
+  ax=`<g id="dxax"><line x1="${X}" y1="${-Y}" x2="${X+dx[0]*L}" y2="${-(Y+dx[1]*L)}" stroke="#ff4d4d" stroke-width="${sw*2.5}"/><line x1="${X}" y1="${-Y}" x2="${X+dy[0]*L}" y2="${-(Y+dy[1]*L)}" stroke="#3ddc84" stroke-width="${sw*2.5}"/><text x="${X+dx[0]*L*1.12}" y="${-(Y+dx[1]*L*1.12)}" fill="#ff4d4d" font-size="${sw*14}">X</text><text x="${X+dy[0]*L*1.12}" y="${-(Y+dy[1]*L*1.12)}" fill="#3ddc84" font-size="${sw*14}">Y</text><circle cx="${X}" cy="${-Y}" r="${sw*4}" fill="#ffd21f"/></g>`}
+ const sel=DX.sel?`<path d="${DX.sel.map(pathOf).join('')}" stroke="#ffd21f" stroke-width="${sw*3}" fill="none"/>`:'';
+ return `<svg id="dxsvg" viewBox="${vb.join(' ')}" style="width:100%;height:260px;background:#0b0b0b;border-radius:8px;touch-action:manipulation" preserveAspectRatio="xMidYMid meet"><path d="${cl}" stroke="#14b8a6" stroke-width="${sw*1.6}" fill="none"/><path d="${ci}" stroke="#ffd21f" stroke-width="${sw*1.2}" fill="none"/><path d="${op}" stroke="#ff4d4d" stroke-width="${sw*1.6}" fill="none" stroke-dasharray="${sw*5} ${sw*3}"/>${sel}${ax}</svg><div class="s">Teal = closed shape · yellow = circle · red dashed = open chain.</div>`}
+function dxSnaps(m){const b=m.box,o=[[b[0],b[1]],[b[2],b[1]],[b[2],b[3]],[b[0],b[3]],[(b[0]+b[2])/2,(b[1]+b[3])/2]];m.kept.forEach(p=>{if(p.k=='C')o.push(p.c);else{o.push(p.p,p.q);if(p.k=='A')o.push(p.c)}});return o}
+function dxTap(ev){const sv=$('#dxsvg');if(!sv)return;const pt=sv.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;const q=pt.matrixTransform(sv.getScreenCTM().inverse());dxPick(q.x,-q.y)}
+function dxPick(x,y){const m=dxModel();let best=null,bd=1e18;dxSnaps(m).forEach(p=>{const d=Math.hypot(p[0]-x,p[1]-y);if(d<bd){bd=d;best=p}});const b=m.box,lim=Math.max(b[2]-b[0],b[3]-b[1])*0.06;if(!best||bd>lim){return false}DX.o.ox=best[0];DX.o.oy=best[1];DX.o.originOk=false;dxImp();return true}
+function dxSetO(x,y){DX.o.ox=x;DX.o.oy=y;DX.o.originOk=false;dxImp()}
+function dxKnown(){const m=dxModel(),u=dxU(),sel=$('#dxkd').value,v=+String($('#dxkv').value).replace(',','.');if(!u){DX.o.known={html:'<div class="ok bad">Pick the drawing units first.</div>'};dxImp();return}if(!(v>0)){DX.o.known={html:'<div class="ok bad">Type the size from your print.</div>'};dxImp();return}
+ const b=m.box,raw=sel=='w'?b[2]-b[0]:sel=='h'?b[3]-b[1]:(m.groups[+sel.slice(1)]||{}).d;const tol=Math.max(v*0.001,u=='in'?0.0005:0.01),ok=Math.abs(raw-v)<=tol,r1=raw/v;
+ let html;if(ok){DX.o.unitsOk=true;html=`<div class="ok" id="dxkok">✓ Drawing says ${dxFmt(raw)} ${u}, you said ${dxFmt(v)} ${u} — units confirmed.</div>`}
+ else{DX.o.unitsOk=false;html=`<div class="ok bad" id="dxkbad">⛔ Drawing says ${dxFmt(raw)}, you said ${dxFmt(v)} ${u}. ${Math.abs(r1-25.4)<0.05||Math.abs(r1-1/25.4)<0.0005?'They are 25.4× apart, so one is in mm and the other in inches. Check the unit you picked.':'Check the scale: it may be a drawing-sheet export at a scale, or you picked the wrong feature.'} Units stay red.</div>`}
+ DX.o.known={html};dxImp()}
+function dxWire(){if(!DX||!DX.r||DX.r.err)return;const o=DX.o;
+ V.querySelectorAll('.dxly').forEach(c=>c.onchange=()=>{c.checked?o.layers.add(c.dataset.n):o.layers.delete(c.dataset.n);o.unitsOk=false;o.known=null;dxImp()});
+ const u=$('#dxu');if(u)u.onchange=()=>{o.units=u.value||null;o.unitsOk=false;o.known=null;o.tol=null;o.originOk=false;dxImp()};
+ const kb=$('#dxkb');if(kb)kb.onclick=dxKnown;
+ const t=$('#dxt');if(t)t.onchange=()=>{const v=+String(t.value).replace(',','.');if(v>0&&v<=(dxU()=='mm'?2.5:0.1)){o.tol=dxU()=='mm'?v/25.4:v}else DX.msg='';dxImp()};
+ const sv=$('#dxsvg');if(sv)sv.onclick=dxTap;const b=dxModel().box;
+ const ll=$('#dxll');if(ll)ll.onclick=()=>dxSetO(b[0],b[1]);const cc=$('#dxcc');if(cc)cc.onclick=()=>dxSetO((b[0]+b[2])/2,(b[1]+b[3])/2);
+ const ty=$('#dxty');if(ty)ty.onclick=()=>{const s=prompt('X0 Y0 in drawing coordinates, like 10, 5');if(s==null)return;const a=String(s).split(/[\s,;]+/).map(Number).filter(x=>!isNaN(x));if(a.length==2)dxSetO(a[0],a[1])};
+ const r=$('#dxr');if(r)r.onchange=()=>{o.rot=r.value===''?null:+r.value;o.originOk=false;dxImp()};const mi=$('#dxm');if(mi)mi.onchange=()=>{o.mir=mi.value||null;o.originOk=false;dxImp()};
+ const oc=$('#dxoc');if(oc)oc.onclick=()=>{if(o.ox==null||o.rot==null||!o.mir)return;o.originOk=true;dxImp()};
+ V.querySelectorAll('.dxdr').forEach(bn=>bn.onclick=()=>dxToDrill(+bn.dataset.i));V.querySelectorAll('.dxpf').forEach(bn=>bn.onclick=()=>dxToProf(+bn.dataset.i));dxWireMore()}
+let dxWireMore=()=>{};
+function dxCtx(){const o=DX.o;return {name:DX.r.name,units:o.units,ox:o.ox,oy:o.oy,rot:o.rot,mir:o.mir,tol:dxTolIn()}}
+function dxOpen(op,dx,extra){if(!dxOK())return null;if(!jAvail(op))return null;J={op,p:{},text:'(from drawing '+DX.r.name+')',edits:{},date:Date.now(),dx};if(extra)extra(J);j2Norm(J);if(extra)extra(J);tab('new');show();return J}
+function dxToDrill(i){const m=dxModel(),g=m.groups[i];if(!g||!dxOK())return;const X=dxXf({...DX.o});const pts=g.pts.map(X.T);return dxOpen('dxdrill',{...dxCtx(),d:g.d*X.k,pts,conc:g.conc})}
+function dxToProf(i){const m=dxModel(),l=m.loops.filter(l=>!l.circle)[i];if(!l||!dxOK()||l.branch)return;const X=dxXf({...DX.o});const segs=l.segs.map(X.seg);
+ return dxOpen('dxprof',{...dxCtx(),segs,sug:l.sug,shape:i+1},J=>{if(!J.p.Side||J.p.Side.v==null)J.p.Side={v:l.sug,g:true}})}
+// ---------- drill job (point list from the drawing)
+['Lead-in','R plane (above Z0)','Cutter','Clear Z','Stepdown','Peck Q','Z0','Depth'].forEach(k=>KL.add(k));['Feed','Plunge feed'].forEach(k=>KF.add(k));
+Object.assign(UNIT,{'Cycle':'Drill G81 / Peck G83 / Spot G81 — you pick','R plane (above Z0)':'in, rapid plane above your Z0','Side':'outside / inside (gray = the app\'s suggestion; tap to change, then confirm)','Side OK':'tap to confirm the side',
+ 'Cut direction':'climb (G41) / conventional (G42)','Lead-in':'in, straight lead-in / lead-out length (≥ cutter radius)','Lead-in OK':'tap to confirm the lead-in point and length','Cutter':'in, cutter Ø (for the checks and the simulator offset only)','Plunge feed':'in/min'});
+const dxHas=j=>!!(j&&j.dx&&(j.dx.pts||j.dx.segs||j.dx.prof||j.dx.region));
+function dxHdr(L,j,what){L(`(FROM DRAWING ${dxClean(j.dx.name,40).toUpperCase().replace(/[()]/g,'')} - ${what})`);L(`(UNITS ${String(j.dx.units).toUpperCase()} CONFIRMED BY A KNOWN SIZE - ORIGIN, ROTATION ${j.dx.rot} DEG, MIRROR ${String(j.dx.mir).toUpperCase()} PICKED BY YOU)`)}
+defJ('dxdrill',{name:'Drill holes from a drawing (point list)',re:/(?!)/,
+ req:['Cycle','Z0','Depth','R plane (above Z0)','Feed','RPM','Tool','Work offset'],sug:{},choices:{'Cycle':['Drill G81','Peck G83','Spot G81']},extra:j=>jv(j,'Cycle')=='Peck G83'?['Peck Q']:[],
+ parse:()=>{},
+ block:j=>{if(!dxHas(j))return'This job needs its drawing: import the DXF again (drawing geometry is not kept in shared files).';if(!(jv(j,'Depth')>0))return'Depth must be more than 0 (it goes below Z0).';if(!(jv(j,'R plane (above Z0)')>0))return'R plane must be above Z0 (more than 0).';if(jv(j,'Cycle')=='Peck G83'&&!(jv(j,'Peck Q')>0))return'Peck Q must be more than 0.';if(!(jv(j,'Feed')>0))return'Feed must be more than 0.';if(!j.dx.pts.length)return'No holes.';return null},
+ gen:(j,L)=>{const z0=jv(j,'Z0'),zb=z0-jv(j,'Depth'),zr=z0+jv(j,'R plane (above Z0)'),c=jv(j,'Cycle'),P=j.dx.pts,T=jv(j,'Tool');hdr(L,7700,'DRILL FROM DRAWING');dxHdr(L,j,P.length+' HOLES');
+  L(`(DRAWING HOLE DIA ${f4(j.dx.d)} - A HINT ONLY - TOOL, CYCLE AND DEPTH ARE YOURS)`);if(j.dx.conc)L('(SOME HOLES HAVE A CONCENTRIC CIRCLE - CHECK THE PRINT FOR A COUNTERBORE OR CHAMFER)');tstart(L,j,P[0][0],P[0][1],zr+0.5);L(`G00 Z${f4(zr)}`);
+  P.forEach((p,i)=>{if(i==0)L(`G98 ${c=='Peck G83'?'G83':'G81'} X${f4(p[0])} Y${f4(p[1])} Z${f4(zb)} R${f4(zr)}${c=='Peck G83'?' Q'+f4(jv(j,'Peck Q')):''} F${f4(jv(j,'Feed'))}`);else L(`X${f4(p[0])} Y${f4(p[1])}`)});
+  L('G80');L(`G00 Z${f4(zr+0.5)}`);L('M05');endP(L);const b=dxBox(P);j.stock=[b[0]-0.5,b[1]-0.5,zb-0.25,b[2]+0.5,b[3]+0.5,z0]},
+ checks:j=>[['Holes from your drawing with confirmed units and origin ('+j.dx.pts.length+')',dxHas(j)],['Hole Ø used as a hint only (no tap or tool picked from it)',true],['Cycle, depth, R plane, feed, RPM, tool and work offset are yours',['Cycle','Depth','R plane (above Z0)','Feed','RPM','Tool','Work offset'].every(k=>j.p[k]&&j.p[k].v!=null&&!j.p[k].g)],['Canned cycle cancelled G80',true]]});
+// ---------- profile job (closed shape, part line + G41/G42)
+function dxOrient(segs,ccw){const a=dxArea(dxPoly(segs));return (a>0)==ccw?segs:segs.slice().reverse().map(dxRev)}
+function dxStart(segs){let bi=-1,bl=0;segs.forEach((s,i)=>{if(s.k=='L'){const l=dxD(s.p,s.q);if(l>bl){bl=l;bi=i}}});let i=bi>=0?bi:0,s=segs[i];
+ let mid,t1,t2;if(s.k=='L'){mid=[(s.p[0]+s.q[0])/2,(s.p[1]+s.q[1])/2];t1={...s,q:mid};t2={...s,p:mid}}else{const a0=Math.atan2(s.p[1]-s.c[1],s.p[0]-s.c[0]),h=s.sw/2*Math.PI/180*(s.ccw?1:-1);mid=[s.c[0]+s.r*Math.cos(a0+h),s.c[1]+s.r*Math.sin(a0+h)];t1={...s,q:mid,sw:s.sw/2};t2={...s,p:mid,sw:s.sw/2}}
+ const out=[t2,...segs.slice(i+1),...segs.slice(0,i),t1];const tg=s.k=='L'?[(s.q[0]-s.p[0])/dxD(s.p,s.q),(s.q[1]-s.p[1])/dxD(s.p,s.q)]:(()=>{const v=[mid[0]-s.c[0],mid[1]-s.c[1]],l=Math.hypot(...v);return s.ccw?[-v[1]/l,v[0]/l]:[v[1]/l,-v[0]/l]})();return {segs:out,mid,tg}}
+function dxSegDist(pt,s){if(s.k=='L'){const v=[s.q[0]-s.p[0],s.q[1]-s.p[1]],w=[pt[0]-s.p[0],pt[1]-s.p[1]],l2=v[0]*v[0]+v[1]*v[1],t=l2?Math.max(0,Math.min(1,(w[0]*v[0]+w[1]*v[1])/l2)):0;return Math.hypot(w[0]-t*v[0],w[1]-t*v[1])}
+ const a=Math.atan2(pt[1]-s.c[1],pt[0]-s.c[0]),a0=Math.atan2(s.p[1]-s.c[1],s.p[0]-s.c[0]);let d=((s.ccw?a-a0:a0-a)*180/Math.PI%360+360)%360;if(d<=s.sw+1e-9)return Math.abs(Math.hypot(pt[0]-s.c[0],pt[1]-s.c[1])-s.r);return Math.min(dxD(pt,s.p),dxD(pt,s.q))}
+// path: comp G41 = tool left of travel. Outside + G41 -> clockwise; inside + G41 -> counter-clockwise; G42 reverses both.
+function dxPlan(j){const side=jv(j,'Side'),g41=/G41/.test(jv(j,'Cut direction')||''),ccw=(side=='inside')==g41;const segs=dxOrient(j.dx.segs,ccw),st=dxStart(segs),pl=dxPoly(segs);
+ const left=[-st.tg[1],st.tg[0]],nrm=g41?left:[-left[0],-left[1]],ld=jv(j,'Lead-in')||0,S0=[st.mid[0]+nrm[0]*ld,st.mid[1]+nrm[1]*ld];return {segs:st.segs,mid:st.mid,S0,nrm,pl,g:g41?'G41':'G42'}}
+function dxArcW(s){return `${s.ccw?'G03':'G02'} X${f4(s.q[0])} Y${f4(s.q[1])} I${f4(s.c[0]-s.p[0])} J${f4(s.c[1]-s.p[1])}`}
+defJ('dxprof',{name:'Profile from a drawing (G41 / G42 part line)',re:/(?!)/,
+ req:['Side','Side OK','Cut direction','Cutter','Lead-in','Lead-in OK','Z0','Depth','Stepdown','Clear Z','Feed','Plunge feed','RPM','Tool','Work offset'],sug:{},
+ choices:{'Side':['outside','inside'],'Side OK':['YES'],'Cut direction':['climb (G41)','conventional (G42)'],'Lead-in OK':['YES']},parse:()=>{},
+ block:j=>{if(!dxHas(j))return'This job needs its drawing: import the DXF again (drawing geometry is not kept in shared files).';if(j.p.Side&&j.p.Side.g)return'Side is only the app\'s suggestion (gray) — tap Side to check it, then tap Side OK.';if(jv(j,'Side OK')!='YES')return'Confirm the side (Side OK).';
+  const r=jv(j,'Cutter')/2;if(!(r>0))return'Cutter Ø must be more than 0.';if(!(jv(j,'Lead-in')>=r-1e-9))return'Lead-in must be at least the cutter radius ('+f4(r)+') so comp can turn on along a straight move.';
+  if(!(jv(j,'Depth')>0))return'Depth must be more than 0.';if(!(jv(j,'Stepdown')>0))return'Stepdown must be more than 0.';if(!(jv(j,'Clear Z')>0))return'Clear Z must be above Z0 (more than 0).';if(!(jv(j,'Feed')>0)||!(jv(j,'Plunge feed')>0))return'Feeds must be more than 0.';
+  if(Math.ceil(jv(j,'Depth')/jv(j,'Stepdown')-1e-9)>200)return'Over 200 depth passes — check Depth and Stepdown.';
+  const P=dxPlan(j),inside=dxIn(P.S0,P.pl);if(inside!=(jv(j,'Side')=='inside'))return'The lead-in start lands on the wrong side of the shape — check Side and Cut direction.';
+  const dmin=Math.min(...j.dx.segs.map(s=>dxSegDist(P.S0,s)));if(dmin<r-1e-6)return'The lead-in start is closer than the cutter radius to another wall ('+f4(dmin)+') — shorten the lead-in or pick a bigger shape.';
+  for(let k=1;k<20;k++){const t=k/20,pt=[P.S0[0]+(P.mid[0]-P.S0[0])*t,P.mid[1]==P.mid[1]?P.S0[1]+(P.mid[1]-P.S0[1])*t:0];if(dxIn(pt,P.pl)!=inside)return'The lead-in line crosses the shape — shorten it.'}
+  if(jv(j,'Lead-in OK')!='YES')return'Confirm the lead-in (Lead-in OK) — it starts at X'+f4(P.S0[0])+' Y'+f4(P.S0[1])+'.';return null},
+ gen:(j,L)=>{const P=dxPlan(j),z0=jv(j,'Z0'),dep=jv(j,'Depth'),sd=jv(j,'Stepdown'),zc=z0+jv(j,'Clear Z'),T=jv(j,'Tool'),n=Math.ceil(dep/sd-1e-9);
+  hdr(L,7600,'PROFILE FROM DRAWING');dxHdr(L,j,'SHAPE '+j.dx.shape+' '+String(jv(j,'Side')).toUpperCase());L(`(PART LINE WITH ${P.g} - THE CONTROL OFFSETS BY D${T} - D NUMBER = TOOL NUMBER ASSUMED)`);L('(LEAD-IN AND LEAD-OUT ARE STRAIGHT MOVES - COMP TURNS ON AND OFF ON THEM)');
+  tstart(L,j,P.S0[0],P.S0[1],zc);
+  for(let k=1;k<=n;k++){const z=z0-Math.min(dep,k*sd);L(`(PASS ${k} OF ${n} - Z${f4(z)})`);L(`G01 Z${f4(z)} F${f4(jv(j,'Plunge feed'))}`);L(`${P.g} D${T} G01 X${f4(P.mid[0])} Y${f4(P.mid[1])} F${f4(jv(j,'Feed'))} (COMP ON - LEAD-IN)`);
+   P.segs.forEach(s=>L(s.k=='L'?`G01 X${f4(s.q[0])} Y${f4(s.q[1])}`:dxArcW(s)));L(`G40 G01 X${f4(P.S0[0])} Y${f4(P.S0[1])} (COMP OFF - LEAD-OUT)`)}
+  L(`G00 Z${f4(zc)}`);L('M05');endP(L);const b=dxBox([...P.pl,P.S0]),r=jv(j,'Cutter')/2+0.25;j.stock=[b[0]-r,b[1]-r,z0-dep-0.25,b[2]+r,b[3]+r,z0];
+  // simulator: tool-center preview on the comp side (the control does the real offset)
+  const off=[],rc=jv(j,'Cutter')/2,sgn=P.g=='G41'?1:-1;P.segs.forEach(s=>{const a=dxSamp(s,Math.PI/36);a.forEach((p,i)=>{const q=a[Math.min(i+1,a.length-1)],o=a[Math.max(i-1,0)],tx=q[0]-o[0],ty=q[1]-o[1],l=Math.hypot(tx,ty)||1;off.push([p[0]-ty/l*rc*sgn,p[1]+tx/l*rc*sgn])})});j.dxOff={pts:off,z:z0-dep}},
+ checks:j=>{const t=txt().join('\n'),P=dxPlan(j);return [['Closed shape from your drawing (units + origin confirmed)',dxHas(j)],['Side and cut direction confirmed by you',jv(j,'Side OK')=='YES'&&!j.p.Side.g],['Comp turns on with '+P.g+' on a straight lead-in',new RegExp(P.g+' D\\d+ G01').test(t)],['Lead-in ≥ cutter radius',jv(j,'Lead-in')>=jv(j,'Cutter')/2],['Comp off with G40 on a straight lead-out',/G40 G01/.test(t)],['Arcs as G02 / G03 with I J from the start point',true],['Profile ends where it starts',dxD(P.segs[0].p,P.segs.at(-1).q)<1e-6]]}});
+// simulator: draw the comp-side tool-center preview (dashed orange) over the part line
+const _draw54=draw;draw=function(){_draw54.apply(this,arguments);try{if(!J||!J.dxOff||J.op!='dxprof'||!ctx)return;ctx.save();ctx.setLineDash([3,3]);ctx.strokeStyle='#ff9f1a';ctx.lineWidth=1;const z=J.dxOff.z,p=J.dxOff.pts;for(let i=1;i<p.length;i++)ln([p[i-1][0],p[i-1][1],z],[p[i][0],p[i][1],z]);ctx.restore()}catch(e){}};
+// entry points: Build page (next to the job picker) and More
+const _nw54=nw;nw=function(){_nw54.apply(this,arguments);const box=$('#jpbox')||($('#q')&&$('#q').parentNode);if(!box||$('#dxgo'))return;const b=document.createElement('button');b.id='dxgo';b.type='button';b.className='chip gr';b.textContent='📐 Import a drawing (DXF)';b.onclick=()=>dxImp();b.style.marginTop='6px';($('#jpbox')||$('#q')).after(b)};
+const _more54=more;more=function(){_more54.apply(this,arguments);if($('#dxmore'))return;const c=document.createElement('div');c.className='card';c.id='dxmore';c.setAttribute('onclick','dxImp()');c.innerHTML='<div class="t">📐 Import a drawing (DXF)</div><div class="s">2D DXF → holes and profiles. Read on your phone only.</div>';const th=$('#theme');th?th.after(c):V.prepend(c)};
+let DXL_ON=0;navWrap('dxImp');
+const _ct54=curTopic;curTopic=function(){const t=$('#ttl').textContent;if(/^Import drawing/.test(t))return 'dxf';const r=_ct54();return r=='build'&&J&&/^dx/.test(J.op||'')?'dxf':r};
+HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='faq')),0,['dxf','Importing a drawing (DXF)',()=>dxHelp()]);
+let dxHelp=()=>`<p><b>What it reads:</b> a flat 2D drawing saved as <b>ASCII DXF</b>, version R12 to 2018, up to 5 MB and 50,000 shapes. Lines, arcs, circles, polylines (with bulge arcs) and blocks (scaled, rotated, arrays) are read. Text, dimensions, hatches and title blocks are skipped and listed, never cut or engraved.</p>
+<p><b>Refused:</b> binary DXF, DWG, STEP / IGES / STL and other 3D files, 3D solids or meshes, anything not flat at Z0 or tilted, blocks scaled unevenly, and open shapes as profiles. Re-export from your CAD program as ASCII DXF.</p>
+<p><b>Steps (all red until you confirm):</b> 1. <b>Layers</b>: dimension, text, title, hidden and center-line layers start off. 2. <b>Units</b>: DXF numbers have no unit and many files say the wrong one, so you pick inches or mm and check <b>one size you know</b> from your print against the drawing. A 25.4× mistake is caught here. The size box is shown both ways. 3. <b>Join tolerance</b> (gray, 0.001 in / 0.02 mm): ends closer than this are joined, duplicates removed and counted, bigger gaps are listed with where they are. 4. <b>Origin</b>: tap the drawing to pick X0 Y0 (snaps to a corner, end point or circle center), then rotation and mirror. Arrows show +X (red) and +Y (green).</p>
+<p><b>Holes:</b> circles are grouped by Ø. Ø is a hint only: the app never picks a drill, tap or tool from it. <i>Drill these</i> opens a point-list drill job; cycle, depth, R plane, feed, RPM, tool and work offset are red. Concentric circles are flagged, not assumed.</p>
+<p><b>Profiles:</b> a closed shape gets a gray outside / inside suggestion (outer = outside, a shape inside another = inside). You check it and tap <i>Side OK</i>. The code follows the <b>part line</b> with G41 (climb) or G42 (conventional), so the control offsets by D (D = tool number assumed) and you can size at the machine. Comp turns on along a straight lead-in from a point you confirm (at least the cutter radius long, clear of other walls) and off along the same line. Cutter Ø is only used for the checks and the simulator's dashed tool-center line.</p>
+<p><b>Never picked for you:</b> tools, depths, Z0, feeds, speeds, work offset, origin. Your drawing stays on your phone and is never uploaded. Use only drawings that are yours, never ones from work. Drawing geometry is not kept in shared .mbjob files; import the DXF again on the other phone.</p>`;
+LOG.unshift(['2.0 · Oct 13','Import a drawing (DXF), mill: 2D ASCII DXF R12–2018, layers, units checked against one known size, origin / rotation / mirror picked on the drawing, gaps listed, holes → point-list drill, closed shapes → G41/G42 profile. Read on your phone only.']);
+</script>
+
 </body></html>

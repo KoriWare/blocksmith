@@ -1,0 +1,99 @@
+<!doctype html><body><pre id="o"></pre><script src="dxf/fixtures.js"></script><iframe id="f" src="../index.html?v=54" style="width:390px;height:844px"></iframe><script>
+// Round 54 · DXF import phase 1 (mill)
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");
+  const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)}};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);setv('Control','Haas NGC');setv('Units','inch');
+  w.tab('new');log('Build page has the Import a drawing button',!!d.querySelector('#dxgo'));
+  w.tab('more');E('more()');log('More has an Import a drawing card',!!d.querySelector('#dxmore'));
+  w.dxImp();log('import screen title',d.querySelector('#ttl').textContent=='Import drawing (DXF)');log('? opens the DXF help topic',E('curTopic()')=='dxf');
+  log('privacy note: never uploaded, not from work',/never uploaded/.test(d.querySelector('#dxfile').textContent)&&/never ones from work/.test(d.querySelector('#dxfile').textContent));
+  const L=(n)=>E(`dxLoad(FIXT[${JSON.stringify(n)}],${JSON.stringify(n)})`);w.FIXT=window.FIX;
+  // ---- refusals
+  const refuse=(n,re,lbl)=>{L(n);const e=d.querySelector('#dxerr');log('refused: '+lbl,!!e&&re.test(e.textContent),e&&e.textContent)};
+  refuse('binary.dxf',/binary DXF/,'binary DXF (sentinel)');refuse('part.dwg',/DWG/,'DWG');refuse('solid3d.dxf',/3D model data/,'3DSOLID');refuse('old_r10.dxf',/older than R12/,'older than R12');
+  E(`dxLoad("0\\nSECTION\\n2\\nHEADER\\n9\\n$ACADVER\\n1\\nAC1036\\n0\\nENDSEC\\n0\\nEOF\\n","new.dxf")`);log('refused: newer than 2018',/newer than the 2018/.test(d.querySelector('#dxerr').textContent));
+  E(`dxLoad("solid x\\nfacet","part.stl")`);log('refused: STL / 3D file',/3D model files/.test(d.querySelector('#dxerr').textContent));
+  E(`dxLoad("ISO-10303-21;","part.step")`);log('refused: STEP',/3D model files/.test(d.querySelector('#dxerr').textContent));
+  E(`dxLoad("x".repeat(5*1024*1024+1),"big.dxf")`);log('refused: over the 5 MB cap',/5 MB/.test(d.querySelector('#dxerr').textContent));
+  E(`dxLoad("hello\\nworld","junk.dxf")`);log('refused: not a DXF',/Not a readable ASCII DXF/.test(d.querySelector('#dxerr').textContent));
+  log('dxFile refuses a big file before reading',(()=>{E(`dxFile({name:'a.dxf',size:6e6})`);return /5 MB/.test(d.querySelector('#dxerr').textContent)})());
+  // tilted / not flat
+  L('tilted.dxf');const rf=[...d.querySelectorAll('.dxref')].map(x=>x.textContent).join('|');log('tilted circle refused',/Tilted/.test(rf),rf);log('line off Z0 refused',/Not flat/.test(rf),rf);
+  log('-Z extrusion arc read mirrored (center X → −5)',E(`DX.r.prims.some(p=>p.k=='A'&&Math.abs(p.c[0]+5)<1e-9&&Math.abs(p.c[1]-5)<1e-9)`));
+  // sanitized layer name
+  E(`dxLoad("0\\nSECTION\\n2\\nENTITIES\\n0\\nLINE\\n8\\n<img src=x onerror=alert(1)>\\n10\\n0\\n20\\n0\\n11\\n1\\n21\\n0\\n0\\nENDSEC\\n0\\nEOF\\n","x.dxf")`);log('layer names sanitized (no HTML injected)',!d.querySelector('#v img')&&/img src=x/.test(d.querySelector('#dxlay').textContent));
+  // ---- R12 plate (unitless, drawn at 10,5)
+  L('plate_r12.dxf');const r=E('DX.r');
+  log('R12 read: version + shapes',r.verName=='R11/R12'&&r.prims.length>=17,r.verName+' '+r.prims.length);
+  log('text / dimension skipped and listed',r.skipped.TEXT==1&&r.skipped.DIMENSION==1&&/TEXT ×1/.test(d.querySelector('#dxsum').textContent));
+  const lay=n=>d.querySelector(`.dxly[data-n="${n}"]`);log('layer picker: PART / HOLES on, TEXT / TITLE off by default',lay('PART').checked&&lay('HOLES').checked&&!lay('TITLE').checked);
+  log('unitless file: units red, must pick',/no usable unit/.test(d.querySelector('#dxunits').textContent)&&!!d.querySelector('#dxunits .chip.r'));
+  log('size box shown in both units',/if inches: 4 × 3 in \(101\.60 × 76\.20 mm\)/.test(d.querySelector('#dxbb').textContent.replace(/\.0000/g,'')),d.querySelector('#dxbb').textContent);
+  let m=E('dxModel()');log('duplicate line removed and counted',m.dup==1,m.dup);log('2 closed shapes (rectangle + bulge obround)',m.loops.filter(l=>!l.circle).length==2);
+  log('circles grouped by Ø: 0.201 ×6, 0.257 ×4',m.groups.length==2&&m.groups[0].pts.length==6&&Math.abs(m.groups[0].d-0.201)<1e-9&&m.groups[1].pts.length==4);
+  log('obround suggested inside, rectangle outside',(()=>{const l=m.loops.filter(l=>!l.circle);return l.some(x=>x.sug=='inside'&&x.segs.some(s=>s.k=='A'))&&l.some(x=>x.sug=='outside'&&x.segs.length==4)})());
+  log('job buttons locked until units + origin confirmed',[...d.querySelectorAll('.dxdr,.dxpf')].every(b=>b.disabled)&&!!d.querySelector('#dxlock'));
+  log('title layer on widens the box (off by default)',(()=>{lay('TITLE').click();const b=E('dxModel().box');const wide=b[2]-b[0]>50;lay('TITLE').click();return wide})());
+  // units
+  const U=v=>{const s=d.querySelector('#dxu');s.value=v;s.onchange()};U('in');
+  const K=(sel,v)=>{d.querySelector('#dxkd').value=sel;d.querySelector('#dxkv').value=v;d.querySelector('#dxkb').click()};
+  K('w','101.6');log('known size 25.4× off is caught',/25\.4×/.test(d.querySelector('#dxkr').textContent)&&!E('DX.o.unitsOk'));
+  K('w','4');log('known width 4 in confirms units',E('DX.o.unitsOk')&&!!d.querySelector('#dxkok'));
+  U('mm');log('changing units clears the confirm',!E('DX.o.unitsOk'));U('in');K('g0','0.201');log('hole Ø can be the known size',E('DX.o.unitsOk'));
+  // origin
+  log('tap far from geometry does not pick',E('dxPick(100,100)')===false);
+  E('dxPick(10.01,5.02)');log('tap snaps to the corner 10, 5',E('DX.o.ox')==10&&E('DX.o.oy')==5);log('axis overlay drawn',!!d.querySelector('#dxax'));
+  log('origin not confirmed until rotation and mirror picked',d.querySelector('#dxoc').disabled);
+  const R=(v)=>{const s=d.querySelector('#dxr');s.value=v;s.onchange()},M=v=>{const s=d.querySelector('#dxm');s.value=v;s.onchange()};R('0');M('none');d.querySelector('#dxoc').click();
+  log('origin confirmed, buttons unlock',E('dxOK()')&&![...d.querySelectorAll('.dxdr')].some(b=>b.disabled));
+  log('tolerance shown (gray 0.001 in)',/0\.0010 in/.test(d.querySelector('#dxtol').textContent));
+  // drill job
+  d.querySelectorAll('.dxdr')[1].click();log('drill job opens with 4 holes from the drawing',E('J.op')=='dxdrill'&&E('J.dx.pts.length')==4);
+  log('drill: cycle, depth, R plane, feed, RPM, tool, work offset all red',['Cycle','Z0','Depth','R plane (above Z0)','Feed','RPM','Tool','Work offset'].every(k=>E(`J.p[${JSON.stringify(k)}].v`)==null));
+  log('hole positions moved to the picked origin',E(`J.dx.pts.some(p=>Math.abs(p[0]-0.375)<1e-9&&Math.abs(p[1]-0.375)<1e-9)`));
+  log('no tap offered from hole Ø (cycles: drill / peck / spot only)',!E(`J2.dxdrill.choices.Cycle.some(c=>/tap|G84/i.test(c))`));
+  E(`Object.entries({'Cycle':'Peck G83','Z0':0,'Depth':0.5,'R plane (above Z0)':0.1,'Feed':8,'RPM':2500,'Tool':3,'Work offset':'G54','Peck Q':0.1}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);
+  let code=E('J.code.join("\\n")');log('drill code: G83 at first hole, others X Y, G80',/G98 G83 X0\.375 Y0\.375 Z-0\.5 R0\.1 Q0\.1 F8/.test(code)&&/G80/.test(code)&&(code.match(/^X[\d.-]+ Y[\d.-]+$/mg)||[]).length==3,code);
+  log('drill code says Ø is a hint only',/HINT ONLY/.test(code));log('simulator has moves',E('(J.M||[]).length')>4);
+  // profile: rectangle outside
+  w.dxImp();const shapes=E('dxModel().loops.filter(l=>!l.circle)'),ri=shapes.findIndex(l=>l.segs.length==4),oi=shapes.findIndex(l=>l.segs.some(s=>s.k=='A'));
+  d.querySelectorAll('.dxpf')[ri].click();log('profile job opens; side = gray suggestion "outside"',E('J.op')=='dxprof'&&E('J.p.Side.v')=='outside'&&E('J.p.Side.g')===true);
+  const PF=(o)=>E(`Object.entries(${JSON.stringify(o)}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);
+  E(`Object.entries({'Cut direction':'climb (G41)','Cutter':0.25,'Lead-in':0.25,'Z0':0,'Depth':0.25,'Stepdown':0.125,'Clear Z':0.1,'Feed':20,'Plunge feed':5,'RPM':5000,'Tool':4,'Work offset':'G54','Lead-in OK':'YES','Side OK':'YES'}).forEach(([k,v])=>J.p[k]={v,g:false});J.p.Side={v:'outside',g:true};show()`);
+  log('gray side suggestion blocks the code until you check it',/suggestion \(gray\)/.test(d.querySelector('#out').textContent));
+  E(`J.p.Side={v:'outside',g:false};J.p['Lead-in']={v:0.1,g:false};show()`);log('lead-in shorter than cutter radius refused',/at least the cutter radius/.test(d.querySelector('#out').textContent));
+  E(`J.p['Lead-in']={v:0.25,g:false};show()`);code=E('J.code.join("\\n")');
+  log('profile code: G41 D4 on the lead-in, G40 on the lead-out',/G41 D4 G01 X[\d.-]+ Y[\d.-]+ F20\.0 \(COMP ON/.test(code)&&/G40 G01 X[\d.-]+ Y[\d.-]+ \(COMP OFF/.test(code),code);
+  log('two depth passes',(code.match(/\(PASS \d OF 2/g)||[]).length==2);
+  const pl=E('dxPlan(J)');log('outside + climb runs clockwise',E('dxArea(dxPoly(dxPlan(J).segs))')<0);log('lead-in starts outside the part',!E('dxIn(dxPlan(J).S0,dxPlan(J).pl)'));
+  log('simulator shows the comp-side tool-center line',E('J.dxOff.pts.length')>4&&(E('(J.M||[]).length')>8));
+  log('checks pass (comp on/off on straight moves)',E(`checks(J).filter(c=>c[1]===false).map(c=>c[0]).join('|')`)=='',E(`checks(J).filter(c=>c[1]===false).map(c=>c[0]).join('|')`));
+  E(`J.p['Cut direction']={v:'conventional (G42)',g:false};show()`);log('conventional → G42, counter-clockwise',/G42 D4 G01/.test(E('J.code.join("\\n")'))&&E('dxArea(dxPoly(dxPlan(J).segs))')>0);
+  // obround inside with arcs
+  w.dxImp();d.querySelectorAll('.dxpf')[oi].click();log('obround: suggestion inside',E('J.p.Side.v')=='inside');
+  E(`Object.entries({'Side':'inside','Side OK':'YES','Cut direction':'climb (G41)','Cutter':0.125,'Lead-in':0.07,'Lead-in OK':'YES','Z0':0,'Depth':0.1,'Stepdown':0.1,'Clear Z':0.1,'Feed':15,'Plunge feed':3,'RPM':6000,'Tool':5,'Work offset':'G54'}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);
+  code=E('J.code.join("\\n")');log('inside obround: G03 arcs with I J, climb counter-clockwise',/G03 X[\d.-]+ Y[\d.-]+ I[\d.-]+ J[\d.-]+/.test(code)&&E('dxArea(dxPoly(dxPlan(J).segs))')>0,code);
+  log('inside lead-in start inside the shape and clear of walls',E('dxIn(dxPlan(J).S0,dxPlan(J).pl)'));
+  E(`J.p['Lead-in']={v:0.3,g:false};show()`);log('lead-in that would hit the far wall is refused',/closer than the cutter radius|crosses the shape|wrong side/.test(d.querySelector('#out').textContent),d.querySelector('#out').textContent.slice(0,200));
+  // ---- 2018 mm plate: blocks, rotation, arrays, bulge corners
+  L('plate_2018_mm.dxf');log('2018 + mm: gray unit suggestion from $INSUNITS',/file says mm/.test(d.querySelector('#dxunits').textContent)&&!E('DX.o.unitsOk'));
+  U('mm');K('w','100');log('known 100 mm width confirms',E('DX.o.unitsOk'));m=E('dxModel()');
+  log('INSERT array of 3 pins expanded (Ø3 at X35/50/65 Y52)',(()=>{const g=m.groups.find(g=>Math.abs(g.d-3)<1e-6);return g&&g.pts.length==3&&g.pts.some(p=>Math.abs(p[0]-65)<1e-9&&Math.abs(p[1]-52)<1e-9)})());
+  log('rounded-corner LWPOLYLINE is one closed shape with 4 arcs',m.loops.filter(l=>!l.circle).length==1&&m.loops.find(l=>!l.circle).segs.filter(s=>s.k=='A').length==4);
+  E('dxPick(0,0)');R('90');M('X');d.querySelector('#dxoc').click();d.querySelectorAll('.dxdr')[0].click();
+  log('rotation 90 + mirror X applied, mm → inches inside',(()=>{const p=E('J.dx.pts');/* pin at (35,52)mm -> mirror X (-35,52) -> rot90 (-52,-35) -> in */return p.some(q=>Math.abs(q[0]+52/25.4)<1e-9&&Math.abs(q[1]+35/25.4)<1e-9)})(),JSON.stringify(E('J.dx.pts')));
+  // ---- open contour + gap
+  L('open_gap.dxf');U('in');m=E('dxModel()');log('near-miss 0.0005 closes within the 0.001 tolerance',m.loops.filter(l=>!l.circle).length==1);
+  log('open chain listed and refused for profiling',d.querySelectorAll('.dxopen').length==1&&/can't profile/.test(d.querySelector('.dxopen').textContent));
+  log('gap 0.01 listed with its location',/gap 0\.01 at X0 Y0(\.01)?/.test(d.querySelector('#dxgaps').textContent),d.querySelector('#dxgaps').textContent);
+  log('duplicate counted',m.dup==1);
+  const t=d.querySelector('#dxt');t.value='0.02';t.onchange();log('bigger tolerance (yours) closes the gap',E('dxModel().open.length')==0&&/✓ yours/.test(d.querySelector('#dxtol').textContent));
+  E("setUnits('mm')");E("tab('new');Object.entries({'Cycle':'Drill G81','Z0':0,'Depth':0.2,'R plane (above Z0)':0.1,'Feed':8,'RPM':2500,'Tool':3,'Work offset':'G54'}).forEach(([k,v])=>J.p[k]={v,g:false});show()");code=E('J.code.join("\\n")');
+  log('mm mode: code in G21 with mm values (pin at −52, −35 mm)',/G21/.test(code)&&/X-52\.?0* Y-35/.test(code),code.slice(0,600));E("setUnits('in')");
+  log('help topic: Importing a drawing (DXF)',E(`HELP.some(h=>h[0]=='dxf'&&h[1]=='Importing a drawing (DXF)')`));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>
