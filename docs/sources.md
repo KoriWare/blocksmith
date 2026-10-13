@@ -327,3 +327,25 @@ New rule (Kori): if sources are thin, show what they say as an amber hint with "
 | Fanuc multi-path wait M-codes | range in params 8110/8111, M__ P__, both paths need it | Fanuc 30i/31i parameter manual + user manual (cncmanuals.com copies, official, 30i not 0i) | swmulti, subxfer (Swiss); not written — app makes one-path programs |
 
 Zero public sources (no hint, user types it): Fanuc spindle load variable; Fanuc look-ahead fix; Nakamura-Tome M-codes; Tsugami M-codes; wear sign convention for automatic wear update.
+
+## Round 33 · batch 6 (Oct 13)
+
+The research file's snippets were re-checked by opening the pages: the Renishaw manual PDF (downloaded, read with pdftotext), the zappettiniconsulting.com page, and the Haas basic programming page.
+
+| Fact used | Sources | Used in |
+|---|---|---|
+| G65 P9832 / P9833 probe on / off | Renishaw Inspection Plus manual H-2000-6222 (haascnc.com copy, official) + zappettiniconsulting.com/wiki/haas-renishaw-inspection | all probe jobs |
+| G65 P9810 X Y Z F [M1.]: stops with PATH OBSTRUCTED; M1. = flag only (#198 = 7 on Haas); F modal; do not exceed the safe feed set at installation | same 2 | ppos |
+| Tool length (G43) must be on before cycles | zappettini (alarm 89) + manual examples | all probe jobs |
+| G65 P9819 C D K (bore) / Z (boss) [A B H M]; starts at PCD centre; nests 4 deep | manual (official) + zappettini | ppcd |
+| G65 P9820 Z I J pairs (up to 6 points) U = max stock; no S, so no offset is set | manual + zappettini | pstock |
+| G65 P9801 Z T, P9802 D (bore with exact centre), P9803 D (ring gauge), in that order | manual + zappettini | pcal |
+| G65 P9814 D [Z]: no Z = bore; G65 P9834 with no inputs stores feature 1, then X Y = nominal incremental distance + H | manual + zappettini | pdist |
+| Safe startup line G00 G90 G17 G40 G49 G54 after every tool change | Haas mill operator manual, Basic Programming (official); the app adds G80 like its other safe starts | sstart |
+| Lathe G18 / G97 / G99 safe start | Round 28 rows (Haas official; Fanuc is amber) | lstart |
+| Trochoidal slot, sphere, ellipse, polygon | geometry only (no control-specific codes beyond G01/G02/G03/G43) | troch, sphcap, ellip, polyb |
+
+Amber (thin): Renishaw output / calibration variable numbers differ by control (only zappettini gives the Haas vs Fanuc table). The app does not read them, except for the Flag # in ppos flag mode, which the user types (Haas manual: #198).
+
+Our own defaults (unsourced, shown gray or stated in the program): gray feed / RPM / clear Z (the app's usual starting values); trochoidal and polygon-pocket helix = one turn per step-down level; the helix starts 0.02 above the previous level; entry 0.1 + tool radius outside on ellipse / polygon boss; polygon pocket helix radius = min(half the tool radius, pocket); 'First flat angle' 0 and the Renishaw default A0 (that one is from the manual).
+Skipped: ellipse pocket (concentric ellipse offsets self-intersect; contour only — rough with the circular / rectangular pocket jobs); X/Y-surface stock checks (Z only); vector calibration O9804.

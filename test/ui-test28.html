@@ -1,0 +1,47 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=41" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+const MJ=[['ppos','protected probe move t20 g54 to x1.0 y0.5 z-0.2 safe z1.0 feed 120 alarm'],['ppos','protected probe move t20 g54 to x1.0 y0.5 z-0.2 safe z1.0 feed 120 flag #198',{'Flag #':198}],
+['ppcd','check bolt circle 6 holes 0.5 dia holes 3.0 pcd t20 g54 center x0 y0 start z0.1 measure z-0.25 safe z1.0 feed 120 size tol 0.002 pos tol 0.004'],
+['ppcd','check bolt circle 4 boss 0.75 dia boss 4.0 pcd t20 g54 center x0 y0 start z0.3 measure z-0.2 safe z1.0 feed 120 size tol 0.002 pos tol 0.004 first 45 deg'],
+['pstock','stock allowance check t20 g54 points 1,1; 3,1; 3,2 start z0.3 nominal z0.05 max stock 0.1 safe z1.0 feed 120'],
+['pcal','calibrate probe t20 g54 all safe z2.0 feed 120',{'Ref X':-3,'Ref Y':0,'Ref start Z':0.3,'Ref surface Z':0,'Bore X':0,'Bore Y':0,'Bore Ø':1.9685,'Bore Z':-0.3,'Ring X':4,'Ring Y':0,'Ring Ø':1.9685,'Ring Z':-0.3,'Confirm write':'YES'}],
+['pdist','distance between two holes t20 g54 hole 1 x0 y0 hole 2 x2.5 y1.0 0.5 dia start z0.1 measure z-0.25 tol 0.002 safe z1.0 feed 120'],
+['sstart','safe start header t1 g54 start x0 y0 clear z0.1'],
+['troch','trochoidal slot from x0 y0 to x3 y0 0.5 wide 0.4 deep 0.375 end mill step 0.05 step down 0.4 t3 g54 z0 0'],
+['troch','trochoidal slot from x0 y0 to x2 y2 0.6 wide 0.2 deep 0.375 end mill step 0.04 step down 0.1 t3 g54 z0 0 conventional'],
+['sphcap','spherical cap radius 1.0 0.5 high 0.25 ball step 0.05 t4 g54 center x0 y0 z0 0'],
+['ellip','4 x 2 ellipse outside 72 segments 0.25 deep 0.375 end mill step down 0.125 t2 g54 center x0 y0 z0 0'],
+['ellip','4 x 2 ellipse inside wall 90 segments 0.2 deep 0.25 end mill step down 0.1 t2 g54 center x0 y0 z0 0'],
+['polyb','hex boss 1.5 across flats 0.3 deep 0.375 end mill step down 0.15 t2 g54 center x0 y0 z0 0'],
+['polyb','octagon pocket 2.0 af 0.25 deep 0.375 end mill step down 0.125 t2 g54 center x0 y0 z0 0']];
+const LJ=[['lstart','safe start header t1 start x2.2 z0.1']];
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+  const setv=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x)return;if(${JSON.stringify(v)}!==null)x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  const run=(nm,jobs)=>jobs.forEach(([op,t,extra])=>{w.tab('new');d.querySelector('#q').value=t;w.go();const j0=E('J&&J.op');
+    Object.entries(extra||{}).forEach(([k,v])=>E(`J.p[${JSON.stringify(k)}]={v:${JSON.stringify(v)},g:false}`));E('show()');const miss=E('J?Object.entries(J.p).filter(([k,x])=>x.v==null).map(([k])=>k):[]');
+    const code=E('J&&J.code?txt().join("\\n"):""');let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{contact:mkContact(J),lathe:J.lathe});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
+    const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+d.querySelector('#out').innerText.slice(0,300)];
+    log(`${nm} ${op}: recognised, code written`,j0==op&&!!code,'op='+j0+' miss='+miss.join(',')+' '+ck.join('|'));
+    if(code){log(`${nm} ${op}: sim runs, no alarm, moves`,!sim[0]&&!sim[1]&&sim[2]>0,JSON.stringify(sim));log(`${nm} ${op}: all checks pass`,!ck.length,ck.join(' | '));
+     if(/^p(pos|pcd|stock|cal|dist)$/.test(op))log(`${nm} ${op}: P9832 on, P9810 protected, P9833 off`,/G65 P9832/.test(code)&&/G65 P9810 .*F/.test(code)&&/G65 P9833/.test(code));
+     if(op=='ppcd')log(nm+' ppcd format',/G65 P9819 C\d.*D.*[KZ]-?\d.*B\d+\. H.* M/.test(code),code.split('\n').find(l=>/P9819/.test(l)));
+     if(op=='pstock')log(nm+' pstock format',/G65 P9820 Z0\.05 I3\.0+ J1\.0+ I3\.0+ J2\.0+ U0\.1/.test(code),code.split('\n').find(l=>/P9820/.test(l)));
+     if(op=='pcal')log(nm+' pcal order 9801 9802 9803',/P9801 Z0\.? ?.*T20[\s\S]*P9802 D[\s\S]*P9803 D/.test(code));
+     if(op=='pdist')log(nm+' pdist 9834 twice',(code.match(/G65 P9834/g)||[]).length==2&&/P9834 X2\.5/.test(code));
+     {const xx=[...d.querySelectorAll('#cl .s')].filter(x=>/❌/.test(x.textContent)).map(x=>x.textContent);log(`${nm} ${op}: no ❌ in panel`,!xx.length,xx.join('|'))}}});
+  ['Fanuc Robodrill-style (generic)','Haas VF-style VMC (generic)'].forEach(nm=>{const hk=/Haas/.test(nm);w.pick(nm,'Vertical mills');w.cur(E('S.m.length')-1);setv('Control',null);
+   w.tab('new');d.querySelector('#q').value=MJ[0][1];w.go();log(nm+' probe job red without a Renishaw probe',!E('J.code')&&/Renishaw/.test(d.querySelector('#out').textContent));
+   E("S.m[S.cur].probes=[{type:'Renishaw OMP-style spindle probe',def:1}];S.m[S.cur].opt.probe=1;save()");run(hk?'Haas':'Fanuc',MJ)});
+  ['Generic 2-axis lathe','Haas ST-style lathe (generic)'].forEach(nm=>{w.pick(nm,'Lathes');w.cur(E('S.m.length')-1);setv('Control',/Haas/.test(nm)?'Haas NGC':'Fanuc 0i');run(/Haas/.test(nm)?'Haas lathe':'Fanuc lathe',LJ)});
+  w.pick('Haas VF-style VMC (generic)','Vertical mills');w.cur(E('S.m.length')-1);setv('Control',null);
+  const g=p=>{w.tab('new');d.querySelector('#q').value=p;w.go();return E('J&&J.op')||''};
+  const old=[['G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1','bolt'],['G54 T20 probe bore 2.0 dia center x0 y0 probe z -0.25 tip 0.157 write to g55','pbore'],['circular pocket 2 dia','cpock'],['slot 0.5 wide','slot'],['rectangular pocket 2 x 1','rpock'],['square pocket 2 x 2','rpock'],['probe boss','pboss'],['safe home program end','shome']].map(([p,e])=>[p,e,g(p)]);
+  log('old phrases unchanged',old.every(([p,e,o])=>o==e||(e=='slot'&&o=='slot')),old.filter(([p,e,o])=>o!=e).map(x=>x.join('→')).join(' ; '));
+  w.tab('new');d.querySelector('#q').value=MJ[0][1];w.go();log('probe job no code before positions/feed (red)',(()=>{w.tab('new');d.querySelector('#q').value='protected probe move';w.go();return !E('J.code')})());
+  w.tab('new');d.querySelector('#q').value=MJ[4][1];w.go();log('amber Renishaw note on probe job',!!d.querySelector('#thinbox [data-thin="ripvar"]'));
+  log('Help jobs33',E("HELP.some(h=>h[0]=='jobs33')"));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack)}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>

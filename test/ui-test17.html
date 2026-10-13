@@ -11,7 +11,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
    E("NOASK=1");w.cur(0);w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');d.querySelector('#jn').value='Home test job';w.saveJob();
    d.querySelector('#ttl').click();log('header title tap returns Home + shows recent job',d.querySelector('#ttl').textContent=='Home'&&/Home test job/.test(d.querySelector('#home').textContent));
    log('tab bar unchanged (6 tabs)',[...d.querySelectorAll('.tabs button')].map(b=>b.textContent).join()=='Machines,Build,Editor,Simulate,Library,More');
-   [...d.querySelectorAll('#home .chip')].find(b=>b.textContent=='Help').click();log('Help from Home, all sections',d.querySelector('#ttl').textContent=='Help'&&d.querySelectorAll('#hl details').length==24);
+   [...d.querySelectorAll('#home .chip')].find(b=>b.textContent=='Help').click();log('Help from Home, all sections',d.querySelector('#ttl').textContent=='Help'&&d.querySelectorAll('#hl details').length==25);
    const hq=d.querySelector('#hq');hq.value='G154';hq.dispatchEvent(new Event('input'));log('Help search filters',[...d.querySelectorAll('#hl details')].filter(x=>x.style.display!='none').length>=1&&d.querySelector('#h-faq').style.display=='none');
    log('Help lists job inputs with units',/Bolt circle<\/b> needs: Holes[\s\S]*Dia <span class="s">\(in\)/.test(d.querySelector('#h-build').innerHTML)&&/Swiss-type jobs/.test(d.querySelector('#h-build').textContent));
    w.more();log('Help reachable from More',!![...d.querySelectorAll('.card')].find(c=>/Help/.test(c.textContent)&&/help\(/.test(c.getAttribute('onclick')||'')));
