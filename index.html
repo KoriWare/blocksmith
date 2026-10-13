@@ -213,7 +213,7 @@ function draw(){ctx.clearRect(0,0,cv.width,cv.height);const s=J.stock,M=J.M||J.m
  if(L&&view.rev){ctx.strokeStyle='rgba(20,184,166,.22)';M.slice(0,n).forEach(m=>{if(!m.r)for(let k=1;k<8;k++)ln(rot(m.a,k*Math.PI/4),rot(m.b,k*Math.PI/4))})}
  M.slice(0,n).forEach(m=>{ctx.setLineDash(m.r?[4,4]:[]);ctx.strokeStyle=m.out?'#ff4d4d':m.r?'#ffd21f':'#14b8a6';ctx.lineWidth=m.r?1:2;ln(R3(m.a),R3(m.b))});
  ctx.setLineDash([]);tool(n?M[n-1].b:(M[0]||{a:[0,0,1]}).a)}
-function tool(t){ctx.strokeStyle='#f2f2f2';ctx.lineWidth=1.3;
+function tool(t){if(J&&J.swiss)return;ctx.strokeStyle='#f2f2f2';ctx.lineWidth=1.3;
  if(J.lathe){const r=t[0],z=t[2],o=(dr,dz)=>[r+dr,0,z+dz];let sh;
   if(J.op=='ldrill'){const d=(J.p['Drill Ø']||{v:.25}).v/2;sh=[[o(0,0),o(d,.08),o(d,1.6),o(-d,1.6),o(-d,.08)]]}
   else if(J.op=='lgroove'){const w=J.p['Insert W'].v;sh=[[o(0,0),o(0,w),o(.45,w),o(.45,0)],[o(.45,-.05),o(.45,w+.05),o(.8,w+.05),o(.8,-.05)]]}
@@ -663,7 +663,7 @@ const _refresh10=refresh;refresh=function(){_refresh10();ctNote()};
 PRESETS['Swiss-type']=['Tsugami Swiss-type (generic)','Generic Swiss-type'];
 const SWS=[['Guide bushing','yes',1],['C-axis','yes',1],['Live tools','yes',1],['Live tool M-code','M51 (check manual)',1],['Sub spindle','no',1],['Bushing reach Z (in)','0.25']];
 const isSw=()=>/swiss/i.test((S.m[S.cur]||{}).type||'');
-const _pick11=pick;pick=function(n,g){if(g=='Swiss-type'){S.m.push(mk(n,'swiss-type lathe'));const m=S.m.at(-1);SWS.forEach(([k,v,c])=>m.s.push({k,v,st:c?'confirm':'suggested'}));m.opt={macroB:1};m.tools=JSON.parse(JSON.stringify((S.m[0]||{}).tools||[]));save();edit(S.m.length-1);return}_pick11(n,g)};
+const _pick11=pick;pick=function(n,g){if(g=='Swiss-type'){S.m.push(mk(n,'swiss-type lathe'));const m=S.m.at(-1);SWS.forEach(([k,v,c])=>m.s.push({k,v:(k=='Sub spindle'&&/Tsugami/.test(n))?'yes':v,st:c?'confirm':'suggested'}));m.opt={macroB:1};m.tools=JSON.parse(JSON.stringify((S.m[0]||{}).tools||[]));save();edit(S.m.length-1);return}_pick11(n,g)};
 OPN.swiss='Swiss: turn / flat / cross drill / part-off';REQ.swiss=['Bar Ø','Finish Ø','Length','Z0','Work offset'];
 Object.assign(UNIT,{'Flat depth':'in from OD','Flat L':'in along Z','Cross Ø':'in','Cross at Z':'in from face','Cross depth':'in (radial)','End drill depth':'in','Part-off W':'in blade','Segment':'in per bushing segment'});
 const _parseL11=parseL;parseL=function(t){const l=t.toLowerCase();if(!isSw())return _parseL11(t);const p={},G=(k,v,g)=>p[k]={v,g:!!g};
@@ -694,7 +694,7 @@ const _checks11=checks;checks=function(j){const c=_checks11(j);if(j.op!='swiss')
  const L=t.split('\n'),pi=L.map((l,i)=>/PART OFF/.test(l)?i:-1).filter(i=>i>=0).pop(),mi=L.findIndex(l=>/^M30/.test(l));c.push(['Part-off is the last cut before M30',pi!=null&&pi>=0&&pi<mi&&!L.slice(pi+1,mi).some(l=>/^G0?1\b/.test(l))]);return c};
 // sim: bushing, gang tools, C angle
 function swTool(l){const L=txt();const e=L.findIndex(x=>/^M30/.test(x));if(e>=0&&l>e)return 1;for(let i=l;i>=0;i--){const m=(L[i]||'').match(/^T(\d\d)/);if(m)return +m[1]}return 1}
-const _draw11=draw;draw=function(){if(!J||!J.swiss||!ctx)return _draw11();const M0=J.M||[],m0=M0[Math.min(view.n,M0.length)-1],sh=(!view.rev&&m0)?m0.b[2]:0;view.fz0+=sh;try{_draw11()}finally{view.fz0-=sh}if(!view.rev)view.fz0+=sh;try{sw2()}finally{if(!view.rev)view.fz0-=sh}};
+const _draw11=draw;draw=function(){if(!J||!J.swiss||!ctx)return _draw11();const M0=J.M||[],m0=M0[Math.min(view.n,M0.length)-1],sh=(!view.rev&&m0)?m0.b[2]+0.45:0;view.fz0+=sh;try{_draw11()}finally{view.fz0-=sh}if(!view.rev)view.fz0+=sh;try{sw2()}finally{if(!view.rev)view.fz0-=sh}};
 function sw2(){const M=J.M||[],n=Math.min(view.n,M.length),m=M[n-1],t=m?m.b:[J.lb.R+0.3,0,0.3],R=J.lb.R,flat=!view.rev;
  const lines=txt();let ca=0;if(m)for(let i=m.l;i>=0;i--){const q=(lines[i]||'').toUpperCase().match(/\bC(-?[\d.]+)/);if(q){ca=+q[1];break}}
  const zb=Math.min(0,t[2])-0.06;// bushing fixed in machine, just behind the cut; bar slides
@@ -703,7 +703,7 @@ function sw2(){const M=J.M||[],n=Math.min(view.n,M.length),m=M[n-1],t=m?m.b:[J.l
  ctx.setLineDash([]);ctx.lineWidth=1.2;
  if(flat){const L=(J.p.Length||{v:1}).v;box(0,R,-L-1.2,0,'#8aa','#8aa2');lab([R+0.02,0,-L-1.1],'bar (slides in Z)','#8aa');
   box(R+0.01,R+0.3,zb-0.35,zb,'#c9a227','#c9a22733');box(-R-0.3,-R-0.01,zb-0.35,zb,'#c9a227','#c9a22733');lab([R+0.34,0,zb-0.35],'guide bushing (fixed)','#c9a227');
-  const sub=sv('Sub spindle');if(sub&&!/^no|^none|^0/i.test(String(sub.v))){const tt0=swTool(m?m.l:0),zs=tt0==2?t[2]+0.03:Math.max(0.6,t[2]+0.6);box(-R-0.2,R+0.2,zs,zs+0.45,'#7fb3ff','#7fb3ff22');lab([R+0.24,0,zs],'sub spindle'+(tt0==2?' (pick-off)':''),'#7fb3ff')}}
+  const sub=sv('Sub spindle');if(sub&&!/^no|^none|^0/i.test(String(sub.v))){const tt0=swTool(m?m.l:0),zs=tt0==2?0.02:Math.max(0.6,t[2]+0.6);box(-R-0.2,R+0.2,zs,zs+0.45,'#7fb3ff','#7fb3ff22');lab([R+0.24,0,zs],'sub spindle'+(tt0==2?' (pick-off)':''),'#7fb3ff')}}
  const tt=swTool(m?m.l:0);ctx.strokeStyle='#f2f2f2';ctx.lineWidth=1.3;const o=(dr,dz)=>[t[0]+dr,0,t[2]+dz];
  const flutes=(x0,x1,d,alongZ)=>{for(let k=x0;k<x1-0.04;k+=0.07)ln(alongZ?o(-d,k):o(k,-d),alongZ?o(d,k+0.05):o(k+0.05,d))};
  if(tt==1){poly([o(0,0),o(0.07,-0.05),o(0.07,0.05)]);poly([o(0.07,-0.07),o(0.07,0.07),o(0.7,0.07),o(0.7,-0.07)]);lab(o(0.72,0),'T01 turn','#ccc')}
