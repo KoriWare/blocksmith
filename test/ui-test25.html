@@ -43,7 +43,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
     if(code&&op=='lthread')log(nm+' lthread: '+(hk?'one-block':'two-block'),hk?/G76 X0\.6734 Z-0\.75 K0\.0383 D0\.012 F0\.0625 A60/.test(code):/G76 P010060 Q20 R0\.001/.test(code)&&/G76 X0\.6734 Z-0\.75 P383 Q120 F0\.0625/.test(code),code.split('\n').filter(l=>/G76/.test(l)).join(' / '));
    });
   });
-  log('old phrases unchanged: multitask part off / probe slot / inspect spc / lathe face',![ 'probe slot 1.0 wide','inspect bore 1.0 dia tol 0.001 spc','face 2.0 bar z0','turn 1.0 dia z-2','bolt circle 6 holes 2.0 bc','multitask part off','repeat part counter'].some(p=>['sload','tdia','ppres','rotcl','cface','yflat','poly','drift','lthread'].includes(E('(parse('+JSON.stringify(p)+')||{}).op'))));
+  log('old phrases unchanged: multitask part off / probe slot / inspect spc / lathe face',![ 'probe slot 1.0 wide','inspect bore 1.0 dia tol 0.001 spc','face 2.0 bar z0','turn 1.0 dia z-2','bolt circle 6 holes 2.0 bc','multitask part off','repeat part counter'].some(p=>{w.tab('new');d.querySelector('#q').value=p;w.go();return ['sload','tdia','ppres','rotcl','cface','yflat','poly','drift','lthread'].includes(E('J&&J.op'))}));
   log('Help topic jobs30',E("HELP.some(h=>h[0]=='jobs30')"));
   log('No page errors',!errs.length,errs.join('|'));
  }catch(e){out.push('FAIL exception '+e.message+' '+e.stack)}o.textContent=out.join('\n')},1500)}

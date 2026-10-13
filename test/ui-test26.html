@@ -1,0 +1,43 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=39" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+const MJ=[['shome','safe home program end'],['shome','safe park at end park x-10 y0',{}],['awear','wear update from measured #800 nominal 1.0 outside boss d4 max 0.005 confirm',{'Confirm write':'YES'}],['awear','wear update from measured #800 nominal -0.5 floor h4 max 0.005 no stop',{'Confirm write':'YES'}],['palloop','pallet loop 10 cycles program o2000 count #810']];
+const LJ=[['lhome','safe home program end'],['ltset','tool setter x and z T3 start x4 z2 tip direction 3'],['lpwear','probe od 1.0 dia at z-0.5 start x1.5 update wear 3 max 0.005 tip 0.118 T7 confirm',{'Confirm write':'YES'}],['lpwear','probe face nominal z0 at x0.5 start z0.5 update wear 2 max 0.005 tip 0.118 T7 no stop',{'Confirm write':'YES'}],['lawear','wear update from measured #800 nominal 1.0 od wear 3 max 0.004 confirm',{'Confirm write':'YES'}],['pcatch','part off with parts catcher 1.25 bar part off at z-1.0 to x-0.02 T4'],['barloop','bar feeder loop 50 parts program o2000 count #810'],['subxfer','sub spindle pickup approach b-28 grip b-29.25 retract b-13 500 rpm part off cutoff t4 1.25 bar part off at z-1.0 to x-0.02 clear x3'],['subxfer','sub spindle transfer pull approach b-28 grip b-29.25 retract b-13 500 rpm']];
+const SJ=[['swbar','bar end check alarm stop'],['sweject','part ejected check timeout 3 s'],['swwarm','guide bushing warm up rpm 500,1000,1500 z-2 to z1 x0.5 to x2 feed 40 2 min each'],['swmulti','4 parts per bar program o2000 count #810']];
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+  const setv=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x)return;if(${JSON.stringify(v)}!==null)x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  const run=(nm,jobs)=>jobs.forEach(([op,t,extra])=>{w.tab('new');d.querySelector('#q').value=t;w.go();const j0=E('J&&J.op'),miss=E('J?Object.entries(J.p).filter(([k,x])=>x.v==null).map(([k])=>k):[]');
+    Object.entries(extra||{}).forEach(([k,v])=>E(`J.p[${JSON.stringify(k)}]={v:${JSON.stringify(v)},g:false}`));E('show()');
+    const code=E('J&&J.code?txt().join("\\n"):""');let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{contact:mkContact(J),lathe:J.lathe});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
+    const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+d.querySelector('#out').innerText.slice(0,400)];
+    log(`${nm} ${op}: recognised, code written`,j0==op&&!!code,'op='+j0+' miss='+miss.join(',')+' '+ck.join('|'));
+    if(code){log(`${nm} ${op}: sim runs, no alarm`,!sim[0]&&!sim[1],JSON.stringify(sim));log(`${nm} ${op}: all checks pass`,!ck.length,ck.join(' | '));const xx=[...d.querySelectorAll('#cl .s')].filter(x=>/❌/.test(x.textContent)).map(x=>x.textContent);log(`${nm} ${op}: no ❌ in panel`,!xx.length,xx.join(' | '));
+     if(op=='ltset')log(nm+' ltset code',/Haas/.test(nm)?/M104 \(SETTER ARM DOWN/.test(code)&&/G212 H3/.test(code):/G36 X5\.0/.test(code)&&/G37 Z-0\.5/.test(code),code.split('\n').filter(l=>/G3[67]|G212|ARM/.test(l)).join(' / '));
+     if(op=='lpwear')log(nm+' lpwear write',/Haas/.test(nm)?/G10 L11 P\d [UW]#22/.test(code):/G10 P\d [UW]#22/.test(code));
+     if(op=='barloop'&&/Haas/.test(nm))log(nm+' G105 alone on its line',code.split('\n').includes('G105'));
+     window['C_'+nm+op]=code}});
+  // mills
+  ['Fanuc Robodrill-style (generic)','Haas VF-style VMC (generic)'].forEach(nm=>{const hk=/Haas/.test(nm);w.pick(nm,'Vertical mills');w.cur(E('S.m.length')-1);setv('Control',null);
+   w.tab('new');d.querySelector('#q').value=MJ[4][1];w.go();log(nm+' palloop red before pallet code',/Pallet change code/.test(d.querySelector('#out').textContent)&&!E('J.code'));
+   setv('Pallet change code',hk?'M50':'M60');setv('D offsets hold',hk?'diameter':'radius');setv('Tool offset memory (Fanuc)','C');E("S.m[S.cur].opt.g10=1;save()");run(hk?'Haas':'Fanuc',MJ)});
+  // lathes
+  ['Generic 2-axis lathe','Haas ST-style lathe (generic)'].forEach(nm=>{const hk=/Haas/.test(nm);w.pick(nm,'Lathes');w.cur(E('S.m.length')-1);setv('Control',hk?'Haas NGC':'Fanuc 0i');
+   w.tab('new');d.querySelector('#q').value=LJ[5][1];w.go();log(nm+' pcatch red before catcher codes',/Parts catcher on \/ off/.test(d.querySelector('#out').textContent)&&!E('J.code'));
+   setv('Skip code (probe)',null);setv('Lathe probe on / off','M210 / M211');setv('Tool setter arm down / up',hk?'M104 / M105':'M220 / M221');setv('Setter X position (G36)','5.0');setv('Setter Z position (G37)','-0.5');setv('Parts catcher on / off',hk?'M36 / M37':'M230 / M231');setv('Bar feed code',hk?'G105':'M240');setv('Spindle sync on / off',hk?'G199 / G198':'M250 / M251');setv('Sub chuck clamp / unclamp',hk?'M110 / M111':'M252 / M253');setv('Main chuck clamp / unclamp',hk?'M10 / M11':'M254 / M255');setv('Sub spindle axis','B');
+   E("S.m[S.cur].opt.probe=1;S.m[S.cur].opt.g10=1;S.m[S.cur].opt.tset=1;save()");run(hk?'Haas lathe':'Fanuc lathe',LJ)});
+  {const g=p=>{w.tab('new');d.querySelector('#q').value=p;w.go();return E('J&&J.op')};const a=g('probe od 1.0 dia at z-0.5 write wear 1'),b=g('warm up spindle');log('old lathe phrases unchanged: lprobe write wear, plain warm up',a=='lprobe'&&b!='swwarm',a+' / '+b)}
+  {const g=p=>{w.tab('new');d.querySelector('#q').value=p;w.go();return E('J&&J.op')||''};const r=['bar end check alarm stop','4 parts per bar program o2000 count #810','guide bushing warm up rpm 500,1000 z-2 to z1 x0.5 to x2 feed 40'].map(g);log('Swiss jobs not offered on a plain lathe',r.every(o=>!/^sw/.test(o)),r.join(','))}
+  // Swiss + Nakamura
+  w.pick('Tsugami Swiss-type (generic)','Swiss-type');w.cur(E('S.m.length')-1);setv('Control','Fanuc 0i');
+  w.tab('new');d.querySelector('#q').value=SJ[0][1];w.go();log('Swiss swbar red before signal set',/Bar end signal #/.test(d.querySelector('#out').textContent)&&!E('J.code'));
+  setv('Bar end signal #','#1004');setv('Bar end signal value','1');setv('Part ejected signal #','#1005');setv('Part ejected signal value','1');setv('Part eject code','M260');setv('Re-chuck / bar advance code','M261');setv('Bar change code','M262');setv('Max RPM (G50)','8000');run('Tsugami',SJ);
+  {const g=p=>{w.tab('new');d.querySelector('#q').value=p;w.go();return E('J&&J.op')||''};const a=g('warm up after 4 hours idle #630 #631 warm-up program o9010'),b=g('warm up');log('Swiss: idle warm-up phrase not taken, plain warm up goes to swwarm',a!='swwarm'&&b=='swwarm',a+' / '+b)}
+  w.pick('Nakamura-Tome multitasking lathe (generic)','Multitasking lathes');w.cur(E('S.m.length')-1);setv('Control','Fanuc 0i');
+  w.tab('new');d.querySelector('#q').value=LJ[7][1];w.go();log('Nakamura subxfer red before sync codes',/Spindle sync on \/ off/.test(d.querySelector('#out').textContent)&&!E('J.code'));
+  setv('Spindle sync on / off','M250 / M251');setv('Sub chuck clamp / unclamp','M252 / M253');setv('Main chuck clamp / unclamp','M254 / M255');setv('Sub spindle axis','B');run('Nakamura',[LJ[7],LJ[8]]);
+  log('No Haas hint written as a value (all new settings empty on a fresh machine)',(()=>{w.pick('Haas ST-style lathe (generic)','Lathes');w.cur(E('S.m.length')-1);return E("['Parts catcher on / off','Bar feed code','Spindle sync on / off','Tool setter arm down / up','Lathe probe on / off'].every(k=>{const x=S.m[S.cur].s.find(x=>x.k==k);return x&&!x.v&&x.st=='confirm'})")})());
+  log('Help topic jobs31',E("HELP.some(h=>h[0]=='jobs31')"));
+  log('No page errors',!errs.length,errs.join('|'));
+ }catch(e){out.push('FAIL exception '+e.message+' '+e.stack)}o.textContent=out.join('\n')},1500)}
+</script></body>
