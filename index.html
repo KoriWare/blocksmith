@@ -24,7 +24,7 @@ textarea,input,select{width:100%;background:#0a0a0a;color:#eee;border:1px solid 
 </style></head><body>
 <div class="h"><span id="ttl">My Machines 😼</span><small>● Offline</small></div>
 <div class="c" id="v"></div>
-<div class="tabs"><button data-t="machines">Machines</button><button data-t="new">New</button><button data-t="recent">Recent</button></div>
+<div class="tabs"><button data-t="machines">Machines</button><button data-t="new">New</button><button data-t="recent">Recent</button><button data-t="more">More</button></div>
 <script>
 const $=s=>document.querySelector(s),V=$('#v');
 const PRESETS={'Vertical mills':['Generic 3-axis VMC','Generic VMC w/ 4th axis','Small toolroom mill'],'Horizontal mills':['Generic HMC w/ pallet','Generic HMC 4-axis'],'Lathes':['Generic 2-axis lathe','Lathe w/ live tooling','Lathe w/ sub-spindle']};
@@ -35,7 +35,7 @@ function mk(name,type,user){return{id:Date.now()+Math.random(),name,type,s:(isLT
 let S=JSON.parse(localStorage.getItem('mc')||'null')||{m:[mk('Mill A','demo VMC',['Units','Rapid rate (in/min)']),mk('Mill B','demo VMC 4th',['Units']),mk('Lathe 1','demo lathe',[])],jobs:[],cur:0};
 S.m.forEach(m=>{if((isLT(m.type)&&!m.s.find(x=>x.k=='Diameter mode'))||!m.s.find(x=>x.k=='Extended offsets'))m.s=mk(m.name,m.type).s});
 const save=()=>localStorage.setItem('mc',JSON.stringify(S));
-function tab(t){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));({machines,new:nw,recent})[t]();scrollTo(0,0)}
+function tab(t){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));({machines,new:nw,recent,more})[t]();scrollTo(0,0)}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
 const pct=m=>Math.round(100*m.s.filter(x=>x.st=='user').length/m.s.length);
 const cls={user:'g',suggested:'gr',confirm:'r'},ic={user:'✓',suggested:'~',confirm:'!'};
@@ -104,7 +104,7 @@ function gen(j){const p=k=>j.p[k]?j.p[k].v:0,c=[],mv=[];let pos=[0,0,2],out=0;
  mv.forEach(m=>{if(!m.r&&(m.b[2]<st[2]))m.out=1,out++});j.stock=st;return{code:c,moves:mv,out}}
 const fmt=s=>Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0');
 function saveJob(){S.jobs.unshift({...J,date:Date.now(),machine:(S.m[S.cur]||{}).name});save();tab('recent')}
-function recent(){$('#ttl').textContent='Recent';V.innerHTML=S.jobs.length?S.jobs.map((j,i)=>`<div class="card" onclick="reopen(${i})"><div class="t">${OPN[j.op]} · ${j.machine||''}</div><div class="s">${new Date(j.date).toLocaleString()}</div><div class="s">${esc(j.text)}</div></div>`).join(''):'<div class="card s">No saved jobs yet.</div>'}
+function recent(){$('#ttl').textContent='Recent';V.innerHTML=S.jobs.length?S.jobs.map((j,i)=>`<div class="card" onclick="reopen(${i})"><div class="t">${OPN[j.op]} · ${j.machine||''}</div><div class="s">${new Date(j.date).toLocaleString()}</div><div class="s">${esc(j.text)}</div></div>`).join(''):`<div class="card"><div class="s">No saved jobs yet. Try a sample:</div>${SAMPLES.map((s,i)=>`<button class="chip y" onclick="sample(${i})">${s[1]}</button>`).join('')}</div>`}
 function reopen(i){J=JSON.parse(JSON.stringify(S.jobs[i]));const k=S.m.findIndex(m=>m.name==J.machine);if(k>=0)S.cur=k;tab('new');show()}
 // ---------- work offsets (canonical: 'G54'..'G59' or 'P1'..'P300')
 function normOff(t){t=String(t).toLowerCase();let m=t.match(/g54\.1\s*p\s*(\d+)|g54\s*p\s*(\d+)/);if(m)return'P'+(m[1]||m[2]);m=t.match(/g1(1\d|2\d)\b/);if(m)return'P'+(+m[1]-9);m=t.match(/\bp\s*(\d+)\b/);if(m&&!/peck/.test(t))return'P'+m[1];m=t.match(/g5[4-9]\b/);return m?m[0].toUpperCase():null}
@@ -183,11 +183,11 @@ function show(){const miss=Object.entries(J.p).filter(([k,x])=>x.v==null);
  h+=`<div class="ok" id="ck" onclick="$('#cl').classList.toggle('hid')"></div><div id="cl" class="hid card"></div>
  <div class="code" id="ed">${J.code.map((l,i)=>`<div class="ln ${J.edits[i]!=null?'u':''}" contenteditable data-i="${i}">${esc(J.edits[i]??l)}</div>`).join('')}</div>
  <canvas id="cv"></canvas><input type="range" id="sc" min="0" value="0" style="padding:0;margin-top:8px">
- <div class="row" style="margin-top:6px">${J.lathe?'<button class="chip y" id="rv" onclick="rev()">Revolve 3D</button>':''}<button class="chip gr" onclick="vw('top')">Top</button><button class="chip gr" onclick="vw('front')">Front</button><button class="chip gr" onclick="vw('iso')">Iso</button><button class="chip gr" onclick="vw('fit')">Fit</button><button class="chip y" onclick="play()">▶ Play</button><button class="chip gr" onclick="step()">Step</button></div>
- <div class="card" style="margin-top:8px" id="info"></div>
- <label><input type="checkbox" id="vf" style="width:auto"> I'll verify on the control</label><button class="btn" id="cp" disabled onclick="copy()">Copy program</button><button class="btn o" onclick="saveJob()">Save to Recent</button>
+ <div class="row" style="margin-top:6px">${J.lathe?'<button class="chip y" id="rv" onclick="rev()">Revolve 3D</button>':''}<button class="chip gr" onclick="vw('top')">Top</button><button class="chip gr" onclick="vw('front')">Front</button><button class="chip gr" onclick="vw('iso')">Iso</button><button class="chip gr" onclick="vw('fit')">Fit</button><button class="chip gr" onclick="zoom(1.25)">＋</button><button class="chip gr" onclick="zoom(0.8)">－</button><button class="chip y" onclick="play()">▶ Play</button><button class="chip gr" onclick="step()">Step</button></div>
+ <div class="card" style="margin-top:8px" id="info"></div><div class="card" id="alm"></div>
+ <label><input type="checkbox" id="vf" style="width:auto"> I'll verify on the control</label><button class="btn gate" id="cp" disabled onclick="copy()">Copy program</button><div class="row"><button class="btn o gate" disabled onclick="dl('nc')">⬇ .nc</button><button class="btn o gate" disabled onclick="dl('txt')">⬇ .txt</button><button class="btn o gate" disabled onclick="share()">Share…</button></div><button class="btn o" onclick="sheet()">🖨 Setup sheet</button><button class="btn o" onclick="saveJob()">Save to Recent</button>
  <div class="foot">⚠ Dry-run and single-block on the machine before production. Generic Fanuc-style Macro B. Not for any specific machine.</div>`;
- $('#out').innerHTML=h;$('#vf').onchange=e=>$('#cp').disabled=!e.target.checked;
+ $('#out').innerHTML=h;$('#vf').onchange=e=>V.querySelectorAll('.gate').forEach(b=>b.disabled=!e.target.checked);
  V.querySelectorAll('.ln').forEach(el=>el.oninput=()=>{J.edits[el.dataset.i]=el.textContent;el.classList.add('u');refresh()});
  $('#sc').oninput=e=>{clearInterval(pl);scrub(+e.target.value)};view.rev=0;refresh();initCv();scrub(J.M.length)}
 function refresh(){J.M=J.moves.concat(userMoves());const ch=checks(J),ok=ch.filter(c=>c[1]).length,m=S.m[S.cur],rr=+((sv('Rapid rate (in/min)')||{v:400}).v),rs=sv('Rapid rate (in/min)'),out=J.M.filter(x=>x.out).length;
@@ -240,7 +240,154 @@ function step(){clearInterval(pl);scrub(view.n>=J.M.length?1:view.n+1)}
 function shiftZero(j,g){const v=k=>j.p[k]?j.p[k].v:0,o=j.lathe?[0,0,v('Z0')]:[v('Center X')||v('Start X')||0,v('Center Y')||v('Start Y')||0,v('Z0')];
  g.moves.forEach(m=>{m.a=m.a.map((x,i)=>x+o[i]);m.b=m.b.map((x,i)=>x+o[i])});j.stock=j.stock.map((x,i)=>x+o[i%3]);if(j.lb)j.lb={...j.lb,z:j.lb.z+o[2],L:j.lb.L-o[2]}}
 
+// ---------- Macro B interpreter (runs the edited text) — generic subset
+const ARG={A:1,B:2,C:3,I:4,J:5,K:6,D:7,E:8,F:9,H:11,M:13,Q:17,R:18,S:19,T:20,U:21,V:22,W:23,X:24,Y:25,Z:26};
+const FN={SIN:x=>Math.sin(x*Math.PI/180),COS:x=>Math.cos(x*Math.PI/180),TAN:x=>Math.tan(x*Math.PI/180),ATAN:x=>Math.atan(x)*180/Math.PI,ASIN:x=>Math.asin(x)*180/Math.PI,ACOS:x=>Math.acos(x)*180/Math.PI,SQRT:Math.sqrt,ABS:Math.abs,ROUND:Math.round,FIX:Math.trunc,FUP:x=>x<0?Math.floor(x):Math.ceil(x),LN:Math.log,EXP:Math.exp};
+function mexpr(e,V){let s=e.replace(/\[/g,'(').replace(/\]/g,')').replace(/#(\d+)/g,'V($1)').replace(/#\(/g,'V(')
+  .replace(/EQ/g,'==').replace(/NE/g,'!=').replace(/GE/g,'>=').replace(/LE/g,'<=').replace(/GT/g,'>').replace(/LT/g,'<').replace(/AND/g,'&&').replace(/XOR/g,'^').replace(/OR/g,'||')
+  .replace(/(SIN|COS|TAN|ATAN|ASIN|ACOS|SQRT|ABS|ROUND|FIX|FUP|LN|EXP)\(/g,'F.$1(');
+ if(!/^(?:V|F\.[A-Z]+|[\d.]+|[-+*/()<>=!&|^])*$/.test(s))throw Error('bad expression: '+e);
+ return Function('V','F','return ('+s+')')(V,FN)}
+function brEnd(s,i){let d=0;for(;i<s.length;i++){if(s[i]=='[')d++;else if(s[i]==']'&&--d==0)return i}return -1}
+function words(s){const w=[];let i=0;while(i<s.length){const L=s[i];if(!/[A-Z]/.test(L)){i++;continue}let j=i+1;if(s[j]=='-'||s[j]=='+')j++;
+  if(s[j]=='['){j=brEnd(s,j)+1}else if(s[j]=='#'){j++;if(s[j]=='[')j=brEnd(s,j)+1;else while(/\d/.test(s[j]))j++}else while(/[\d.]/.test(s[j]))j++;
+  w.push([L,s.slice(i+1,j)]);i=j}return w}
+function interp(lines,o){o=o||{};const lathe=o.lathe,M=[],alarms=[],V={};const R=[];let pos=[...(o.start||[0,0,2])],home=[...pos],mode=0,abs=1,can=null,ret=99,shift=[0,0,0],feed=1,steps=0,err=null;
+ const cl=lines.map(l=>{const c=(l.match(/\(([^)]*)\)/)||[])[1]||'';return{c,s:l.replace(/\([^)]*\)/g,'').replace(/\s+/g,'').toUpperCase().replace(/^%$/,'')}});
+ const progStart=i=>{for(let k=i;k>=0;k--)if(/^O\d+/.test(cl[k].s))return k;return 0};
+ const findN=(n,i)=>{const p=progStart(i);for(let k=p;k<cl.length;k++){if(k>p&&/^O\d+/.test(cl[k].s))break;if(new RegExp('^N'+n+'(?!\\d)').test(cl[k].s))return k}throw Error('N'+n+' not found')};
+ const findO=n=>{const k=cl.findIndex(x=>new RegExp('^O0*'+n+'(?!\\d)').test(x.s));if(k<0)throw Error('O'+n+' not found');return k};
+ let loc=[{}];const get=n=>{n=Math.round(n);if(n==0)return null;if(n<=33){const v=loc.at(-1)[n];return v==null?null:v}const v=V[n];return v==null?null:v};
+ const set=(n,v)=>{n=Math.round(n);if(n<=33)loc.at(-1)[n]=v;else V[n]=v};
+ const ev=e=>mexpr(e,get);const val=x=>{const v=ev(x);return v==null?0:v};
+ const mv=(b,r,l)=>{const m={a:[...pos],b,r:r?1:0,f:feed,l};M.push(m);pos=[...b]};
+ function motion(s,i){const w=words(s);let g=[],P={};w.forEach(([L,x])=>{if(L=='G')g.push(+x);else P[L]=x});
+  if(g.includes(65)){const pr=val(P.P),args={};Object.keys(P).forEach(k=>{if(k!='P'&&ARG[k])args[ARG[k]]=val(P[k])});loc.push(args);R.push(i);return findO(pr)}
+  g.forEach(x=>{if(x==0||x==1||x==2||x==3)mode=x;if(x==90)abs=1;if(x==91)abs=0;if(x==80)can=null;if(x==81||x==83)can=x;if(x==98||x==99)ret=x});
+  if(P.F!=null)feed=val(P.F);
+  if(g.includes(52)){['X','Y','Z'].forEach((k,n)=>{if(P[k]!=null)shift[n]=val(P[k])});return}
+  if(g.includes(28)){mv(lathe?[...home]:[pos[0],pos[1],home[2]+shift[2]],1,i);return}
+  if(g.includes(50)&&lathe)return;
+  if(g.some(x=>x==4)){return}
+  const t=[...pos];let any=0;
+  const ax=lathe?[['X',0,.5],['Z',2,1]]:[['X',0,1],['Y',1,1],['Z',2,1]];
+  ax.forEach(([k,n,sc])=>{if(P[k]!=null){any=1;t[n]=abs?val(P[k])*sc+shift[n]:t[n]+val(P[k])*sc}});
+  if(lathe){if(P.U!=null){any=1;t[0]+=val(P.U)/2}if(P.W!=null){any=1;t[2]+=val(P.W)}}
+  if(!any)return;
+  if(can&&!lathe){const z0=pos[2],rz=val(P.R??'0')+shift[2],zb=t[2],q=P.Q!=null?val(P.Q):0;mv([t[0],t[1],z0],1,i);mv([t[0],t[1],rz],1,i);
+   if(can==83&&q>0){let z=rz;while(z>zb+1e-9){const nz=Math.max(zb,z-q);mv([t[0],t[1],nz],0,i);mv([t[0],t[1],rz],1,i);if(nz>zb)mv([t[0],t[1],nz+0.01],1,i);z=nz}}else{mv([t[0],t[1],zb],0,i);}
+   mv([t[0],t[1],ret==98?z0:rz],1,i);if(ret==98)pos[2]=z0;return}
+  if(mode==2||mode==3){const a=lathe?[pos[2],pos[0]]:[pos[0],pos[1]],b=lathe?[t[2],t[0]]:[t[0],t[1]];let c;
+   if(P.R!=null){const r=val(P.R),dx=b[0]-a[0],dy=b[1]-a[1],d=Math.hypot(dx,dy),h=Math.sqrt(Math.max(0,r*r-d*d/4)),sgn=(mode==2)==(r>0)?-1:1;c=[(a[0]+b[0])/2-sgn*h*dy/d,(a[1]+b[1])/2+sgn*h*dx/d]}
+   else c=lathe?[a[0]+val(P.K||'0'),a[1]+val(P.I||'0')/1]:[a[0]+val(P.I||'0'),a[1]+val(P.J||'0')];
+   let a0=Math.atan2(a[1]-c[1],a[0]-c[0]),a1=Math.atan2(b[1]-c[1],b[0]-c[0]),r=Math.hypot(a[0]-c[0],a[1]-c[1]);const cw=mode==2;
+   if(cw&&a1>=a0)a1-=2*Math.PI;if(!cw&&a1<=a0)a1+=2*Math.PI;const n=Math.max(4,Math.ceil(Math.abs(a1-a0)/0.15));
+   for(let k=1;k<=n;k++){const an=a0+(a1-a0)*k/n,x=c[0]+r*Math.cos(an),y=c[1]+r*Math.sin(an),z=pos[2]+(t[2]-pos[2])/(n-k+1);mv(lathe?[y,0,x]:[x,y,lathe?pos[2]:z],0,i)}return}
+  mv(t,mode==0,i)}
+ function stmt(s,i){
+  if(/^#/.test(s)&&s.includes('=')){const k=s.indexOf('=');let L=s.slice(1,k);const n=L[0]=='['?val(L.slice(1,-1)):+L;const v=ev(s.slice(k+1));if(n==3000){alarms.push({n:v,msg:cl[i].c,l:i});throw{alarm:1}}set(n,v);return}
+  if(/^GOTO/.test(s))return findN(val(s.slice(4)),i);
+  if(/^(M30|M02)/.test(s)||/M30/.test(s.replace(/\[.*?\]/g,''))&&!/^G/.test(s)&&!/^#/.test(s)){throw{end:1}}
+  if(/M99/.test(s)){const r=R.pop();loc.pop();if(r==null)throw{end:1};return r+1}
+  return motion(s,i)}
+ let i=0;try{
+  // run from first program
+  i=cl.findIndex(x=>/^O\d+/.test(x.s));if(i<0)i=0;else i++;
+  while(i<cl.length){if(++steps>200000)throw Error('step limit (endless loop?)');const s=cl[i].s;let nx=i+1;
+   if(!s||/^O\d+/.test(s)){ if(/^O\d+/.test(s)&&!R.length)break;i=nx;continue}
+   let b=s.replace(/^N\d+(?=\D|$)/,'');
+   if(/^IF\[/.test(b)){const e=brEnd(b,2),c=ev(b.slice(3,e)),rest=b.slice(e+1);if(c){if(/^GOTO/.test(rest))nx=findN(val(rest.slice(4)),i);else{const r=stmt(rest.replace(/^THEN/,''),i);if(r!=null)nx=r}}}
+   else if(/^WHILE\[/.test(b)){const e=brEnd(b,5),c=ev(b.slice(6,e)),n=b.slice(e+1).replace('DO','');if(!c){let k=i+1;while(k<cl.length&&!new RegExp('^(N\\d+)?END'+n+'$').test(cl[k].s))k++;nx=k+1}}
+   else if(/^END\d$/.test(b)){const n=b[3];let k=i-1,d=0;while(k>=0&&!new RegExp('^(N\\d+)?WHILE.*DO'+n+'$').test(cl[k].s))k--;nx=k}
+   else{const r=stmt(b,i);if(r!=null)nx=r}
+   i=nx}
+ }catch(e){if(!e.end&&!e.alarm)err=(e.message||String(e))+' (line '+(i+1)+')'}
+ return{moves:M,alarms,err}}
+// ---------- round 3: run sim from edited text
+const LET=Object.fromEntries(Object.entries(ARG).map(([k,v])=>[v,k]));
+function refresh(){const st=J.stock;let r;try{r=interp(txt(),{lathe:J.lathe,start:(J.moves[0]||{a:[0,0,2]}).a})}catch(e){r={moves:[],alarms:[],err:e.message}}
+ J.run=r;J.M=r.err||!r.moves.length?J.moves:r.moves;
+ J.M.forEach(m=>{m.out=0;if(J.lathe?(m.b[0]<-1e-6||(!m.r&&m.b[2]<st[2]-1e-6)):(!m.r&&m.b[2]<st[2]-1e-6))m.out=1});
+ const ch=checks(J);ch.unshift(['Program runs in simulator'+(r.err?': '+r.err:''),!r.err],['No #3000 alarm on this run'+(r.alarms.length?' (alarm '+r.alarms[0].n+': '+r.alarms[0].msg+')':''),!r.alarms.length]);
+ const lt=S.tools&&S.tools.find(t=>t.n==(J.p.Tool||{}).v);ch.push(['Tool T'+(J.p.Tool||{}).v+' is in the tool library',!!lt]);
+ const ok=ch.filter(c=>c[1]).length,rr=+((sv('Rapid rate (in/min)')||{v:400}).v),rs=sv('Rapid rate (in/min)'),out=J.M.filter(x=>x.out).length;J.ct=time(J.M,rr);
+ $('#ck').className='ok '+(ok==ch.length?'':'bad');$('#ck').textContent=`${ok==ch.length?'✓':'⚠'} ${ok} of ${ch.length} checks passed ▾`;$('#cl').innerHTML=ch.map(c=>`<div class="s">${c[1]?'✅':'❌'} ${c[0]}</div>`).join('');
+ $('#sc').max=J.M.length;
+ $('#info').innerHTML=`<div class="t">Cycle time about ${fmt(J.ct)}</div><div class="s">${J.M.length} moves, simulated from ${r.err?'the generator (your text has an error)':'the program text, edits included'} · rapid ${rr} in/min <span class="chip ${rs&&rs.st=='user'?'g':'gr'}">${rs&&rs.st=='user'?'set':'suggested'}</span>${J.lathe?' · G96/G99 feed per rev math':''}</div><div class="s">Estimate only. Don't quote a job off it.</div>`+(out?`<div class="s" style="color:#ff8a8a">⚠ ${out} move(s) outside stock or below centerline (red)</div>`:'');
+ $('#alm').innerHTML=alarmPreview();if(cv){if(view.n>J.M.length)view.n=J.M.length;draw()}}
+function alarmPreview(){const t=txt(),out=[];t.forEach((l,i)=>{const m=l.match(/N(\d+)\s*#3000\s*=\s*(\d+)\s*\(([^)]*)\)/);if(!m)return;
+  const conds=[];t.forEach(x=>{const g=x.replace(/\s/g,'').match(/^IF\[(.*)\]GOTO(\d+)$/);if(g&&g[2]==m[1])conds.push(g[1].replace(/#(\d+)EQ#0/,(a,n)=>`${LET[n]||'#'+n} (#${n}) not given`).replace(/#(\d+)/g,(a,n)=>LET[n]?LET[n]:a).replace(/GE/,' ≥ ').replace(/LT/,' < ').replace(/GT/,' > '))});
+  out.push(`<div class="s"><b style="color:#ff8a8a">ALARM ${m[2]}: ${m[3]}</b><br>fires when: ${[...new Set(conds)].join(' · ')||'—'}</div>`)});
+ const a=J.run&&J.run.alarms[0];return `<div class="t">Alarm preview</div>${out.join('')}<div class="s" style="margin-top:6px">This run: ${a?'<span style="color:#ff8a8a">stops at alarm '+a.n+' (line '+(a.l+1)+')</span>':'no alarm fires ✓'}</div>`}
+// ---------- view: fit / pan / zoom
+function vw(k){if(k=='top')view.rx=0,view.rz=0;if(k=='front')view.rx=-Math.PI/2,view.rz=0;if(k=='iso')view.rx=-0.9,view.rz=-0.6;if(k=='iso2')view.rx=-1.2,view.rz=0.9;view.px=0;view.py=0;
+ const st=J.stock,M=J.M||J.moves;view.c=[(st[0]+st[3])/2,(st[1]+st[4])/2,(st[2]+st[5])/2];view.s=Math.min(cv.clientWidth,300)*0.75/Math.max(st[3]-st[0],st[4]-st[1],st[5]-st[2],2.5);
+ if(J.lathe){let z0=st[2],z1=st[5],r1=J.lb.R;M.forEach(m=>[m.a,m.b].forEach(p=>{z0=Math.min(z0,p[2]);z1=Math.max(z1,p[2]);r1=Math.max(r1,p[0])}));z1+=0.25;z0-=0.15;r1+=0.8;const r0=-0.15;
+  view.fs=Math.min((cv.clientWidth-20)/(z1-z0),270/(r1-r0));view.fz=z1;view.fz0=z0;view.fr=r1;view.fx=10+((cv.clientWidth-20)-(z1-z0)*view.fs)/2}draw()}
+function P(p){if(J.lathe&&!view.rev)return[view.fx+(p[2]-view.fz0)*view.fs+view.px,15+(view.fr-p[0])*view.fs+view.py];
+ let x=p[0]-view.c[0],y=p[1]-view.c[1],z=p[2]-view.c[2];const cz=Math.cos(view.rz),sz=Math.sin(view.rz);[x,y]=[x*cz-y*sz,x*sz+y*cz];const cx=Math.cos(view.rx),sx=Math.sin(view.rx);[y,z]=[y*cx-z*sx,y*sx+z*cx];return[cv.clientWidth/2+x*view.s+view.px,150-y*view.s+view.py]}
+function zoom(f){view.s*=f;if(view.fs)view.fs*=f;draw()}
+function initCv(){cv=$('#cv');const d=devicePixelRatio||1;cv.width=cv.clientWidth*d;cv.height=300*d;ctx=cv.getContext('2d');ctx.scale(d,d);view.px=view.py=0;vw(J.lathe?'fit':'iso');
+ let dr=null;cv.onpointerdown=e=>dr=[e.clientX,e.clientY,e.shiftKey];onpointerup=()=>dr=null;cv.onwheel=e=>{e.preventDefault();zoom(e.deltaY<0?1.15:1/1.15)};
+ cv.onpointermove=e=>{if(!dr)return;const dx=e.clientX-dr[0],dy=e.clientY-dr[1];if((J.lathe&&!view.rev)||view.pan){view.px+=dx;view.py+=dy}else{view.rz+=dx/100;view.rx+=dy/100}dr=[e.clientX,e.clientY];draw()}}
+// ---------- tool library (§5)
+S.tools=S.tools||[{n:1,type:'Face mill',dia:2,len:3,fl:5},{n:2,type:'Drill',dia:0.25,len:4,fl:2},{n:3,type:'Groove insert',dia:0.125,len:2,fl:1},{n:4,type:'End mill',dia:0.5,len:3,fl:3},{n:5,type:'Drill',dia:0.25,len:4,fl:2}];
+const TT=['End mill','Face mill','Drill','Spot drill','Tap','Turning insert','Groove insert','Boring bar'];
+function tools(){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t=='more'));$('#ttl').textContent='Tool library';V.innerHTML=S.tools.map((t,i)=>`<div class="card"><div class="row"><input style="width:60px;flex:0 0 60px" value="${t.n}" data-f="n" data-i="${i}"><select data-f="type" data-i="${i}">${TT.map(x=>`<option ${x==t.type?'selected':''}>${x}</option>`).join('')}</select></div>
+ <div class="row" style="margin-top:6px">${[['dia','Ø in'],['len','stick-out in'],['fl','flutes']].map(([f,l])=>`<label style="flex:1">${l}<input inputmode="decimal" value="${t[f]}" data-f="${f}" data-i="${i}"></label>`).join('')}</div><button class="chip r" onclick="S.tools.splice(${i},1);save();tools()">Remove</button></div>`).join('')+
+ `<button class="btn" onclick="S.tools.push({n:(Math.max(0,...S.tools.map(t=>t.n))+1),type:'End mill',dia:0.5,len:3,fl:3});save();tools()">+ Add tool</button><div class="s" style="margin-top:8px">Jobs look up the tool by number (T1, T2…) for its diameter. Demo tools only.</div><button class="btn o" onclick="more()">Back</button>`;
+ V.querySelectorAll('[data-f]').forEach(el=>el.onchange=()=>{const t=S.tools[el.dataset.i];t[el.dataset.f]=el.dataset.f=='type'?el.value:+el.value;save()})}
+const _req=req;req=function(j){j=_req(j);if(!j)return j;const t=S.tools.find(x=>x.n==(j.p.Tool||{}).v);if(t){
+ if(j.op=='face'&&j.p.Cutter.v==null)j.p.Cutter={v:t.dia,g:false,lib:1};if(j.p['Drill Ø']&&j.p['Drill Ø'].g)j.p['Drill Ø']={v:t.dia,g:false,lib:1};if(j.op=='lgroove'&&j.p['Insert W'].v==null)j.p['Insert W']={v:t.dia,g:false,lib:1}}return j};
+// ---------- G-code scanner (§9)
+const GD={'G00':'Rapid move','G01':'Straight feed move','G02':'Arc clockwise','G03':'Arc counter-clockwise','G04':'Dwell (pause)','G10':'Set offsets from program','G17':'XY plane','G18':'XZ plane (lathe)','G19':'YZ plane','G20':'Inch units','G21':'Metric units','G28':'Return to home','G40':'Cutter comp off','G41':'Cutter comp left','G42':'Cutter comp right','G43':'Tool length comp on','G49':'Tool length comp off','G50':'Lathe: max RPM clamp (or scaling off on some mills)','G52':'Local coordinate shift','G53':'Machine coordinates (one block)','G54':'Work offset 1','G55':'Work offset 2','G56':'Work offset 3','G57':'Work offset 4','G58':'Work offset 5','G59':'Work offset 6','G54.1':'Extended work offset (Pn)','G65':'Macro call (one shot)','G66':'Modal macro call','G67':'Cancel modal macro','G68':'Rotate coordinates','G69':'Cancel rotation','G70':'Lathe finish cycle','G71':'Lathe roughing cycle','G72':'Lathe face roughing','G73':'High-speed peck drill (mill) / pattern repeat (lathe)','G74':'Left-hand tap (mill) / face peck (lathe)','G76':'Fine bore (mill) / threading (lathe)','G80':'Cancel canned cycle','G81':'Drill cycle','G82':'Drill with dwell','G83':'Peck drill cycle','G84':'Tapping cycle','G85':'Bore in, feed out','G90':'Absolute positioning','G91':'Incremental positioning','G94':'Feed per minute','G95':'Feed per rev (mill)','G96':'Constant surface speed','G97':'Constant RPM','G98':'Canned cycle: return to start Z (mill) / feed per min (lathe)','G99':'Canned cycle: return to R (mill) / feed per rev (lathe)',
+ 'M00':'Program stop','M01':'Optional stop','M03':'Spindle on clockwise','M04':'Spindle on counter-clockwise','M05':'Spindle stop','M06':'Tool change','M08':'Coolant on','M09':'Coolant off','M30':'End of program, rewind','M98':'Call subprogram','M99':'Return from subprogram'};
+const LONLY=['G18','G50','G70','G71','G72','G96','G76'],MONLY=['G17','G43','G49','G81','G82','G83','G84','G85','G68','M06'];
+function scanner(pre){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t=='more'));$('#ttl').textContent='G-code scanner';V.innerHTML=`<div class="s">Paste any program. Nothing leaves the phone. Checked against: <b>${(S.m[S.cur]||{}).name}</b></div><textarea id="sq" rows="8" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;margin-top:6px">${esc(pre||'')}</textarea><button class="btn" onclick="scan()">Scan</button><div id="so"></div><button class="btn o" onclick="more()">Back</button>`;if(pre)scan()}
+function scan(){const t=$('#sq').value.toUpperCase().replace(/\([^)]*\)/g,''),L=isL(),seen={};
+ (t.match(/[GM]\d+(\.\d)?/g)||[]).forEach(c=>{const k=c[0]+(c.includes('.')?c.slice(1).padStart(4,'0'):c.slice(1).padStart(2,'0'));seen[k]=(seen[k]||0)+1});
+ (t.match(/G1[1-2]\d\b/g)||[]).forEach(c=>{seen[c]=seen[c]});
+ const rows=Object.keys(seen).sort().map(k=>{let d=GD[k],f='';if(/^G1[1-2]\d$/.test(k)){d='Haas-style extended work offset';f=/G110/.test((sv('Offset syntax')||{v:''}).v)?'':'This machine is set to '+(sv('Offset syntax')||{}).v}
+  if(k=='G54.1'){f=extN()?'':'Machine has no extended offsets'}if(!d)f='Unknown / not in the library — check the control manual';else if(L&&MONLY.includes(k))f='Mill code on a lathe — check';else if(!L&&LONLY.includes(k)&&k!='G50')f='Lathe code on a mill — check';
+  return`<div class="set"><span><b class="v" style="color:#14b8a6">${k}</b> ${d||'?'} <span class="s">×${seen[k]}</span>${f?`<br><span class="chip r">! ${f}</span>`:''}</span></div>`});
+ const mac=(t.match(/WHILE|IF\[|#\d+/g)||[]).length;$('#so').innerHTML=`<div class="card"><div class="t">${Object.keys(seen).length} codes found</div>${rows.join('')}<div class="s" style="margin-top:6px">${mac?mac+' macro items (#vars, IF, WHILE) found.':'No macro statements.'} Meanings are plain-English summaries; control behavior varies — confirm on yours.</div></div>`}
+// ---------- calculators (§16)
+function calc(){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t=='more'));$('#ttl').textContent='Calculators';V.innerHTML=`<div class="card"><div class="t">Speeds & feeds</div><div class="row"><label style="flex:1">SFM<input id="c1" value="400"></label><label style="flex:1">Tool Ø in<input id="c2" value="0.5"></label></div><div class="row"><label style="flex:1">Flutes<input id="c3" value="3"></label><label style="flex:1">Chipload in/tooth<input id="c4" value="0.002"></label></div><div class="ok" id="co"></div></div>
+<div class="card"><div class="t">Bolt circle coordinates</div><div class="row"><label style="flex:1">Holes<input id="b1" value="6"></label><label style="flex:1">BC Ø<input id="b2" value="3"></label><label style="flex:1">Start°<input id="b3" value="0"></label></div><div class="row"><label style="flex:1">Center X<input id="b4" value="0"></label><label style="flex:1">Center Y<input id="b5" value="0"></label></div><div id="bo"></div></div>
+<div class="card"><div class="t">Tap drill (basic)</div><div class="row"><label style="flex:1">Major Ø (in or mm)<input id="t1" value="0.25"></label><label style="flex:1">TPI or pitch mm<input id="t2" value="20"></label></div><label><input type="checkbox" id="t3" style="width:auto"> metric</label><div class="ok" id="to"></div></div><div class="s">Starting points only — check your tool maker's data and your machine.</div><button class="btn o" onclick="more()">Back</button>`;
+ const g=id=>+$('#'+id).value,up=()=>{const rpm=g('c1')*3.82/g('c2'),ipm=rpm*g('c3')*g('c4');$('#co').textContent=`RPM ≈ ${Math.round(rpm)} · Feed ≈ ${ipm.toFixed(1)} in/min`;
+  let h='<table style="width:100%;font:12px ui-monospace,monospace;color:#ddd"><tr><th>#</th><th>X</th><th>Y</th></tr>';for(let i=0;i<g('b1');i++){const a=(g('b3')+360*i/g('b1'))*Math.PI/180;h+=`<tr><td>${i+1}</td><td>${(g('b4')+g('b2')/2*Math.cos(a)).toFixed(4)}</td><td>${(g('b5')+g('b2')/2*Math.sin(a)).toFixed(4)}</td></tr>`}$('#bo').innerHTML=h+'</table>';
+  const m=$('#t3').checked,d=m?g('t1')-g('t2'):g('t1')-1/g('t2');$('#to').textContent=`Tap drill ≈ ${d.toFixed(m?2:4)} ${m?'mm':'in'} (about 75% thread, major − pitch)`};V.querySelectorAll('input').forEach(e=>e.oninput=up);up()}
+// ---------- snippets (§15)
+S.snips=S.snips||[{n:'Safe start (mill)',c:'G17 G20 G40 G49 G80 G90'},{n:'Safe end (mill)',c:'M09\nG91 G28 Z0.\nG90 M05\nM30'},{n:'Missing-arg alarm',c:'IF[#1EQ#0]GOTO99\n...\nN99 #3000=1 (MISSING ARGUMENT)'},{n:'Count loop',c:'#100=0\nWHILE[#100LT#11]DO1\n(...)\n#100=#100+1\nEND1'},{n:'Safe start (lathe)',c:'G18 G20 G40 G80 G99\nG50 S3000'}];
+function snips(){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t=='more'));$('#ttl').textContent='Snippets';V.innerHTML=S.snips.map((s,i)=>`<div class="card"><div class="t">⭐ ${esc(s.n)}</div><pre class="code" style="padding:8px;margin:6px 0">${esc(s.c)}</pre><div class="row"><button class="chip gr" onclick="navigator.clipboard?.writeText(S.snips[${i}].c);this.textContent='Copied'">Copy</button><button class="chip gr" onclick="scanner(S.snips[${i}].c)">Scan it</button><button class="chip r" onclick="S.snips.splice(${i},1);save();snips()">Remove</button></div></div>`).join('')+
+ `<div class="card"><input id="sn" placeholder="Name"><textarea id="sc2" rows="3" style="margin-top:6px;font-family:ui-monospace,monospace" placeholder="Code"></textarea><button class="btn" onclick="if($('#sn').value){S.snips.push({n:$('#sn').value,c:$('#sc2').value});save();snips()}">Save snippet</button></div><button class="btn o" onclick="more()">Back</button>`}
+// ---------- samples (§27), about + change log (§33)
+const SAMPLES=[['Mill A','Bolt circle (mill)','G54 T5 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1'],['Mill A','Hole grid (mill)','G55 T2 3 x 4 grid 0.75 spacing start x0.5 y0.5 z0 0 0.4 deep drill'],['Mill A','Face mill','G54 T1 face 4 x 3 take off 0.06 stepdown 0.02 stepover 70 z0 0'],['Lathe 1','OD turn (lathe)','G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0 chamfer 0.03'],['Lathe 1','OD groove (lathe)','G54 T3 groove 0.25 wide 0.1 deep at z-1.0 2.0 bar z0 0']];
+function sample(i){const s=SAMPLES[i],k=S.m.findIndex(m=>m.name==s[0]);if(k>=0)S.cur=k;tab('new');ex(s[2])}
+const LOG=[['0.3 · Oct 12','Simulator now runs your edited macro text (small Macro B interpreter). Lathe view fit/pan/zoom. Tool library, G-code scanner, calculators, alarm preview, export, setup sheet, samples, snippets.'],['0.2 · Oct 12','Lathe jobs, tool shown in sim, scrub + line highlight, required positional values, extended work offsets.'],['0.1 · Oct 12','First prototype: machines, bolt circle/grid/face, Macro B generator, checker, 3D view, recent.']];
+function about(){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t=='more'));$('#ttl').textContent='About';V.innerHTML=`<div class="card"><div class="t">Macro Catculator 😼 prototype</div><div class="s">Fully offline. Generic Fanuc-style Macro B only. Not affiliated with any machine or control maker. Demo data only.</div><div class="foot">Always dry-run and single-block on the machine before production.</div></div><div class="card"><div class="t">Change log</div>${LOG.map(l=>`<div class="s"><b style="color:#ffd21f">${l[0]}</b> — ${l[1]}</div>`).join('')}</div><button class="btn o" onclick="more()">Back</button>`}
+function more(){$('#ttl').textContent='More';document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t=='more'));
+ V.innerHTML=[['🔧 Tool library','tools()'],['🔍 G-code scanner','scanner()'],['🧮 Calculators','calc()'],['⭐ Snippets','snips()'],['ℹ️ About & change log','about()']].map(([n,f])=>`<div class="card" onclick="${f}"><div class="t">${n}</div></div>`).join('')+`<div class="card"><div class="t">Sample jobs</div>${SAMPLES.map((s,i)=>`<button class="chip y" onclick="sample(${i})">${s[1]}</button>`).join('')}</div>`}
+// ---------- export (§18) + setup sheet (§30)
+function fname(){return (OPN[J.op]||'job').replace(/\W+/g,'_').toLowerCase()+'_O'+((txt().join('\n').match(/O(\d{4})/)||[])[1]||'1000')}
+function dl(ext){const b=new Blob([txt().join('\r\n')],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname()+'.'+ext;a.click()}
+async function share(){const f=new File([txt().join('\r\n')],fname()+'.nc',{type:'text/plain'});if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:fname()});else dl('nc')}
+function sheet(){const m=S.m[S.cur]||{name:'?'},st=J.stock,tl=S.tools.find(t=>t.n==J.p.Tool.v),W=260,H=150;
+ let svg;if(J.lathe){const b=J.lb,sc=Math.min(220/(b.L+b.z+0.5),110/(b.R*2)),x0=240-b.z*sc;svg=`<rect x="${x0-b.L*sc}" y="${75-b.R*sc}" width="${(b.L+b.z)*sc}" height="${b.R*2*sc}" fill="none" stroke="#333"/><line x1="10" y1="75" x2="250" y2="75" stroke="#999" stroke-dasharray="6 3"/><circle cx="${x0-J.p.Z0.v*0}" cy="75" r="5" fill="none" stroke="#c00"/><text x="${x0-30}" y="${75-b.R*sc-6}" font-size="10">Z0 at face (${J.p.Z0.v})</text><text x="${x0-b.L*sc}" y="145" font-size="10">← chuck</text>`}
+ else{const sw=st[3]-st[0],sh=st[4]-st[1],sc=Math.min(220/sw,120/sh),ox=20+(-st[0])*sc*0+20,cx=130-(sw*sc)/2;const zx=cx+(0-st[0]+((J.p['Center X']||J.p['Start X']||{v:0}).v)*0)*sc;
+  const px=cx+(((J.p['Center X']||J.p['Start X']||{v:0}).v)-st[0])*sc,py=135-(((J.p['Center Y']||J.p['Start Y']||{v:0}).v)-st[1])*sc;svg=`<rect x="${cx}" y="${135-sh*sc}" width="${sw*sc}" height="${sh*sc}" fill="none" stroke="#333"/><line x1="${px-12}" y1="${py}" x2="${px+12}" y2="${py}" stroke="#c00"/><line x1="${px}" y1="${py-12}" x2="${px}" y2="${py+12}" stroke="#c00"/><circle cx="${px}" cy="${py}" r="6" fill="none" stroke="#c00"/><text x="${px+8}" y="${py-8}" font-size="10">part zero</text>`}
+ const o=document.createElement('div');o.id='sheet';o.innerHTML=`<style>#sheet{position:fixed;inset:0;background:#fff;color:#111;z-index:50;overflow:auto;padding:18px;font-size:13px}#sheet td{border:1px solid #ccc;padding:4px 6px}#sheet table{border-collapse:collapse;width:100%;margin:6px 0}@media print{body>*:not(#sheet){display:none}#sheet .np{display:none}#sheet{position:static}}</style>
+ <h2 style="margin:0">Setup sheet — ${OPN[J.op]}</h2><div>${new Date().toLocaleString()} · ${fname()}</div>
+ <table><tr><td>Machine</td><td>${m.name} (${m.type}) · ${(m.s[0]||{}).v}</td></tr><tr><td>Work offset</td><td>${offLbl(J.p['Work offset'].v)} · Z0 = ${J.p.Z0.v} ${J.lathe?'(face)':'(top of part)'}</td></tr>
+ <tr><td>Stock</td><td>${J.lathe?`Ø${J.p['Bar Ø']?J.p['Bar Ø'].v:'—'} bar, ${J.lb.L.toFixed(2)} out of chuck`:`${(st[3]-st[0]).toFixed(2)} × ${(st[4]-st[1]).toFixed(2)} in`}</td></tr>
+ <tr><td>Tool</td><td>T${J.p.Tool.v} ${tl?`${tl.type} Ø${tl.dia} · stick-out ${tl.len} · ${tl.fl} fl`:'(not in library)'}</td></tr><tr><td>Cycle time</td><td>about ${fmt(J.ct||0)} (estimate)</td></tr>
+ <tr><td>Values</td><td>${Object.entries(J.p).map(([k,x])=>`${k}: ${k=='Work offset'?offLbl(x.v):x.v}${x.g?' (suggested)':''}`).join(' · ')}</td></tr></table>
+ <div><b>Offset location</b></div><svg width="${W}" height="${H}" style="border:1px solid #ccc">${svg}</svg>
+ <p><b>⚠ Dry-run and single-block on the machine before production.</b> Generic Fanuc-style Macro B. Verify on your control.</p><p>Operator: ________ &nbsp; Checked: ________</p>
+ <div class="np"><button class="btn" onclick="print()">Print</button><button class="btn o" onclick="this.closest('#sheet').remove()">Close</button></div>`;document.body.appendChild(o)}
+
 if('serviceWorker'in navigator&&location.protocol!='file:')navigator.serviceWorker.register('sw.js');
 tab('machines');
-let H=decodeURIComponent(location.hash.slice(1));if(H.startsWith('L:')){S.cur=S.m.findIndex(m=>isLT(m.type));H=H.slice(2)}if(H=='presets')addM();else if(H=='recent'){tab('new');ex('6 hole bolt circle 3.0 dia 0.5 deep');saveJob()}else if(H){tab('new');ex(H);const q=new URLSearchParams(location.search);if(J&&J.M){if(q.has('rev'))rev();if(q.has('n'))scrub(Math.floor(J.M.length*+q.get('n')))}}
+let H=decodeURIComponent(location.hash.slice(1));if(H.startsWith('more:')){const f=H.slice(5);({tools,calc,snips,about,more,scanner:()=>scanner('O1234\nG17 G20 G90 G54.1 P2\nG43 H1 Z1.\nG96 S400\nG71 U0.05 R0.02\nG81 X1 Y1 Z-0.5 R0.1 F8\nG12.1\nM30')})[f]();H=''}else if(H.startsWith('edit:')){H=H.slice(5);window.__edit=1}if(H.startsWith('L:')){S.cur=S.m.findIndex(m=>isLT(m.type));H=H.slice(2)}if(H=='presets')addM();else if(H=='recent'){tab('new');ex('6 hole bolt circle 3.0 dia 0.5 deep');saveJob()}else if(H){tab('new');ex(H);if(window.__edit&&J&&J.code){J.code.forEach((l,i)=>{if(l=='#102=#7/2*COS[#101]')J.edits[i]='#102=#7*COS[#101]';if(l=='G01 Z-#26 F#9'&&J.lathe)J.edits[i]='G01 Z[-#26+1.0] F#9'});show()}const q=new URLSearchParams(location.search);if(J&&J.M){if(q.has('rev'))rev();if(q.has('n'))scrub(Math.floor(J.M.length*+q.get('n')));if(q.has('sheet'))sheet()}}
 </script></body></html>

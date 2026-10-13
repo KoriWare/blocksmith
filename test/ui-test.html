@@ -1,0 +1,25 @@
+<!doctype html><body style="background:#fff"><pre id="o"></pre><iframe id="f" src="../index.html" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);
+f.onload=()=>{const w=f.contentWindow,d=w.document;try{
+ if(!window.r){window.r=1;w.localStorage.clear();w.location.reload();return}}catch(e){}
+ setTimeout(()=>{const w=f.contentWindow,d=w.document;try{
+  // red chip confirm on Mill A: Extended offsets
+  w.edit(0);const k=w.eval('S').m[0].s.findIndex(x=>x.k=='Extended offsets');d.querySelectorAll('.set .chip')[k].click();log('red chip confirm turns setting green',w.eval('S').m[0].s[k].st=='user');
+  // set extended offsets to 48 via input
+  const inp=d.querySelector(`input[data-j="${k}"]`);inp.value='48';inp.onchange();log('extended offsets saved =48',w.eval('S').m[0].s[k].v=='48');
+  w.eval('S').cur=0;w.tab('new');w.ex('T5 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep');
+  const sel=d.querySelector('select[data-k="Work offset"]');const opts=[...sel.options].map(o=>o.textContent);log('picker offers G54.1 P1..P48 ('+opts.length+' options)',opts.includes('G54.1 P48')&&!opts.includes('G54.1 P49'));
+  sel.value='P12';w.fill();const code=w.eval('txt()').join('\n');log('code uses G54.1 P12',/G54\.1 P12 G00/.test(code));
+  log('offset check passes',/Work offset G54.1 P12 exists[^❌]*/.test(d.querySelector('#cl').textContent)&&!d.querySelector('#cl').textContent.includes('❌ Work offset'));
+  // syntax change to G110
+  const ks=w.eval('S').m[0].s.findIndex(x=>x.k=='Offset syntax');w.eval('S').m[0].s[ks].v='G110-G129';w.show();log('Haas-style syntax emits G121 for P12',/G121 G00/.test(w.eval('txt()').join('\n')));
+  w.eval('J').p['Work offset'].v='P30';w.show();log('P30 flagged with G110 style (max 20)',d.querySelector('#cl').textContent.includes('❌ Work offset'));
+  // verify gate
+  log('export gated before verify',[...d.querySelectorAll('.gate')].every(b=>b.disabled));d.querySelector('#vf').checked=true;d.querySelector('#vf').onchange({target:{checked:true}});log('export enabled after verify',[...d.querySelectorAll('.gate')].every(b=>!b.disabled));
+  // edit feeds sim
+  const n0=w.eval('J').M.map(m=>m.b[0]).reduce((a,b)=>Math.max(a,b));const i=w.eval('J').code.indexOf('#102=#7/2*COS[#101]');const el=d.querySelector(`.ln[data-i="${i}"]`);el.textContent='#102=#7*COS[#101]';el.oninput();
+  const n1=w.eval('J').M.map(m=>m.b[0]).reduce((a,b)=>Math.max(a,b));log(`edited radius line moves path (max X ${n0.toFixed(2)} -> ${n1.toFixed(2)})`,n1>n0*1.9);log('edited line pink',el.classList.contains('u'));
+  // missing arg -> alarm preview
+  const g=w.eval('J').code.findIndex(l=>/^G65/.test(l));const e2=d.querySelector(`.ln[data-i="${g}"]`);e2.textContent=w.eval('J').code[g].replace(/H6 /,'');e2.oninput();log('removing H arg fires alarm 1 in preview',/stops at alarm 1/.test(d.querySelector('#alm').textContent));
+ }catch(e){out.push('ERROR '+e.message)}o.textContent=out.join('\n')},800)};
+</script></body>
