@@ -2034,4 +2034,140 @@ HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='faq')),0,['jobs27','Counters, to
 <p><b>Broken-tool check</b>: say “broken tool check T8” — it is the Tool length check in broken-tool mode.</p>
 <p><b>Warm-up</b>: runs each RPM step (never over Max RPM) while moving around the G53 machine limits you type. Clear the table first.</p>`]);
 </script>
+<script>
+// ---- Round 28 · next 10 jobs (rect pocket, slot, helical bore, hole chamfer, custom peck, counterbore pattern, date code engrave, inspect every Nth, multi-vise loop, lathe multi-groove). Sources: docs/sources.md Round 28.
+['Pocket L','Pocket W','Corner R','Slot width','End X','End Y','Start X','Start Y','Hole Ø','Chamfer','Tip Ø','First peck','Min peck','Cbore Ø','Cbore depth','Bar Ø','Groove Ø','First groove Z','Groove pitch','Groove width','Insert W','Retract'].forEach(k=>KL.add(k));
+Object.assign(UNIT,{'Pocket L':'in, along X','Pocket W':'in, along Y','Corner R':'in, pocket corner radius (0 = sharp)','Slot width':'in','End X':'in','End Y':'in','Hole Ø':'in, hole diameter at the top','Chamfer':'in, 45° leg size','Tip Ø':'in, flat at the tip of the 90° chamfer tool (0 = sharp)',
+ 'First peck':'in','Min peck':'in, smallest peck','Peck reduce %':'% smaller each peck','Full retract every':'pecks (0 = chip-break only)','Retract':'in, chip-break back-off','Holes':'list: x y, x y … (in)','Cbore Ø':'in','Cbore depth':'in',
+ 'Date format':'YYYYMMDD or YYMMDD','Every N parts':'count','Stop type':'M00 (always) or M01 (optional stop switch)','Offsets':'list, e.g. G54 G55 G56','Part sub O#':'program number of your part program (as a subprogram)',
+ 'Bar Ø':'in dia','Groove Ø':'in dia at the groove bottom','First groove Z':'in, +Z wall of the first groove','Groove pitch':'in, wall to wall spacing','Count':'count','Groove width':'in','Insert W':'in, insert width','Insert reference':'which insert corner your Z offset is set to','Feed/rev':'in/rev'});
+const R28=['rpock','slot','hbore','hcham','peck2','cbpat','datec','nstop','mvise','mgroove'];
+const sp=(j,k)=>jv(j,k);
+function rampHelix(L,cx,cy,rh,zfrom,zto,hp,pf){let zz=zfrom;while(zz>zto+1e-9){zz=Math.max(zto,zz-hp);L(`G03 X${f4(cx+rh)} Y${f4(cy)} I${f4(-rh)} J0. Z${f4(zz)} F${f4(pf)}`)}}
+const hp3=(rh,sd)=>Math.min(sd,2*Math.PI*rh*Math.tan(3*Math.PI/180));
+const millSug={'Stepover %':50,'Feed':20,'Plunge feed':10,'RPM':3000,'Clear Z':0.1};
+const millParse=(l,G,n)=>{G('Depth',n(/([\d.]+)\s*(?:"|in)?\s*deep/));G('Cutter',n(/([\d.]+)\s*(?:"|in)?\s*(?:cutter|end\s*mill|em\b|tool\s*dia)/));G('Stepdown',n(/step\s*down\s*([\d.]+)/))};
+// 1 rectangular pocket
+defJ('rpock',{name:'Rectangular pocket',re:/(?:rect(?:angular)?|square)\s*pocket|pocket\s*\d*\.?\d+\s*(?:x|by)\s*\d*\.?\d+/,
+ req:['Center X','Center Y','Pocket L','Pocket W','Corner R','Depth','Z0','Cutter','Stepdown','Tool','Work offset'],sug:millSug,
+ parse:(l,G,n)=>{millParse(l,G,n);const m=l.match(/(\d*\.?\d+)\s*(?:"|in)?\s*(?:x|by)\s*(\d*\.?\d+)/);G('Pocket L',m?+m[1]:null);G('Pocket W',m?+m[2]:null);G('Corner R',n(/(?:corner\s*r(?:adius)?|\br)\s*([\d.]+)/))},
+ block:j=>{const c=sp(j,'Cutter');if(sp(j,'Pocket W')<=c||sp(j,'Pocket L')<=c)return'Cutter must be smaller than the pocket.';if(sp(j,'Corner R')>0&&sp(j,'Corner R')<c/2-1e-9)return'Corner R is smaller than the cutter radius — use a smaller cutter or a bigger radius (or 0 for the cutter radius).';return null},
+ gen:(j,L)=>{const cx=sp(j,'Center X'),cy=sp(j,'Center Y'),c=sp(j,'Cutter'),tr=c/2,ax=sp(j,'Pocket L')/2-tr,ay=sp(j,'Pocket W')/2-tr,rr=Math.max(0,(sp(j,'Corner R')||tr)-tr),z0=sp(j,'Z0'),cz=sp(j,'Clear Z'),f=sp(j,'Feed'),pf=sp(j,'Plunge feed'),so=c*sp(j,'Stepover %')/100,rh=Math.min(ay,ax,tr*0.5),hp=hp3(rh,sp(j,'Stepdown'));
+  hdr(L,4400,'RECTANGULAR POCKET');L(`(POCKET ${f4(sp(j,'Pocket L'))} X ${f4(sp(j,'Pocket W'))} - CLIMB, CCW)`);tstart(L,j,cx+rh,cy,z0+cz);let zc=z0;
+  const rect=(hx,hy,r)=>{L(`G01 X${f4(cx+hx)} Y${f4(cy)} F${f4(f)}`);if(r>1e-6){L(`G01 Y${f4(cy+hy-r)}`);L(`G03 X${f4(cx+hx-r)} Y${f4(cy+hy)} R${f4(r)}`);L(`G01 X${f4(cx-hx+r)}`);L(`G03 X${f4(cx-hx)} Y${f4(cy+hy-r)} R${f4(r)}`);L(`G01 Y${f4(cy-hy+r)}`);L(`G03 X${f4(cx-hx+r)} Y${f4(cy-hy)} R${f4(r)}`);L(`G01 X${f4(cx+hx-r)}`);L(`G03 X${f4(cx+hx)} Y${f4(cy-hy+r)} R${f4(r)}`);L(`G01 Y${f4(cy)}`)}
+   else{L(`G01 Y${f4(cy+hy)}`);L(`G01 X${f4(cx-hx)}`);L(`G01 Y${f4(cy-hy)}`);L(`G01 X${f4(cx+hx)}`);L(`G01 Y${f4(cy)}`)}};
+  levels(z0,sp(j,'Depth'),sp(j,'Stepdown')).forEach(z=>{L(`G01 X${f4(cx+rh)} Y${f4(cy)} F${f4(f)}`);rampHelix(L,cx,cy,rh,zc,z,hp,pf);L(`G03 X${f4(cx+rh)} Y${f4(cy)} I${f4(-rh)} J0. F${f4(f)}`);
+   let o=rh;while(o<Math.max(ax,ay)-1e-9){o=Math.min(Math.max(ax,ay),o+so);const hx=Math.min(o,ax),hy=Math.min(o,ay);rect(hx,hy,hx>=ax-1e-9&&hy>=ay-1e-9?rr:0)}zc=z});
+  L(`G01 X${f4(cx)} Y${f4(cy)}`);L(`G00 Z${f4(z0+cz)}`);endP(L);j.stock=[cx-ax-tr-0.5,cy-ay-tr-0.5,z0-sp(j,'Depth')-0.25,cx+ax+tr+0.5,cy+ay+tr+0.5,z0]},
+ checks:j=>[['Helical entry, climb (CCW) passes, last pass with your corner radius',true],['Helix pitch suggested (about 3° ramp) — check for your cutter',true]]});
+// 2 slot
+defJ('slot',{name:'Slot (straight)',re:/\bslot\b(?!\s*(?:center|probe))|keyway\s*slot|mill\s*(?:a\s*)?slot/,
+ req:['Start X','Start Y','End X','End Y','Slot width','Depth','Z0','Cutter','Stepdown','Tool','Work offset'],sug:millSug,
+ parse:(l,G,n)=>{millParse(l,G,n);const a=l.match(/(?:from|start)\s*x\s*(-?[\d.]+)\s*,?\s*y\s*(-?[\d.]+)/),b=l.match(/(?:to|end)\s*x\s*(-?[\d.]+)\s*,?\s*y\s*(-?[\d.]+)/);G('Start X',a?+a[1]:null);G('Start Y',a?+a[2]:null);G('End X',b?+b[1]:null);G('End Y',b?+b[2]:null);G('Slot width',n(/([\d.]+)\s*(?:"|in)?\s*wide/))},
+ block:j=>sp(j,'Slot width')<sp(j,'Cutter')-1e-9?'Cutter is wider than the slot.':Math.hypot(sp(j,'End X')-sp(j,'Start X'),sp(j,'End Y')-sp(j,'Start Y'))<1e-6?'Start and end are the same point.':null,
+ gen:(j,L)=>{const x1=sp(j,'Start X'),y1=sp(j,'Start Y'),x2=sp(j,'End X'),y2=sp(j,'End Y'),c=sp(j,'Cutter'),o=(sp(j,'Slot width')-c)/2,z0=sp(j,'Z0'),cz=sp(j,'Clear Z'),f=sp(j,'Feed'),pf=sp(j,'Plunge feed'),len=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/len,uy=(y2-y1)/len,nx=-uy,ny=ux;
+  hdr(L,4500,'SLOT');L(`(SLOT WIDTH ${f4(sp(j,'Slot width'))} - RAMP ALONG THE CENTER LINE${o>1e-6?', THEN CLIMB CONTOUR':''})`);tstart(L,j,x1,y1,z0+cz);L(`G01 Z${f4(z0)} F${f4(pf)}`);let zc=z0,at=0;
+  levels(z0,sp(j,'Depth'),sp(j,'Stepdown')).forEach(z=>{L(`G01 X${f4(at?x1:x2)} Y${f4(at?y1:y2)} Z${f4(z)} F${f4(pf)} (RAMP)`);at=1-at;L(`G01 X${f4(at?x1:x2)} Y${f4(at?y1:y2)} F${f4(f)}`);at=1-at;
+   if(o>1e-6){const P=(x,y,s)=>[x+s*nx*o,y+s*ny*o],a=P(x2,y2,-1),b=P(x2,y2,1),cc=P(x1,y1,1),d=P(x1,y1,-1);const ex=at?x1:x2,ey=at?y1:y2;L(`G01 X${f4(at?d[0]:a[0])} Y${f4(at?d[1]:a[1])}`);
+    if(!at){L(`G03 X${f4(b[0])} Y${f4(b[1])} R${f4(o)}`);L(`G01 X${f4(cc[0])} Y${f4(cc[1])}`);L(`G03 X${f4(d[0])} Y${f4(d[1])} R${f4(o)}`);L(`G01 X${f4(a[0])} Y${f4(a[1])}`)}else{L(`G01 X${f4(a[0])} Y${f4(a[1])}`);L(`G03 X${f4(b[0])} Y${f4(b[1])} R${f4(o)}`);L(`G01 X${f4(cc[0])} Y${f4(cc[1])}`);L(`G03 X${f4(d[0])} Y${f4(d[1])} R${f4(o)}`)}L(`G01 X${f4(ex)} Y${f4(ey)}`)}zc=z});
+  L(`G00 Z${f4(z0+cz)}`);endP(L);const w=sp(j,'Slot width')/2+0.5;j.stock=[Math.min(x1,x2)-w,Math.min(y1,y2)-w,z0-sp(j,'Depth')-0.25,Math.max(x1,x2)+w,Math.max(y1,y2)+w,z0]},
+ checks:j=>[['Ramps in along the slot (no straight plunge)',true],['Ramp angle = stepdown over slot length — check it suits your cutter',true]]});
+// 3 helical bore
+defJ('hbore',{name:'Helical bore',re:/helical\s*(?:bore|interp|hole)|helix\s*(?:bore|a\s*hole)|interpolate\s*(?:a\s*)?(?:hole|bore)|circle\s*interp/,
+ req:['Center X','Center Y','Dia','Depth','Z0','Cutter','Helix pitch','Tool','Work offset'],sug:{'Feed':20,'RPM':3000,'Clear Z':0.1},
+ parse:(l,G,n)=>{millParse(l,G,n);G('Dia',n(/([\d.]+)\s*(?:"|in)?\s*(?:dia|bore|hole)/));G('Helix pitch',n(/pitch\s*([\d.]+)/))},
+ block:j=>{const R=(sp(j,'Dia')-sp(j,'Cutter'))/2;if(!(R>0))return'Cutter must be smaller than the bore.';if(sp(j,'Cutter')<sp(j,'Dia')/2-1e-9)return'Cutter is less than half the bore — the middle would be left as a slug. Use Circular pocket, or a bigger cutter.';if(!(sp(j,'Helix pitch')>0))return'Helix pitch must be more than 0.';return null},
+ gen:(j,L)=>{const cx=sp(j,'Center X'),cy=sp(j,'Center Y'),R=(sp(j,'Dia')-sp(j,'Cutter'))/2,z0=sp(j,'Z0'),cz=sp(j,'Clear Z'),f=sp(j,'Feed');hdr(L,4600,'HELICAL BORE');L(`(BORE ${f4(sp(j,'Dia'))} - PATH RADIUS ${f4(R)} - CLIMB G03)`);
+  tstart(L,j,cx,cy,z0+cz);L(`G01 Z${f4(z0)} F${f4(f)}`);L(`G01 X${f4(cx+R)} Y${f4(cy)}`);rampHelix(L,cx,cy,R,z0,z0-sp(j,'Depth'),sp(j,'Helix pitch'),f);L(`G03 X${f4(cx+R)} Y${f4(cy)} I${f4(-R)} J0. (FLAT BOTTOM PASS)`);L(`G01 X${f4(cx)} Y${f4(cy)}`);L(`G00 Z${f4(z0+cz)}`);endP(L);
+  const s=sp(j,'Dia')/2+0.5;j.stock=[cx-s,cy-s,z0-sp(j,'Depth')-0.25,cx+s,cy+s,z0]},checks:j=>[['Cutter at least half the bore (no slug)',true],['Climb G03',true]]});
+// 4 hole chamfer / deburr
+defJ('hcham',{name:'Hole chamfer / deburr',re:/chamfer|deburr|break\s*(?:the\s*)?edge/,
+ req:['Holes','Hole Ø','Chamfer','Z0','Tip Ø','Tool','Work offset'],sug:{'Feed':15,'RPM':4000,'Clear Z':0.1},
+ parse:(l,G,n)=>{G('Holes',holeList(l));G('Hole Ø',n(/([\d.]+)\s*(?:"|in)?\s*(?:dia|hole)/));G('Chamfer',n(/([\d.]+)\s*(?:"|in)?\s*(?:x\s*45|chamfer)/)??n(/chamfer\s*([\d.]+)/));G('Tip Ø',n(/tip\s*([\d.]+)/))},
+ block:j=>{const R=sp(j,'Hole Ø')/2-sp(j,'Tip Ø')/2-sp(j,'Chamfer');if(R<-1e-9)return'Tool tip too big for this hole and chamfer — use a smaller-tip 90° tool.';return holeBad(j)},
+ gen:(j,L)=>{const c=sp(j,'Chamfer'),t=sp(j,'Tip Ø'),R=Math.max(0,sp(j,'Hole Ø')/2-t/2-c),z0=sp(j,'Z0'),cz=sp(j,'Clear Z'),f=sp(j,'Feed'),zd=z0-2*c,hs=parseHoles(sp(j,'Holes'));
+  hdr(L,4700,'HOLE CHAMFER 45 DEG');L(`(90 DEG CHAMFER TOOL - TIP AT Z${f4(zd)} - PATH RADIUS ${f4(R)})`);tstart(L,j,hs[0][0],hs[0][1],z0+cz);
+  hs.forEach(([x,y])=>{L(`G00 X${f4(x)} Y${f4(y)}`);L(`G01 Z${f4(zd)} F${f4(f)}`);if(R>1e-6){L(`G01 X${f4(x+R)}`);L(`G03 X${f4(x+R)} Y${f4(y)} I${f4(-R)} J0.`);L(`G01 X${f4(x)}`)}L(`G00 Z${f4(z0+cz)}`)});endP(L)},
+ checks:j=>[['90° chamfer tool only (45° chamfer)',true],['Tool tip goes '+f4(2*sp(j,'Chamfer'))+' below the top — check the hole is at least that deep',true]]});
+function holeList(l){const m=[...l.matchAll(/x\s*(-?\d*\.?\d+)\s*,?\s*y\s*(-?\d*\.?\d+)/g)].map(a=>a[1]+' '+a[2]);return m.length?m.join(', '):null}
+function parseHoles(s){return String(s||'').split(',').map(p=>p.trim().replace(/[xy]/gi,' ').trim().split(/\s+/).map(Number)).filter(a=>a.length==2&&a.every(x=>!isNaN(x)))}
+function holeBad(j){const h=parseHoles(sp(j,'Holes'));return h.length?null:'Holes must be a list like “x1 y0.5, x2 y0.5”.'}
+// 5 custom peck drill
+defJ('peck2',{name:'Custom peck drill (shrinking pecks)',re:/(?:custom|shrinking|decreasing|reducing)\s*peck|peck\s*(?:that\s*)?(?:gets?\s*)?smaller|chip\s*break\s*peck/,
+ req:['Holes','Z0','Depth','First peck','Min peck','Tool','Work offset'],sug:{'Peck reduce %':20,'Full retract every':3,'Retract':0.02,'Feed':6,'RPM':2000,'Clear Z':0.1},
+ parse:(l,G,n)=>{G('Holes',holeList(l));G('Depth',n(/([\d.]+)\s*(?:"|in)?\s*deep/));G('First peck',n(/(?:first|start)\s*(?:peck)?\s*([\d.]+)/));G('Min peck',n(/min(?:imum)?\s*(?:peck)?\s*([\d.]+)/))},
+ block:j=>holeBad(j)||(sp(j,'Min peck')>sp(j,'First peck')?'Min peck must not be bigger than the first peck.':!(sp(j,'Min peck')>0)?'Min peck must be more than 0.':null),
+ gen:(j,L)=>{const z0=sp(j,'Z0'),cz=sp(j,'Clear Z'),f=sp(j,'Feed'),D=sp(j,'Depth'),q1=sp(j,'First peck'),qm=sp(j,'Min peck'),rd=1-(sp(j,'Peck reduce %')||0)/100,fr=sp(j,'Full retract every')||0,rt=sp(j,'Retract'),hs=parseHoles(sp(j,'Holes'));
+  hdr(L,4800,'CUSTOM PECK DRILL');L(`(PECKS FROM ${f4(q1)} DOWN TO ${f4(qm)} - ${fr?'FULL RETRACT EVERY '+fr:'CHIP-BREAK ONLY'})`);tstart(L,j,hs[0][0],hs[0][1],z0+cz);
+  hs.forEach(([x,y])=>{L(`G00 X${f4(x)} Y${f4(y)}`);L(`G00 Z${f4(z0+cz)}`);let z=z0,q=q1,k=0;while(z>z0-D+1e-9){const nz=Math.max(z0-D,z-q);L(`G01 Z${f4(nz)} F${f4(f)}`);k++;z=nz;if(z<=z0-D+1e-9)break;if(fr&&k%fr==0){L(`G00 Z${f4(z0+cz)} (CLEAR CHIPS)`);L(`G00 Z${f4(z+rt)}`)}else L(`G00 Z${f4(z+rt)} (CHIP BREAK)`);q=Math.max(qm,q*rd)}L(`G00 Z${f4(z0+cz)}`)});endP(L)},
+ checks:j=>[['Rapid back down stops one retract above the last depth',true]]});
+// 6 counterbore pattern
+defJ('cbpat',{name:'Counterbore pattern',re:/counter\s*-?\s*bore|c'?bore|spot\s*-?\s*face/,
+ req:['Holes','Cbore Ø','Cbore depth','Z0','Cutter','Tool','Work offset'],sug:{'Feed':10,'RPM':2500,'Clear Z':0.1,'Helix pitch':0.03},
+ parse:(l,G,n)=>{G('Holes',holeList(l));G('Cbore Ø',n(/([\d.]+)\s*(?:"|in)?\s*(?:c'?bore|counterbore|spot\s*face|dia)/));G('Cbore depth',n(/([\d.]+)\s*(?:"|in)?\s*deep/));G('Cutter',n(/([\d.]+)\s*(?:"|in)?\s*(?:cutter|end\s*mill|em\b)/))},
+ block:j=>holeBad(j)||(sp(j,'Cutter')>sp(j,'Cbore Ø')+1e-9?'Cutter is bigger than the counterbore.':sp(j,'Cutter')<sp(j,'Cbore Ø')/2-1e-9&&sp(j,'Cutter')<sp(j,'Cbore Ø')-1e-9?'Cutter is less than half the counterbore Ø — the middle would be left. Use a bigger cutter.':null),
+ gen:(j,L)=>{const z0=sp(j,'Z0'),cz=sp(j,'Clear Z'),f=sp(j,'Feed'),R=(sp(j,'Cbore Ø')-sp(j,'Cutter'))/2,d=sp(j,'Cbore depth'),hs=parseHoles(sp(j,'Holes'));hdr(L,4900,'COUNTERBORE PATTERN');L(R>1e-6?`(HELICAL, PATH RADIUS ${f4(R)} - CLIMB G03)`:'(CUTTER = COUNTERBORE: STRAIGHT PLUNGE)');tstart(L,j,hs[0][0],hs[0][1],z0+cz);
+  hs.forEach(([x,y])=>{L(`G00 X${f4(x)} Y${f4(y)}`);if(R>1e-6){L(`G01 Z${f4(z0)} F${f4(f)}`);L(`G01 X${f4(x+R)}`);rampHelix(L,x,y,R,z0,z0-d,sp(j,'Helix pitch'),f);L(`G03 X${f4(x+R)} Y${f4(y)} I${f4(-R)} J0.`);L(`G01 X${f4(x)} Y${f4(y)}`)}else L(`G01 Z${f4(z0-d)} F${f4(f)}`);L(`G00 Z${f4(z0+cz)}`)});endP(L)}});
+// 7 date / lot code engrave (shares the serial digit subprograms)
+function digitSubs(L,s,cz,dp,f,pf){const adv=5.5*s;for(let d=0;d<10;d++){L(`O${7110+d} (DIGIT ${d})`);L('G91');let cur=[0,0];EFONT[String(d)].split('|').forEach(st=>{const pts=st.split(' ').map(p=>p.split(',').map(Number)).map(([a,b])=>[a*s,b*s]);L(`G00 X${f4(pts[0][0]-cur[0])} Y${f4(pts[0][1]-cur[1])}`);L(`G01 Z${f4(-(cz+dp))} F${f4(pf)}`);for(let i=1;i<pts.length;i++)L(`G01 X${f4(pts[i][0]-pts[i-1][0])} Y${f4(pts[i][1]-pts[i-1][1])} F${f4(f)}`);L(`G00 Z${f4(cz+dp)}`);cur=pts.at(-1)});L(`G00 X${f4(adv-cur[0])} Y${f4(-cur[1])}`);L('G90');L('M99')}}
+defJ('datec',{name:'Date code engrave',re:/date\s*(?:code|stamp)|engrave\s*(?:the\s*)?(?:today'?s\s*)?date|lot\s*(?:code|date)/,
+ req:['Date format','Letter height','Depth','Text start X','Text start Y','Z0','Tool','Work offset'],sug:{'Feed':10,'Plunge feed':5,'RPM':8000,'Clear Z':0.05},choices:{'Date format':['YYYYMMDD','YYMMDD']},
+ parse:(l,G,n)=>{G('Date format',/yymmdd/.test(l)&&!/yyyymmdd/.test(l)?'YYMMDD':/yyyymmdd/.test(l)?'YYYYMMDD':null);G('Letter height',n(/([\d.]+)\s*(?:"|in)?\s*(?:tall|high)/));G('Depth',n(/([\d.]+)\s*(?:"|in)?\s*deep/));const xy=l.match(/(?:start|at)\s*x\s*(-?[\d.]+)\s*,?\s*y\s*(-?[\d.]+)/);G('Text start X',xy?+xy[1]:null);G('Text start Y',xy?+xy[2]:null)},
+ gen:(j,L)=>{const D=sp(j,'Date format')=='YYMMDD'?6:8,H=sp(j,'Letter height'),s=H/6,z0=sp(j,'Z0'),cz=sp(j,'Clear Z'),x0=sp(j,'Text start X'),y0=sp(j,'Text start Y');hdr(L,6300,'DATE CODE ENGRAVE');L(`(DATE FROM #3011 = YYYYMMDD ON THE CONTROL - CUT AS ${sp(j,'Date format')})`);
+  tstart(L,j,x0,y0,z0+cz);L(D==8?'#30=#3011 (TODAY YYYYMMDD)':'#30=#3011-FIX[#3011/1000000]*1000000 (TODAY YYMMDD)');
+  for(let k=D-1;k>=0;k--){L(`#31=FIX[#30/${10**k}]-FIX[#30/${10**(k+1)}]*10 (DIGIT ${D-k})`);L('#32=7110+#31');L('G65 P#32 (CUT ONE DIGIT, MOVES TO NEXT)')}
+  L(`G00 Z${f4(z0+cz)}`);endP(L);digitSubs(L,s,cz,sp(j,'Depth'),sp(j,'Feed'),sp(j,'Plunge feed'));L('%');j.stock=[x0-0.25,y0-0.25,z0-0.25,x0+5.5*s*D+0.25,y0+H+0.25,z0];return 1},
+ checks:j=>[['Date read from #3011 (YYYYMMDD) — check the control clock is right',true],['Digit subprograms O7110–O7119 must not clash with programs on the control',null]]});
+// 8 inspection stop every Nth part
+defJ('nstop',{name:'Inspection stop every Nth part',re:/every\s*\d*\s*(?:th|nd|rd|st)?\s*parts?|inspect(?:ion)?\s*(?:stop\s*)?every|check\s*every\s*\d+|stop\s*every\s*\d+/,
+ req:['Counter #','Every N parts'],sug:{'Stop type':'M00'},choices:{'Stop type':['M00','M01']},
+ parse:(l,G,n)=>{G('Counter #',n(/#\s*(\d{3,5})/));G('Every N parts',n(/every\s*(\d+)/));if(/m01|optional/.test(l))G('Stop type','M01')},
+ block:j=>{const e=varOK(sp(j,'Counter #'));if(e)return'Counter #'+sp(j,'Counter #')+': '+e;return sp(j,'Every N parts')>=2?null:'Every N parts must be 2 or more.'},
+ gen:(j,L)=>{const v='#'+sp(j,'Counter #'),N=sp(j,'Every N parts'),st=sp(j,'Stop type');hdr(L,7300,'INSPECT EVERY '+N+' PARTS');L(`(COUNT IN ${v} - STOPS ON PART ${N}, ${2*N}, ${3*N}...)`);L('(---- YOUR PART PROGRAM GOES HERE ----)');
+  L(`${v}=${v}+1`);L(`#20=${v}-FIX[${v}/${N}]*${N} (REMAINDER)`);L('IF[#20NE0]GOTO10');L(`${st} (INSPECT THIS PART - CYCLE START TO GO ON)`);L('N10 M30')},
+ checks:j=>[[sp(j,'Stop type')=='M01'?'M01 only stops when the operator’s optional stop switch is on':'M00 always stops',true],['Counter kept at power off',!varOK(sp(j,'Counter #'))]]});
+// 9 multi-vise / multi-fixture loop
+defJ('mvise',{name:'Multi-vise offset loop',re:/multi\s*-?\s*(?:vise|vice|fixture|part)|(?:each|every|all)\s*(?:vise|vice|fixture)|\d+\s*vi[sc]es|run\s*(?:the\s*)?(?:part|program)\s*(?:at|on)\s*g5/,
+ req:['Offsets','Part sub O#'],sug:{},
+ parse:(l,G,n)=>{const o=[...l.toUpperCase().matchAll(/G5[4-9](?:\.1\s*P\d+)?|G154\s*P\d+|G1[12]\d/g)].map(m=>normOff(m[0])).filter(Boolean);G('Offsets',o.length?o.join(' '):null);G('Part sub O#',n(/(?:sub(?:program)?|o|program)\s*#?\s*o?(\d{3,5})/))},
+ block:j=>{const o=String(sp(j,'Offsets')).split(/\s+/).map(normOff);if(o.some(x=>!x))return'Offsets must be work offsets like G54 G55 G56.';const bad=o.filter(x=>!offOK(x));if(bad.length)return'Not on this machine: '+bad.map(offLbl).join(' ');if(!(sp(j,'Part sub O#')>=1&&sp(j,'Part sub O#')<=9999))return'Part sub O# must be 1–9999.';return null},
+ gen:(j,L)=>{const o=String(sp(j,'Offsets')).split(/\s+/).map(normOff),P=sp(j,'Part sub O#');hdr(L,7400,'MULTI-VISE LOOP');L(`(RUNS O${P} ONCE AT EACH OFFSET - O${P} MUST NOT SET ITS OWN WORK OFFSET AND MUST END WITH M99)`);
+  o.forEach((x,i)=>{L(`${offCode(x)} (VISE ${i+1})`);L(`M98 P${P}`)});endP(L)},
+ checks:j=>[['Every offset exists on this machine',true],['Your part program is a subprogram ending in M99, with no work offset of its own',null]]});
+// 10 lathe multi-groove
+defJ('mgroove',{name:'Multi-groove pattern (lathe)',lathe:1,re:/(?:multi(?:ple)?|several|\d+)\s*-?\s*grooves?|groove\s*pattern|equal\s*grooves/,
+ req:['Bar Ø','Groove Ø','First groove Z','Groove pitch','Count','Groove width','Insert W','Insert reference','Tool'],sug:{'Feed/rev':0.002,'RPM':800,'Clear Z':0.1},choices:{'Insert reference':['left corner (-Z side)','right corner (+Z side)']},
+ parse:(l,G,n)=>{G('Bar Ø',n(/([\d.]+)\s*(?:"|in)?\s*(?:dia\s*)?(?:bar|stock)/));G('Groove Ø',n(/(?:to|bottom|groove\s*dia(?:meter)?)\s*([\d.]+)/));const z=n(/(?:first\s*(?:groove)?\s*(?:at)?\s*z|at\s*z)\s*(-?[\d.]+)/);G('First groove Z',z);G('Groove pitch',n(/(?:pitch|apart|spacing)\s*([\d.]+)/)??n(/([\d.]+)\s*(?:"|in)?\s*(?:pitch|apart)/));G('Count',n(/(\d+)\s*grooves?/));G('Groove width',n(/([\d.]+)\s*(?:"|in)?\s*wide/));G('Insert W',n(/insert\s*([\d.]+)/));if(/left\s*corner/.test(l))G('Insert reference','left corner (-Z side)');if(/right\s*corner/.test(l))G('Insert reference','right corner (+Z side)')},
+ block:j=>{if(sp(j,'Groove Ø')>=sp(j,'Bar Ø'))return'Groove Ø must be smaller than the bar.';if(sp(j,'Insert W')>sp(j,'Groove width')+1e-9)return'Insert is wider than the groove.';if(sp(j,'Groove pitch')<sp(j,'Groove width')-1e-9)return'Pitch is smaller than the groove width — grooves would overlap.';if(!(sp(j,'Count')>=1))return'Count must be 1 or more.';return null},
+ gen:(j,L)=>{const T=sp(j,'Tool'),tt='T'+String(T).padStart(2,'0')+String(T).padStart(2,'0'),B=sp(j,'Bar Ø'),Gd=sp(j,'Groove Ø'),z1=sp(j,'First groove Z'),P=sp(j,'Groove pitch'),N=sp(j,'Count'),W=sp(j,'Groove width'),iw=sp(j,'Insert W'),left=/left/.test(sp(j,'Insert reference')),xc=B+0.1,f=sp(j,'Feed/rev');
+  L('%');L('O2100 (MULTI-GROOVE PATTERN - MACRO BUILDER)');L(`(${hkC()?'HAAS-STYLE':'FANUC 0I-STYLE'} LATHE - X IN DIAMETER - VERIFY ON CONTROL)`);L(`G18 ${GU()} G40 G80 G99 (SAFE START)`);L(`${tt} (GROOVE TOOL, Z SET TO ${left?'LEFT':'RIGHT'} CORNER)`);L(`G97 S${sp(j,'RPM')} M03`);L(`G00 X${f4(xc)} Z${f4(sp(j,'Clear Z'))}`);
+  for(let g=0;g<N;g++){const zr=z1-g*P;L(`(GROOVE ${g+1} - WALLS Z${f4(zr)} TO Z${f4(zr-W)})`);const pl=[];let e=zr;for(;;){pl.push(e);if(e-iw<=zr-W+1e-9)break;e=Math.max(zr-W+iw,e-iw*0.8)}
+   pl.forEach(e=>{const zt=left?e-iw:e;L(`G00 Z${f4(zt)}`);L(`G01 X${f4(Gd)} F${f4(f)}`);L(`G00 X${f4(xc)}`)})}
+  L(`G00 Z${f4(sp(j,'Clear Z'))}`);L('M05');L('G28 U0. W0.');L('M30');L('%');return 1},
+ checks:j=>[['Insert reference corner you chose: '+sp(j,'Insert reference'),true],['Wide grooves cut in overlapping plunges (80% of insert width)',true]]});
+// framework updates: order, lathe jobs, recognition through parseL, lathe gen
+J2ORDER.unshift('datec','nstop','mvise','peck2','cbpat','hcham','hbore','rpock','slot','mgroove');
+j2Op=function(t){const l=String(t||'').toLowerCase();for(const op of J2ORDER){const S2=J2[op];if(!!S2.lathe!=isL())continue;if(/probe/.test(l)&&!S2.probe)continue;if(S2.re.test(l))return op}return null};
+const _pj28=parseJ2;parseJ2=function(t,op){const j=_pj28(t,op);if(J2[op].lathe)j.lathe=true;return j};
+const _parseL28=parseL;parseL=function(t){const op=j2Op(t);return op?parseJ2(t,op):_parseL28(t)};
+const _genL28=genL;genL=function(j){return isJ2(j)?genU(genJ2,j):_genL28(j)};
+const _gj28=genJ2;genJ2=function(j){const g=_gj28(j);if(j.lathe)j.stock=[0,0,sp(j,'First groove Z')-sp(j,'Groove pitch')*sp(j,'Count')-0.5,sp(j,'Bar Ø')/2,0,0.2];j.lb={R:sp(j,'Bar Ø')/2,L:Math.abs(sp(j,'First groove Z'))+sp(j,'Groove pitch')*sp(j,'Count')+0.5,z:0};return g};
+const _ip28=interp;interp=function(lines,o){if(J&&J.op=='mvise'&&lines)lines=lines.map(l=>/^M98 P/.test(l)?'('+l+' - YOUR PROGRAM, NOT SIMULATED)':l);return _ip28(lines,o)};
+const _ck28=checks;checks=function(j){const c=_ck28(j);if(isJ2(j)&&j.lathe){const t=txt().join('\n');return c.map(x=>/^Safe start line/.test(x[0])?['Safe start line (G18 '+GU()+' G40 G80 G99)',/G18 G2[01] G40 G80 G99/.test(t)]:/^All #variables|#variables valid/.test(x[0])?x:x)}return c};
+TLNEAR.push(['Rectangular pocket','rectangular pocket 2 x 1',/pocket|rect|square/],['Slot','slot',/slot|keyway/],['Helical bore','helical bore',/bore|hole|helix|interp/],['Hole chamfer','chamfer holes',/chamfer|deburr|edge/],['Custom peck drill','custom peck drill',/peck|drill|deep/],['Counterbore pattern','counterbore',/counterbore|cbore|spot/],['Date code engrave','engrave date code',/date|lot|stamp/],['Inspect every Nth part','inspect every 10 parts',/every|inspect|check/],['Multi-vise loop','multi vise G54 G55',/vise|vice|fixture/]);
+TLNEARL.push(['Multi-groove pattern','4 grooves',/groove/]);
+LOG.unshift(['2.0 · Oct 13','Ten more jobs: rectangular pocket, slot, helical bore, hole chamfer, custom peck drill, counterbore pattern, date code engrave, inspection stop every Nth part, multi-vise loop, lathe multi-groove pattern.']);
+const _ct28=curTopic;curTopic=function(){const t=_ct28();return t=='jobs27'&&R28.includes(J.op)?'jobs28':t};
+HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='faq')),0,['jobs28','Pockets, slots, bores, chamfers, pecks, counterbores, date codes, inspection stops, multi-vise, grooves',()=>`<p>All positions, hole lists, offsets and variables are yours to type; nothing is guessed. Hole lists look like “x1 y0.5, x2 y0.5”.</p>
+<p><b>Rectangular pocket</b>: helical entry in the middle, climb (counter-clockwise) passes outward, last pass with your corner radius (must be at least the cutter radius; 0 = cutter radius). Helix pitch is a gray suggestion (about a 3° ramp).</p>
+<p><b>Slot</b>: ramps down along the center line each stepdown; if the slot is wider than the cutter, a climb contour finishes the sides.</p>
+<p><b>Helical bore</b>: one helix down at the bore size, then a flat pass. The cutter must be at least half the bore, or a slug is left — use Circular pocket then.</p>
+<p><b>Hole chamfer</b>: for a 90° chamfer tool. The tip goes down twice the chamfer size and circles the hole so a 45° chamfer of your size is cut. A tool with a tip flat needs the tip Ø.</p>
+<p><b>Custom peck drill</b>: pecks shrink by your % each time down to the minimum, with chip-break back-offs and a full retract every N pecks.</p>
+<p><b>Counterbore pattern</b>: plunges if the cutter equals the counterbore, otherwise a helical ramp and a flat pass at each hole.</p>
+<p><b>Date code engrave</b>: reads today from #3011 (YYYYMMDD on Fanuc-style and Haas) and cuts it as YYYYMMDD or YYMMDD with the Engrave text digits (subprograms O7110–O7119). Check the control clock.</p>
+<p><b>Inspection stop every Nth part</b>: counts parts in your retained variable and stops on every Nth one. M00 always stops; M01 only with the optional stop switch on.</p>
+<p><b>Multi-vise loop</b>: runs your part program (as a subprogram ending in M99, with no work offset of its own) once at each work offset you list.</p>
+<p><b>Multi-groove pattern (lathe)</b>: equal-pitch grooves by plunging; wide grooves use overlapping plunges. Tell it which insert corner your Z offset is set to.</p>`]);
+</script>
 </body></html>

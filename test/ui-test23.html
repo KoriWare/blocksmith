@@ -1,0 +1,38 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=35" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+const JOBS=[['rpock','rectangular pocket 2 x 1 corner r 0.25 0.3 deep center x0 y0 z0 0 0.375 cutter stepdown 0.1 T4 G54',{}],
+ ['slot','mill a slot from x0 y0 to x2 y0 0.5 wide 0.2 deep z0 0 0.375 cutter stepdown 0.1 T4 G54',{}],
+ ['hbore','helical bore 1.0 dia 0.5 deep center x0 y0 z0 0 0.625 cutter pitch 0.05 T5 G54',{}],
+ ['hcham','chamfer holes x0 y0, x1.5 y0 0.25 dia 0.02 chamfer tip 0 z0 0 T6 G54',{}],
+ ['peck2','custom peck drill x0 y0, x1 y0 1.0 deep first peck 0.2 min peck 0.05 z0 0 T7 G54',{}],
+ ['cbpat','counterbore x0 y0, x1 y1 0.5 dia 0.25 deep 0.375 cutter z0 0 T8 G54',{}],
+ ['datec','engrave date code yymmdd 0.1 tall 0.005 deep at x0.5 y0.5 z0 0 T9 G54',{}],
+ ['nstop','inspection stop every 10 parts #610',{}],
+ ['mvise','multi vise G54 G55 G56 sub o2000',{}]];
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+  const setv=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x)return;if(${JSON.stringify(v)}!==null)x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  ['Fanuc Robodrill-style (generic)','Haas VF-style VMC (generic)'].forEach(nm=>{const hk=/Haas/.test(nm);w.pick(nm,'Vertical mills');w.cur(E('S.m.length')-1);
+   w.tab('new');d.querySelector('#q').value=JOBS[2][1];w.go();
+   setv('Control',null);setv('Skip code (probe)',null);setv('Spindle probe on / off','M100 / M101');setv('DPRNT support','yes');setv('Max RPM','8000');E("S.m[S.cur].opt.probe=1;S.m[S.cur].opt.g10=1;save()");
+   JOBS.forEach(([op,t,extra])=>{w.tab('new');d.querySelector('#q').value=t;w.go();const j0=E('J&&J.op');
+    const miss=E('J?Object.entries(J.p).filter(([k,x])=>x.v==null).map(([k])=>k):[]');
+    Object.entries(extra).forEach(([k,v])=>E(`J.p[${JSON.stringify(k)}]={v:${JSON.stringify(v)},g:false}`));E('show()');
+    const code=E('J&&J.code?txt().join("\\n"):""');let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{contact:mkContact(J)});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
+    const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+d.querySelector('#out').innerText.slice(0,300)];
+    log(`${hk?'Haas':'Fanuc'} ${op}: recognised, code written`,j0==op&&!!code,'op='+j0+' miss='+miss.join(','));
+    if(code)log(`${hk?'Haas':'Fanuc'} ${op}: sim runs, no alarm`,!sim[0]&&!sim[1],JSON.stringify(sim));
+    if(code)log(`${hk?'Haas':'Fanuc'} ${op}: all checks pass`,ck.length==0,ck.join(' | '));
+    
+    
+   });
+  });
+        ['Generic 2-axis lathe','Haas ST-style lathe (generic)'].forEach(nm=>{w.pick(nm,'Lathes');w.cur(E('S.m.length')-1);setv('Control',/Haas/.test(nm)?'Haas NGC':'Fanuc 0i');w.tab('new');d.querySelector('#q').value='4 grooves 2.0 bar to 1.8 first groove z-0.5 pitch 0.4 0.25 wide insert 0.125 left corner T3';w.go();
+   const code=E('J&&J.code?txt().join("\\n"):""');const sim=E('(()=>{const r=interp(txt(),{lathe:1});return [r.err,r.alarms.length,r.moves.length]})()');const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):[d.querySelector('#out').innerText.slice(0,300)];
+   log(nm+' mgroove: code',!!code,ck.join('|'));log(nm+' mgroove: sim ok',!sim[0]&&!sim[1]&&sim[2]>10,JSON.stringify(sim));log(nm+' mgroove: checks',!ck.length,ck.join(' | '));log(nm+' mgroove: 4 grooves x 3 plunges (80% step)',(code.match(/G01 X1\.8/g)||[]).length==12)});
+  log('probe slot still goes to probe pocket',E('parse("probe slot 1.0 wide").op')=='ppocket');
+  log('Help topic jobs28',E("HELP.some(h=>h[0]=='jobs28')"));
+  log('No page errors',!errs.length,errs.join('|'));
+ }catch(e){out.push('FAIL exception '+e.message+' '+e.stack)}o.textContent=out.join('\n')},1500)}
+</script></body>

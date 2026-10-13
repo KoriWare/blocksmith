@@ -8,7 +8,7 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   d.querySelector('#cvo').click();log('7 override once shows code, check still red',!!d.querySelector('#ed')&&/❌ Common variables/.test(d.querySelector('#cl').textContent));
   w.ex(BC);d.querySelector('#cvy').click();log('7 confirm free -> code + setting green',!!d.querySelector('#ed')&&E("sv('Free common variables').st")=='user'&&!/❌ Common variables/.test(d.querySelector('#cl').textContent));
   // 6 work-arounds
-  d.querySelector('#q').value='counterbore 4 holes';d.querySelector('#q').dispatchEvent(new Event('input'));log('6 work-around shown as suggestion, verify',/suggestion, verify/.test(d.querySelector('#us').textContent)&&/Counterbore/.test(d.querySelector('#us').textContent));
+  d.querySelector('#q').value='counterbore 4 holes';d.querySelector('#q').dispatchEvent(new Event('input'));log('6 counterbore now a real job (Round 28), not a work-around',w.eval("parse('counterbore 4 holes').op")=='cbpat');
   const c0=code();log('6 never inserted',!/COUNTERBORE/i.test(c0));
   E("S.m[0].opt.macroB=0");w.ex(BC);log('6 work-around when option missing',/suggestion, verify/.test(d.querySelector('#wa').textContent)&&/long-hand/.test(d.querySelector('#wa').textContent));E("S.m[0].opt.macroB=1");
   // 2 sourced data
