@@ -189,3 +189,21 @@ Flagged / not sourced (kept as gray suggestions or user inputs, never as facts):
 - Probe on / off M-codes: builder-specific — red field, no hint numbers.
 - Warm-up RPM steps and travel limits: user inputs; no published "standard" warm-up schedule was used.
 - Skipped from the research list's top 10: nothing skipped; job 7 (broken tool) reuses the Round 26 Tool length check, job 3/8 add boss and corners next to the existing bore / web / pocket jobs.
+
+## Round 28 · Next 10 jobs (Oct 13)
+
+| Fact | Used by | Sources | Status |
+|---|---|---|---|
+| M98 Pnnnn calls program Onnnn, M99 returns | mvise | Haas M98 page (official) haascnc.com/service/codes-settings.type=mcode.machine=mill.value=M98.html; Fanuc: helmancnc.com/fanuc-sub-programming + getgcode.com/en/cnc-codes/m98-m99 (agree) | OK |
+| Haas M98 needs the sub to exist or it alarms | mvise | Haas M98 page (official) | OK, sub left red for user |
+| M00 always stops; M01 stops only with Optional Stop on | nstop | Haas M00 page + Haas mill M-code list (official); Fanuc: cnc.wiki M00/M01 page + carbide-tooling.com M-code guide (agree) | OK |
+| Lathe G18 XZ plane, G97 RPM (CSS off), G99 feed per rev, safe start G18 G20 G40 G80 G99 | mgroove | Haas lathe manual "Basic Programming" + Haas lathe G-code list + G97 page (official) | OK for Haas. Fanuc 0i-T: same codes in generic sources, but I did not find 2 independent Fanuc-specific pages this round — FLAGGED, verify on control |
+| #3011 date YYYYMMDD | datec | see Round 25 rows above | OK |
+| #3901 part count, retained var ranges | nstop | see Round 27 | OK |
+| Climb direction G03 internal / G02 external (helix) | hbore, rpock, cbpat | reused from Round 27 thread mill rows | OK |
+
+Heuristics (our own defaults, not from any source, shown as suggestions):
+- 3° helical ramp angle for rpock/slot/hbore entry.
+- Groove plunge step = 80% of insert width (mgroove).
+- Chamfer with a 90° spot/chamfer tool: tip depth = chamfer width + hole radius geometry (45° each side). Plain geometry, check your tool's tip angle.
+- Shrinking peck factor in peck2 (each peck smaller, never below min peck).
