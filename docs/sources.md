@@ -275,3 +275,35 @@ Our own defaults / methods (unsourced, shown as gray suggestions or stated in th
 | C clamp / unclamp M-codes are builder-specific (Haas M14 / M15 main spindle clamp) | yflat | Haas lathe programming workbook (official) + HFO pdf; Fanuc: IMD + Manual Guide i (parameter-set codes) | red setting, no default |
 
 Not sourced, ours: Y sweep = half chord + cutter radius + 0.05 (shown as a check to compare with your Y travel); Z rows at 0.5 × cutter.
+
+## Round 31 · batch 5 — builder jobs (Oct 13, 2026)
+
+Rule here: every builder code is a red machine setting that starts empty. A gray hint is shown only when a source below gives it. Fanuc-style, Nakamura-Tome-style and Tsugami-style machines get no code hints (no public builder lists found).
+
+| Fact | Used by | Sources | Status |
+|---|---|---|---|
+| Haas lathe M-codes: M10/M11 chuck, M36/M37 parts catcher, M104/M105 probe arm, M110/M111 secondary chuck | pcatch, ltset, subxfer (hints) | Haas lathe M-code list (official) haascnc.com/service/online-operator-s-manuals/lathe-operator-s-manual/lathe---m-codes.html; Haas M36/M37 page (official) | OK as hints |
+| Haas G212 auto tool setting: T call first, H = tip direction (path depends on it), calibrate first | ltset | Haas G211/G212 page (official) haascnc.com/service/codes-settings.type=gcode.machine=lathe.value=G212.html | OK |
+| Fanuc T-series G36 X / G37 Z: tool moves to the measuring position, difference added to the active offset; feed and ranges are builder parameters (6241, 6251–6255) | ltset | Fanuc 0i-B Descriptions §17.6 + 21i-TB operator's manual + 30i connection manual (official, via cncmanuals.com) | OK; measuring positions red |
+| Haas G105 bar feed; no comment on the G105 line (alarm 314); I/J/K from #3100–#3102 | barloop | Haas G105 page (official) | OK |
+| Haas M50 pallet change, P = pallet | palloop | Haas mill M50 page (official) | OK as hint |
+| Haas G199 / G198 sync spindles; DS sub axis B; M110/M111 sub chuck in the transfer example | subxfer | Haas G199 page (official, incl. example program) | OK as hints |
+| Haas G28 (machine zero); G53 X0 then Z0 to home a Haas lathe, G28 H0 unwinds C | shome, lhome | Haas mill G28 page + Haas G199 page example (official) | OK |
+| Fanuc G28 via intermediate point: G91 G28 Z0. (mill), G28 U0. / W0. (lathe) | shome, lhome | Fanuc operator's manual (official) + helmancnc.com (agree) | OK |
+| Lathe G10: Haas L10 geometry / L11 wear, U/W add; Fanuc G10 P(n) wear / P(10000+n) geometry, U/W add | lpwear, lawear | Haas lathe G10 page (official); helmancnc.com + mfgrobots.com Fanuc G10 articles (agree) | OK |
+| Mill G10 L10–L13, R = value or increment, G91 = add | awear | Haas mill G10 page (official); Fanuc memory A/B/C rows from Round 30 | OK |
+| Fanuc #1000–#1031 interface inputs (read-only, builder wires them) | swbar, sweject | Fanuc 30i connection manual (official) + zappettiniconsulting.com (agree) | OK; # red |
+| Haas #11000–#11255 discrete inputs; G103 P1 to stop look-ahead reading ahead | swbar, sweject | Haas lathe macros chapter (official) | OK |
+| #3001 ms timer settable to 0 | sweject | Round 29 rows | OK |
+| Haas G04 P = seconds; Fanuc G04 P = milliseconds | pcatch, subxfer | Haas lathe workbook (official); Fanuc manual + helmancnc.com | OK |
+| Tsugami warm-up: min. 15 min, spindle 2 min each 500→3000 then max, max travel each axis | swwarm (2 min gray) | Tsugami instruction manual (scribd copy) + Tsugami SS267/SS327 manual (manualmachine.com) | OK for steps; FLAG: one Tsugami manual says clamp a work-piece, the other says no bar during warm-up — program says "per your manual" |
+| Swiss re-chuck / bar advance and bar change codes | swmulti | Only one source family (industrialmonitordirect.com) describes a sequence; codes vary by builder | FLAGGED: both codes red, sequence is just "your code" lines |
+| Multi-path Swiss wait / sync codes | swmulti | Builder-specific | SKIPPED — not written, stated in the program |
+| Nakamura-Tome sub-spindle / sync codes, Tsugami part eject / bar-end wiring | subxfer, swbar, sweject | No public source found | red, no hint |
+
+Our own defaults (unsourced, gray or stated in the program):
+- Part-off: clearance 0.2 on diameter, 800 RPM, 0.002 in/rev, catcher dwell 1 s.
+- Sub-spindle: grip feed 20 in/min, clamp dwell 0.5 s, part-off feed 0.002 in/rev, part-off start = bar + 0.2.
+- Lathe probe: clearance 0.1, skip feed 10 in/min; measured Ø = skip X − tip (assumes skip X reads diameter and the probe is calibrated).
+- Warm-up step time from distance ÷ feed (no timer).
+- Wear signs: boss big → D smaller, pocket big → D bigger, floor high → H wear down; lathe OD / ID / face: wear += nominal − measured.
