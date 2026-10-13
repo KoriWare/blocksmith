@@ -33,8 +33,8 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
    });
   });
   ['Generic 2-axis lathe','Haas ST-style lathe (generic)'].forEach(nm=>{const hk=/Haas/.test(nm);w.pick(nm,'Lathes');w.cur(E('S.m.length')-1);setv('Control',hk?'Haas NGC':'Fanuc 0i');
-   w.tab('new');d.querySelector('#q').value=LJOBS[3][1];w.go();log(nm+' cdrill: red before C / live codes confirmed',/C axis on \/ off/.test(d.querySelector('#out').textContent)&&!E('J.code'));
-   setv('C axis on / off',hk?'M154 / M155':'M200 / M201');setv('Live tool start / stop',hk?'M133 P<RPM> / M135':'M203 S<RPM> / M205');E("S.m[S.cur].opt.live=1;S.m[S.cur].opt.cax=1;save()");
+   w.tab('new');d.querySelector('#q').value=LJOBS[3][1];w.go();log(nm+' cdrill: red before C / live codes confirmed',/C.axis (mode )?on \/ off/.test(d.querySelector('#out').textContent)&&!E('J.code'));
+   setv('C axis on / off',hk?'M154 / M155':'M200 / M201');setv('C-axis mode on / off',hk?'M154 / M155':'M200 / M201');setv('Live tool start / stop',hk?'M133 P<RPM> / M135':'M203 S<RPM> / M205');E("S.m[S.cur].opt.live=1;S.m[S.cur].opt.cax=1;save()");
    LJOBS.forEach(([op,t])=>{w.tab('new');d.querySelector('#q').value=t;w.go();const j0=E('J&&J.op'),miss=E('J?Object.entries(J.p).filter(([k,x])=>x.v==null).map(([k])=>k):[]');
     const code=E('J&&J.code?txt().join("\\n"):""');let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{lathe:1});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
     const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+d.querySelector('#out').innerText.slice(0,300)];
