@@ -1,0 +1,75 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=51" style="width:390px;height:844px"></iframe><script>
+// Round 42 · navigation: Back via history, separate Build/Editor/Simulate pages, header ? / ⌂ / ‹, auto-select new machine, pinned Use, short cards, Home, Help
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ const sl=ms=>new Promise(r=>setTimeout(r,ms||250));const T=()=>d.querySelector('#ttl').textContent;const vis=e=>!!(e&&e.offsetParent!==null);
+ const back=async()=>{w.history.back();await sl(300)};
+ setTimeout(async()=>{const E=x=>w.eval(x);try{E("NOASK=1");
+  // Home
+  log('starts on Home',T()=='Home');
+  log('first-run tip on Home',vis(d.querySelector('#hTip')));
+  const chips=[...d.querySelectorAll('#home .row .chip')].map(c=>c.textContent);
+  log('Home chips that repeat tabs are gone',!chips.includes('Machines')&&!chips.includes('Simulate')&&chips.includes('Help'),chips.join(','));
+  log('Home setup line matches Machines card',(()=>{const h=d.querySelector('#hPct').textContent;w.tab('machines');const c=[...d.querySelectorAll('.card[onclick^="edit("]')].find(c=>c.getAttribute('onclick')=='edit('+E('S.cur')+')');return c&&c.textContent.includes(h)})());
+  w.tab('home');d.querySelector('#hTip button').click();log('tip dismiss sticks',!d.querySelector('#hTip')&&E('S.tip42')==1);
+  // header
+  log('? sits in the header',!!d.querySelector('.h #qhelp'));log('home icon in header',!!d.querySelector('.h #hhome'));
+  w.tab('machines');d.querySelector('#hhome').click();log('home icon goes Home',T()=='Home');
+  // Back through tabs
+  w.tab('machines');w.tab('new');w.tab('recent');await back();log('Back: Library → Build',/^Build ·/.test(T()),T());
+  await back();log('Back: Build → Machines',T()=='My Machines',T());
+  await back();log('Back: Machines → Home',T()=='Home',T());
+  // More sub-screens + header back
+  w.more();w.tools();log('header ‹ shown on sub-screen',vis(d.querySelector('#hback')));
+  await back();log('Back: Tools → More',T()=='More',T());log('header ‹ hidden on More',!vis(d.querySelector('#hback')));
+  w.compare();d.querySelector('#hback').click();await sl(300);log('header ‹: Compare → More',T()=='More',T());
+  w.batch();const ib=[...d.querySelectorAll('#v button')].find(b=>/^Back/.test(b.textContent.trim()));ib&&ib.click();await sl(300);log('in-page Back goes back (no new entry)',T()=='More'&&E('NAV.cur.k')=='more',T());
+  // '?' topics
+  const topic=(fn)=>{w[fn]();return E('curTopic()')};
+  log("'?' topics: More/Tools/Snippets/Compare/Batch/About",['more','tools','snips','compare','batch','about'].join()==[topic('more'),topic('tools'),topic('snips'),topic('compare'),topic('batch'),topic('about')].join(),[topic('more'),topic('tools'),topic('snips'),topic('compare'),topic('batch'),topic('about')].join());
+  // Help returns to previous screen
+  w.tab('machines');d.querySelector('#qhelp').click();log('? opens Help',T()=='Help');
+  log('Help has ‹ Back',!!d.querySelector('#helpBack'));d.querySelector('#helpBack').click();await sl(300);log('Help Back → previous screen (Machines)',T()=='My Machines',T());
+  w.tab('sim');w.help();await back();log('phone Back from Help → Simulate',/^Simulate ·/.test(T()),T());
+  // Help search stems
+  w.help();const hq=d.querySelector('#hq');const srch=q=>{hq.value=q;hq.dispatchEvent(new w.Event('input'));return [...d.querySelectorAll('#hl details[id^="h-"]')].filter(x=>x.style.display!='none').map(x=>x.id)};
+  log('search "simulate" finds the simulator topic',srch('simulate').includes('h-sim'));
+  log('search "calculator" finds calculators',srch('calculator').includes('h-calc36'));
+  log('search "probing" finds probe topics',srch('probing').length>0);
+  log('two words must both match',srch('backup pin').includes('h-backup')&&!srch('backup pin').includes('h-sim'));
+  log('nonsense shows "Nothing found"',srch('zzqxv').length==0&&vis(d.querySelector('#hnone')));
+  srch('');log('source links folded',d.querySelectorAll('#hl details.srcf').length>0&&[...d.querySelectorAll('#hl details.srcf')].every(x=>!x.open));
+  // Editor / Simulate with no job
+  E('J=null');w.tab('edit');log('Editor with no job: Pick a job first',/Pick a job first/.test(d.querySelector('#v').textContent)&&vis(d.querySelector('#pickfirst'))&&!d.querySelector('#jpick'));
+  w.tab('sim');log('Simulate with no job: Pick a job first',/Pick a job first/.test(d.querySelector('#v').textContent)&&!d.querySelector('#cv'));
+  [...d.querySelectorAll('#pickfirst button')].find(b=>/Go to Build/.test(b.textContent)).click();log('Go to Build works',/^Build ·/.test(T())&&!!d.querySelector('#jpick'));
+  // new machine auto-selected + pinned Use
+  const n0=E('S.m.length');w.tab('machines');w.addM();[...d.querySelectorAll('.chip')].find(b=>/Robodrill/.test(b.textContent)).click();
+  log('new machine is selected',E('S.cur')==n0,E('S.cur')+' vs '+n0);log('pinned bar says In use',/In use/.test(d.querySelector('#usebar').textContent));
+  await back();log('Back from new machine → Machines (not Presets)',T()=='My Machines',T());
+  w.edit(0);log('pinned Use this machine at top',d.querySelector('#v').firstElementChild.id=='usebar'&&!!d.querySelector('#useTop')&&d.querySelector('#useTop').getBoundingClientRect().top<200);
+  d.querySelector('#useTop').click();log('Use this machine → Build on that machine',E('S.cur')==0&&/^Build ·/.test(T()));
+  // short machine cards
+  w.tab('machines');const c0=d.querySelector('.card[onclick^="edit("]');log('machine cards short (chips folded)',!!c0.querySelector('details.mchips')&&!c0.querySelector('details.mchips').open&&c0.offsetHeight<450,c0.offsetHeight);
+  log('card summary "to confirm"',/\d+ to confirm/.test(c0.textContent));
+  log('Use buttons named consistently',[...d.querySelectorAll('#v button')].filter(b=>/^Use\b/.test(b.textContent.trim())).every(b=>b.textContent.trim()=='Use this machine'));
+  // separate pages with shared job
+  w.tab('new');d.querySelector('#q').value='G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1';w.go();await sl(200);
+  log('Build shows code',vis(d.querySelector('#ed')));log('Build hides simulator',!vis(d.querySelector('#cv')));log('Build shows job inputs',vis(d.querySelector('#q')));
+  log('Save… next to checks bar',vis(d.querySelector('#qsave'))&&d.querySelector('#qsave').previousElementSibling&&['ck','ready'].includes(d.querySelector('#qsave').previousElementSibling.id));
+  w.tab('edit');await sl(100);log('Editor page: code, no job inputs, no sim',vis(d.querySelector('#ed'))&&!vis(d.querySelector('#q'))&&!vis(d.querySelector('#cv'))&&vis(d.querySelector('#ck')));
+  w.tab('sim');await sl(100);log('Simulate page: canvas only, no editor/inputs',vis(d.querySelector('#cv'))&&!vis(d.querySelector('#ed'))&&!vis(d.querySelector('#q')));
+  log('sim canvas sized on its own page',d.querySelector('#cv').width>100,d.querySelector('#cv').width);log('job kept across pages',E('J&&J.op')=='bolt');
+  await back();log('Back: Simulate → Editor',/^Editor ·/.test(T()),T());await back();log('Back: Editor → Build',/^Build ·/.test(T())&&vis(d.querySelector('#q')),T());
+  // Save… prompt
+  w.prompt=()=>'Nav bolts';const nj=E('S.jobs.length');d.querySelector('#qsave button').click();log('Save… asks a name and saves to Library',E('S.jobs.length')==nj+1&&E('S.jobs[0].name')=='Nav bolts'&&T()=='Library',T());
+  w.prompt=()=>null;w.reopen(0);log('reopened job has Save…',!!d.querySelector('#qsave'),d.querySelector('#out')&&d.querySelector('#out').textContent.slice(0,200));const nj2=E('S.jobs.length');d.querySelector('#qsave button').click();log('Save… cancel saves nothing',E('S.jobs.length')==nj2);
+  // safety: positions still not guessed
+  w.tab('new');d.querySelector('#q').value='G54 T2 6 hole bolt circle 3.0 dia 0.5 deep';w.go();log('missing positions still red (not guessed)',/Center X|Z0/.test((d.querySelector('#out .card')||{}).textContent||'')&&!d.querySelector('#ed'));
+  w.tab('edit');log('Editor with unanswered job sends you to Build',/Finish this job in Build first/.test(d.querySelector('#v').textContent));
+  log('help topics: nav + screen topics',['nav','more','tools','snips','compare','batch','about'].every(k=>E('HELP').some(h=>h[0]==k)));
+  log('titles say Build, not New job',(w.tab('new'),/^Build ·/.test(T())));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>
