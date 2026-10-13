@@ -165,3 +165,27 @@ Items tagged **official** rest on the control maker's own public manual (allowed
 | #3000 ranges | Fanuc 0–200, 26 chars; Haas 1–999 | Round 25 (above) |
 
 Not used (only one source or builder-specific): Haas WIPS tool-setting macro numbers; Blum macro numbers; setter positions (always from the user's setup sheet).
+
+## Round 27 · Top-10 real-world jobs (Oct 13)
+
+The research list in /workspace/macro-research/real-world-jobs.md was not source-checked by its author; each control-specific fact used below was checked again here.
+
+| Fact used | Sources (official, or 2+ independent that agree) | Used in |
+|---|---|---|
+| Fanuc #3901 parts completed, #3902 parts required; M30 counts when parameter 6700 bit 0 = 0 | Fanuc 0i/16/18/21 macro executor manual (cncmanuals.com copy, official) + factorywiz.com KB + jitbase KB + glassdome.com | Part counter |
+| Haas #3901 / #3902 = M30 counter 1 / 2 (no "required parts" variable) | Haas mill operator manual, Macros (official) + inventcom.net + kb.wolframmfg.com | Part counter |
+| Haas variables kept at power off; #100–#199 and #500–#599 used by probes / pallets; #600–#699, #800–#999 for users | Haas mill operator manual (official) + Haas macro programming PDF (official) + inventcom.net | Counter variable checks |
+| Fanuc #100–#199 cleared at power off, #500–#999 kept | Fanuc Macro B reference PDF (hobbycnc copy) + studylib Macro B manual + digit-chain.com | Counter variable checks |
+| Thread milling direction: internal = G03 (RH bottom up, LH top down), external = G02 (RH top down, LH bottom up), climb, M03 | Haas Tooling thread mill page (official) + Sandvik Coromant application tips (official) + Morse / CPT / Tungaloy catalog programs | Thread mill |
+| Internal thread path radius = (major − cutter)/2, tangential arc in / out with 1/8 pitch rise | Morse 2022 catalog p.133 + CPT catalog p.375 + Tungaloy catalog | Thread mill |
+| Fanuc POPEN / DPRNT / PCLOS; [ab] digit format; * prints as a space | Fanuc 30i/31i and 21i-TB operator manuals (cncmanuals.com copies, official) + cncci.com | Inspect + DPRNT |
+| Haas DPRNT: only command in its block, two-digit [wf] format, Setting 261 = file or TCP, 263 = port | Haas "Communication with external devices – DPRNT" page (official) + factorywiz.com | Inspect + DPRNT |
+| Skip positions #5061 / #5062, G10 L2 / L20 offset writes | Round 25 entries (sourced) | Probe boss, corner, inspect |
+| Engraving digits | the app's own single-stroke font (Round 24) | Serial engrave |
+
+Flagged / not sourced (kept as gray suggestions or user inputs, never as facts):
+- Helical ramp pitch in Circular pocket: suggested from a ~3° ramp; shop practice, not a sourced number — shown gray, user changes it.
+- External thread minor Ø: not computed (thread-depth constants not checked here) — the user types it from their thread table.
+- Probe on / off M-codes: builder-specific — red field, no hint numbers.
+- Warm-up RPM steps and travel limits: user inputs; no published "standard" warm-up schedule was used.
+- Skipped from the research list's top 10: nothing skipped; job 7 (broken tool) reuses the Round 26 Tool length check, job 3/8 add boss and corners next to the existing bore / web / pocket jobs.
