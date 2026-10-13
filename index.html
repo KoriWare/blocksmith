@@ -338,7 +338,7 @@ function refresh(){const st=J.stock;let r;try{r=interp(txt(),{lathe:J.lathe,star
  J.run=r;J.M=r.err||!r.moves.length?J.moves:r.moves;
  J.M.forEach(m=>{m.out=0;if(J.rot){const H=J.p.Z0.v,D=J.p.Depth.v;if(!m.r&&(J.rot=='B'?Math.max(Math.abs(m.b[0]),Math.abs(m.b[2])):Math.hypot(m.b[1],m.b[2]))<H-D-1e-6)m.out=1;return}if(J.op=='engrave'&&J.lathe){if(!m.r&&m.b[2]<st[2]-1e-6)m.out=1;return}if(J.lathe?(m.b[0]<-1e-6||(!m.r&&m.b[2]<st[2]-1e-6)):(!m.r&&m.b[2]<st[2]-1e-6))m.out=1});
  const ch=checks(J);ch.unshift(['Program runs in simulator'+(r.err?': '+r.err:''),!r.err],['No #3000 alarm on this run'+(r.alarms.length?' (alarm '+r.alarms[0].n+': '+r.alarms[0].msg+')':''),!r.alarms.length]);
- const lt=S.tools&&S.tools.find(t=>t.n==(J.p.Tool||{}).v);ch.push(['Tool T'+(J.p.Tool||{}).v+' is in the tool library',!!lt]);
+ const lt=S.tools&&S.tools.find(t=>t.n==(J.p.Tool||{}).v);if(J.p.Tool&&J.p.Tool.v!=null)ch.push(['Tool T'+J.p.Tool.v+' is in the tool library',!!lt]);
  const ok=ch.filter(c=>c[1]).length,rr=+((sv('Rapid rate (in/min)')||{v:400}).v),rs=sv('Rapid rate (in/min)'),out=J.M.filter(x=>x.out).length;J.ct=time(J.M,rr);
  $('#ck').className='ok '+(ok==ch.length?'':'bad');$('#ck').textContent=`${ok==ch.length?'✓':'⚠'} ${ok} of ${ch.length} checks passed ▾`;$('#cl').innerHTML=ch.map(c=>`<div class="s">${c[1]?'✅':'❌'} ${c[0]}</div>`).join('');
  $('#sc').max=J.M.length;
@@ -678,7 +678,7 @@ const _sheet9=sheet;sheet=function(){_sheet9();if(J.lathe){const r=sv('Tool nose
 // mill side out-of-stock
 const _refresh9=refresh;refresh=function(){_refresh9();if(J.lathe||J.hmc||J.rot||J.op=='face'||OPN2[J.op]||J.op=='import')return;const s=J.stock,r=((J.p['Drill Ø']||J.p.Cutter||{v:0}).v)/2;let n=0;
  J.M.forEach(m=>{if(!m.r&&m.b[2]<s[5]-1e-6&&(m.b[0]<s[0]+r-1e-6||m.b[0]>s[3]-r+1e-6||m.b[1]<s[1]+r-1e-6||m.b[1]>s[4]-r+1e-6)){if(!m.out)n++;m.out=1}});
- if(n){$('#info').insertAdjacentHTML('beforeend',`<div class="s" style="color:#ff8a8a">⚠ ${n} cut move(s) leave the side of the stock (red)</div>`);const ck=$('#cl');ck.insertAdjacentHTML('afterbegin','<div class="s">❌ Cuts stay inside stock sides</div>');draw()}};
+ if(n){$('#info').insertAdjacentHTML('beforeend',`<div class="s" style="color:#ff8a8a">⚠ ${n} cut move(s) leave the side of the stock (red)</div>`);const ck=$('#cl');ck.insertAdjacentHTML('afterbegin','<div class="s">❌ Cuts stay inside stock sides</div>');if(ctx)draw()}};
 // HMC fit bigger
 const _vw9=vw;vw=function(k){_vw9(k);if(J&&J.hmc){const s=J.stock;view.s=Math.min(cv.clientWidth,300)*1.5/Math.hypot(s[3]-s[0],s[4]-s[1],s[5]-s[2]);view.py=-30;draw()}};
 // import button on New screen
@@ -2151,7 +2151,7 @@ j2Op=function(t){const l=String(t||'').toLowerCase();for(const op of J2ORDER){co
 const _pj28=parseJ2;parseJ2=function(t,op){const j=_pj28(t,op);if(J2[op].lathe)j.lathe=true;return j};
 const _parseL28=parseL;parseL=function(t){const op=j2Op(t);return op?parseJ2(t,op):_parseL28(t)};
 const _genL28=genL;genL=function(j){return isJ2(j)?genU(genJ2,j):_genL28(j)};
-const _gj28=genJ2;genJ2=function(j){const g=_gj28(j);if(j.lathe)j.stock=[0,0,sp(j,'First groove Z')-sp(j,'Groove pitch')*sp(j,'Count')-0.5,sp(j,'Bar Ø')/2,0,0.2];j.lb={R:sp(j,'Bar Ø')/2,L:Math.abs(sp(j,'First groove Z'))+sp(j,'Groove pitch')*sp(j,'Count')+0.5,z:0};return g};
+const _gj28=genJ2;genJ2=function(j){const g=_gj28(j);if(j.lathe)j.stock=[0,0,sp(j,'First groove Z')-sp(j,'Groove pitch')*sp(j,'Count')-0.5,sp(j,'Bar Ø')/2,0,0.2],j.lb={R:sp(j,'Bar Ø')/2,L:Math.abs(sp(j,'First groove Z'))+sp(j,'Groove pitch')*sp(j,'Count')+0.5,z:0};if(!j.lathe&&j.p&&j.p.Holes){const h=parseHoles(sp(j,'Holes')),pad=Math.max(0.5,(sp(j,'Cbore Ø')||sp(j,'Hole Ø')||0.5));if(h.length){const xs=h.map(a=>a[0]),ys=h.map(a=>a[1]),st=j.stock||[0,0,-1,0,0,0];j.stock=[Math.min(...xs)-pad,Math.min(...ys)-pad,st[2],Math.max(...xs)+pad,Math.max(...ys)+pad,st[5]]}}return g};
 const _ip28=interp;interp=function(lines,o){if(J&&J.op=='mvise'&&lines)lines=lines.map(l=>/^M98 P/.test(l)?'('+l+' - YOUR PROGRAM, NOT SIMULATED)':l);return _ip28(lines,o)};
 const _ck28=checks;checks=function(j){const c=_ck28(j);if(isJ2(j)&&j.lathe){const t=txt().join('\n');return c.map(x=>/^Safe start line/.test(x[0])?['Safe start line (G18 '+GU()+' G40 G80 G99)',/G18 G2[01] G40 G80 G99/.test(t)]:/^All #variables|#variables valid/.test(x[0])?x:x)}return c};
 TLNEAR.push(['Rectangular pocket','rectangular pocket 2 x 1',/pocket|rect|square/],['Slot','slot',/slot|keyway/],['Helical bore','helical bore',/bore|hole|helix|interp/],['Hole chamfer','chamfer holes',/chamfer|deburr|edge/],['Custom peck drill','custom peck drill',/peck|drill|deep/],['Counterbore pattern','counterbore',/counterbore|cbore|spot/],['Date code engrave','engrave date code',/date|lot|stamp/],['Inspect every Nth part','inspect every 10 parts',/every|inspect|check/],['Multi-vise loop','multi vise G54 G55',/vise|vice|fixture/]);
