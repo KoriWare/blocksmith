@@ -1,8 +1,10 @@
-<!doctype html><body style="margin:0;background:#111"><iframe id="f" src="../index.html?v=26" style="width:390px;height:1500px;border:0"></iframe><script>
+<!doctype html><body style="margin:0;background:#111"><iframe id="f" src="../index.html?v=27" style="width:390px;height:1500px;border:0"></iframe><script>
 let first=1;const job=new URLSearchParams(location.search);
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
  setTimeout(()=>{w.eval('NOASK=1');const E=x=>w.eval(x),k=job.get('k');w.confirm=()=>true;
-  if(k=='r21ask'){E('NOASK=0');E('S.cur=0');w.tab('new');w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');setTimeout(()=>{const D=f.contentDocument;D.scrollingElement.scrollTop=D.querySelector('#cvask').offsetTop-300},500)}
+  if(k=='home'){E('S.m[0].fav=1');w.tab('home')}
+else if(k=='help'){w.help('build')}
+else if(k=='r21ask'){E('NOASK=0');E('S.cur=0');w.tab('new');w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');setTimeout(()=>{const D=f.contentDocument;D.scrollingElement.scrollTop=D.querySelector('#cvask').offsetTop-300},500)}
 else if(k=='r21form'){E('S.cur=0');w.tab('new');w.ex('G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 70 z0 0');E("S.tools.find(t=>t.n==1).type='Custom form tool';S.tools.find(t=>t.n==1).prof=[[0.25,0],[1,0.25],[1,1]]");w.tab('sim');setTimeout(()=>{const D=f.contentDocument;D.querySelector('#tStk').click();w.scrub(Math.floor(E('J.M.length')*0.55));D.scrollingElement.scrollTop=D.querySelector('#cv').offsetTop-70},700)}
 else if(k=='r21sim'){E('S.cur=0');w.tab('new');w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');w.tab('sim');setTimeout(()=>{f.style.height='844px';const D=f.contentDocument;D.querySelector('#simcode').open=true;w.scrub(9);D.scrollingElement.scrollTop=D.querySelector('#cv').offsetTop+120},700)}
 else if(k=='r21edit'){E('S.cur=0');w.tab('new');w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');w.tab('edit');setTimeout(()=>{const D=f.contentDocument;D.scrollingElement.scrollTop=D.querySelector('#ck').offsetTop-70},700)}
