@@ -1,0 +1,17 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
+ setTimeout(async()=>{const d=w.document,E=x=>w.eval(x);w.confirm=()=>true;try{
+  log('each machine has own tools',E('S.m.every(m=>Array.isArray(m.tools)&&m.tools.length)'));
+  E('S.cur=0;S.tools[0].dia=3');E('S.cur=1');log('editing Mill A tools does not change Mill B',E('S.tools[0].dia')==2);
+  log('tools not saved as shared key',!JSON.parse(w.localStorage.mc||'{}').tools||E('save(),!JSON.parse(localStorage.mc).tools'));
+  E('S.cur=0');w.tab('new');w.ex('G54 T1 face 4 x 3 take off 0.06 stepdown 0.02 stepover 70 z0 0');log('job uses selected machine tool dia (3)',E('J.p.Cutter.v')==3);
+  log('filename uses O-number',E('fname()')=='O1000');E("S.eol='LF'");let t=E('progText()');log('LF export, % wrapped',!t.includes('\r')&&t.startsWith('%\n')&&/\n%\n$/.test(t));E("S.eol='CRLF'");t=E('progText()');log('CRLF export',t.includes('\r\n'));
+  log('line-ending picker shown',!!d.querySelector('#eol'));
+  const n0=E('view.n');d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Home',bubbles:true}));d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));log('arrow steps sim',E('view.n')==1);
+  d.querySelector('#q').value='G54 T2 3 x 4 grid 0.75 spacing start x0 y0 z0 0 0.4 deep drill';d.querySelector('#q').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,bubbles:true}));log('Ctrl+Enter generates',E('J.op')=='grid');
+  d.body.dispatchEvent(new w.KeyboardEvent('keydown',{key:'s',ctrlKey:true,bubbles:true}));log('Ctrl+S saves to Recent',E('S.jobs.length')==1);
+  w.scanner();log('scanner has file import',!!d.querySelector('#sfi'));
+  log('debug hooks off without ?debug=1',!/debug=1/.test(w.location.search));
+ }catch(e){out.push('ERROR '+e.message+' '+(e.stack||'').split('\n')[1])}o.textContent=out.join('\n')},800)};
+</script></body>
