@@ -39,10 +39,13 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   log('clashing O9100 renumbered',/^O9101 /m.test(c2)&&/^O9100 /m.test(c2)&&o.notes.some(n=>/O9100 clashed .*renumbered to O9101/.test(n)),o.notes.join('|'));
   log('G65 call updated to new number',/G65 P9101 /.test(c2)&&/G65 P9100 /.test(c2));
   log('no duplicate O numbers',o.checks.find(c=>/duplicate O/.test(c[0]))[1]);
-  // persistent variable conflict flagged
-  E(`(()=>{const l=jmGet('${lid}');jmAdd(l,'op:ctr');jmAdd(l,'op:ctr');const n=l.entries.length;[n-2,n-1].forEach(i=>{const p=l.entries[i].job.p;Object.keys(p).forEach(k=>{if(p[k].v==null)p[k].v=/#/.test(k)?510:/offset/i.test(k)?'G54':1})});save();jmOpen(l.id)})()`);
-  const r5=E(`jmRender(jmGet('${lid}').entries[3],0)`);o=E("jmBuildUI()");
-  log('#500+ shared between jobs flagged amber (not renumbered)',r5.red||o.warn.some(w=>/#510/.test(w)&&/persistent/.test(w)),(r5.red?'red:'+JSON.stringify(r5.miss)+r5.block:'')+o.warn.join('|')+o.err.join('|'));
+  // persistent variable shared by two VALID jobs: both render ready, the list builds, #520 is flagged amber and left alone
+  E(`(()=>{const l=jmGet('${lid}');[0,1].forEach(()=>{const e=jmAdd(l,'op:pnth');const p=e.job.p;Object.assign(p,{'Every N':{v:5,g:false},'Count #':{v:520,g:false},'Probe program':{v:9810,g:false},'Work offset':{v:'G54',g:false}});Object.keys(p).forEach(k=>{if(p[k].v==null)p[k]={v:1,g:false}})});save();jmOpen(l.id)})()`);
+  const r5=E(`[3,4].map(i=>jmRender(jmGet('${lid}').entries[i],0))`);o=E("jmBuildUI()");
+  log('#500+: both jobs sharing #520 are valid on their own (not red, code written)',r5.every(r=>!r.red&&r.code&&r.code.join('\n').includes('#520')),JSON.stringify(r5.map(r=>[r.red,r.miss,r.block,r.err])));
+  log('#500+: the list still builds (no errors)',!o.err.length&&o.lines.length>0,o.err.join('|'));
+  log('#500+: amber note names #520 and both jobs',o.warn.some(w=>/#520/.test(w)&&/persistent/.test(w)&&/#5 /.test(w)&&/#4\b/.test(w))&&!!d.querySelector('.jmwarn'),o.warn.join('|'));
+  log('#500+: #520 not renumbered (appears in both sections)',(o.lines.join('\n').match(/#520\b/g)||[]).length>=4&&!o.notes.some(n=>/#520→/.test(n)),o.notes.join('|'));
   E(`(()=>{const l=jmGet('${lid}');l.entries.splice(3,2);save();jmOpen(l.id)})()`);
   // red entry blocks build
   d.querySelector('#jmadd').value='op:cpock';E("jmAddUI()");
@@ -54,10 +57,14 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   E("jmFix(3)");log('Fix opens Build with a back bar',!!d.querySelector('#jmfixbar')&&/^Build/.test(d.querySelector('#ttl').textContent));
   E("Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k=='Work offset'?'G56':k=='Tool'?7:k=='Z0'||k=='Center X'||k=='Center Y'?0:k=='Dia'?1.5:k=='Cutter'?0.5:k=='Depth'?0.25:k=='Stepdown'?0.05:1,g:false}});show();jmDone()");
   log('Done returns to list; entry no longer red',/^Job manager/.test(d.querySelector('#ttl').textContent)&&!d.querySelector('#jmbuild').disabled,d.querySelector('.jme:last-child').textContent);
-  // risky gate per entry
-  
-  const hasR=E(`jAvail('splm19')`);if(hasR){E("jmAdd(jmGet(JML),'op:splm19');{const p=jmGet(JML).entries.at(-1).job.p;Object.keys(p).forEach(k=>{if(p[k].v==null&&k!=RISK)p[k]={v:({'Work offset':'G54','Teeth':12,'Start Ø':0.5,'Final Ø':0.6,'Depth per pass':0.01,'Z top':0,'Z bottom':-0.5,'Tip at orient 0':'+X','Angle direction':'CCW (+)','Feed':5,'Tool':3,'Center X':0,'Center Y':0})[k]??1,g:false}})}jmOpen(JML)");const rr=E(`jmRender(jmGet(JML).entries.at(-1),0)`);
-   log('HIGH-risk entry: amber/⚠ flagged and red while its gates are open',rr.red&&rr.high&&/accept the risk|setup/i.test(rr.block+rr.miss.join()),JSON.stringify(rr));E("jmGet(JML).entries.pop();save();jmOpen(JML)")}else log('HIGH-risk job available for gate test',false,'splm19 not available');
+  // HIGH-risk gate: everything filled and machine setup complete — only the risk tap is missing, and that alone blocks the build
+  E("{const e=jmAdd(jmGet(JML),'op:fhlock');e.job.p.Lock={v:'Feed hold only',g:false}}jmOpen(JML)");const ri=E("jmGet(JML).entries.length-1");const rr=E(`jmRender(jmGet(JML).entries[${ri}],0)`);
+  log('HIGH-risk entry: red only because the risk tap is missing (no setup / refusal block)',rr.red&&rr.high&&JSON.stringify(rr.miss)==JSON.stringify([E('RISK')])&&!rr.block&&!rr.err,JSON.stringify(rr));
+  log('HIGH-risk: Build button disabled + build refused naming the risk tap',d.querySelector('#jmbuild').disabled&&(o=E("jmBuild(jmGet(JML))"),o.err.length==1&&o.err[0].includes(E('RISK'))&&!o.lines.length),o&&o.err.join('|'));
+  E(`jmFix(${ri})`);E("ed(RISK)");E("jmDone()");const rr2=E(`jmRender(jmGet(JML).entries[${ri}],0)`);
+  log('HIGH-risk: tapping “I accept the risk” (and nothing else) unblocks it',!rr2.red&&rr2.high&&!d.querySelector('#jmbuild').disabled,JSON.stringify(rr2));
+  o=E("jmBuildUI()");log('HIGH-risk: built program carries the HIGH RISK banner + red note',!o.err.length&&/HIGH RISK JOB - RISK ACCEPTED/.test(o.lines.join('\n'))&&/HIGH-risk jobs inside/.test(d.querySelector('#jmout').textContent),o.err.join('|'));
+  E("jmGet(JML).entries.pop();save();jmOpen(JML)");
   // subprogram mode
   E("jmGet(JML).mode='sub';save();jmOpen(JML)");o=E("jmBuildUI()");const c3=o.lines.join('\n');
   log('sub mode: main calls each job with M98',(c3.match(/^M98 P\d+ /mg)||[]).length==4&&(c3.match(/\bM30\b/g)||[]).length==1,c3.slice(0,400));

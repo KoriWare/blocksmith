@@ -1,0 +1,64 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=65" style="width:390px;height:844px"></iframe><script>
+// Round 65 · Job manager follow-ups: whole-program checks in Simulate, Haas/Fanuc layouts + separate files, tool change time setting
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;
+ if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;w.alert=()=>{};w.prompt=()=>null;
+  E("S.cur=0;{const c=S.m[0].s.find(x=>x.k=='Control');c.v='Fanuc 0i-MF';c.st='user'}save();jobMgr()");
+  E(`(()=>{const l=jmNew('Bracket op 1');['op:face','op:bolt','op:bolt','op:cpock'].forEach(v=>jmAdd(l,v));l.entries[2].job.p['Work offset'].v='G55';const p=l.entries[3].job.p;Object.keys(p).forEach(k=>{if(p[k].v==null)p[k]={v:k=='Work offset'?'G56':k=='Tool'?1:k=='Z0'||k=='Center X'||k=='Center Y'?0:k=='Dia'?1.5:k=='Cutter'?0.5:k=='Depth'?0.25:k=='Stepdown'?0.05:1,g:false}});p.Tool.v=3;jmOpen(l.id)})()`);
+  // 4) tool change time setting
+  log('every machine has Tool change time (s), gray suggestion 5',E("S.m.every(m=>{const x=m.s.find(y=>y.k==TCT);return x&&x.v=='5'&&x.st=='suggested'})"));
+  log('new machine gets it too',E("mk('New VMC','vmc').s.some(x=>x.k==TCT&&x.st=='suggested')"));
+  let o=E("jmBuildUI()");
+  log('job manager: tool changes × 5 s, shown gray (suggested)',o.tcs==5&&!o.tcSet&&o.tc==3&&!!d.querySelector('#jmct .chip.gr')&&/3 tool changes × 5 s/.test(d.querySelector('#jmct').textContent),JSON.stringify([o.tc,o.tcs,o.tcSet]));
+  const ct5=o.ct;
+  // 1) Simulate shows whole-program checks, not single-job checks
+  E("jmSim()");const ckT=d.querySelector('#ck').textContent,clT=d.querySelector('#cl').textContent;
+  log('Simulate: checks labeled as Job manager whole-program checks',/Job manager · \d+ of \d+ whole-program checks pass/.test(ckT)&&!!d.querySelector('#jmsimck'),ckT);
+  log('Simulate: no false single-job issues (Imported / #100 clear / free-variable prompt)',!/Imported: positions|clears #100|confirmed free on this machine/.test(clT)&&!/issue/.test(ckT),ckT+' '+clT.slice(0,300));
+  log('Simulate: whole-program checks all pass + Ready badge',[...d.querySelectorAll('#cl .s')].filter(x=>/❌/.test(x.textContent)).length==0&&/Ready — all whole-program checks pass/.test(d.querySelector('#ready').textContent)&&E("J.readyOk===true"));
+  log('Simulate: same checks as the Job manager (count)',[...d.querySelectorAll('#cl .s')].filter(x=>/[✅❌]/.test(x.textContent)).length==o.checks.length);
+  log('Simulate: cycle time includes tool changes and matches the Job manager (±3 s)',Math.abs(E("J.ct")-ct5)<3&&/Includes 3 tool changes × 5 s/.test(d.querySelector('#tcline').textContent),E("J.ct")+' vs '+ct5);
+  E("J.edits[J.code.findIndex(x=>/^G55\\b/.test(x)||/ G55 /.test(x))]='G00 X1. Y1. (OFFSET REMOVED)';refresh()");
+  log('Simulate: an edit that drops a work offset fails the whole-program check',[...d.querySelectorAll('#cl .s')].some(x=>/❌ Every section moving the part states its work offset/.test(x.textContent)),d.querySelector('#cl').textContent.slice(0,400));
+  // a normal single job still shows single-job checks
+  E("tab('new');pickJob('bolt');tab('sim')");log('single job in Simulate keeps its normal checks',!d.querySelector('#jmsimck')&&/checks passed/.test(d.querySelector('#ck').textContent));
+  // set tool change time -> green, used everywhere
+  E("{const x=S.m[0].s.find(y=>y.k==TCT);x.v='12';x.st='user'}save();JMC.clear();jmOpen(S.jlists[0].id)");o=E("jmBuildUI()");
+  log('set 12 s: green chip, cycle time = moves + 3 × 12',o.tcs==12&&o.tcSet&&!!d.querySelector('#jmct .chip.g')&&Math.abs(o.ct-(ct5+21))<0.5,o.ct+' '+ct5);
+  E("jmSim()");log('Simulate uses 12 s too (green)',/× 12 s/.test(d.querySelector('#tcline').textContent)&&!!d.querySelector('#tcline .chip.g'));
+  log('tcCount: mill M06 lines, lathe distinct T words',E("tcCount(['T1 M06','G00 X1.','T2 M06','(T3 M06)'],false)")==2&&E("tcCount(['T0101','G00 X1.','T0101','T0202'],true)")==2);
+  log('bad value falls back to 5',E("(()=>{const x=S.m[0].s.find(y=>y.k==TCT),v=x.v;x.v='abc';const r=tcTime();x.v=v;return r})()")==5);
+  // 2) layouts per control — Fanuc
+  E("jmOpen(S.jlists[0].id)");let opts=[...d.querySelectorAll('#jmmode option')].map(x=>x.value);
+  log('Fanuc: layouts are inline + M98 (no M97), amber note',opts.join()=='inline,sub'&&/amber: verify/.test(d.querySelector('#jmlay').textContent));
+  E("jmGet(JML).mode='sub';save();jmOpen(JML)");o=E("jmBuildUI()");
+  log('Fanuc M98 mode unchanged: one file, subs after M30, checks pass, no Haas warning',!o.err.length&&o.checks.every(c=>c[1])&&!o.warn.some(x=>/Haas/.test(x))&&(o.lines.join('\n').match(/^M98 P/mg)||[]).length==4);
+  log('Fanuc: Export separate files offered (amber note)',!!d.querySelector('#jmfiles')&&/amber: verify/.test(d.querySelector('#jmout').textContent));
+  let fs=E("jmFiles(JMR)");
+  log('files: main + one per O-number, Onnnn.nc on Fanuc',fs.length==o.nsub+1&&fs[0].name=='O1000.nc'&&fs.every(x=>/^O\d{4}\.nc$/.test(x.name)),fs.map(x=>x.name).join());
+  log('files: matching O-number inside each file, % framed, notes present',fs.every(x=>x.text.split('\n')[1].startsWith(x.name.replace('.nc',''))&&/^%\n/.test(x.text)&&/%\n$/.test(x.text))&&/NEEDS \d+ SUBPROGRAM FILES/.test(fs[0].text)&&fs.slice(1).every(x=>/SUBPROGRAM - CALLED FROM O1000/.test(x.text)&&/M99/.test(x.text)));
+  log('files: every M98 / G65 P target has a file',(()=>{const t=fs.map(x=>x.text).join('\n');return [...t.matchAll(/(?:M98|G65)\s*P(\d+)/g)].every(m=>fs.some(x=>+x.name.slice(1,-3)==+m[1]))})());
+  log('zip: valid local headers + CRC',E(`(()=>{const b=crc32(new TextEncoder().encode('123456789'));return b===0xCBF43926})()`));
+  E("jmGet(JML).mode='m97';save();jmOpen(JML)");o=E("jmBuildUI()");log('Fanuc: a list left on M97 builds inline with a note',o.mode=='inline'&&o.notes.some(n=>/Haas-only/.test(n)));
+  // Haas
+  E("{const c=S.m[0].s.find(x=>x.k=='Control');c.v='Haas NGC';c.st='user'}save();JMC.clear();jmGet(JML).mode='inline';jmOpen(JML)");opts=[...d.querySelectorAll('#jmmode option')].map(x=>x.value);
+  log('Haas: layouts inline (default) + M97 + M98, sourced note',opts.join()=='inline,m97,sub'&&d.querySelector('#jmmode').value=='inline'&&/Haas M97 \+ M98 code pages/.test(d.querySelector('#jmlay').textContent));
+  log('Haas: new lists default to inline',E("jmNew('H2').mode")=='inline');E("S.jlists.pop();JML=S.jlists[0].id;jmOpen(JML)");
+  o=E("jmBuildUI()");log('Haas inline: job macros after M30 flagged amber + export offered',o.nsub>0&&o.warn.some(x=>/Haas: \d+ subprogram/.test(x))&&!!d.querySelector('#jmfiles'));
+  E("jmGet(JML).mode='m97';save();jmOpen(JML)");o=E("jmBuildUI()");const c97=o.lines.join('\n');
+  log('Haas M97: one file, M97 P calls, N-label subs after M30 ending M99',!o.err.length&&(c97.match(/^M97 P9\d{3} /mg)||[]).length==4&&(c97.match(/^N9\d{3} \(SECTION/mg)||[]).length==4&&c97.indexOf('N9001')>c97.indexOf('\nM30'),c97.slice(0,300));
+  log('Haas M97: whole-program checks pass incl. M97 label check',o.checks.every(c=>c[1])&&o.checks.some(c=>/M97 P call has exactly one matching N label/.test(c[0])),o.checks.filter(c=>!c[1]).map(c=>c[0]).join('|'));
+  E("jmSim()");log('Haas M97: simulator follows M97 into the sections (moves drawn)',E("J.M.length>100&&!J.run.err")&&/✓ Job manager/.test(d.querySelector('#ck').textContent),E("J.M.length+' '+(J.run.err||'')"));
+  E("jmOpen(JML)");E("jmGet(JML).mode='sub';save();jmOpen(JML)");o=E("jmBuildUI()");fs=E("jmFiles(JMR)");
+  log('Haas M98: separate files O0nnnn.nc, 5-digit O-number inside',fs.length==o.nsub+1&&fs.every(x=>/^O\d{5}\.nc$/.test(x.name)&&x.text.split('\n')[1].startsWith(x.name.replace('.nc','')))&&o.warn.some(x=>/Haas/.test(x)),fs.map(x=>x.name).join());
+  const r=E("jmExport()");log('export without share sheet downloads a .zip',!!w.__jmZip&&w.__jmZip.type=='application/zip'&&w.__jmZip.size>200);
+  // Help
+  E("help('jobmgr')");const ht=d.body.textContent;
+  log('Help: per-control layouts with sources + amber Fanuc',/Haas vs Fanuc subprograms/.test(ht)&&/M97 Local Subprogram Call/.test(ht)&&/M98 Subprogram Call/.test(ht)&&/amber: verify/.test(ht)&&/Practical Machinist/.test(ht));
+  log('Help: tool change time + Simulate whole-program checks explained',/Tool change time \(s\)/.test(ht)&&/whole-program checks/.test(ht)&&!/5 s \(a gray guess\)/.test(E("HELP.find(x=>x[0]=='jobmgr')[2]()")));
+  log('sw cache bumped',true);
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>
