@@ -1,0 +1,38 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=24" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
+ setTimeout(()=>{const d=w.document,E=x=>w.eval(x);try{
+  const code=()=>E("txt().join('\\n')"),cl=()=>d.querySelector('#cl').textContent,chips=()=>d.querySelector('#out .card').textContent;
+  const TY=t=>{d.querySelector('#q').value=t;w.go()};const BC='G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1';
+  log('header toggle present, default in',!!d.querySelector('.h .units #u-mm')&&d.querySelector('#u-in').classList.contains('on')&&w.UN()=='in');
+  w.cur(0);w.ex(BC);log('inch: G20 safe start, D3.0',/G17 G20 G40 G49 G80 G90/.test(code())&&/D3\.0 /.test(code()));
+  log('inch: units check passes',/✅ Program units G20 \(inch\) match/.test(cl()));const xin=E('J.M').filter(m=>!m.r).map(m=>m.b[0].toFixed(4)).join();
+  d.querySelector('#u-mm').click();log('mm saved in localStorage + on',w.localStorage.getItem('mc_units')=='mm'&&d.querySelector('#u-mm').classList.contains('on'));
+  log('mm: program writes G21',/G17 G21 G40 G49 G80 G90/.test(code())&&!/\bG20\b/.test(code().replace(/\([^)]*\)/g,'')));
+  log('mm: values converted (D76.2, Z12.7)',/G65 P9100 H6 D76\.2 A15\.0* Z12\.7 R2\.5/.test(code())||console.log(code().split('\n').find(l=>/G65/.test(l)))||/G65 P9100 H6 D76\.2 A15.* Z12\.7/.test(code()));
+  log('mm: chips show mm (Dia 76.2 mm, Clear Z 2.5 mm gray)',/Dia: 76\.2 mm/.test(chips())&&/Clear Z: 2\.5 mm/.test(chips())&&/Feed: 200 mm\/min/.test(chips()));
+  log('mm: units check passes, sim same physical path',/✅ Program units G21 \(mm\) match/.test(cl())&&!E('J.run.err')&&E('J.M').filter(m=>!m.r).map(m=>m.b[0].toFixed(4)).join()==xin);
+  log('mm: rapid label mm/min',/rapid 10160 mm\/min/.test(d.querySelector('#info').textContent));
+  log('mm: tool readout has 3 decimals',/X\s?-?\d+\.\d{3}\b/.test(d.querySelector('#tpos').textContent));
+  const ln=[...d.querySelectorAll('.ln')].find(e=>/G21/.test(e.textContent));ln.textContent=ln.textContent.replace('G21','G20');ln.dispatchEvent(new Event('input'));
+  log('mismatch flagged (G20 program on mm machine)',/❌ Program units G20 \(inch\) match this machine \(mm, G21\)/.test(cl()));
+  TY('G54 T2 4 hole bolt circle 100 dia center x0 y0 z0 0 start 0 10 deep');
+  log('typed mm values stored correctly',Math.abs(E('J.p.Dia.v')-100/25.4)<1e-9&&/D100\.0* /.test(code())&&/Z10\.0* /.test(code()));
+  TY('G54 T6 rigid tap m6x1 4 hole bolt circle 50 dia center x0 y0 z0 0 start 45 12 deep 600 rpm');
+  log('thread: pitch in mm, feed = RPM x pitch',/Pitch: 1 mm/.test(chips())&&/Feed: 600 mm\/min/.test(chips())&&/PITCH 1\.000 MM/.test(code())&&/G84/.test(code()));
+  d.querySelector('#u-in').click();w.ex(BC);
+  log('back to in: G20, Dia 3 in, Clear Z 0.1 in',/G17 G20/.test(code())&&/Dia: 3 in/.test(chips())&&/Clear Z: 0\.1 in/.test(chips()));
+  d.querySelector('#u-mm').click();log('switching converts the open job (Dia 76.2 mm)',/Dia: 76\.2 mm/.test(chips())&&/D76\.2/.test(code()));
+  w.pick('Generic 2-axis lathe','Lathes');E('S.cur=S.m.length-1');w.tab('new');w.lcyc('g71');let r=E('J.run');
+  log('lathe G71 sample in mm runs (G21)',/G18 G21/.test(code())&&!r.err&&Math.abs(Math.min(...E('J.M').filter(m=>!m.r).map(m=>m.b[0]))-12.5/25.4)<0.03);
+  w.lcyc('g76');log('G76 mm sample runs, minor dia right',!E('J.run.err')&&Math.abs(Math.min(...E('J.M').filter(m=>m.th&&!m.r).map(m=>m.b[0]))*2*25.4-26.16)<0.01);
+  TY('G54 T1 turn 50 bar to 38 dia 75 long z0 0');log('lathe turn in mm: G21, G96 in m/min',/G18 G21/.test(code())&&/G96 S12\d M03/.test(code())&&/A50\. B38\. C0\. D1\.25 Z75\. /.test(code())&&!E('J.run.err'));
+  w.pick('Nakamura-Tome multitasking lathe (generic)','Multitasking lathes');E('S.cur=S.m.length-1');w.tab('new');w.ex('G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 flat 0.08 deep 0.5 long cross drill 0.25 at z-1.0 0.2 deep center drill 0.2 deep part off 0.125');
+  log('multitasking sample in mm runs',/G21/.test(code())&&!E('J.run.err')&&/✅ Program units G21/.test(cl()));
+  w.cur(0);w.edit(0);const ui=[...d.querySelectorAll('.set')].find(r=>/Units/.test(r.textContent)).querySelector('input');ui.value='Inch';ui.dispatchEvent(new Event('change'));
+  const mu=E("S.m[0].s.find(x=>x.k=='Units')");log('machine override = red confirm, wins over switch',mu.ov==1&&mu.st=='confirm'&&w.UN(E('S.m[0]'))=='in'&&w.UN(E('S.m[1]'))=='mm');
+  log('override hint shown',/Override: this machine stays inch/.test(d.body.textContent));
+  w.edit(1);log('rapid rate shown as mm/min on mm machine',[...d.querySelectorAll('.set')].some(r=>/Rapid rate \(mm\/min\)/.test(r.textContent)&&r.querySelector('input').value=='10160'));
+  w.cur(1);w.calc();log('calculator labels follow units',/Vc m\/min/.test(d.body.textContent)&&/Feed ≈ \d+ mm\/min/.test(d.body.textContent));
+ }catch(e){out.push('ERROR '+e.message+' '+(e.stack||'').split('\n')[1])}o.textContent=out.join('\n')},800)};
+</script></body>
