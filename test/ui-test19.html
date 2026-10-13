@@ -1,0 +1,50 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=29b#new" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");
+  const mach=(n,g)=>{w.pick(n,g);w.cur(E('S.m.length')-1)};
+  const run=s=>{w.tab('new');w.ex(s);return{J:E('J'),code:(E('J').code||[]).join('\n'),out:d.querySelector('#out').textContent,html:d.querySelector('#out').innerHTML}};
+  const setv=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  const ck=()=>[...d.querySelectorAll('#cl div, #cl li, #cl .set')].map(x=>x.textContent).join('\n')||d.querySelector('#cl').textContent;
+  mach('Generic 3-axis VMC','Vertical mills');log('3-axis VMC: no 4th axis ticked',!E('opt("ax4")'));
+  let r=run('engrave lettering on a round shaft');log('3ax: understood as engrave job (flat method)',r.J.op=='engrave'&&r.J.emode=='shaft'&&/Flat on top of the shaft/.test(r.out));
+  log('3ax: red need card asks text, height, orientation, mirror, tolerance, zero',['Text','Letter height','Reading','Baseline rotation','Mirror','Depth tolerance','Zero point','Shaft Ø','Start angle'].every(k=>d.querySelector(`#out [data-k="${k}"]`)));
+  log('3ax: choice inputs are selects (reading/mirror)',d.querySelector('#out select[data-k="Reading"]')&&d.querySelector('#out select[data-k="Mirror"]'));
+  log('3ax: no code before all red values',!d.querySelector('#ed'));
+  log('gray suggestions: spacing, RPM, feed, plunge, clearance',['Letter spacing','RPM','Feed','Plunge feed','Clearance'].every(k=>r.J.p[k]&&r.J.p[k].g));
+  w.exE(0);r={J:E('J'),code:E('J').code.join('\n'),out:d.querySelector('#out').textContent};
+  log('3ax example writes flat code: Y and Z follow the curve, no A',/G01 X[\d.-]+ Y[\d.-]+ Z0\.4/.test(r.code)&&!/\bA-?\d/.test(r.code));
+  log('3ax: live preview + up direction text',!!d.querySelector('#eprev svg')&&/Tops of the letters point toward/.test(d.querySelector('#eprev').textContent));
+  log('3ax: flat tolerance check listed',/Flat on a curve/.test(d.querySelector('#cl').textContent));
+  r=run('G54 T7 engrave "WIDE TEXT HERE" 0.25 tall 0.004 deep on 0.5 dia shaft start x0 centered on 0 deg around rotate 0 not mirrored zero on centerline tolerance 0.001');log('3ax: too wide around the curve is blocked',/Not written/.test(r.out)&&!d.querySelector('#ed'));
+  mach('Generic VMC w/ 4th axis','Vertical mills');log('4th-axis preset ticks its 4th-axis option',E('opt("ax4")'));
+  w.exE(0);r={code:E('J').code.join('\n'),out:d.querySelector('#out').textContent};log('4ax: wrapped around A, Z at R minus depth',/G01 X[\d.-]+ A-?[\d.]+ F/.test(r.code)&&/G01 Z0\.496/.test(r.code)&&/Wrapped around the 4th/.test(r.out));
+  log('4ax: no G93 unless confirmed, combined-feed warning',!/G93/.test(r.code)&&/combined X\/A feed/.test(d.querySelector('#cl').textContent));
+  setv('G93 inverse time','yes');w.exE(0);r={code:E('J').code.join('\n')};log('4ax: G93 used once confirmed, G94 after',/^G93$/m.test(r.code)&&/^G94$/m.test(r.code));
+  r=run('G54 T7 engrave "THIS TEXT IS FAR TOO LONG" 0.25 tall 0.004 deep on 0.5 dia shaft start x0 centered on 0 deg around rotate 0 not mirrored zero on centerline');log('4ax: text longer than circumference blocked',/Not written/.test(r.out)&&/around/.test(r.out));
+  r=run('G54 T7 engrave "AB" 0.1 tall 0.004 deep on 1.0 dia shaft start x0 centered on 0 deg along axis rotate 90 mirrored zero on centerline');log('orientation: rotate 90 + mirror changes up/reading words',/Mirrored/.test(d.querySelector('#eprev').textContent)&&/Tops of the letters point toward −X|Tops of the letters point toward \+X/.test(d.querySelector('#eprev').textContent));
+  w.exE(1);r={J:E('J'),code:E('J').code.join('\n'),out:d.querySelector('#out').textContent};log('mill text in a circle: XY at Z-depth, fits 360°',r.J.emode=='circle'&&/G01 X[\d.-]+ Y[\d.-]+ Z-0\.005/.test(r.code)&&/Text fits within 360/.test(d.querySelector('#cl').textContent));
+  log('circle: preview says tops out + clockwise',/tops facing out/.test(d.querySelector('#eprev').textContent)&&/clockwise/.test(d.querySelector('#eprev').textContent));
+  r=run('G54 T7 engrave "MACRO BUILDER ENGRAVING" in a circle radius 0.3 center x0 y0 0.125 tall 0.005 deep centered on 90 deg cw outside not mirrored zero on top');log('circle: more than 360° is blocked',/more than 360/.test(r.out));
+  r=run('G54 T7 engrave "AB" in a circle radius 0.25 center x0 y0 0.125 tall 0.005 deep centered on 90 deg ccw inside not mirrored zero on top');log('circle: letter height vs radius check flags distortion',/Letter height vs radius/.test(d.querySelector('#cl').textContent)&&[...d.querySelectorAll('#cl *')].some(x=>/Letter height vs radius/.test(x.textContent)&&/❌/.test(x.textContent)));
+  mach('Generic 2-axis lathe','Lathes');w.exE(0);log('plain lathe without live/C is blocked',/live tooling \+ C-axis/.test(d.querySelector('#out').textContent)&&!d.querySelector('#ed'));
+  mach('Nakamura-Tome multitasking lathe (generic)','Multitasking lathes');w.exE(0);
+  log('v29: C-axis settings exist, red and empty',['C-axis mode on / off','C-axis clamp / unclamp'].every(k=>{const x=E('S.m[S.cur].s').find(x=>x.k==k);return x&&x.st=='confirm'&&x.v===''}));
+  log('v29: unconfirmed C codes -> missing list, no code',/Missing machine settings/.test(d.querySelector('#out').textContent)&&/C-axis mode on \/ off/.test(d.querySelector('#out').textContent)&&!d.querySelector('#ed'));
+  E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k=='C-axis mode on / off');x.v='M901 / M902';save()})()`);w.exE(0);log('v29: typed but not confirmed still blocked',/Missing machine settings/.test(d.querySelector('#out').textContent));
+  setv('C-axis mode on / off','M901 / M902');setv('C-axis clamp / unclamp','M911 / M912');w.exE(0);r={code:E('J').code.join('\n')};log('NT: wrap around C on OD, X at diameter minus 2×depth',/G01 Z-?[\d.]+ C-?[\d.]+ F/.test(r.code)&&/G01 X0\.992/.test(r.code)&&/G98/.test(r.code));
+  log('NT: no G07.1 unless confirmed',!/G07\.1/.test(r.code));setv('Cylindrical interp (G07.1/G107)','yes');w.exE(0);{const c=E('J').code.map(l=>l.replace(/\(.*?\)/g,'')).join('\n');log('NT: G07.1 once confirmed + cancel',/G07\.1 C0\.5/.test(c)&&/G07\.1 C0/.test(c));log('v29: Fanuc G18 W0 H0 before G07.1, no G00 inside mode',/G18 W0 H0\s*\nG07\.1 C0\.5/.test(c)&&!/G07\.1 C0\.5[\s\S]*G00[\s\S]*G07\.1 C0\s*$/m.test(c));log('v29: C mode/unclamp/off codes written',/^M901/m.test(c)&&/^M912/m.test(c)&&/^M902/m.test(c));
+  E("S.m[S.cur].s[0].v='Haas'");w.exE(0);const h=E('J').code.join('\n');log('v29: Haas G19 + G107 Y0 C0 Q(dia), Z/Y moves, G107 cancel, G18',/G19[^\n]*\nG107 Y0 C0 Q1\.0 /.test(h)&&/G01 Z-?[\d.]+ Y-?[\d.]+/.test(h)&&/^G107 \(/m.test(h)&&/^G18 /m.test(h)&&!/G07\.1/.test(h));log('v29: sim has cut moves for Haas G107',E('J.M').filter(m=>!m.r).length>20&&E('J.M').every(m=>m.b.every(isFinite)));E("S.m[S.cur].s[0].v='Fanuc-style'")}
+  w.exE(1);r={code:E('J').code.join('\n')};log('NT face text in a circle: point-by-point X/C',/G01 X[\d.]+ C-?[\d.]+ F/.test(r.code)&&/Z-0\.004/.test(r.code)&&!/G12\.1/.test(r.code));
+  setv('Polar interp (G12.1/G112)','yes');w.exE(1);log('NT face: G12.1 once confirmed',/^G12\.1/m.test(E('J').code.join('\n'))&&/G13\.1/.test(E('J').code.join('\n')));E("S.m[S.cur].s[0].v='Haas'");w.exE(1);{const h=E('J').code.join('\n');log('v29: Haas face G17 G112 X/Y, G113, G18',/^G17 /m.test(h)&&/^G112 /m.test(h)&&/G01 X-?[\d.]+ Y-?[\d.]+/.test(h)&&/^G113 /m.test(h))}E("S.m[S.cur].s[0].v='Fanuc-style'");
+  mach('Generic Swiss-type','Swiss-type');setv('C-axis mode on / off','M901 / M902');setv('C-axis clamp / unclamp','M911 / M912');w.exE(0);r={code:E('J').code.join('\n')};log('Swiss: C wrap + bushing reach check',/ C-?[\d.]+/.test(r.code)&&/guide-bushing reach/.test(d.querySelector('#cl').textContent));
+  log('sim: engrave moves drawn (teal cuts + rapids)',E('J.M.length')>20&&E('J.M.some(m=>m.r)')&&E('J.M.some(m=>!m.r)'));
+  mach('Generic 3-axis VMC','Vertical mills');E("setUnits('mm')");w.exE(1);r={code:E('J').code.join('\n')};log('mm: G21 and metric circle example',/G21/.test(r.code)&&/Z-0\.12/.test(r.code)&&/radius 25/.test(d.querySelector('#q').value));E("setUnits('in')");
+  log('engraving tool type in library',E("TT.includes('Engraving tool')")&&E("S.tools.some(t=>t.type=='Engraving tool'&&t.tip>0)"));
+  log('font covers A-Z 0-9',[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'].every(c=>E('EFONT')[c]));
+  w.tab('new');log('example buttons on Build',/Engrave shaft/.test(d.body.textContent)&&/Text in a circle/.test(d.body.textContent));
+  w.help();log('Help has engraving topic',!!d.querySelector('#h-engrave')&&/tops out/.test(d.querySelector('#h-engrave').textContent));
+  log('no page errors',!errs.length||(out.push('errs: '+errs.join(' | ')),false));o.textContent=out.join('\n')
+ }catch(e){out.push('FAIL exception '+e.message+' '+e.stack);o.textContent=out.join('\n')}},1200)}
+</script>

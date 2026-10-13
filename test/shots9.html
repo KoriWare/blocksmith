@@ -1,0 +1,14 @@
+<!doctype html><body style="margin:0;background:#111"><iframe id="f" src="../index.html?v=29" style="width:390px;height:844px;border:0"></iframe><script>
+let first=1;const q=new URLSearchParams(location.search),k=q.get('k')||'0',vw=q.get('v')||'code',ctl=q.get('c');
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
+ setTimeout(()=>{const E=x=>w.eval(x);E('NOASK=1');w.confirm=()=>true;const M={vmc:['Generic 3-axis VMC','Vertical mills'],ax4:['Generic VMC w/ 4th axis','Vertical mills'],nt:['Nakamura-Tome multitasking lathe (generic)','Multitasking lathes']}[q.get('m')];
+  w.pick(...M);E('S.cur=S.m.length-1');const setv=(a,b)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(a)});if(x){x.v=${JSON.stringify(b)};x.st='user'};save()})()`);
+  if(q.get('cc')){setv('C-axis mode on / off','M901 / M902');setv('C-axis clamp / unclamp','M911 / M912')}
+  if(q.get('cyl')){setv('Cylindrical interp (G07.1/G107)','yes')}if(ctl)E(`S.m[S.cur].s[0].v=${JSON.stringify(ctl)}`);
+  if(vw=='mach'){w.edit(E('S.cur'));setTimeout(()=>{const D=f.contentDocument;const el=[...D.querySelectorAll('.set')].find(x=>/C-axis mode on/.test(x.textContent));D.scrollingElement.scrollTop=el.getBoundingClientRect().top+D.scrollingElement.scrollTop-300},400);return}
+  w.tab('new');w.exE(+k);
+  setTimeout(()=>{const D=f.contentDocument;if(vw=='sim'){E('view.stk=1');w.tab('sim');setTimeout(()=>{w.scrub(E('J.M.length'));if(q.get('vw'))w.vw(q.get('vw'));if(q.get('z'))w.zoom(+q.get('z'));D.scrollingElement.scrollTop=D.querySelector('#cv').getBoundingClientRect().top+D.scrollingElement.scrollTop-60},500)}
+   else if(vw=='code'){const ed=D.querySelector('#ed'),l=[...ed.querySelectorAll('.ln')].find(x=>/C-AXIS MODE ON/.test(x.textContent));D.scrollingElement.scrollTop=ed.getBoundingClientRect().top+D.scrollingElement.scrollTop-150;let sc=ed;while(sc&&sc.scrollHeight<=sc.clientHeight+2)sc=sc.parentElement;if(sc&&sc!==D.scrollingElement&&sc!==D.body)sc.scrollTop=l.offsetTop-sc.offsetTop-4}
+   if(vw=='out')
+   {const p=D.querySelector('#out');D.scrollingElement.scrollTop=p.getBoundingClientRect().top+D.scrollingElement.scrollTop-60}},700)},1200)};
+</script></body>
