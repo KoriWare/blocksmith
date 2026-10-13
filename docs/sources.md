@@ -307,3 +307,23 @@ Our own defaults (unsourced, gray or stated in the program):
 - Lathe probe: clearance 0.1, skip feed 10 in/min; measured Ø = skip X − tip (assumes skip X reads diameter and the probe is calibrated).
 - Warm-up step time from distance ÷ feed (no timer).
 - Wear signs: boss big → D smaller, pocket big → D bigger, floor high → H wear down; lathe OD / ID / face: wear += nominal − measured.
+
+## Round 32 · Thin-source suggestions (amber)
+
+New rule (Kori): if sources are thin, show what they say as an amber hint with "Thin source — verify on your machine", the source count and links. Amber hints never fill a field or write anything, and red settings stay red.
+
+| Item | What the amber hint says | Sources (count) | Shown where |
+|---|---|---|---|
+| Fanuc lathe G87 / G88 | side drilling / side tapping, G80 cancels (lathe only) | Fanuc 0i-F lathe operator manual (drivesul.com.br copy) + helmancnc.com (2) | Help › colors |
+| Fanuc G34 | G34 X Z F K, K = lead change per rev | Fanuc 0i-F lathe manual + machinemfg.com + industrialmonitordirect.com (3) | Help › colors |
+| M07 | Haas = shower; Fanuc-style mist = builder's choice | Haas mill M-code list (1) | Help › colors |
+| Fanuc #3002 | manual: only while cycle start lamp on; MMS: always runs (disagree) | 2, disagreeing | Help › colors |
+| Fanuc ATAN range | 0–360 per one source; job normalises | 2 for form, 1 for range | rotp, a4p (Fanuc) |
+| Fanuc lathe G18 / G97 / G99 | same as Haas, in the 0i-F G-code table (system A) | Fanuc 0i-F lathe manual (1) | mgroove, lpeck, ltaper, cdrill (Fanuc) |
+| Fanuc lathe G98 live tool | per minute in system A; B/C differ | Fanuc 0i-F lathe manual (1) | cdrill (Fanuc) |
+| Swiss re-chuck / bar advance | sequence only; codes are the builder's | industrialmonitordirect.com (1 family) | Swiss setting + swmulti |
+| Swiss bar change | builder macro tied to bar feeder and bar-end signal | same (1 family) | Swiss setting + swmulti, swbar |
+| Tsugami warm-up bar in bushing | two Tsugami manuals disagree | 2, disagreeing | swwarm (Swiss) |
+| Fanuc multi-path wait M-codes | range in params 8110/8111, M__ P__, both paths need it | Fanuc 30i/31i parameter manual + user manual (cncmanuals.com copies, official, 30i not 0i) | swmulti, subxfer (Swiss); not written — app makes one-path programs |
+
+Zero public sources (no hint, user types it): Fanuc spindle load variable; Fanuc look-ahead fix; Nakamura-Tome M-codes; Tsugami M-codes; wear sign convention for automatic wear update.
