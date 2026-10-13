@@ -1,0 +1,23 @@
+<!doctype html><body style="margin:0"><iframe id="f" src="../index.html?v=58s" style="width:390px;height:844px;border:0"></iframe><script>
+const Q=new URLSearchParams(location.search),S0=+Q.get('s');let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+setTimeout(()=>{const E=x=>w.eval(x);E("NOASK=1;S.tip42=1");
+ const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)}};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+ const H={'Free common variables':'#600-#699','DPRNT support':'yes','Skip code (probe)':'G31','Spindle probe on / off':'M59 / M69','Max RPM':'8000','Setter diameter call':'G65 P9023 A12. T<T>','Setter diameter result #':'#199','D offsets hold':'diameter','Tool offset memory (Fanuc)':'C'};
+ const mach=(n,g,ct)=>{w.pick(n,g);w.cur(E('S.m.length')-1);setv('Control',ct);Object.entries(H).forEach(([k,v])=>setv(k,v));E("Object.keys(S.m[S.cur].opt||{}).length;S.m[S.cur].opt=Object.assign(S.m[S.cur].opt||{},{macroB:1,g10:1,probe:1,tset:1,ext:1});save()")};
+ const fill=o=>E(`Object.entries(${JSON.stringify(o)}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);
+ const go=t=>{w.tab('new');d.querySelector('#q').value=t;w.go()};
+ const toOut=()=>{const o=d.querySelector('#wonote')||d.querySelector('#out');if(o)w.scrollTo(0,o.getBoundingClientRect().top+w.scrollY-120)};
+ const code=()=>{w.tab('edit');setTimeout(()=>w.scrollTo(0,0),50)};
+ const MP={'Holes':6,'Bolt circle Ø':2,'Start angle':0,'Depth Z':-0.5,'R plane':0.1,'Feed':10,'Tool':3};
+ if(S0==1){mach('Haas VF-style VMC (generic)','Vertical mills','Haas NGC');go('bolt pattern at the jogged spot');fill(MP);toOut()}
+ if(S0==2){mach('Haas VF-style VMC (generic)','Vertical mills','Haas NGC');go('bolt pattern at the jogged spot');fill({...MP,'Work offset':'G56','X0 Y0 Z0 at':'X0 Y0 part center, Z0 top of part'});code()}
+ if(S0==3){mach('Generic 3-axis VMC','Vertical mills','Fanuc 0i');go('unattended probe flag t20 program o9100 flag #198 result #630 skip');fill({'Work offset':'G54','X0 Y0 Z0 at':'X0 Y0 Z0 as on my setup sheet'});;w.tab('new');toOut();document.title=d.querySelector('#out').innerText.slice(0,900)}
+ if(S0==4){mach('Generic 3-axis VMC','Vertical mills','Fanuc 0i');go('probe every 10 parts count #600 program o9100');fill({'Work offset':'G55','X0 Y0 Z0 at':'X0 Y0 front-left corner, Z0 top of part'});const c=[...d.querySelectorAll('#out *')].find(x=>/^Work offset G55 written/.test(x.textContent));(c||d.querySelector('#out')).scrollIntoView({block:'center'})}
+ if(S0==5){mach('Haas VF-style VMC (generic)','Vertical mills','Haas NGC');go('warm up the spindle and axes');fill({'RPM steps':'2000 4000 6000','Passes per step':2,'X min':-20,'X max':-1,'Y min':-14,'Y max':-1,'Z clear':-1});toOut()}
+ if(S0==6){mach('Haas VF-style VMC (generic)','Vertical mills','Haas NGC');go('warm up the spindle and axes');fill({'RPM steps':'2000 4000 6000','Passes per step':2,'X min':-20,'X max':-1,'Y min':-14,'Y max':-1,'Z clear':-1});code()}
+ if(S0==7){mach('Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills','Haas NGC');go('safe rotary unwind home');toOut()}
+ if(S0==8){mach('Haas VF-style VMC (generic)','Vertical mills','Haas NGC');go('measure tool diameter t3 d23 nominal 0.5 max wear 0.01');toOut()}
+ if(S0==9){w.help('offsets');setTimeout(()=>{const p=[...d.querySelectorAll('p')].find(p=>/Which jobs ask for a work offset/.test(p.textContent));if(p)p.scrollIntoView({block:'start'})},100)}
+},1500)};
+</script></body>

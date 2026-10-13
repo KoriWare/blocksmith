@@ -1,0 +1,35 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=58" style="width:390px;height:844px"></iframe><script>
+// Round 58 · mill / 5-axis work-offset audit (Haas + Fanuc)
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");
+  const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)}};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  const code=()=>E('(J.code&&J.code.length?J.code:Object.values(J.p).some(x=>x.v==null)?[]:(J.code=genJ2(J).code)).join("\\n")'),outT=()=>(d.querySelector('#out')||{textContent:''}).textContent;
+  const V={'Holes':6,'Bolt circle Ø':2,'Start angle':0,'Depth Z':-0.5,'R plane':0.1,'Feed':10,'Tool':3,'Probe tool':20,'Measure program':8001,'Flag #':500,'Result #':501,'Every N':5,'Count #':502,'Probe program':8000,
+   'RPM steps':'2000 4000','Passes per step':2,'X min':-10,'X max':-1,'Y min':-8,'Y max':-1,'Z clear':-1,'Offset #':4,'Cutter Ø':0.5,'D offset #':24,'Break tol':0.01,'Flag offset #':99,'D number':24,'Nominal Ø':0.5,'Max wear':0.01,'Park X':-10,'Park Y':-1,'Program end':'M30'};
+  const open=(op,t)=>{E(`J=parseJ2(${JSON.stringify(t||'')},'${op}');J.text=${JSON.stringify(t||'')};J.edits={};J.code=[]`);w.tab('new');E('show()')};
+  const fillAll=(op,extra)=>E(`(()=>{const V=${JSON.stringify({...V,...(extra||{})})};const ch=J2['${op}'].choices||{};Object.keys(J.p).forEach(k=>{if(J.p[k].v==null){J.p[k]={v:k in V?V[k]:ch[k]?ch[k][0]:1,g:false}}});show()})()`);
+  const mills=[['Generic 3-axis VMC','Vertical mills','Haas NGC'],['Generic 3-axis VMC','Vertical mills','Fanuc 0i'],['Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills','Haas NGC']];
+  mills.forEach(([n,g,ct])=>{try{w.pick(n,g)}catch(e){}w.cur(E('S.m.length')-1);setv('Control',ct);setv('Max RPM','8000');setv('Setter diameter call','G65 P9999 T<T>');setv('Setter diameter result #','#199');setv('D offsets hold','diameter');setv('Tool offset memory (Fanuc)','C');const tag=E('S.m[S.cur].name')+' / '+ct;
+   ['mdipat','pflag','pnth'].forEach(op=>{if(!E(`(()=>{try{return !J2['${op}'].refuse||!J2['${op}'].refuse()}catch(e){return true}})()`))return;
+    open(op);log(`${tag} ${op}: Work offset + X0 Y0 Z0 at red, no code`,E('J.p["Work offset"]&&J.p["Work offset"].v==null&&J.p["X0 Y0 Z0 at"].v==null')&&!/WORK OFFSET -/.test(code())&&d.querySelectorAll('#out [data-k="Work offset"],#out [data-k="X0 Y0 Z0 at"]').length>=1,outT().slice(0,200));
+    fillAll(op,{'Work offset':'G56'});const c=code(),L=c.split('\n'),io=L.findIndex(l=>/^G56 \(WORK OFFSET - X0 Y0 Z0 AS ON MY SETUP SHEET\)/.test(l)),is=L.findIndex(l=>/SAFE START/.test(l)),im=L.findIndex(l=>/^(G0[0-3]|G8[1-9]|G90 G8|T\d+ M06|M98|G65|G91 G28)\b/.test(l));
+    log(`${tag} ${op}: G56 right after safe start, before the first move`,io==is+1&&io>0&&(im<0||io<im),c.slice(0,400).replace(/\n/g,' / ')+' :: '+outT().slice(0,200));
+    log(`${tag} ${op}: check row passes`,E(`checks(J).some(c=>/^Work offset G56 written before the first move/.test(c[0])&&c[1])`));
+    log(`${tag} ${op}: card note`,/Work offset required/.test(outT()))});
+   ['warm','shome','runw','tsman','tsauto','tdia'].forEach(op=>{if(op=='runw'&&!E('is5()'))return;open(op);fillAll(op);const c=code();
+    log(`${tag} ${op}: machine-coords comment, no G5x offset, still no Work offset input`,/MACHINE COORDINATES ONLY - NO WORK OFFSET USED/.test(c)&&!/^(G5[4-9]|G1[1-2]\d|G154)\b/m.test(c)&&!E('"Work offset" in J.p'),c.slice(0,300).replace(/\n/g,' / ')+' :: '+outT().slice(0,300));
+    log(`${tag} ${op}: card says machine coordinates only + check row`,/Machine coordinates only/.test(outT())&&E(`checks(J).some(c=>/^Machine coordinates only/.test(c[0])&&c[1])`));
+    if(op=='warm')log(`${tag} warm: every axis move is G53`,c.split('\n').filter(l=>/\b[XYZ]-?[\d.]/.test(l)&&!/^\(/.test(l)).every(l=>/G53/.test(l)));
+    if(op=='runw')log(`${tag} runw: moves are G53 / G28 only`,c.split('\n').filter(l=>/\b[XYZABC]-?[\d.]/.test(l)&&!/^\(/.test(l)).every(l=>/G53|G28/.test(l)),c)});
+  });
+  w.cur(0);w.tab('new');d.querySelector('#q').value='check tool length tool 8';w.go();log('tlen: machine-coordinates comment + card note (when code is written)',E('J.op')=='tlen'&&/Machine coordinates only/.test(outT())&&(!E('J.code&&J.code.length')||/MACHINE COORDINATES ONLY/.test(E('J.code.join("\\n")'))),outT().slice(0,200));
+  // Haas: typed G55 is read
+  w.cur(0);E("J=parseJ2('G55 bolt pattern at the jogged spot','mdipat')");log('typed G55 read (yellow)',E('J.p["Work offset"].v')=='G55');
+  // no-move jobs untouched
+  log('no-move jobs do not ask for a work offset',E(`['ctr','nstop','hlife','drift','ctime','tlog','rpmg','offexp','eos','dx32'].every(op=>!j2Req({op,p:{}}).includes('Work offset'))`));
+  log('help offsets topic lists the audit',/Machine coordinates only/.test(E(`HELP.find(h=>h[0]=='offsets')[2]()`))&&/X0 Y0 Z0 at/.test(E(`HELP.find(h=>h[0]=='offsets')[2]()`)));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>
