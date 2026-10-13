@@ -1,0 +1,15 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=9" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
+ setTimeout(()=>{const d=w.document,E=x=>w.eval(x);w.confirm=()=>true;try{
+  E('S.cur=0');w.tab('new');log('import button on New',/Import .nc/.test(d.body.textContent));
+  w.importToEditor('%\nO0123 (TEST)\nG17 G20 G90 G54\nG00 X0 Y0 Z1.\nG01 Z-0.2 F10.\nG01 X2. Y1.\nG00 Z1.\nM30\n%');
+  log('imported lines are pink user lines',d.querySelectorAll('.ln.u').length==9);log('sim runs imported moves',E('J.M.length')>=4&&!E('J.run.err'));
+  log('checker runs on import',/checks passed/.test(d.querySelector('#ck').textContent));
+  E('S.cur=0');w.tab('new');w.ex('G54 T2 3 x 4 grid 0.75 spacing start x0 y0 z0 0 0.4 deep drill');const i=E("J.code.findIndex(l=>/^G52/.test(l))");const el=d.querySelector(`.ln[data-i="${i+3}"]`);
+  const k=E("J.code.findIndex(l=>/^G65/.test(l))");const e2=d.querySelector(`.ln[data-i="${k}"]`);e2.textContent=E('J.code['+k+']').replace('U0.75','U3.0');e2.oninput();
+  log('grid spacing edit beyond stock flagged red on sides',/leave the side of the stock/.test(d.querySelector('#info').textContent));
+  E('S.cur=2');w.tab('new');w.ex('G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0 chamfer 0.03');log('lathe nose radius note',/Tool-nose radius 0.031/.test(d.querySelector('#cl').textContent));
+  w.sheet();log('setup sheet shows nose radius',/Tool nose radius/.test(d.querySelector('#sheet').textContent));
+ }catch(e){out.push('ERROR '+e.message+' '+(e.stack||'').split('\n')[1])}o.textContent=out.join('\n')},800)};
+</script></body>
