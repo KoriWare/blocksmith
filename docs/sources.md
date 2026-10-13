@@ -264,3 +264,14 @@ Our own defaults / methods (unsourced, shown as gray suggestions or stated in th
 - Rotary centerline: alarm if the two top readings differ more than the expected gap + 1.
 - Drift: simple moving average of the last N readings vs nominal.
 - Feeds / RPM: 20 in/min and 3000 RPM load check, 1500 / 3000 live RPM, 4 / 10 in/min live feeds.
+
+## Round 31 · Y-axis flats fix (Oct 13, 2026)
+
+| Fact | Used by | Sources | Status |
+|---|---|---|---|
+| OD / radial milling on a Haas Y-axis lathe is done in G19 (Y-Z plane, X is depth); go back to G18 after; face milling uses G18, G112 face work uses G17 | yflat (gray hint only), Help | Morris-Trident live-tool lathe training (Haas-hosted pdf, haascnc.com/content/dam/haascnc/hfo-microsite/...) + Haas Factory Outlet "Live Tooling for Haas Lathes" (productivity.com) — agree | OK as a hint; the setting stays red |
+| Fanuc: G17/G18/G19 select the plane; the lathe powers on in G18; a Y move works in any plane (plane matters for arcs, comp and cycles) | yflat | Fanuc 30i/31i common user's manual §7.4 (official, via cncmanuals.com) | OK |
+| Fanuc Y-axis lathes: G19 for OD/side milling, G17 for face | yflat (Help text) | cncwebschool.com Y-axis lathe appendix + industrialmonitordirect.com (agree) | OK; mode-switch M-codes are builder-specific, so red |
+| C clamp / unclamp M-codes are builder-specific (Haas M14 / M15 main spindle clamp) | yflat | Haas lathe programming workbook (official) + HFO pdf; Fanuc: IMD + Manual Guide i (parameter-set codes) | red setting, no default |
+
+Not sourced, ours: Y sweep = half chord + cutter radius + 0.05 (shown as a check to compare with your Y travel); Z rows at 0.5 × cutter.
