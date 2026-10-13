@@ -452,3 +452,10 @@ Single-source items from the research file, now checked against 2+ public source
 - Tool nose comp G42 on before G71, G40 after: research file [12][13] (Haas G71 troubleshooting PDF + Practical Machinist thread).
 - Lathe arcs: G02 / G03 written as seen with +X up and +Z to the right (standard G18 view, right-handed, viewer on +Y). Common convention; dry-run note in Help.
 - Bolt circle fit: least-squares circle (Kasa), equal spacing within 0.05°; grid: X / Y clusters with equal pitch; slot: 2 equal parallel lines + 2 half arcs. Our own math, checked by ui-test41 fixtures.
+
+## Round 56 — DXF import phase 3 (curves, pockets with islands, 3+2 faces)
+- ELLIPSE group codes (10 center, 11 major-axis endpoint relative to center, 40 minor/major ratio, 41/42 start/end parameter): Autodesk DXF Reference "ELLIPSE (DXF)" and the ezdxf ELLIPSE docs. Both agree.
+- SPLINE group codes (70 flags, 71 degree, 72/73/74 knot/control/fit counts, 40 knots, 41 weights, 10 control points, 11 fit points): Autodesk DXF Reference "SPLINE (DXF)" and the ezdxf SPLINE docs. Both agree. We evaluate with the standard de Boor algorithm (rational when weights are given). A spline that has only fit points is passed through those points with a Catmull-Rom curve, and the UI says so.
+- Arc fitting: our own greedy fit with a binary search. A segment is kept only if every sample and every chord midpoint is within the shown tolerance. Arcs are kept under 180° so the R-word stays unambiguous.
+- Pocket clearing: our own zig-zag scan-line method. The tool center stays at least r + allowance from every wall (exact distance to lines and arcs), and rows only link when the link move is clear. G41/G42 finish passes run on the outer wall and on each island. No library shipped. We looked at Clipper2 (Boost license, MIT-compatible) and decided it wasn't needed. Nothing AGPL is used.
+- 3+2: the face feature is written as a plain subprogram (M98/M99), called by the existing 3+2 wrapper. Plane, tool, and TCP are left to that wrapper. Using cutter comp in a tilted plane depends on the control, so the code carries a caution line.

@@ -4372,4 +4372,131 @@ const _hlp55=dxHelp;dxHelp=()=>_hlp55()+`<p><b>Lathe (G71 / G70):</b> pick X0 Z0
 LOG.unshift(['2.1 · Oct 13','DXF import: lathe half-profiles → G71 / G70 with Type I rule checks (refused with the reason), bolt circle / grid / slot detection → the existing jobs.']);
 </script>
 
+<script>
+// ---- Round 56 · DXF import phase 3: SPLINE / ELLIPSE fitted to arcs and lines within a tolerance you see (amber), pocket clearing with islands
+//      (our own small scan-line approach — no polygon library shipped), and 3+2 face features on 5-axis mills (run from the 3+2 wrapper).
+// ---- curves: sampled at read time, fitted to arcs + lines at build time (the fit tolerance is part of the model key)
+function dxNurbs(P,U,W,p,t){const n=P.length-1;let k=p;while(k<n&&U[k+1]<=t)k++;if(t>=U[n+1])k=n;const d=[];for(let j=0;j<=p;j++){const i=k-p+j,w=W?W[i]:1;d.push([P[i][0]*w,P[i][1]*w,w])}
+ for(let r=1;r<=p;r++)for(let j=p;j>=r;j--){const i=k-p+j,den=U[i+p-r+1]-U[i],a=den?(t-U[i])/den:0;d[j]=d[j].map((v,q)=>(1-a)*d[j-1][q]+a*v)}return [d[p][0]/d[p][2],d[p][1]/d[p][2]]}
+function dxCatmull(F,closed){const o=[],n=F.length,g=i=>closed?F[(i+n)%n]:F[Math.max(0,Math.min(n-1,i))];for(let i=0;i<(closed?n:n-1);i++){const p0=g(i-1),p1=g(i),p2=g(i+1),p3=g(i+2);for(let s=0;s<16;s++){const t=s/16,t2=t*t,t3=t2*t;o.push([0,1].map(q=>0.5*(2*p1[q]+(-p0[q]+p2[q])*t+(2*p0[q]-5*p1[q]+4*p2[q]-p3[q])*t2+(-p0[q]+3*p1[q]-3*p2[q]+p3[q])*t3)))}}o.push(closed?[...F[0]]:[...F[n-1]]);return o}
+DXH.ELLIPSE=(e,emit,ex,r)=>{const c=[dxN(e,10,0),dxN(e,20,0)],ax=[dxN(e,11,1),dxN(e,21,0)],ra=dxN(e,40,1),s0=dxN(e,41,0),s1=dxN(e,42,2*Math.PI);
+ if(Math.abs(dxN(e,30,0))>1e-9||Math.abs(dxN(e,31,0))>1e-9||!ex)return'Ellipse not flat at Z0 — 3D or tilted geometry refused';const a=Math.hypot(...ax);if(!(a>0)||!(ra>0))return'Ellipse with no size';
+ const ux=[ax[0]/a,ax[1]/a],b=a*ra,sw=((s1-s0)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)||2*Math.PI,full=Math.abs(sw-2*Math.PI)<1e-9;if(Math.abs(ra-1)<1e-9&&full){emit({k:'C',c,r:a});return null}
+ const n=Math.min(2000,Math.max(96,Math.ceil(sw/(2*Math.PI)*720))),pts=[];for(let i=0;i<=n;i++){const t=s0+sw*i/n,x=a*Math.cos(t),y=b*Math.sin(t)*(ex<0?-1:1);pts.push([c[0]+x*ux[0]-y*ux[1],c[1]+x*ux[1]+y*ux[0]])}if(full)pts[n]=[...pts[0]];
+ emit({k:'S',pts,src:'ELLIPSE',closed:full});return null};
+DXH.SPLINE=(e,emit,ex,r)=>{const deg=dxN(e,71,3),fl=dxN(e,70,0),U=e.g.filter(p=>p[0]==40).map(p=>+p[1]),W=e.g.filter(p=>p[0]==41).map(p=>+p[1]);const P=[],F=[];let cur=null,fc=null;
+ for(const [c,v] of e.g){if(c==10){cur=[+v,0,0];P.push(cur)}else if(c==20&&cur)cur[1]=+v;else if(c==30&&cur)cur[2]=+v;else if(c==11){fc=[+v,0,0];F.push(fc)}else if(c==21&&fc)fc[1]=+v;else if(c==31&&fc)fc[2]=+v}
+ if([...P,...F].some(p=>Math.abs(p[2])>1e-9)||!ex)return'Spline not flat at Z0 — 3D or tilted geometry refused';const closed=!!(fl&1);let pts=null,how='';
+ if(P.length>deg&&U.length==P.length+deg+1){const t0=U[deg],t1=U[P.length],n=Math.min(4000,Math.max(64,P.length*24));pts=[];for(let i=0;i<=n;i++)pts.push(dxNurbs(P,U,W.length==P.length?W:null,deg,t0+(t1-t0)*i/n));how='control points'}
+ else if(F.length>=2){pts=dxCatmull(F.map(p=>[p[0],p[1]]),closed);how='fit points only (curve between them approximated)'}else return'Spline without usable control or fit points';
+ if(closed||dxD(pts[0],pts.at(-1))<1e-9)pts[pts.length-1]=[...pts[0]];emit({k:'S',pts,src:'SPLINE',how,closed:dxD(pts[0],pts.at(-1))<1e-9});return null};
+DXF.curves=/^(HELIX)$/;
+// ---------- arc fit (greedy, longest arc or line that stays within tol of every sample)
+function dxCirc3(a,b,c){const d=2*(a[0]*(b[1]-c[1])+b[0]*(c[1]-a[1])+c[0]*(a[1]-b[1]));if(Math.abs(d)<1e-14)return null;const A=a[0]*a[0]+a[1]*a[1],B=b[0]*b[0]+b[1]*b[1],C=c[0]*c[0]+c[1]*c[1];
+ const x=(A*(b[1]-c[1])+B*(c[1]-a[1])+C*(a[1]-b[1]))/d,y=(A*(c[0]-b[0])+B*(a[0]-c[0])+C*(b[0]-a[0]))/d;return {c:[x,y],r:Math.hypot(a[0]-x,a[1]-y)}}
+function dxFitSeg(P,i,j,tol){const a=P[i],b=P[j];let ok=true,dev=0;for(let k=i+1;k<j;k++){const d=dxSegDist(P[k],{k:'L',p:a,q:b});dev=Math.max(dev,d);if(d>tol){ok=false;break}}if(ok)return {k:'L',p:[...a],q:[...b],dev};
+ const m=P[(i+j)>>1],ci=dxCirc3(a,m,b);if(!ci||ci.r>1e6)return null;const ccw=((m[0]-a[0])*(b[1]-a[1])-(m[1]-a[1])*(b[0]-a[0]))>0;const a0=Math.atan2(a[1]-ci.c[1],a[0]-ci.c[0]),a1=Math.atan2(b[1]-ci.c[1],b[0]-ci.c[0]);
+ let sw=((ccw?a1-a0:a0-a1)*180/Math.PI%360+360)%360;if(sw<1e-6||sw>=180)return null;dev=0;const seg={k:'A',p:[...a],q:[...b],c:ci.c,r:ci.r,ccw,sw};
+ for(let k=i+1;k<j;k++){const d=dxSegDist(P[k],seg);dev=Math.max(dev,d);if(d>tol)return null}
+ for(let k=i;k<j;k++){const mid=[(P[k][0]+P[k+1][0])/2,(P[k][1]+P[k+1][1])/2],d=dxSegDist(mid,seg);if(d>tol)return null}return {...seg,dev}}
+function dxArcFit(P,tol){const out=[];let i=0,dev=0;const n=P.length-1;while(i<n){let best=dxFitSeg(P,i,i+1,tol)||{k:'L',p:P[i],q:P[i+1],dev:0},bj=i+1,step=1,j=i+2,bad=null;
+  while(j<=n){const f=dxFitSeg(P,i,j,tol);if(f){best=f;bj=j;step*=2;j=Math.min(n,i+step*2);if(bj==n)break;if(j==bj)break}else{bad=j;break}}
+  if(bad!=null){let lo=bj,hi=bad;while(hi-lo>1){const mid=(lo+hi)>>1,f=dxFitSeg(P,i,mid,tol);if(f){lo=mid;best=f}else hi=mid}bj=lo}
+  out.push(best);dev=Math.max(dev,best.dev||0);i=bj}return {segs:out,dev}}
+const _bld56=dxBuild;dxBuild=function(r,o){const ft=o.ftol||o.tol,fits=[];const rr={...r,prims:r.prims.flatMap(p=>{if(p.k!='S')return [p];if(!o.layers.has(p.ly))return [];const f=dxArcFit(p.pts,ft);
+  fits.push({src:p.src,how:p.how,n:f.segs.length,dev:f.dev,ly:p.ly});return f.segs.map(s=>({...s,ly:p.ly,fit:1}))})};const m=_bld56(rr,o);m.fits=fits;m.ftol=ft;
+ m.loops.forEach(l=>l.fit=l.segs.some(s=>s.fit));m.chains.forEach(c=>c.fit=c.segs.some(s=>s.fit));return m};
+const _pp56=dxPrimPts;dxPrimPts=p=>p.k=='S'?p.pts:_pp56(p);
+const _sm56=dxSame;dxSame=(a,b,t)=>(a.k=='S'||b.k=='S')?false:_sm56(a,b,t);
+// blocks: curve points transform like any point (even scaled unevenly)
+const _ent56=dxEnt;dxEnt=function(e,emit0,ctx,r,xf){if(!xf)return _ent56(e,emit0,ctx,r,xf);const xf2={...xf,f:p=>{if(p.k!='S')return xf.f(p);const T=q=>{const L=xf.f({k:'L',p:q,q:q});return L.p};return {...p,pts:p.pts.map(T)}}};return _ent56(e,emit0,ctx,r,xf2)};
+function dxFtolIn(){return DX.o.ftol!=null?DX.o.ftol:(dxU()=='mm'?0.02/25.4:0.001)}
+const _model56=dxModel;dxModel=function(){if(!DX||!DX.r||DX.r.err)return null;const ft=dxU()=='mm'?dxFtolIn()*25.4:dxFtolIn();const k=JSON.stringify([...DX.o.layers].sort())+'|'+dxTolRaw()+'|f'+ft;
+ if(DX.mk!==k){DX.m=dxBuild(DX.r,{tol:dxTolRaw(),ftol:ft,layers:DX.o.layers});DX.mk=k}return DX.m};
+const _cards56=dxCards;dxCards=function(){let h=_cards56();const m=dxModel(),u=dxU();if(!m.fits.length)return h;const ft=dxFtolIn();
+ const card=`<div class="card" id="dxfit"><div class="t">Curves fitted to arcs <span class="chip gr">~ fit tolerance ${u=='mm'?(ft*25.4).toFixed(3)+' mm':ft.toFixed(4)+' in'}</span></div>
+  ${m.fits.map(f=>`<div class="thin dxfitrow">⚠ ${esc(f.src)} on ${esc(f.ly)}: ${f.n} arcs / lines, max deviation ${dxFmt(f.dev)} ${u||'drawing units'}${f.how&&/fit points/.test(f.how)?' — from fit points only, the curve between them is approximated':''}. Verify on your print; or re-export with “splines as polylines”.</div>`).join('')}
+  <div class="set"><span>Fit tolerance (${u||'in'})</span><input id="dxft" inputmode="decimal" style="width:30%" value="${u=='mm'?(ft*25.4).toFixed(3):ft.toFixed(4)}"></div><div class="s">Smaller = more, shorter arcs. The fitted path never strays from the curve by more than this.</div></div>`;
+ return h.replace('<div class="card" id="dxtol">',card+'<div class="card" id="dxtol">')};
+// ---------- pocket with islands. Clearing: zig-zag rows; a tool-center point is used only when it is inside the outer wall, outside every island, and at least
+//            cutter radius + finish allowance from every wall (exact distance to lines and arcs). Rows link with a feed move only if the whole link is clear,
+//            otherwise retract, move and plunge. Finish: part line with G41/G42, outer wall inside, islands outside.
+function dxPockSetup(m,i){const L=m.loops.filter(l=>!l.circle),o=L[i];if(!o)return null;const isl=m.loops.filter(l=>l!==o&&l.depth==o.depth+1&&Math.abs(l.area)<Math.abs(o.area)&&dxIn(l.pl[0],o.pl));return {o,isl}}
+function dxRegion(dx){return {walls:[...dx.outer,...dx.islands.flat()],opl:dxPoly(dx.outer),ipl:dx.islands.map(dxPoly)}}
+function dxFree(R,pt,c){if(!dxIn(pt,R.opl)||R.ipl.some(p=>dxIn(pt,p)))return false;for(const s of R.walls)if(dxSegDist(pt,s)<c-1e-9)return false;return true}
+function dxClear(dx,c,so){const R=dxRegion(dx),b=dxBox(R.opl),runs=[];const dx0=Math.max(Math.min(so,c)/6,1e-4);let row=0;
+ for(let y=b[1]+c;y<=b[3]-c+1e-9;y+=so,row++){if(row>3000)return {err:'Over 3000 rows — check Stepover.'};const xs=[];let inRun=false,st=null;const N=Math.ceil((b[2]-b[0])/dx0)+1;
+  const ref=(x0,x1,want)=>{for(let k=0;k<12;k++){const mm=(x0+x1)/2;if(dxFree(R,[mm,y],c)==want)x1=mm;else x0=mm}return want?x1:x0};
+  for(let k=0;k<=N;k++){const x=b[0]+k*dx0,f=dxFree(R,[x,y],c);if(f&&!inRun){st=k?ref(x-dx0,x,true):x;inRun=true}if(!f&&inRun){xs.push([st,ref(x-dx0,x,false)]);inRun=false}}if(inRun)xs.push([st,b[0]+N*dx0]);
+  xs.map(r=>[r[0]+2e-4,r[1]-2e-4]).filter(r=>r[1]-r[0]>1e-6).forEach(r=>runs.push({y,row,a:r[0],b:r[1]}))}
+ // order: rows bottom-up, alternate direction; links checked for clearance
+ const rows={};runs.forEach(r=>(rows[r.row]=rows[r.row]||[]).push(r));const path=[];let flip=false;
+ Object.keys(rows).map(Number).sort((a,b)=>a-b).forEach(k=>{const l=rows[k].sort((a,b)=>a.a-b.a);(flip?l.reverse():l).forEach(r=>path.push(flip?[[r.b,r.y],[r.a,r.y]]:[[r.a,r.y],[r.b,r.y]]));flip=!flip});
+ const linkOK=(p,q)=>{const n=Math.max(2,Math.ceil(dxD(p,q)/dx0));for(let k=0;k<=n;k++){const t=k/n;if(!dxFree(R,[p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t],c-1e-7))return false}return true};
+ return {path:path.map((s,i)=>({a:s[0],b:s[1],link:i>0&&dxD(path[i-1][1],s[0])<so*3&&linkOK(path[i-1][1],s[0])})),R}}
+function dxPlanW(segs,side,g41,ld){const ccw=(side=='inside')==g41,sg=dxOrient(segs,ccw),st=dxStart(sg),left=[-st.tg[1],st.tg[0]],nrm=g41?left:[-left[0],-left[1]];return {segs:st.segs,mid:st.mid,S0:[st.mid[0]+nrm[0]*ld,st.mid[1]+nrm[1]*ld],pl:dxPoly(sg),g:g41?'G41':'G42'}}
+function dxPockWalls(j){const g41=/G41/.test(jv(j,'Cut direction')||''),ld=jv(j,'Lead-in')||0;return [{nm:'OUTER WALL',...dxPlanW(j.dx.outer,'inside',g41,ld)},...j.dx.islands.map((s,i)=>({nm:'ISLAND '+(i+1),...dxPlanW(s,'outside',g41,ld)}))]}
+Object.assign(UNIT,{'Stepover':'in, distance between clearing rows (you pick from your cutter)','Finish allowance':'in, stock left on every wall for the G41 / G42 finish pass','Entry':'how the cutter gets down: plunge only — use a center-cutting end mill or pre-drill'});
+['Stepover','Finish allowance'].forEach(k=>KL.add(k));
+defJ('dxpock',{name:'Pocket with islands from a drawing',re:/(?!)/,
+ req:['Cutter','Stepover','Finish allowance','Entry','Cut direction','Lead-in','Lead-in OK','Z0','Depth','Stepdown','Clear Z','Feed','Plunge feed','RPM','Tool','Work offset'],sug:{},
+ choices:{'Entry':['plunge (center-cutting or pre-drilled)'],'Cut direction':['climb (G41)','conventional (G42)'],'Lead-in OK':['YES']},parse:()=>{},
+ block:j=>{if(!(j.dx&&j.dx.outer))return'This job needs its drawing: import the DXF again (drawing geometry is not kept in shared files).';const r=jv(j,'Cutter')/2,so=jv(j,'Stepover'),al=jv(j,'Finish allowance');
+  if(!(r>0))return'Cutter Ø must be more than 0.';if(!(so>0)||so>2*r)return'Stepover must be more than 0 and no more than the cutter Ø.';if(!(al>=0))return'Finish allowance must be 0 or more.';if(!(jv(j,'Depth')>0)||!(jv(j,'Stepdown')>0))return'Depth and Stepdown must be more than 0.';
+  if(!(jv(j,'Clear Z')>0))return'Clear Z must be above Z0.';if(!(jv(j,'Feed')>0)||!(jv(j,'Plunge feed')>0))return'Feeds must be more than 0.';if(Math.ceil(jv(j,'Depth')/jv(j,'Stepdown')-1e-9)>200)return'Over 200 depth passes — check Depth and Stepdown.';
+  if(!(jv(j,'Lead-in')>=r-1e-9))return'Lead-in must be at least the cutter radius ('+f4(r)+').';const C=dxClear(j.dx,r+al,so);if(C.err)return C.err;if(!C.path.length)return'The cutter does not fit inside this pocket (no room for cutter + allowance).';
+  for(const w of dxPockWalls(j)){if(!dxFree(C.R,w.S0,r-1e-6))return'The lead-in start for the '+w.nm.toLowerCase()+' is not in open pocket space at least a cutter radius from every wall — shorten the lead-in.';
+   for(let k=1;k<20;k++){const t=k/20,pt=[w.S0[0]+(w.mid[0]-w.S0[0])*t,w.S0[1]+(w.mid[1]-w.S0[1])*t];if(!dxIn(pt,C.R.opl)||C.R.ipl.some(p=>dxIn(pt,p)))return'The lead-in for the '+w.nm.toLowerCase()+' crosses a wall — shorten it.'}}
+  if(jv(j,'Lead-in OK')!='YES')return'Confirm the lead-ins (Lead-in OK).';return null},
+ gen:(j,L)=>{const r=jv(j,'Cutter')/2,al=jv(j,'Finish allowance'),so=jv(j,'Stepover'),z0=jv(j,'Z0'),dep=jv(j,'Depth'),sd=jv(j,'Stepdown'),zc=z0+jv(j,'Clear Z'),T=jv(j,'Tool'),n=Math.ceil(dep/sd-1e-9),F=jv(j,'Feed'),PF=jv(j,'Plunge feed');
+  const C=dxClear(j.dx,r+al,so),W=dxPockWalls(j);hdr(L,7800,'POCKET WITH ISLANDS FROM DRAWING');dxHdr(L,j,'SHAPE '+j.dx.shape+' - '+j.dx.islands.length+' ISLAND(S)');if(j.dx.fit)L('(SOME WALLS ARE SPLINE / ELLIPSE FITTED TO ARCS - VERIFY)');
+  L(`(CLEARING: TOOL CENTER STAYS ${f4(r+al)} FROM EVERY WALL - ${C.path.length} ROWS - PLUNGE ENTRY)`);L(`(FINISH: PART LINE WITH ${W[0].g} D${T} - D NUMBER = TOOL NUMBER ASSUMED)`);
+  tstart(L,j,C.path[0].a[0],C.path[0].a[1],zc);const off=[];
+  for(let k=1;k<=n;k++){const z=z0-Math.min(dep,k*sd);L(`(LEVEL ${k} OF ${n} - Z${f4(z)} - CLEARING)`);
+   C.path.forEach((s,i)=>{if(!s.link){if(i)L(`G00 Z${f4(zc)}`);L(`G00 X${f4(s.a[0])} Y${f4(s.a[1])}`);L(`G01 Z${f4(z)} F${f4(PF)} (PLUNGE)`)}else L(`G01 X${f4(s.a[0])} Y${f4(s.a[1])} F${f4(F)}`);L(`G01 X${f4(s.b[0])} Y${f4(s.b[1])} F${f4(F)}`)});
+   W.forEach(w=>{L(`G00 Z${f4(zc)}`);L(`(LEVEL ${k} - FINISH ${w.nm})`);L(`G00 X${f4(w.S0[0])} Y${f4(w.S0[1])}`);L(`G01 Z${f4(z)} F${f4(PF)}`);L(`${w.g} D${T} G01 X${f4(w.mid[0])} Y${f4(w.mid[1])} F${f4(F)} (COMP ON - LEAD-IN)`);
+    w.segs.forEach(s=>L(s.k=='L'?`G01 X${f4(s.q[0])} Y${f4(s.q[1])}`:dxArcW(s)));L(`G40 G01 X${f4(w.S0[0])} Y${f4(w.S0[1])} (COMP OFF - LEAD-OUT)`)})}
+  L(`G00 Z${f4(zc)}`);L('M05');endP(L);const b=dxBox(C.R.opl);j.stock=[b[0]-0.25,b[1]-0.25,z0-dep-0.25,b[2]+0.25,b[3]+0.25,z0];
+  const sgn=W[0].g=='G41'?1:-1;W.forEach(w=>w.segs.forEach(s=>{const a=dxSamp(s,Math.PI/36);a.forEach((p,i)=>{const q=a[Math.min(i+1,a.length-1)],o=a[Math.max(i-1,0)],tx=q[0]-o[0],ty=q[1]-o[1],l=Math.hypot(tx,ty)||1;off.push([p[0]-ty/l*r*sgn,p[1]+tx/l*r*sgn])});off.push(null)}));j.dxOff={pts:off,z:z0-dep}},
+ checks:j=>{const r=jv(j,'Cutter')/2,al=jv(j,'Finish allowance'),C=dxClear(j.dx,r+al,jv(j,'Stepover')),t=txt().join('\n');let ok=true;C.path.forEach(s=>{if(!dxFree(C.R,s.a,r+al-1e-6)||!dxFree(C.R,s.b,r+al-1e-6))ok=false});
+  return [['Clearing keeps the cutter + allowance off every wall and island',ok],['Islands left standing ('+j.dx.islands.length+')',true],['Plunge entry confirmed (center-cutting or pre-drilled)',/plunge/.test(jv(j,'Entry')||'')],['Finish passes turn comp on / off on straight moves',/G4[12] D\d+ G01/.test(t)&&/G40 G01/.test(t)],['Cutter, stepover, allowance, depths, feeds, tool, work offset are yours',true]]}});
+const _draw56=draw;draw=function(){_draw56.apply(this,arguments);try{if(!J||!J.dxOff||J.op!='dxpock'||!ctx)return;ctx.save();ctx.setLineDash([3,3]);ctx.strokeStyle='#ff9f1a';ctx.lineWidth=1;const z=J.dxOff.z,p=J.dxOff.pts;for(let i=1;i<p.length;i++)if(p[i]&&p[i-1])ln([p[i-1][0],p[i-1][1],z],[p[i][0],p[i][1],z]);ctx.restore()}catch(e){}};
+function dxToPock(i){const m=dxModel(),s=dxPockSetup(m,i);if(!s||!dxOK())return;const X=dxXf({...DX.o});return dxOpen('dxpock',{...dxCtx(),outer:s.o.segs.map(X.seg),islands:s.isl.map(l=>l.segs.map(X.seg)),shape:i+1,fit:s.o.fit||s.isl.some(l=>l.fit)})}
+// fitted shapes carry the amber note into the profile job too
+const _prof56=dxToProf;dxToProf=function(i){const r=_prof56(i);try{const l=dxModel().loops.filter(l=>!l.circle)[i];if(r&&l&&l.fit){J.dx.fit=1;show()}}catch(e){}return r};
+// ---------- 3+2 face feature (5-axis): the same drawing feature as a subprogram in tilted-plane coordinates; the 3+2 wrapper sets the plane, tool and TCP
+Object.assign(UNIT,{'Feature program':'program number for this face feature, like 5101 — the 3+2 wrapper calls it with M98'});
+defJ('dx32',{name:'3+2 face feature from a drawing (subprogram for the 3+2 wrapper)',m:'five',re:/(?!)/,
+ req:['Feature program','Z0','Feed'],sug:{},choices:{'Cycle':['Drill G81','Peck G83','Spot G81'],'Side':['outside','inside'],'Side OK':['YES'],'Cut direction':['climb (G41)','conventional (G42)'],'Lead-in OK':['YES']},parse:()=>{},
+ extra:j=>j.dx&&j.dx.pts?['Cycle','Depth','R plane (above Z0)',...(jv(j,'Cycle')=='Peck G83'?['Peck Q']:[])]:['Side','Side OK','Cut direction','Cutter','Lead-in','Lead-in OK','Depth','Stepdown','Clear Z','Plunge feed','Tool'],
+ block:j=>{if(!dxHas(j))return'This job needs its drawing: import the DXF again (drawing geometry is not kept in shared files).';const pn=jv(j,'Feature program');if(!(pn>=1&&pn<=99999&&Math.round(pn)==pn))return'Feature program: a program number like 5101.';
+  if(j.dx.pts)return J2.dxdrill.block({...j,p:{...j.p,RPM:{v:1},Tool:{v:1},'Work offset':{v:'G54'}}});const b=J2.dxprof.block({...j,p:{...j.p,RPM:{v:1},'Work offset':{v:'G54'}}});return b},
+ gen:(j,L)=>{const pn=Math.round(jv(j,'Feature program')),z0=jv(j,'Z0');L('%');L(`O${pn} (3+2 FACE FEATURE FROM DRAWING - MACRO BUILDER)`);L('(SUBPROGRAM - RUN IT FROM THE 3+2 TILTED-PLANE WRAPPER WITH M98 P'+pn+')');L('(X Y Z ARE IN THE TILTED PLANE - THE WRAPPER SETS PLANE, TOOL, LENGTH COMP AND SPINDLE)');dxHdr(L,j,j.dx.pts?j.dx.pts.length+' HOLES':'SHAPE '+j.dx.shape);
+  if(j.dx.pts){const zb=z0-jv(j,'Depth'),zr=z0+jv(j,'R plane (above Z0)'),c=jv(j,'Cycle'),P=j.dx.pts;L(`(DRAWING HOLE DIA ${f4(j.dx.d)} - A HINT ONLY)`);L(`G00 X${f4(P[0][0])} Y${f4(P[0][1])}`);L(`G00 Z${f4(zr)}`);
+   P.forEach((p,i)=>{if(i==0)L(`G98 ${c=='Peck G83'?'G83':'G81'} X${f4(p[0])} Y${f4(p[1])} Z${f4(zb)} R${f4(zr)}${c=='Peck G83'?' Q'+f4(jv(j,'Peck Q')):''} F${f4(jv(j,'Feed'))}`);else L(`X${f4(p[0])} Y${f4(p[1])}`)});L('G80');const b=dxBox(P);j.stock=[b[0]-0.5,b[1]-0.5,zb-0.25,b[2]+0.5,b[3]+0.5,z0]}
+  else{const P=dxPlan(j),dep=jv(j,'Depth'),sd=jv(j,'Stepdown'),zc=z0+jv(j,'Clear Z'),T=jv(j,'Tool'),n=Math.ceil(dep/sd-1e-9);L(`(PART LINE WITH ${P.g} D${T} IN THE TILTED PLANE - CHECK YOUR CONTROL ALLOWS CUTTER COMP UNDER THE PLANE COMMAND)`);L(`G00 X${f4(P.S0[0])} Y${f4(P.S0[1])}`);L(`G00 Z${f4(zc)}`);
+   for(let k=1;k<=n;k++){const z=z0-Math.min(dep,k*sd);L(`G01 Z${f4(z)} F${f4(jv(j,'Plunge feed'))}`);L(`${P.g} D${T} G01 X${f4(P.mid[0])} Y${f4(P.mid[1])} F${f4(jv(j,'Feed'))} (COMP ON - LEAD-IN)`);P.segs.forEach(s=>L(s.k=='L'?`G01 X${f4(s.q[0])} Y${f4(s.q[1])}`:dxArcW(s)));L(`G40 G01 X${f4(P.S0[0])} Y${f4(P.S0[1])} (COMP OFF - LEAD-OUT)`)}
+   L(`G00 Z${f4(zc)}`);const b=dxBox([...P.pl,P.S0]);j.stock=[b[0]-0.5,b[1]-0.5,z0-dep-0.25,b[2]+0.5,b[3]+0.5,z0]}
+  L(`M99 (BACK TO THE 3+2 WRAPPER)`);L('%');return 1},
+ checks:j=>{const t=txt().join('\n');return [['Subprogram ends with M99 (no tool change, no work offset inside)',/M99/.test(t)&&!/M0?6\b/.test(t)&&!/G5[4-9]/.test(t)],['Feature from your drawing (units + origin confirmed)',dxHas(j)],['Run it from the 3+2 wrapper (plane, tool, TCP set there)',true]]}});
+// open the 3+2 wrapper with this program number
+const _show56=show;show=function(){const r=_show56.apply(this,arguments);try{if(J&&J.op=='dx32'&&J.code&&J.code.length>2&&$('#out')&&!$('#dx32w')){const pn=Math.round(jv(J,'Feature program'));$('#out').insertAdjacentHTML('afterbegin',`<div class="card" id="dx32w"><div class="t">Next: the 3+2 wrapper</div><div class="s">This program is the face feature only. Save it, then open the wrapper: it tilts to the face, sets the plane and tool, and calls O${pn}.</div><button class="btn o" onclick="dxWrap(${pn})">Open 3+2 wrapper for O${pn}</button></div>`)}}catch(e){}return r};
+function dxWrap(pn){if(!jAvail('tp32'))return;const j=parseJ2('3+2 tilted plane program '+pn,'tp32');j.p['Feature program']={v:pn,g:false};J={...j,date:Date.now(),edits:{}};tab('new');show();return J}
+function dxTo32(kind,i){const m=dxModel(),X=dxXf({...DX.o});if(!dxOK()||!is5())return;if(kind=='h'){const g=m.groups[i];if(!g)return;return dxOpen('dx32',{...dxCtx(),d:g.d*X.k,pts:g.pts.map(X.T),conc:g.conc})}
+ const l=m.loops.filter(l=>!l.circle)[i];if(!l||l.branch)return;return dxOpen('dx32',{...dxCtx(),segs:l.segs.map(X.seg),sug:l.sug,shape:i+1,fit:l.fit},J=>{if(!J.p.Side||J.p.Side.v==null)J.p.Side={v:l.sug,g:true}})}
+// buttons: pocket on shapes, 3+2 on holes and shapes (5-axis only)
+const _sb56=dxShapeBtns;dxShapeBtns=(l,i,ok)=>{let h=_sb56(l,i,ok);if(l.branch)return h;const m=dxModel(),s=dxPockSetup(m,i);h+=` <button class="chip y dxpk" data-i="${i}"${ok?'':' disabled'}>Pocket${s&&s.isl.length?' + '+s.isl.length+' island'+(s.isl.length>1?'s':''):''}</button>`;if(is5())h+=` <button class="chip y dx32s" data-i="${i}"${ok?'':' disabled'}>3+2 face</button>`;if(l.fit)h+=`<br><span class="thin" style="display:inline-block">⚠ has fitted curves — verify</span>`;return h};
+const _pat56=dxPat;dxPat=(g,i)=>_pat56(g,i)+(is5()?` <button class="chip y dx32 dx32h" data-i="${i}"${dxOK()?'':' disabled'}>3+2 face</button>`:'');
+const _wm56=dxWireMore;dxWireMore=function(){_wm56();V.querySelectorAll('.dxpk').forEach(b=>b.onclick=()=>dxToPock(+b.dataset.i));V.querySelectorAll('.dx32h').forEach(b=>b.onclick=()=>dxTo32('h',+b.dataset.i));V.querySelectorAll('.dx32s').forEach(b=>b.onclick=()=>dxTo32('s',+b.dataset.i));
+ const ft=$('#dxft');if(ft)ft.onchange=()=>{const v=+String(ft.value).replace(',','.');if(v>0&&v<=(dxU()=='mm'?1:0.04))DX.o.ftol=dxU()=='mm'?v/25.4:v;dxImp()}};
+const _hdr56=dxHdr;dxHdr=function(L,j,w){_hdr56(L,j,w);if(j.dx&&j.dx.fit)L('(AMBER: SPLINE / ELLIPSE FITTED TO ARCS WITHIN '+f4(dxFtolSaved(j))+' - VERIFY AGAINST YOUR PRINT)')};
+function dxFtolSaved(j){return j.dx.ftol||0.001}
+const _ctx56=dxCtx;dxCtx=function(){return {..._ctx56(),ftol:dxFtolIn()}};
+const _ck56=checks;checks=function(j){const c=_ck56(j);if(j&&j.dx&&j.dx.fit)c.push(['Fitted curves (amber, within '+f4(dxFtolSaved(j))+') — check them against your print',true]);return c};
+const _hlp56=dxHelp;dxHelp=()=>_hlp56().replace('<b>Refused:</b> binary DXF','<b>Refused:</b> HELIX, binary DXF')+`<p><b>Curves (amber):</b> SPLINE and ELLIPSE are turned into arcs and lines that stay within the <b>fit tolerance</b> (gray, 0.001 in / 0.02 mm, shown and changeable). Each curve shows how many pieces it became and the largest deviation. Splines saved with fit points only are approximated between the points and say so. Jobs from fitted shapes carry an amber line in the program. If in doubt, re-export with “splines as polylines”.</p>
+<p><b>Pockets with islands:</b> tap <i>Pocket</i> on a closed shape. Shapes inside it are islands and are left standing. Clearing runs zig-zag rows at your stepover; the tool center is only used where it is at least cutter radius + finish allowance from every wall and island (exact distance to lines and arcs). Rows link with a feed move only when the link is clear too, otherwise the tool lifts, moves and plunges. Entry is plunge only, so use a center-cutting end mill or pre-drill. Then each wall gets a G41 / G42 finish pass on the part line (outer wall from inside, islands from outside) with your confirmed lead-ins. Cutter, stepover, allowance, depths, feeds, tool and work offset are red. No polygon-offset library is used.</p>
+<p><b>3+2 faces (5-axis):</b> on a 5-axis machine, holes and shapes also offer <i>3+2 face</i>. It writes the feature alone as a subprogram (O number you pick) in the tilted plane's X Y Z, ending in M99, with no tool change or work offset inside. Then <i>Open 3+2 wrapper</i> fills its program number into the 3+2 tilted-plane wrapper, which sets the plane, tool, length comp and spindle and calls it. Check that your control allows cutter comp under the plane command before using a profile there.</p>`;
+LOG.unshift(['2.2 · Oct 13','DXF import: splines and ellipses fitted to arcs (amber, tolerance shown), pockets with islands, and 3+2 face features on 5-axis mills.']);
+</script>
+
 </body></html>

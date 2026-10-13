@@ -1,0 +1,57 @@
+<!doctype html><body><pre id="o"></pre><script src="dxf/fixtures.js"></script><iframe id="f" src="../index.html?v=56" style="width:390px;height:844px"></iframe><script>
+// Round 56 · DXF import phase 3: spline / ellipse arc fit (amber), pockets with islands, 3+2 face features
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.FIXT=window.FIX;
+  const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)}};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  const L=n=>E(`dxImp();dxLoad(FIXT[${JSON.stringify(n)}],${JSON.stringify(n)})`);
+  const conf=(u,kd,kv,ox,oy,rot,mir)=>E(`(()=>{const s=$('#dxu');s.value='${u}';s.onchange();$('#dxkd').value='${kd}';$('#dxkv').value='${kv}';$('#dxkb').click();dxSetO(${ox},${oy});const r=$('#dxr');r.value='${rot}';r.onchange();const m=$('#dxm');m.value='${mir}';m.onchange();$('#dxoc').click()})()`);
+  const fill=o=>E(`Object.entries(${JSON.stringify(o)}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);const code=()=>E('(J.code||[]).join("\\n")'),outT=()=>d.querySelector('#out').textContent;
+  w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);setv('Control','Haas NGC');
+  L('curves_pocket.dxf');log('spline + ellipse read (not refused)',!d.querySelector('.dxref')&&E('DX.r.prims.filter(p=>p.k=="S").length')==2,d.querySelector('#dxsum').textContent);
+  log('curves card is amber with the fit tolerance shown',d.querySelectorAll('#dxfit .dxfitrow.thin').length==2&&/fit tolerance 0\.0010 in/.test(d.querySelector('#dxfit').textContent));
+  let m=E('dxModel()');const fe=m.fits.find(f=>f.src=='ELLIPSE'),fs=m.fits.find(f=>f.src=='SPLINE');
+  log('ellipse fitted within tolerance (max deviation ≤ 0.001)',fe&&fe.dev<=0.001+1e-12&&fe.n>=4,JSON.stringify(fe));log('spline fitted within tolerance',fs&&fs.dev<=0.001+1e-12&&fs.n>=3,JSON.stringify(fs));
+  // independent check: every fitted piece vs dense true ellipse points
+  log('ellipse fit checked against the true curve (≤ tol everywhere)',E(`(()=>{const segs=dxModel().kept.filter(s=>s.fit&&s.ly=='CURVES'&&dxBox(dxSamp(s)).every((v,i)=>i%2?true:v>=5.99&&v<=8.01));let mx=0;for(let k=0;k<3600;k++){const t=k/3600*2*Math.PI,p=[7+Math.cos(t),1.25+0.5*Math.sin(t)];const d=Math.min(...segs.map(s=>dxSegDist(p,s)));mx=Math.max(mx,d)}return mx<=0.001+1e-9})()`));
+  log('fitted ellipse and spline are closed shapes',m.loops.filter(l=>!l.circle&&l.fit).length==2);
+  log('fit uses arcs (G02/G03 able), not just tiny lines',m.kept.filter(s=>s.fit&&s.k=='A').length>=4);
+  const ft=d.querySelector('#dxft');ft.value='0.0001';ft.onchange();m=E('dxModel()');log('smaller fit tolerance → more pieces, still within it',m.fits.find(f=>f.src=='ELLIPSE').n>fe.n&&m.fits.every(f=>f.dev<=0.0001+1e-12));
+  E(`DX.o.ftol=null`);conf('in','w','11.9472',0,0,0,'none');
+  // pocket with islands
+  const shapes=E('dxModel().loops.filter(l=>!l.circle)');const pi=shapes.findIndex(l=>Math.abs(l.area)>9&&!l.fit);
+  log('pocket button shows 2 islands on the 4 × 2.5 outline',/Pocket \+ 2 islands/.test(d.querySelectorAll('.dxpk')[pi].textContent));
+d.querySelectorAll('.dxpk')[pi].click();log('pocket job opens, all red',E('J.op')=='dxpock'&&E('J.dx.islands.length')==2&&['Cutter','Stepover','Finish allowance','Entry','Z0','Depth','Feed','RPM','Tool','Work offset'].every(k=>E(`J.p[${JSON.stringify(k)}].v`)==null));
+  const P0={'Cutter':0.25,'Stepover':0.1,'Finish allowance':0.01,'Entry':'plunge (center-cutting or pre-drilled)','Cut direction':'climb (G41)','Lead-in':0.15,'Lead-in OK':'YES','Z0':0,'Depth':0.2,'Stepdown':0.1,'Clear Z':0.1,'Feed':20,'Plunge feed':5,'RPM':5000,'Tool':4,'Work offset':'G54'};
+  fill(P0);let c=code();0&&log('dbg2',0,E(`(()=>{const R=dxRegion(J.dx);let on=false;const pts=[];J.code.forEach(l=>{if(/CLEARING\\)/.test(l))on=true;if(/FINISH/.test(l))on=false;const m=l.match(/^G01 X(-?[\\d.]+) Y(-?[\\d.]+)/);if(on&&m)pts.push([+m[1],+m[2]])});return pts.length+' '+JSON.stringify(pts.filter(p=>!dxFree(R,p,0.135-1e-6)).slice(0,5))})()`));0&&log('dbg',0,c.split('\n').filter(l=>/CLEARING|G01 X/.test(l)).slice(0,6).join(' / '));log('pocket code written',/POCKET WITH ISLANDS/.test(c)&&/2 ISLAND/.test(c),outT().slice(0,400));
+  log('clearing never comes closer than r + allowance to any wall or island (every move sampled)',E(`(()=>{const R=dxRegion(J.dx);const mv=(J.M||[]).filter(m=>!m.r&&Math.abs(m.a[2]-m.b[2])<1e-9&&m.b[2]<-0.05);let bad=0,n=0;const t=J.code;
+    /* only clearing moves: lines between LEVEL..CLEARING and the first FINISH */let on=false;const pts=[];t.forEach(l=>{if(/CLEARING\\)/.test(l))on=true;if(/FINISH/.test(l))on=false;const m=l.match(/^G01 X(-?[\\d.]+) Y(-?[\\d.]+)/);if(on&&m)pts.push([+m[1],+m[2]])});
+    pts.forEach(p=>{n++;if(!dxFree(R,p,0.135-1e-6))bad++});return n>20&&!bad?true:n+' '+bad+' '+JSON.stringify(pts.find(p=>!dxFree(R,p,0.135-1e-6)))})()`)===true,E(`(()=>{const R=dxRegion(J.dx);return JSON.stringify(dxBox(R.opl))+typeof J.code})()`));
+  log('islands left standing: no clearing point inside an island',E(`(()=>{const R=dxRegion(J.dx);let on=false;return J.code.every(l=>{if(/CLEARING\\)/.test(l))on=true;if(/FINISH/.test(l))on=false;const m=l.match(/^G01 X(-?[\\d.]+) Y(-?[\\d.]+)/);return !on||!m||!R.ipl.some(p=>dxIn([+m[1],+m[2]],p))})})()`));
+  log('finish: outer wall + 2 islands with G41 on, G40 off',(c.match(/FINISH (OUTER WALL|ISLAND \d)\)/g)||[]).length==6&&(c.match(/G41 D4 G01/g)||[]).length==6&&(c.match(/G40 G01/g)||[]).length==6);
+  log('two Z levels',/LEVEL 2 OF 2/.test(c));log('simulator moves + dashed comp-side line',E('(J.M||[]).length')>50&&E('J.dxOff.pts.length')>20);
+  log('pocket checks pass',E(`checks(J).filter(c=>c[1]===false).map(c=>c[0]).join('|')`)=='',E(`checks(J).filter(c=>c[1]===false).map(c=>c[0]).join('|')`));
+  fill({'Cutter':3});0&&log('dbgc',0,E('JSON.stringify([J.err,J.warn,J.refuse,Object.keys(J)])')+d.body.innerText.match(/[^\n]*(fit|Stepover)[^\n]*/g));log('cutter too big refused',/Not written/.test(d.querySelector('#out').textContent),d.querySelector('#out').textContent.slice(-400));fill({'Cutter':0.25,'Stepover':0.6});log('stepover bigger than cutter Ø refused',/Stepover must/.test(outT()));
+  fill({'Stepover':0.1,'Lead-in':0.6});log('lead-in into a wall refused',/shorten|lead-in/i.test(d.querySelector('#out').textContent.replace(/Lead-in( OK)?:/g,'')),d.querySelector('#out').textContent.slice(-400));fill({'Lead-in':0.15,'Entry':null});log('entry must be confirmed (plunge only)',E("J.p.Entry.v")==null&&!E('J.code&&J.code.length>3&&/POCKET/.test(J.code.join(""))&&J.p.Entry.v'));
+  // profile from a fitted ellipse carries the amber line
+  E('dxImp()');const ei=E('dxModel().loops.filter(l=>!l.circle)').findIndex(l=>l.fit&&Math.abs(l.box[2]-l.box[0]-2)<0.01);d.querySelectorAll('.dxpf')[ei].click();
+  fill({'Side':'outside','Side OK':'YES','Cut direction':'climb (G41)','Cutter':0.25,'Lead-in':0.2,'Lead-in OK':'YES','Z0':0,'Depth':0.1,'Stepdown':0.1,'Clear Z':0.1,'Feed':20,'Plunge feed':5,'RPM':5000,'Tool':4,'Work offset':'G54'});c=code();
+  log('ellipse profile: amber fitted-curve line + G02/G03',/AMBER: SPLINE \/ ELLIPSE FITTED/.test(c)&&/G0[23] X/.test(c),outT().slice(0,300));log('fitted-curve reminder in the checks',E(`checks(J).some(c=>/Fitted curves/.test(c[0]))`));
+  // refused: HELIX still refused; Fanuc mill fine
+  E(`dxLoad("0\\nSECTION\\n2\\nENTITIES\\n0\\nHELIX\\n8\\n0\\n0\\nENDSEC\\n0\\nEOF\\n","h.dxf")`);log('HELIX refused',/not read yet|refused/.test(d.querySelector('#dxsum').textContent));
+  // ---- 5-axis: 3+2 face
+  w.pick('Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills');w.cur(E('S.m.length')-1);setv('Control','Haas NGC');
+  L('plate_r12.dxf');conf('in','w','4',10,5,0,'none');log('5-axis: 3+2 face buttons on holes and shapes',d.querySelectorAll('.dx32h').length==2&&d.querySelectorAll('.dx32s').length==2);
+  d.querySelectorAll('.dx32h')[1].click();log('3+2 face job opens (red program number, depth, feed)',E('J.op')=='dx32'&&E("J.p['Feature program'].v")==null&&E('J.p.Depth.v')==null);
+  fill({'Feature program':5101,'Cycle':'Drill G81','Z0':0,'Depth':0.3,'R plane (above Z0)':0.1,'Feed':8});c=code();
+  log('subprogram O5101 in plane coords, ends M99, no tool change or work offset',/O5101 \(3\+2 FACE FEATURE/.test(c)&&/M99/.test(c)&&!/M0?6\b/.test(c)&&!/G5[4-9]/.test(c)&&/G98 G81 X0\.375 Y0\.375 Z-0\.3 R0\.1/.test(c),c.slice(0,500));
+  log('wrapper hand-off button',!!d.querySelector('#dx32w'));d.querySelector('#dx32w button').click();log('3+2 wrapper opens with Feature program 5101',E('J.op')=='tp32'&&E("J.p['Feature program'].v")==5101);
+  w.dxImp();const ri=E('dxModel().loops.filter(l=>!l.circle)').findIndex(l=>l.segs.length==4);d.querySelectorAll('.dx32s')[ri].click();
+  fill({'Feature program':5102,'Side':'outside','Side OK':'YES','Cut direction':'climb (G41)','Cutter':0.25,'Lead-in':0.25,'Lead-in OK':'YES','Z0':0,'Depth':0.1,'Stepdown':0.1,'Clear Z':0.1,'Feed':20,'Plunge feed':5,'Tool':4});c=code();
+  log('3+2 face profile: G41 in the plane, comp caution, M99',/G41 D4 G01/.test(c)&&/CHECK YOUR CONTROL ALLOWS CUTTER COMP/.test(c)&&/M99/.test(c),outT().slice(0,300));
+  w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);setv('Control','Haas NGC');L('plate_r12.dxf');conf('in','w','4',10,5,0,'none');log('3-axis mill: no 3+2 buttons',!d.querySelector('.dx32h')&&!d.querySelector('.dx32s'));
+  log('help covers curves, pockets, 3+2',(()=>{const h=E(`HELP.find(h=>h[0]=='dxf')[2]()`);return /fit tolerance/.test(h)&&/islands/.test(h)&&/3\+2 faces/.test(h)})());
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>
