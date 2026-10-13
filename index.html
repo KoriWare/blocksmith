@@ -301,7 +301,7 @@ function interp(lines,o){o=o||{};const lathe=o.lathe,M=[],alarms=[],V={};const R
 const LET=Object.fromEntries(Object.entries(ARG).map(([k,v])=>[v,k]));
 function refresh(){const st=J.stock;let r;try{r=interp(txt(),{lathe:J.lathe,start:(J.moves[0]||{a:[0,0,2]}).a,contact:mkContact(J)})}catch(e){r={moves:[],alarms:[],err:e.message}}
  J.run=r;J.M=r.err||!r.moves.length?J.moves:r.moves;
- J.M.forEach(m=>{m.out=0;if(J.rot){const H=J.p.Z0.v,D=J.p.Depth.v;if(!m.r&&(J.rot=='B'?Math.hypot(m.b[0],m.b[2]):Math.hypot(m.b[1],m.b[2]))<H-D-1e-6)m.out=1;return}if(J.lathe?(m.b[0]<-1e-6||(!m.r&&m.b[2]<st[2]-1e-6)):(!m.r&&m.b[2]<st[2]-1e-6))m.out=1});
+ J.M.forEach(m=>{m.out=0;if(J.rot){const H=J.p.Z0.v,D=J.p.Depth.v;if(!m.r&&(J.rot=='B'?Math.max(Math.abs(m.b[0]),Math.abs(m.b[2])):Math.hypot(m.b[1],m.b[2]))<H-D-1e-6)m.out=1;return}if(J.lathe?(m.b[0]<-1e-6||(!m.r&&m.b[2]<st[2]-1e-6)):(!m.r&&m.b[2]<st[2]-1e-6))m.out=1});
  const ch=checks(J);ch.unshift(['Program runs in simulator'+(r.err?': '+r.err:''),!r.err],['No #3000 alarm on this run'+(r.alarms.length?' (alarm '+r.alarms[0].n+': '+r.alarms[0].msg+')':''),!r.alarms.length]);
  const lt=S.tools&&S.tools.find(t=>t.n==(J.p.Tool||{}).v);ch.push(['Tool T'+(J.p.Tool||{}).v+' is in the tool library',!!lt]);
  const ok=ch.filter(c=>c[1]).length,rr=+((sv('Rapid rate (in/min)')||{v:400}).v),rs=sv('Rapid rate (in/min)'),out=J.M.filter(x=>x.out).length;J.ct=time(J.M,rr);
@@ -495,7 +495,7 @@ const _gen5=gen;gen=function(j){const p=k=>j.p[k]?j.p[k].v:0;
   L('%');L('O1400 (4TH AXIS HOLES EVERY FACE - DEMO)');L('(GENERIC FANUC-STYLE - VERIFY ROTARY DIRECTION AND CENTERLINE)');L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06`);L(`${offCode(p('Work offset'))} G00 X0. Y0. ${ax}0. S${p('RPM')} M03`);L('(WORK ZERO: Y0 Z0 ON ROTARY CENTERLINE)');L(`G43 H${T} Z${f4(H+1)} M08`);
   L(`G65 P9400 H${p('Faces')} X${f4(p('Hole X'))} Y${f4(p('Hole Y'))} W${f4(H)} Z${f4(p('Depth'))} R${f4(p('Clear Z'))} F${f4(p('Feed'))}`);L(`G00 Z${f4(H+1)} ${ax}0.`);L('G80 M09');L('G91 G28 Z0. (SAFE END)');L('G90 M05');L('M30');L('');
   L('O9400 (INDEX AND DRILL EVERY FACE)');[11,24,25,23,26,18,9].forEach(v=>L(`IF[#${v}EQ#0]GOTO99`));L('IF[#11LT1]GOTO99');L('#100=0');L('WHILE[#100LT#11]DO1');L(`G00 Z[#23+#18+1]`);L(`G00 ${ax}[360*#100/#11]`);L('G00 X#24 Y#25');L('G90 G99 G81 X#24 Y#25 Z[#23-#26] R[#23+#18] F#9');L('G80');L('#100=#100+1');L('END1');L('M99');L('N99 #3000=1 (MISSING ARGUMENT)');L('M99');L('%');
-  if(ax=='B'){const h=Math.max(H,Math.abs(p('Hole X'))+0.25);j.stock=[-h,p('Hole Y')-1,-h,h,p('Hole Y')+1,h]}else j.stock=[p('Hole X')-1,-H,-H,p('Hole X')+1,H,H];j.rot=ax;return{code:c,moves:[{a:[0,0,H+1],b:[0,0,H+1],r:1,l:7}],out:0}}
+  if(ax=='B'){const hy=Math.max(0.75,Math.abs(p('Hole Y'))+0.5);j.stock=[-H,-hy,-H,H,hy,H];j.hmc=1}else j.stock=[p('Hole X')-1,-H,-H,p('Hole X')+1,H,H];j.rot=ax;return{code:c,moves:[{a:[0,0,H+1],b:[0,0,H+1],r:1,l:7}],out:0}}
  const g=_gen5(j);if(j.tap){g.code=g.code.map(l=>l.replace(/G8[13] Z-#26 R#18( Q#17)? F#9/,'G84 Z-#26 R#18 F#9'));const st=(sv('Rigid tap style')||{v:'M29 S'}).v;
   if(/M29/.test(st)){const k=g.code.findIndex(l=>/^G65/.test(l));g.code.splice(k,0,`M29 S${p('RPM')} (RIGID TAP MODE)`)}g.code.splice(1,0,'(RIGID TAP '+p('TPI')+' TPI - FEED = RPM / TPI)')}return g};
 // interpreter: G84 + rotary display
@@ -512,7 +512,7 @@ const _checks5=checks;checks=function(j){const c=_checks5(j),v=k=>j.p[k]?j.p[k].
  if(j.op=='pbore')c.push(['Probe tip smaller than bore',v('Tip Ø')<v('Dia')]);if(j.op=='ppocket')c.push(['Probe tip smaller than pocket',v('Tip Ø')<v('Width')]);
  if(j.op=='lgroove')c.push(['Insert not wider than groove',v('Insert W')<=v('Width')]);
  if(j.tap){c.push(['Rigid tapping option on',opt('rigid')],['Rigid tap style confirmed on control',(sv('Rigid tap style')||{}).st=='user'],['TPI given',v('TPI')>0])}
- if(j.op=='index'){c.push(['4th axis option on',opt('ax4')],['Rotary axis letter confirmed',(sv('Rotary axis')||{}).st=='user'],['Rotary direction confirmed',(sv('Rotary direction')||{}).st=='user'],['Faces ≥ 1',v('Faces')>=1],['Depth less than face height',v('Depth')<v('Z0')])}
+ if(j.op=='index'){c.push(['Hole lies on the face (|X| < face half-width)',Math.abs(v('Hole X'))<v('Z0')-(v('Drill Ø')||0)/2],['4th axis option on',opt('ax4')],['Rotary axis letter confirmed',(sv('Rotary axis')||{}).st=='user'],['Rotary direction confirmed',(sv('Rotary direction')||{}).st=='user'],['Faces ≥ 1',v('Faces')>=1],['Depth less than face height',v('Depth')<v('Z0')])}
  return c};
 // refuse when option missing
 const _show5=show;show=function(){if(J&&!Object.values(J.p).some(x=>x.v==null)){const need=J.op=='index'&&!opt('ax4')?'4th axis':J.tap&&!opt('rigid')?'Rigid tapping':null;
@@ -592,6 +592,39 @@ const _draw7=draw;draw=function(){_draw7();if(!J||!cv)return;const flat=J.lathe&
   el.innerHTML=J.lathe?`Tool at <b>X${f(t[0]*2)}</b> (Ø) <b>Z${f(t[2]-o[2])}</b> · line ${m?m.l+1:'—'}`:`Tool at <b style="color:${C3.X}">X${f(t[0]-o[0])}</b> <b style="color:${C3.Y}">Y${f(t[1]-o[1])}</b> <b style="color:${C3.Z}">Z${f(t[2]-o[2])}</b>${(J.rot||rotAx())?` <b style="color:#ff9f1a">${J.rot||rotAx()}${(m&&m.ang||0).toFixed(1)}°</b>`:''} · line ${m?m.l+1:'—'}`}}};
 const _refresh7=refresh;refresh=function(){_refresh7();const i=$('#info');if(i&&!$('#tpos')){const d=document.createElement('div');d.id='tpos';d.className='s';d.style.cssText='font-family:ui-monospace,Menlo,monospace;margin-top:4px;color:#eee';i.appendChild(d);if(ctx&&cv&&cv.isConnected)draw()}};
 const _show7=show;show=function(){_show7();const r=V.querySelector('button[onclick="zoom(0.8)"]');if(r&&!$('#tri')){const b=document.createElement('button');b.id='tri';b.className='chip '+(view.hideTriad?'gr':'y');b.textContent='XYZ';b.onclick=()=>{view.hideTriad=!view.hideTriad;b.className='chip '+(view.hideTriad?'gr':'y');draw()};r.after(b)}};
+
+// ---------- HMC kinematics: X right, Y up, Z toward spindle (horizontal); part rotates about vertical Y (B)
+function rotB(p,deg){const a=deg*Math.PI/180,c=Math.cos(a),s=Math.sin(a);return[p[0]*c+p[2]*s,p[1],-p[0]*s+p[2]*c]}
+const PM=p=>P([p[0],-p[2],p[1]]);
+function lnM(a,b){const p=PM(a),q=PM(b);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke()}
+function drawHMC(){ctx.clearRect(0,0,cv.width,cv.height);const s=J.stock,M=J.M||[],n=Math.min(view.n,M.length),cur=M[n-1],th=cur?cur.ang||0:0,PT=p=>rotB(p,th);
+ // pallet (fixed, rotates with B too)
+ const pw=Math.max(s[3],s[5])*1.5,py=s[1];ctx.strokeStyle='#8a7a3a';ctx.lineWidth=1.2;ctx.setLineDash([]);const pc=[[-pw,py,-pw],[pw,py,-pw],[pw,py,pw],[-pw,py,pw]].map(PT);for(let i=0;i<4;i++)lnM(pc[i],pc[(i+1)%4]);
+ const pc2=pc.map(p=>[p[0],p[1]-0.15,p[2]]);for(let i=0;i<4;i++){lnM(pc2[i],pc2[(i+1)%4]);lnM(pc[i],pc2[i])}
+ // part cube (rotates with B)
+ ctx.strokeStyle='#777';const c=[];for(let i=0;i<8;i++)c.push(PT([i&1?s[3]:s[0],i&2?s[4]:s[1],i&4?s[5]:s[2]]));[[0,1],[1,3],[3,2],[2,0],[4,5],[5,7],[7,6],[6,4],[0,4],[1,5],[2,6],[3,7]].forEach(([a,b])=>lnM(c[a],c[b]));
+ // moves (part frame -> machine at current B)
+ M.slice(0,n).forEach(m=>{ctx.setLineDash(m.r?[4,4]:[]);ctx.strokeStyle=m.out?'#ff4d4d':m.r?'#ffd21f':'#14b8a6';ctx.lineWidth=m.r?1:2.5;lnM(PT(m.a),PT(m.b))});ctx.setLineDash([]);
+ // drilled hole marks on faces
+ M.slice(0,n).filter(m=>!m.r).forEach(m=>{const q=PM(PT(m.b));ctx.fillStyle='#14b8a6';ctx.beginPath();ctx.arc(q[0],q[1],3,0,7);ctx.fill()});
+ // B axis + arrow around vertical Y
+ const ok=(sv('Rotary direction')||{}).st=='user',R=Math.max(s[3],s[5])*1.25,yb=py-0.3;ctx.strokeStyle='#ff9f1a88';ctx.setLineDash([6,3]);lnM([0,yb-0.3,0],[0,s[4]+0.6,0]);
+ ctx.strokeStyle='#ff9f1a';ctx.lineWidth=2;ctx.setLineDash(ok?[]:[5,4]);const pts=[];for(let k=0;k<=24;k++){const a=0.2+k*0.23;pts.push([R*Math.sin(a),yb,R*Math.cos(a)])}ctx.beginPath();pts.forEach((p,i)=>{const q=PM(p);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.stroke();ctx.setLineDash([]);
+ arrow(PM(pts[22]),PM(pts[24]),'#ff9f1a',`B+${ok?'':' ?'} ${th.toFixed(0)}°`,1);
+ // horizontal tool along +Z (machine frame), tip at current tool point
+ const tip=cur?PT(cur.b):[0,0,s[5]+1],d=((J.p['Drill Ø']||{v:.25}).v)/2;ctx.strokeStyle='#f2f2f2';ctx.lineWidth=1.3;
+ const ring=z=>{const r=[];for(let i=0;i<=12;i++){const a=i*Math.PI/6;r.push([tip[0]+d*Math.cos(a),tip[1]+d*Math.sin(a),z])}ctx.beginPath();r.forEach((p,i)=>{const q=PM(p);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.stroke()};
+ ring(tip[2]+d*.6);ring(tip[2]+1);ring(tip[2]+2.2);for(let i=0;i<4;i++){const a=i*Math.PI/2,x=tip[0]+d*Math.cos(a),y=tip[1]+d*Math.sin(a);lnM([x,y,tip[2]+d*.6],[x,y,tip[2]+2.2])}lnM([tip[0]+d,tip[1],tip[2]+d*.6],tip);lnM([tip[0]-d,tip[1],tip[2]+d*.6],tip);
+ ctx.fillStyle='#999';ctx.font='10px -apple-system,sans-serif';const sp=PM([tip[0],tip[1],tip[2]+2.4]);ctx.fillText('spindle',sp[0]+4,sp[1]);
+ // triad at work zero (machine frame)
+ if(!view.hideTriad){const L=Math.max(0.3,38/view.s);arrow(PM([0,0,0]),PM([L,0,0]),C3.X,'X+',1);arrow(PM([0,0,0]),PM([0,L,0]),C3.Y,'Y+ (up)',1);arrow(PM([0,0,0]),PM([0,0,L]),C3.Z,'Z+ (to spindle)',1);
+  const o=PM([0,0,0]);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(o[0],o[1],3.5,0,7);ctx.fill();ctx.fillStyle='#ddd';ctx.font='11px -apple-system,sans-serif';ctx.fillText(`${offLbl((J.p['Work offset']||{}).v||'G54')} · HMC · X0Z0 = B centerline, Y0 = ${J.p['Hole Y']?'part center':'table'}`,8,14)}
+ // gizmo
+ const gx=34,gy=262,g=22;ctx.fillStyle='#0008';ctx.beginPath();ctx.arc(gx,gy,30,0,7);ctx.fill();const c0=PM([0,0,0]);
+ [['X',[1,0,0]],['Y',[0,1,0]],['Z',[0,0,1]]].forEach(([k,dv])=>{const p=PM(dv);const dx=p[0]-c0[0],dy=p[1]-c0[1],m=Math.hypot(dx,dy)||1;if(m/view.s<0.3){ctx.fillStyle=C3[k];ctx.beginPath();ctx.arc(gx,gy,4,0,7);ctx.fill();ctx.fillText(k,gx+6,gy+14);return}arrow([gx,gy],[gx+dx/m*g,gy+dy/m*g],C3[k],k,1)});
+ const el=$('#tpos');if(el&&cur){const t=PT(cur.b),f=x=>(x>=0?' ':'')+x.toFixed(4);el.innerHTML=`Tool at <b style="color:${C3.X}">X${f(t[0])}</b> <b style="color:${C3.Y}">Y${f(t[1])}</b> <b style="color:${C3.Z}">Z${f(t[2])}</b> <b style="color:#ff9f1a">B${th.toFixed(1)}°</b> · line ${cur.l+1}`}}
+const _draw8=draw;draw=function(){if(J&&J.hmc&&cv&&ctx)return drawHMC();_draw8()};
+const _vw8=vw;vw=function(k){_vw8(k);if(J&&J.hmc){const s=J.stock;view.c=[0,0,0];view.s=Math.min(cv.clientWidth,300)*0.8/(Math.hypot(s[3]-s[0],s[4]-s[1]+0.6,s[5]-s[2])*1.5);if(k=='iso'||k=='fit'){view.rx=-1.15;view.rz=-0.55}draw()}};
 
 if('serviceWorker'in navigator&&location.protocol!='file:')navigator.serviceWorker.register('sw.js');
 tab('machines');lockScreen();
