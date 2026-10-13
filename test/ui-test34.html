@@ -1,0 +1,81 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=47" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+// [op, text, fills, haasOnly/fanucOnly/refuse map]
+const RK='I accept the risk (HIGH)',CW='Confirm write';
+const LJ=[['lpcal','calibrate the lathe probe 1.0 ring',{'Ring / bar Ø':1,'Probe at Z (Ø)':-0.5,'Start X':1.5,'Reference face Z':0,'Probe at X (face)':0.5,'Start Z':0.3,'Tip Ø':0.118,'Max error':0.01,'X error #':'600','Z error #':'601','Tool':8}],
+ ['lgrw','check the groove width 0.25 wide',{'Feature':'Groove','Nominal width':0.25,'Nominal center Z':-1,'Probe at X':0.9,'Start X':1.4,'Tip Ø':0.118,'Tolerance ±':0.002,'Update':'Wear # (both sides)','Wear #':5,'Max change':0.005,[CW]:'YES','Tool':8}],
+ ['lcbore','measure off-center bore on the face',{'Bore Ø':0.5,'Radius from centre':1,'C angle':45,'Probe Z':-0.2,'Start Z':0.3,'Tip Ø':0.118,'Tolerance ±':0.002,'Tool':8}],
+ ['lzset','probe the face and set work z',{'Nominal face Z':0,'Probe at X':1,'Start Z':0.3,'Tip Ø':0.118,'Write to':'G54','Update sign':'− (subtract the error)','Max change':0.02,'Sign test done':'Yes — tested with a 0.010 test value',[RK]:'YES',[CW]:'YES','Tool':8}],
+ ['lfb','wear update with 80% feedback',{'Measured #':'602','Nominal':1,'Axis':'X (diameter)','Wear #':3,'Feedback %':80,'Dead band':0.0002,'Step limit':0.01,[CW]:'YES'}]];
+const BJ=[['wocopy','copy work offset g54 to g55',{'Mode':'Copy source to targets (+Δ)','Source offset':'G54','Target offsets':'G55 G56','ΔX':0,'ΔY':5,'ΔZ':0,[CW]:'YES'}],
+ ['alias','alias my program as a custom g-code',{'Code type':'G-code (passes arguments)','Code number':150,'Your program number':2000}],
+ ['waitin','wait for input clamp with timeout',{'Input #':'IN','Wanted value':'1','Timeout (s)':10,'What it means':'clamp',[RK]:'YES'}],
+ ['pulse','pulse an output for 2 sec air blast',{'Output #':'OUT','On time (s)':2,'What it drives':'air blast',[RK]:'YES'}],
+ ['coolchk','coolant level check',{'Minimum level':30}],
+ ['rmguard','run-mode guard',{'Block delete must be':'Off'}],
+ ['fhlock','lock the feed hold',{'Lock':'Feed hold only',[RK]:'YES'}],
+ ['fixid','check the fixture id',{'Expected fixture ID':12}],
+ ['verdet','ngc or classic branch',{'NGC program':2001,'Classic program':2002}],
+ ['robot','robot load and unload handshake',{'Request output #':'OUT','Robot clear input #':'IN','Door open / close code':'M85 / M86','Clamp / unclamp code':'M140 / M141','Done output #':'OUT2','Wait timeout (s)':30,[RK]:'YES'}],
+ ['eos','end of shift stop',{'Stop time (HHMMSS)':230000,'Count #':'603','Max parts':40}],
+ ['fa','first article mode features: bore a; slot b',{'Features':'bore a; slot b'}],
+ ['shiftrep','shift report',{'Report title':'SHIFT'}],
+ ['maint','maintenance reminder every 500 parts',{'By':'Part count','Interval':500,'Counter #':'604','Message':'check clamps'}]];
+const MJ=[['tomb','tombstone offsets',{'Base offset':'G54','First new offset':'P1','Count':4,'Pitch ΔX':0,'Pitch ΔY':0,'Pitch ΔZ':-3,[CW]:'YES'}],
+ ['offexp','export the offsets',{'First tool':1,'Last tool':20,'Include work offsets':'Yes (G54–G59)','Fanuc offset memory':'C'}],
+ ['offimp','import offsets from a table',{'Offset table':'T1 5.1234; T2 4.88','What the values are':'Length geometry','Fanuc offset memory':'C',[CW]:'YES'}],
+ ['rpmg','rpm guard',{'Tool':3,'Max RPM':8000,[CW]:'YES'}],
+ ['ttype','check the tool type',{'Tool':20}],
+ ['mdipat','bolt pattern at the jogged spot',{'Holes':4,'Bolt circle Ø':1,'Start angle':45,'Depth Z':-0.5,'R plane':0.1,'Feed':8,'Tool':4}],
+ ['pallet','pallet pool scheduler',{'Pallets':4,'Ready status value':1,[RK]:'YES'}],
+ ['rprep','repeatability check 10 times',{'Touch X':1,'Touch Y':1,'Surface Z':0,'Clear Z':1,'Touches':10,'Tool':20,'Work offset':'G54'}],
+ ['axload','axis max load check',{'Load limit %':80}],
+ ['atmlife','atm group life',{'Group ID':1000,'Warn below %':10}]];
+const FJ=[['tcpc','tcpc wrapper',{'Feature program':5000,'Start X':0,'Start Y':0,'Start Z':2,'Tool':5,'Work offset':'G54',[RK]:'YES'}],
+ ['dwo','dwo 3+2 wrapper',{'Tilt angle':30,'Rotary angle':90,'Start X':0,'Start Y':0,'Clear Z':1,'Feature program':5001,'Tool':5,'Work offset':'G54',[RK]:'YES'}],
+ ['g268','g268 feature plane',{'Origin X':0,'Origin Y':0,'Origin Z':0,'Angle I':0,'Angle J':30,'Angle K':0,'Rotation order Q':0,'Feature program':5002,'Clear Z':1,'Tool':5,'Work offset':'G54'}],
+ ['pivchk','pivot check with a sphere',{'Sphere X':0,'Sphere Y':0,'Sphere Z (top)':3,'Sphere Ø':1,'Tip Ø':0.118,'Angles (tilt list)':'0, 30, 60','Tolerance (pivot)':0.001,'Clear Z':5,'Tool':20,'Work offset':'G54',[RK]:'YES'}]];
+// expected refusals by control
+const REF={haas:{lzset:/WIPS/,fixid:/fixture-ID/},fan:{coolchk:/coolant/,rmguard:/switch/,verdet:/6198/,shiftrep:/timer/,rpmg:/RPM/,ttype:/tool-type/,pallet:/pallet/,axload:/axis-load/,atmlife:/tool-management/,dwo:/DWO/,g268:/G268/}};
+const CODE={lpcal:/G31 X0\.918[\s\S]*#600=#21\n#601=#22/,lgrw:/#23=#21-#22[\s\S]*P5 W-#26/,lcbore:/M210[\s\S]*G00 C45\.0[\s\S]*#24=\[#21\+#22\]\/2/,lzset:/#3006=1[^\n]*\nG10 L2 P1 W-#22/,lfb:/#22=#21\*80\/100\nG10 (L11 )?P3 U#22/,
+ wocopy:/#5241=#5221\+\[0\.0\][\s\S]*#5262=#5222\+\[5\.0\]/,alias:/O9010[\s\S]*M98 P2000[^\n]*\nM99/,waitin:/WHILE\[ROUND\[#(11005|1005)\]NE1\]DO1\nIF\[#3001GT10000\]GOTO98/,pulse:/#(12040|1105)=1[^\n]*\nG04 P(2\.0|2000)\n#(12040|1105)=0/,coolchk:/#13013LT30\.0/,rmguard:/#3030[\s\S]*#3032\]EQ1[\s\S]*#3033/,fhlock:/#3004=1[\s\S]*#3004=0/,fixid:/#1032NE12/,verdet:/#6198EQ1000000/,
+ robot:/DOOR OPEN[\s\S]*WHILE\[ROUND\[#(11005|1005)\]NE0\][\s\S]*GOTO91[\s\S]*WHILE\[ROUND\[#(11005|1005)\]NE1\][\s\S]*GOTO92/,eos:/#3012GE230000[\s\S]*#603GE40/,fa:/\/M00 \(FIRST ARTICLE - CHECK BORE A\)\n[^\n]*\n\/M00/,shiftrep:/#3020[\s\S]*#3901/,maint:/#604=#604\+1[^\n]*\nIF\[#604LT500\]GOTO10/,
+ tomb:/WHILE\[#1LT4\]DO1\n#2=(14001|7001)\+#1\*20[\s\S]*#\[#2\+2\]=#5223\+#1\*\[-3\.0\]/,offexp:/DPRNT\[T#1\[30\]\*L#\[#1\+(2000|11000)\]/,offimp:/G10 L10 P1 R5\.1234\nG10 L10 P2 R4\.88/,rpmg:/#56703=8000/,ttype:/#50020\]NE7/,mdipat:/#24=#5041[\s\S]*G81 X\[#24\+0\.5\*COS\[#2\]\]/,pallet:/#\[#3\+7600\][\s\S]*M50 P#1[\s\S]*M98 P#\[#1\+7700\]/,rprep:/WHILE\[#1LT10\]DO1[\s\S]*#23=#22-#21/,axload:/#1064GT80/,atmlife:/#8500=1000\n#8501GE10|#8500=1000[\s\S]*#8501GE10/,
+ tcpc:/G00 G90 B0\. C0\.[\s\S]*G234 H5 Z2\.0[\s\S]*M98 P5000[\s\S]*G49|G00 G90 B0\. C0\.[\s\S]*G43\.4 H5 Z2\.0[\s\S]*M98 P5000/,dwo:/G53 Z0\.[\s\S]*B30\.0 C90\.0[\s\S]*G254[\s\S]*X0\.0 Y0\.0[^\n]*\nG43 H5 Z1\.0[\s\S]*G255/,g268:/G43 H5[\s\S]*G268 X0\.0 Y0\.0 Z0\.0 I0\.0 J30\.0 K0\.0 Q0[\s\S]*G269/,pivchk:/B30\.0[\s\S]*ZERR[\s\S]*B60\.0/};
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+  const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)},v:''};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  const base=(hk,lathe)=>{setv('Control',hk?'Haas NGC':'Fanuc 0i');setv('Free common variables','#600-#699');setv('DPRNT support','yes');setv('Skip code (probe)','G31');if(lathe){setv('Lathe probe on / off','M51 / M52');setv('Max RPM (G50)','3000');setv('C-axis mode on / off','M210 / M211')}else{setv('Spindle probe on / off','M59 / M69');setv('Pallet change code','M50')}E("Object.assign(S.m[S.cur].opt,{probe:1,g10:1,live:1,macroB:1});save()")};
+  const run=(nm,jobs,hk)=>jobs.forEach(([op,t,fill])=>{w.tab('new');d.querySelector('#q').value=t;w.go();const op2=E('J&&J.op');if(op2!=op){log(`${nm} ${op}: recognised`,false,'got '+op2);return}
+    const rf=(hk?REF.haas:REF.fan)[op];const red=E('Object.values(J.p).filter(x=>x.v==null).length');
+    const io=hk?{IN:'11005',OUT:'12040',OUT2:'12041'}:{IN:'1005',OUT:'1105',OUT2:'1106'};
+    const fv=Object.fromEntries(Object.entries(fill).map(([k,v])=>[k,io[v]||v]));
+    if(!rf&&(fv[RK]||fv[CW])){// gate: everything but the confirm filled -> still no code
+      const g=Object.fromEntries(Object.entries(fv).map(([k,v])=>[k,k==RK||k==CW?'no':v]));E(`Object.entries(${JSON.stringify(g)}).forEach(([k,v])=>J.p[k]={v,g:false});j2Norm(J);show()`);log(`${nm} ${op}: no code before the risk / write confirm`,!E('!!(J.code&&J.code.length)')&&/Not written/.test(d.querySelector('#out').innerText),d.querySelector('#out').innerText.slice(0,200))}
+    E(`Object.entries(${JSON.stringify(fv)}).forEach(([k,v])=>J.p[k]={v,g:false});j2Norm(J);show()`);const outT=d.querySelector('#out').innerText;
+    if(rf){log(`${nm} ${op}: refused`,rf.test(outT)&&/Not written/.test(outT)&&!E('!!(J.code&&J.code.length)'),outT.slice(0,200));return}
+    if(fv[RK])log(`${nm} ${op}: HIGH job starts all red (no suggestions)`,E('Object.values(J2[J.op].sug).length==0||J2[J.op].sug.Clearance!=null'));
+    const miss=E('Object.entries(J.p).filter(([k,x])=>x.v==null).map(x=>x[0]).join()');const code=E('J&&J.code?txt().join("\\n"):""');
+    log(`${nm} ${op}: code written (${red} red at start)`,!!code&&(red>0||!/^(fa|shiftrep|rmguard)$/.test(op)&&false||/^(fa|shiftrep)$/.test(op)),'miss='+miss+' out='+outT.slice(0,300).replace(/\s+/g,' '));if(!code)return;
+    let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{contact:mkContact(J),lathe:J.lathe});return [r.err,r.alarms.map(a=>a.msg).join()]})()')}catch(e){sim=[e.message]}
+    log(`${nm} ${op}: sim runs`,!sim[0]&&!sim[1],JSON.stringify(sim));const ck=E('checks(J).filter(c=>!c[1]).map(c=>c[0])');log(`${nm} ${op}: checks pass`,!ck.length,ck.join(' | '));
+    log(`${nm} ${op}: codes`,CODE[op].test(code),code.split('\n').join(' / ').slice(0,1500));
+    if(/THIN SOURCE/.test(code))log(`${nm} ${op}: amber caution in code`,true)});
+  const mach=(p,g,hk,lathe)=>{w.pick(p,g);w.cur(E('S.m.length')-1);base(hk,lathe)};
+  [[1,'Haas'],[0,'Fanuc']].forEach(([hk,cn])=>{
+   mach(hk?'Haas ST-style lathe (generic)':'Generic 2-axis lathe','Lathes',hk,1);run(cn+' lathe',LJ,hk);run(cn+' lathe',BJ.filter(x=>x[0]!='wocopy'),hk);
+   w.tab('new');d.querySelector('#q').value='copy work offset g54 to g55';w.go();log(cn+' lathe wocopy refused',/Not written/.test(d.querySelector('#out').innerText));
+   mach(hk?'Haas VF-style VMC (generic)':'Generic 3-axis VMC','Vertical mills',hk,0);run(cn+' mill',BJ,hk);run(cn+' mill',MJ,hk);
+   w.pick('Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills');w.cur(E('S.m.length')-1);base(hk,0);
+   [['Kinematics type','table-table (trunnion)'],['Tilt axis name','B'],['Rotary axis name','C'],['Tilt axis limits (min / max deg)','-35 / 120'],['Rotary axis limits (min / max deg, or continuous)','continuous'],['Pivot / rotary center offsets (MRZP)','measured'],['TCPC code on / off',hk?'G234 H_ / G49':'G43.4 H_ / G49'],['Tilted plane code on / off / cancel',hk?'G268 / G269':'G68.2 / G69'],['DWO code on / off','G254 / G255'],['Tilt axis clamp on / off','M10 / M11'],['Rotary axis clamp on / off','M12 / M13'],['Option: TCPC / TCP','yes'],['Option: tilted plane / DWO','yes']].forEach(([k,v])=>setv(k,v));
+   run(cn+' 5-axis',FJ,hk)});
+  // gate checks: wrong I/O range, sign test not done, lathe job not on mill
+  w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);base(0,0);w.tab('new');d.querySelector('#q').value='wait for input clamp';w.go();E(`Object.entries({'Input #':'11005','Wanted value':'1','Timeout (s)':5,'What it means':'clamp','${RK}':'YES'}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);log('Fanuc input # out of range refused',/#1000–#1031/.test(d.querySelector('#out').innerText));
+  log('lathe probe cal not offered on a mill',E("j2Op('calibrate the lathe probe')")!='lpcal');
+  w.calc();const c1=d.querySelector('#q5').innerText,c2=d.querySelector('#o6').innerText;log('Cpk calculator shows Cp / Cpk + n<50 warning',/Cpk \d/.test(c1)&&/fewer than 50/.test(c1),c1);log('OEE calculator',/OEE \d+\.\d%/.test(c2),c2);
+  log('Cpk math (NIST formula)',(()=>{const r=E('cpk39([1,2,3,4,5],8,0,4)');return Math.abs(r.cp-8/(6*Math.sqrt(2.5)))<1e-9&&Math.abs(r.cpk-1/(Math.sqrt(2.5)))<1e-9})());
+  log('OEE math',(()=>{const r=E('oee39(480,60,1,400,380)');return Math.abs(r.O-(420/480)*(400/420)*(380/400))<1e-9})());
+  log('help jobs39',E("HELP.some(h=>h[0]=='jobs39')"));log('35 round-4 jobs registered (33 jobs + 2 calcs)',E('R39.length')==33,E('R39.length'));log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>
