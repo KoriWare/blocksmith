@@ -416,3 +416,11 @@ All rewritten in our own words; generic Haas / Fanuc 0i only.
 - Spindle load watch: Haas macros chapter #1098; Fanuc var builder-specific → red + THIN.
 - Arc roll-in: Sandvik face-milling page + Caltech PDF (Round 36). Corner rest plunge: Sandvik plunge milling + shop practice → THIN.
 - Unsourced defaults (gray): G74/G75 retract 0.01, feeds 0.002–0.003/rev, RPM 600; G92 min depth 0.002, depth schedule first·√n; load watch feed 0.008; crest hook 0.02, plunge feed 4; roll-in feed 20.
+
+## Round 38 — held-back risky jobs (Oct 13, 2026)
+- Haas M19 P/R orient (official mill + lathe M19 pages): option needed; without it M19 goes to zero only; range 0–360.
+- Fanuc orient by parameter write G10 L50 N____ P1 R____ / G11, ~1 s wait before M19: Practical Machinist "18i-mb spindle orientation with G10" + Industrial Monitor Direct articles (machine-written, counted as one source). Parameter number (4077 / 4031 / builder) → red; original value typed by the user and written back (older controls cannot read parameters; PRM[] only on newer). THIN.
+- Lathe keyway broach macro (passes from start/end Ø, DOC, G98 feed, C mode + brake, back off X before return): CNC Broach Tools Fanuc lathe example (DMG Mori). C-indexed spline broach: same + Fanuc C positioning. THIN, builder codes red.
+- Hobbing sync G81 T L (sign of L = C direction), G80 cancel; Q/P for helical; option: Fanuc 16i/18i-B connection manual p.289, 0i-MC EGB addendum, 15i-MA manual (official copies). Live-tool hob setup is builder-specific → red option + sync code; Haas refused (nothing documented).
+- Hex by synced G32: Practical Machinist macro archive (one author) → THIN; X-only lead convention (radius per turn) not verified → amber; Haas refused.
+- Unsourced defaults: Fanuc 1 s dwell after G11 (forum), knurl/broach overrun 0.1, clear Z 0.5, hex 6 segments per flat, hob 2 s settle dwell.

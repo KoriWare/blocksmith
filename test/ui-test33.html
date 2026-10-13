@@ -1,0 +1,44 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=46" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+
+
+
+const LJ=[['knurlx','straight knurl by orient 1.0 od 30 teeth 0.02 deep per pass 0.005 z0.1 to z-0.5 feed 20 ipm t3'],
+['kwbro','keyway broach 1.0 long start 0.75 end 0.875 per pass 0.002 feed 300 ipm c0 t4'],
+['splbro','spline broach 6 teeth 1.0 long start 0.75 end 0.85 per pass 0.005 feed 200 ipm first c0 t4'],
+['hob','gear hob 20 teeth hob starts 1 2.0 gear od tooth depth 0.1 per pass 0.05 z0.2 to z-0.6 300 rpm feed 2 ipm t5'],
+['hexg32','hex by synced g32 0.75 across flats 6 flats 1.0 bar per pass 0.05 z0 to z-0.2 z step 0.1 60 rpm t1']];
+const MJ=[['splm19','spline by m19 center x0 y0 8 teeth start 0.75 final 0.8 per pass 0.01 z top 0 z bottom -0.75 feed 20 t6 g54']];
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+  const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)},v:''};S.m[S.cur].s.push(x)}if(${JSON.stringify(v)}!==null)x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  const okall=()=>E("S.m[S.cur].s.forEach(x=>{if(x.st=='confirm'&&x.v)x.st='user'});save()");
+  const go=t=>{w.tab('new');d.querySelector('#q').value=t;w.go();E('show()');return{op:E('J&&J.op'),code:E('J&&J.code?txt().join("\\n"):""'),out:d.querySelector('#out').innerText}};
+  const ref={hob:/Haas: no hobbing/,hexg32:/Haas: G32 exists/};
+  const run=(nm,jobs,hk)=>jobs.forEach(([op,t])=>{const r=go(t),code=r.code;
+    if(hk&&ref[op]){log(`${nm} ${op}: refused on Haas`,r.op==op&&ref[op].test(r.out)&&!code,r.op+' '+r.out.slice(0,200));return}
+    let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{contact:mkContact(J),lathe:J.lathe});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
+    const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+r.out.slice(0,400).replace(/\s+/g,' ')];
+    log(`${nm} ${op}: recognised, code written`,r.op==op&&!!code,'op='+r.op+' '+ck.join('|'));if(!code)return;
+    log(`${nm} ${op}: sim runs`,!sim[0]&&!sim[1]&&sim[2]>0,JSON.stringify(sim));log(`${nm} ${op}: checks pass`,!ck.length,ck.join(' | '));
+    const C={knurlx:hk?/M19 R#23[\s\S]*G98 G01 Z-0\.5 F20\.0[\s\S]*END1/:/G10 L50[^\n]*\nN4077 P1 R#24\nG11[\s\S]*G04 P1000[^\n]*\nM19[\s\S]*END1[\s\S]*N4077 P1 R512\nG11/,
+     splm19:hk?/M19 R#23[\s\S]*COS\[#25\]/:/N4077 P1 R#24[\s\S]*COS\[#25\][\s\S]*N4077 P1 R512/,kwbro:/M210[\s\S]*G00 C0\.0\nM214[\s\S]*G98 G01 Z-1\.1 F300\.0[\s\S]*M216[\s\S]*M211/,
+     splbro:/WHILE\[#23LT6\]DO2\nM216[^\n]*\nG00 C\[0\.0\+#23\*360\/6\]\nM214/,hob:/G81 T20 L1[\s\S]*M213 S300[\s\S]*G80/,hexg32:/G32 X[\d.]+ F[\d.]+\n(G32 X[\d.]+ F[\d.]+\n){30}/};
+    log(`${nm} ${op}: codes`,C[op].test(code),code.split('\n').slice(0,60).join(' / '));
+    if(!hk&&(op=='knurlx'||op=='splm19'))log(`${nm} ${op}: restore is last write`,code.lastIndexOf('R512')>code.lastIndexOf('R#24'));
+  });
+  [['Haas NGC','Haas lathe'],['Fanuc 0i','Fanuc lathe']].forEach(([ctl,nm])=>{const hk=/Haas/.test(nm);w.pick('Generic 2-axis lathe','Lathes');w.cur(E('S.m.length')-1);setv('Control',ctl);setv('Max RPM (G50)','3000');
+   const r0=go(LJ[0][1]);log(nm+' knurl red until setup',!r0.code&&/Spindle orient M-code/.test(r0.out));
+   setv('Spindle orient M-code','M19');if(hk)setv('Option: M19 orient to any angle (Haas)','yes');else{setv('Orient parameter number','4077');setv('Orient parameter value now','512');setv('Orient parameter spindle (P)','1');setv('Spindle encoder counts per rev','4096');
+    setv('Parameter write OK','I understand this writes machine parameter P4078');log(nm+' wrong confirm sentence keeps it red',!go(LJ[0][1]).code);setv('Parameter write OK','I understand this writes machine parameter P4077')}
+   setv('C-axis mode on / off','M210 / M211');setv('C-axis clamp / unclamp','M214 / M216');setv('Live tool start / stop','M213 S<RPM> / M215');setv('Hobbing sync on / off','G81 / G80');setv('Option: hobbing / EGB','yes');E("Object.assign(S.m[S.cur].opt,{live:1});save()");okall();run(nm,LJ,hk)});
+  [['Haas VF-style VMC (generic)','Haas NGC','Haas mill'],['Generic 3-axis VMC','Fanuc 0i','Fanuc mill']].forEach(([p,ctl,nm])=>{const hk=/Haas/.test(nm);w.pick(p,'Vertical mills');w.cur(E('S.m.length')-1);setv('Control',ctl);setv('Spindle orient M-code','M19');
+   if(hk)setv('Option: M19 orient to any angle (Haas)','yes');else{setv('Orient parameter number','4077');setv('Orient parameter value now','512');setv('Orient parameter spindle (P)','1');setv('Spindle encoder counts per rev','4096');setv('Parameter write OK','I understand this writes machine parameter P4077')}
+   const r=go(MJ[0][1]);log(nm+' spline red until tip direction',!r.code);E("J.p['Tip at orient 0']={v:'+X',g:false};J.p['Angle direction']={v:'CCW seen from above',g:false}");okall();
+   const sim=E('(()=>{show();const r=interp(txt(),{contact:mkContact(J)});return [!!J.code,r.err,r.alarms.length]})()');log(nm+' spline written + sim',sim[0]&&!sim[1]&&!sim[2],JSON.stringify(sim));
+   const code=E('txt().join("\\n")'),ck=E('checks(J).filter(c=>!c[1]).map(c=>c[0])');log(nm+' spline checks',!ck.length,ck.join('|'));log(nm+' spline codes',(hk?/M19 R#23[\s\S]*COS\[#25\]/:/N4077 P1 R#24[\s\S]*COS\[#25\][\s\S]*N4077 P1 R512\nG11/).test(code),code.split('\n').join(' / '))});
+  log('hob refused without live option',(()=>{w.pick('Generic 2-axis lathe','Lathes');w.cur(E('S.m.length')-1);setv('Control','Fanuc 0i');setv('Hobbing sync on / off','G81 / G80');setv('Option: hobbing / EGB','yes');setv('Live tool start / stop','M213 S<RPM> / M215');setv('C-axis mode on / off','M210 / M211');okall();const r=go(LJ[3][1]);return !r.code&&/live tool/i.test(r.out)})());
+  log('help jobs38',E("HELP.some(h=>h[0]=='jobs38')"));log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>
