@@ -1,0 +1,59 @@
+<!doctype html><body><pre id="o"></pre><script src="dxf/fixtures.js"></script><iframe id="f" src="../index.html?v=55" style="width:390px;height:844px"></iframe><script>
+// Round 55 · DXF import phase 2: lathe G71/G70 from a half-profile, bolt circle / grid / slot detection
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.FIXT=window.FIX;
+  const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)}};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  const L=n=>E(`dxImp();dxLoad(FIXT[${JSON.stringify(n)}],${JSON.stringify(n)})`);
+  const conf=(u,kd,kv,ox,oy,rot,mir)=>E(`(()=>{const s=$('#dxu');s.value='${u}';s.onchange();$('#dxkd').value='${kd}';$('#dxkv').value='${kv}';$('#dxkb').click();dxSetO(${ox},${oy});const r=$('#dxr');r.value='${rot}';r.onchange();const m=$('#dxm');m.value='${mir}';m.onchange();$('#dxoc').click()})()`);
+  const fill=o=>E(`Object.entries(${JSON.stringify(o)}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);const code=()=>E('(J.code||[]).join("\\n")'),outT=()=>d.querySelector('#out').textContent;
+  // ---- lathe, Fanuc
+  w.pick('Generic 2-axis lathe','Lathes');w.cur(E('S.m.length')-1);setv('Control','Fanuc 0i');setv('Max RPM (G50)','3000');setv('Diameter mode','yes');
+  L('lathe_half.dxf');log('lathe: import screen open (no "not in this version")',!d.querySelector('#dxlathe')&&!!d.querySelector('#dxshapes'));
+  log('lathe: CENTER layer off by default',!d.querySelector('.dxly[data-n="CENTER"]').checked);
+  conf('in','w','2',0,0,0,'none');log('lathe: axis labels Z and X (radius)',/Z/.test(d.querySelector('#dxax').textContent)&&/X \(radius\)/.test(d.querySelector('#dxax').textContent));
+  log('lathe: holes not offered, half-profile button',!d.querySelector('.dxdr')&&d.querySelectorAll('.dxlt').length==1);
+  d.querySelector('.dxlt').click();log('G71 job opens with every value red',E('J.op')=='dxlathe'&&['Stock Ø','Start Z','Depth of cut','Rough feed','Finish feed','SFM','Tool','Finish tool','Nose comp','Retract'].every(k=>E(`J.p[${JSON.stringify(k)}].v`)==null));
+  log('back face left out, profile ends at the largest Ø',E('J.dx.dropped.length')==1&&Math.abs(E('J.dx.prof.at(-1).q[1]')-0.75)<1e-9);
+  fill({'Stock Ø':1.6,'Start Z':0.1,'Depth of cut':0.05,'Retract':0.02,'X allowance (dia)':0.02,'Z allowance':0.005,'Rough feed':0.01,'Finish feed':0.005,'SFM':400,'Tool':1,'Finish tool':2,'Nose comp':'G42 (OD, toward the chuck)'});
+  let c=code();log('Fanuc two-block G71 U R / P Q U W F',/G71 U0\.05 R0\.02/.test(c)&&/G71 P10 Q20 U0\.02 W0\.005 F0\.01/.test(c),c);
+  log('P block: N10 G01 X only (no rapid)',/N10 G01 X0\.?0? F0\.005/.test(c));
+  const pq=c.split(/\bN10\b/)[1].split(/\bN20\b/)[0];log('no G00 inside P–Q',!/G0?0\b/.test(pq));
+  log('chamfer + fillet: line to X0.94 Z0, then X1.0 Z-0.03, arc G02/G03 R0.06',/G01 X0\.94 Z0\.?0?\b/.test(c)&&/G01 X1\.?0? Z-0\.03/.test(c)&&/G0[23] X1\.5 Z-1\.06 R0\.06/.test(c),pq);
+  log('convex fillet going up to the OD is G03 (seen with X up, Z right)',/G03 X1\.5 Z-1\.06 R0\.06/.test(c));
+  log('ends out to stock Ø at N20',/N20 G01 X1\.6 \(OUT TO STOCK/.test(c));
+  log('nose comp G42 before G71, G40 after',/G42 G00 X1\.7 Z0\.1/.test(c)&&/G40 G00/.test(c));log('G70 P10 Q20 finish',/G70 P10 Q20/.test(c));
+  log('lathe checks all pass',E(`checks(J).filter(c=>c[1]===false).map(c=>c[0]).join('|')`)=='',E(`checks(J).filter(c=>c[1]===false).map(c=>c[0]).join('|')`));
+  log('simulator runs the G71 cycle',E('(J.M||[]).length')>10,E('(J.M||[]).length'));
+  fill({'Stock Ø':1.2});log('stock smaller than the profile refused',/smaller than the biggest profile/.test(outT()));
+  // Haas one block
+  setv('Control','Haas lathe');fill({'Stock Ø':1.6});c=code();log('Haas one-block G71 P Q D U W F',/G71 P10 Q20 D0\.05 U0\.02 W0\.005 F0\.01/.test(c),c.slice(0,500));
+  // ---- refusals with reason
+  L('lathe_groove.dxf');conf('in','w','1.5',0,0,0,'none');d.querySelector('.dxlt').click();log('groove (X dips) refused: needs Type II',/Type II/.test(d.querySelector('#dxlref').textContent),d.querySelector('#dxlref')&&d.querySelector('#dxlref').textContent);
+  log('Type II refusal says where (Z and X)',/near Z-0\.6 X0\.8/.test(d.querySelector('#dxlref').textContent),d.querySelector('#dxlref').textContent);
+  L('lathe_zrev.dxf');conf('in','w','1.2',0,0,0,'none');d.querySelector('.dxlt').click();log('Z reversal refused',/Z goes back toward the face/.test(d.querySelector('#dxlref').textContent));
+  // below the centerline: mirror Y flips it up
+  L('lathe_half.dxf');conf('in','w','2',0,0,0,'Y');d.querySelector('.dxlt').click();log('half drawn below the centerline is flipped up',E('J.op')=='dxlathe'&&E('J.dx.flipped')===true);
+  // crossing the centerline (whole outline) refused
+  E(`dxLoad("0\\nSECTION\\n2\\nENTITIES\\n0\\nLWPOLYLINE\\n8\\nP\\n90\\n4\\n70\\n1\\n10\\n0\\n20\\n-0.5\\n10\\n0\\n20\\n0.5\\n10\\n-1\\n20\\n0.5\\n10\\n-1\\n20\\n-0.5\\n0\\nENDSEC\\n0\\nEOF\\n","full.dxf")`);conf('in','w','1',0,0,0,'none');d.querySelector('.dxlt').click();log('full outline across the centerline refused',/crosses the centerline/.test(d.querySelector('#dxlref').textContent));
+  // ---- mill patterns
+  w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);setv('Control','Haas NGC');
+  L('patterns.dxf');conf('in','g0','0.1',0,0,0,'none');
+  log('bolt circle detected (8 equal on Ø3)',/bolt circle: 8 equal on Ø 3\b/.test(d.querySelector('#dxholes').textContent),d.querySelector('#dxholes').textContent);
+  log('grid detected 4 × 3, pitch 0.5 × 0.75',/grid: 4 × 3, pitch 0\.5 × 0\.75/.test(d.querySelector('#dxholes').textContent));
+  log('uneven arc pattern stays a point list',/not equally spaced/.test(d.querySelector('#dxholes').textContent));
+  log('slot detected (2 lines + 2 half arcs)',d.querySelectorAll('.dxsl').length==1);
+  d.querySelector('.dxbc').click();log('bolt circle job: count, Ø, center, start angle from the drawing',E('J.op')=='bolt'&&E('J.p.Holes.v')==8&&Math.abs(E('J.p.Dia.v')-3)<1e-6&&Math.abs(E("J.p['Center X'].v"))<1e-6&&Math.abs(E("J.p['Start°'].v")-22.5)<1e-3,JSON.stringify(E('J.p')));
+  log('bolt circle: depth, Z0, tool, work offset, drill Ø, feed, RPM red',['Depth','Z0','Tool','Work offset','Drill Ø','Feed','RPM'].every(k=>E(`J.p[${JSON.stringify(k)}]&&J.p[${JSON.stringify(k)}].v`)==null));
+  E(`Object.entries({'Depth':0.3,'Z0':0,'Tool':2,'Work offset':'G54','Drill Ø':0.25,'Feed':8,'RPM':2500}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);c=code();log('bolt circle job writes its code',/G65 P9100 H8\b/.test(c)&&/A22\.5/.test(c),c.slice(0,300));
+  w.dxImp();d.querySelector('.dxgr').click();log('grid job: rows 3, cols 4, pitch, start from the drawing',E('J.op')=='grid'&&E('J.p.Rows.v')==3&&E('J.p.Cols.v')==4&&Math.abs(E("J.p['Pitch X'].v")-0.5)<1e-6&&Math.abs(E("J.p['Start X'].v")-4)<1e-6&&Math.abs(E("J.p['Start Y'].v")+1)<1e-6);
+  w.dxImp();d.querySelector('.dxsl').click();log('slot job: end centers + width 0.5 from the drawing',E('J.op')=='slot'&&Math.abs(E("J.p['Slot width'].v")-0.5)<1e-6&&Math.abs(Math.abs(E("J.p['Start X'].v"))-1)<1e-6&&Math.abs(E("J.p['Start Y'].v")-3.25)<1e-6);
+  log('slot: depth, cutter, tool, feeds red',['Depth','Z0','Cutter','Stepdown','Tool','Work offset','Feed','RPM'].every(k=>E(`J.p[${JSON.stringify(k)}]&&J.p[${JSON.stringify(k)}].v`)==null));
+  // rotated origin keeps bolt circle correct
+  L('patterns.dxf');conf('in','g0','0.1',0,0,90,'none');d.querySelector('.dxbc').click();log('rotation 90°: bolt start angle 22.5 still (pattern symmetric), center at 0,0',Math.abs(E("J.p['Start°'].v")-22.5)<1e-3);
+  E("tab('sim')");w.dxImp();log('import screen visible after coming from Simulate',!!d.querySelector('#dxfile').offsetParent&&E('curTopic()')=='dxf');
+  log('help has lathe + pattern sections',/Type II/.test(E(`HELP.find(h=>h[0]=='dxf')[2]()`))&&/Bolt circle/.test(E(`HELP.find(h=>h[0]=='dxf')[2]()`)));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>

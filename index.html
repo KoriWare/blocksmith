@@ -4155,12 +4155,12 @@ function dxTolIn(){return DX.o.tol!=null?DX.o.tol:(dxU()=='mm'?0.02/25.4:0.001)}
 function dxTolRaw(){const t=dxTolIn();return dxU()=='mm'?t*25.4:t}
 function dxModel(){if(!DX||!DX.r||DX.r.err)return null;const k=JSON.stringify([...DX.o.layers].sort())+'|'+dxTolRaw();if(DX.mk!==k){DX.m=dxBuild(DX.r,{tol:dxTolRaw(),layers:DX.o.layers});DX.mk=k}return DX.m}
 function dxOK(){return !!(DX&&DX.o.unitsOk&&DX.o.originOk)}
-function dxImp(){$('#ttl').textContent='Import drawing (DXF)';document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t=='new'));
+function dxImp(){$('#ttl').textContent='Import drawing (DXF)';V.dataset.page='';document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t=='new'));
  if(isL()&&!DXL_ON){V.innerHTML=`<div class="card"><div class="t">📐 Import a drawing (DXF)</div><div class="ok bad" id="dxlathe">Lathe import is not in this version yet. Pick a mill to import a 2D drawing.</div></div>`;return}
  const h=[`<div class="card" id="dxfile"><div class="t">📐 Import a drawing (DXF)</div><div class="s">A flat <b>2D</b> drawing saved as <b>ASCII DXF</b> (R12 to 2018), up to 5 MB. It is read on this phone only and never uploaded. Use only drawings that are yours, never ones from work.</div>
  <label class="btn o" style="display:block;text-align:center">Choose a .dxf file<input type="file" id="dxf" accept=".dxf,application/dxf,image/vnd.dxf,application/octet-stream" style="display:none"></label><div id="dxmsg">${DX&&DX.msg?DX.msg:''}</div>
  <div class="s"><a href="#" onclick="help('dxf');return false">How importing works</a></div></div>`];
- if(DX&&DX.r&&!DX.r.err)h.push(dxCards());V.innerHTML=h.join('');$('#dxf').onchange=e=>{dxFile(e.target.files[0]);e.target.value=''};dxWire()}
+ if(DX&&DX.r&&!DX.r.err)h.push(dxCards());V.innerHTML=h.join('');$('#dxf').onchange=e=>{dxFile(e.target.files[0]);e.target.value=''};dxWire();try{helpBtn();V.dataset.page=''}catch(e){}}
 function dxFile(f){if(!f)return;if(f.size>DXF.max){DX={msg:`<div class="ok bad" id="dxerr">⛔ ${esc(f.name.slice(0,60))} is over the 5 MB limit, not opened. Export only the part (one sketch or view), not the whole sheet.</div>`};dxImp();return}
  const k=dxKind(f.name,'');if(k.err){DX={msg:`<div class="ok bad" id="dxerr">⛔ ${esc(k.err)}</div>`};dxImp();return}
  const rd=new FileReader();rd.onload=()=>dxLoad(String(rd.result),f.name);rd.readAsText(f,'latin1')}
@@ -4224,7 +4224,7 @@ function dxWire(){if(!DX||!DX.r||DX.r.err)return;const o=DX.o;
  V.querySelectorAll('.dxdr').forEach(bn=>bn.onclick=()=>dxToDrill(+bn.dataset.i));V.querySelectorAll('.dxpf').forEach(bn=>bn.onclick=()=>dxToProf(+bn.dataset.i));dxWireMore()}
 let dxWireMore=()=>{};
 function dxCtx(){const o=DX.o;return {name:DX.r.name,units:o.units,ox:o.ox,oy:o.oy,rot:o.rot,mir:o.mir,tol:dxTolIn()}}
-function dxOpen(op,dx,extra){if(!dxOK())return null;if(!jAvail(op))return null;J={op,p:{},text:'(from drawing '+DX.r.name+')',edits:{},date:Date.now(),dx};if(extra)extra(J);j2Norm(J);if(extra)extra(J);tab('new');show();return J}
+function dxOpen(op,dx,extra){if(!dxOK())return null;if(!jAvail(op))return null;J={op,p:{},text:'(from drawing '+DX.r.name+')',edits:{},date:Date.now(),dx,lathe:J2[op]&&J2[op].lathe?1:0};if(extra)extra(J);j2Norm(J);if(extra)extra(J);tab('new');show();return J}
 function dxToDrill(i){const m=dxModel(),g=m.groups[i];if(!g||!dxOK())return;const X=dxXf({...DX.o});const pts=g.pts.map(X.T);return dxOpen('dxdrill',{...dxCtx(),d:g.d*X.k,pts,conc:g.conc})}
 function dxToProf(i){const m=dxModel(),l=m.loops.filter(l=>!l.circle)[i];if(!l||!dxOK()||l.branch)return;const X=dxXf({...DX.o});const segs=l.segs.map(X.seg);
  return dxOpen('dxprof',{...dxCtx(),segs,sug:l.sug,shape:i+1},J=>{if(!J.p.Side||J.p.Side.v==null)J.p.Side={v:l.sug,g:true}})}
@@ -4289,6 +4289,87 @@ let dxHelp=()=>`<p><b>What it reads:</b> a flat 2D drawing saved as <b>ASCII DXF
 <p><b>Profiles:</b> a closed shape gets a gray outside / inside suggestion (outer = outside, a shape inside another = inside). You check it and tap <i>Side OK</i>. The code follows the <b>part line</b> with G41 (climb) or G42 (conventional), so the control offsets by D (D = tool number assumed) and you can size at the machine. Comp turns on along a straight lead-in from a point you confirm (at least the cutter radius long, clear of other walls) and off along the same line. Cutter Ø is only used for the checks and the simulator's dashed tool-center line.</p>
 <p><b>Never picked for you:</b> tools, depths, Z0, feeds, speeds, work offset, origin. Your drawing stays on your phone and is never uploaded. Use only drawings that are yours, never ones from work. Drawing geometry is not kept in shared .mbjob files; import the DXF again on the other phone.</p>`;
 LOG.unshift(['2.0 · Oct 13','Import a drawing (DXF), mill: 2D ASCII DXF R12–2018, layers, units checked against one known size, origin / rotation / mirror picked on the drawing, gaps listed, holes → point-list drill, closed shapes → G41/G42 profile. Read on your phone only.']);
+</script>
+
+<script>
+// ---- Round 55 · DXF import phase 2: lathe half-profile -> G71 / G70 (Haas and Fanuc 0i rule checks, refused with a reason), and on mills
+//      bolt-circle / grid detection -> the existing Bolt circle / Hole grid jobs, slot detection (2 lines + 2 half arcs) -> the existing Slot job.
+DXL_ON=1;
+// ---- pattern detection (drawing coordinates; rotation by 90° steps keeps a grid square to the axes)
+function dxFitC(P){const n=P.length;let mx=0,my=0;P.forEach(p=>{mx+=p[0];my+=p[1]});mx/=n;my/=n;let suu=0,svv=0,suv=0,suuu=0,svvv=0,suvv=0,svuu=0;
+ P.forEach(p=>{const u=p[0]-mx,v=p[1]-my;suu+=u*u;svv+=v*v;suv+=u*v;suuu+=u*u*u;svvv+=v*v*v;suvv+=u*v*v;svuu+=v*u*u});const det=suu*svv-suv*suv;if(Math.abs(det)<1e-18)return null;
+ const a=(suuu+suvv)/2,b=(svvv+svuu)/2,uc=(a*svv-b*suv)/det,vc=(b*suu-a*suv)/det,c=[uc+mx,vc+my],R=P.reduce((s,p)=>s+dxD(p,c),0)/n;return {c,R,res:Math.max(...P.map(p=>Math.abs(dxD(p,c)-R)))}}
+function dxBolt(P,t){if(P.length<3)return null;const f=dxFitC(P);if(!f||f.res>Math.max(t*2,f.R*1e-5))return null;const n=P.length,A=P.map(p=>((Math.atan2(p[1]-f.c[1],p[0]-f.c[0])*180/Math.PI)%360+360)%360).sort((a,b)=>a-b);
+ const st=360/n,eq=A.every((a,i)=>{const nx=i==n-1?A[0]+360:A[i+1];return Math.abs(nx-a-st)<0.05});return {...f,eq,n}}
+function dxClus(v,t){const s=[...v].sort((a,b)=>a-b),o=[];s.forEach(x=>{if(!o.length||x-o.at(-1).at(-1)>t*2)o.push([x]);else o.at(-1).push(x)});return o.map(c=>c.reduce((a,b)=>a+b,0)/c.length)}
+function dxGrid(P,t){if(P.length<2)return null;const xs=dxClus(P.map(p=>p[0]),t),ys=dxClus(P.map(p=>p[1]),t);if(xs.length*ys.length!=P.length)return null;
+ if(!xs.every(x=>ys.every(y=>P.some(p=>Math.abs(p[0]-x)<=t*2&&Math.abs(p[1]-y)<=t*2))))return null;const px=xs.length>1?xs[1]-xs[0]:0,py=ys.length>1?ys[1]-ys[0]:0;
+ if(!xs.every((x,i)=>!i||Math.abs(x-xs[i-1]-px)<=t*2)||!ys.every((y,i)=>!i||Math.abs(y-ys[i-1]-py)<=t*2))return null;return {cols:xs.length,rows:ys.length,px,py,x0:xs[0],y0:ys[0]}}
+dxPat=(g,i)=>{const t=dxTolRaw(),ok=dxOK();g.bolt=dxBolt(g.pts,t);g.grid=g.bolt&&g.bolt.eq?null:dxGrid(g.pts,t);let h='';
+ if(g.bolt&&g.bolt.eq)h+=`<br><span class="chip gr">~ bolt circle: ${g.pts.length} equal on Ø ${dxFmt(2*g.bolt.R)}</span> <button class="chip y dxbc" data-i="${i}"${ok?'':' disabled'}>Bolt circle job</button>`;
+ else if(g.bolt)h+=`<br><span class="s">On one circle but not equally spaced around 360° — use the point list.</span>`;
+ if(g.grid&&(g.grid.rows>1||g.grid.cols>1))h+=`<br><span class="chip gr">~ grid: ${g.grid.cols} × ${g.grid.rows}, pitch ${dxFmt(g.grid.px)} × ${dxFmt(g.grid.py)}</span> <button class="chip y dxgr" data-i="${i}"${ok?'':' disabled'}>Hole grid job</button>`;return h};
+function dxSlot(l,t){if(l.circle||l.segs.length!=4)return null;const s=l.segs,ls=s.filter(x=>x.k=='L'),as=s.filter(x=>x.k=='A');if(ls.length!=2||as.length!=2)return null;
+ if(!as.every(a=>Math.abs(a.sw-180)<0.05)||Math.abs(as[0].r-as[1].r)>t*2)return null;if(s[0].k==s[1].k||s[1].k==s[2].k)return null;
+ const L0=dxD(ls[0].p,ls[0].q),L1=dxD(ls[1].p,ls[1].q);if(Math.abs(L0-L1)>t*2||Math.abs(dxD(as[0].c,as[1].c)-L0)>t*2)return null;return {a:as[0].c,b:as[1].c,w:2*as[0].r}}
+const _sb55=dxShapeBtns;dxShapeBtns=(l,i,ok)=>{let h=_sb55(l,i,ok);const s=dxSlot(l,dxTolRaw());if(s)h+=` <button class="chip y dxsl" data-i="${i}"${ok?'':' disabled'}>Slot job</button>`;return h};
+// hand-off to the existing jobs: geometry from the drawing (yellow), every depth / tool / feed / offset red
+function dxBase(op,geo){if(!dxOK())return null;const sk=_parse27(op=='bolt'?'bolt circle':'grid');sk.text='(from drawing '+DX.r.name+')';req(sk);Object.entries(geo).forEach(([k,v])=>sk.p[k]={v,g:false});
+ ['Drill Ø','Feed','RPM'].forEach(k=>{if(sk.p[k])sk.p[k]={v:null}});J={...sk,date:Date.now(),edits:{},dxFrom:{name:DX.r.name}};tab('new');show();return J}
+function dxToBolt(i){const g=dxModel().groups[i];if(!g||!dxOK())return;const X=dxXf({...DX.o}),P=g.pts.map(X.T),f=dxFitC(P);const st=Math.min(...P.map(p=>((Math.atan2(p[1]-f.c[1],p[0]-f.c[0])*180/Math.PI)%(360/P.length)+360/P.length)%(360/P.length)));
+ return dxBase('bolt',{'Holes':P.length,'Dia':+(2*f.R).toFixed(6),'Center X':+f.c[0].toFixed(6),'Center Y':+f.c[1].toFixed(6),'Start°':+st.toFixed(4)})}
+function dxToGrid(i){const g=dxModel().groups[i];if(!g||!dxOK())return;const X=dxXf({...DX.o}),P=g.pts.map(X.T),gr=dxGrid(P,dxTolIn());if(!gr)return null;
+ return dxBase('grid',{'Rows':gr.rows,'Cols':gr.cols,'Pitch X':+(gr.px||0).toFixed(6),'Pitch Y':+(gr.py||0).toFixed(6),'Start X':+gr.x0.toFixed(6),'Start Y':+gr.y0.toFixed(6)})}
+const _j2n55=j2Norm;j2Norm=function(j){_j2n55(j);if(j&&j.dxFrom)['Feed','Plunge feed','RPM'].forEach(k=>{if(j.p[k]&&j.p[k].g)j.p[k]={v:null,g:false}})};  // drawing hand-offs: feeds / speeds stay red
+function dxToSlot(i){const l=dxModel().loops.filter(l=>!l.circle)[i];if(!l||!dxOK())return;const X=dxXf({...DX.o}),s=dxSlot(l,dxTolRaw());if(!s)return;const a=X.T(s.a),b=X.T(s.b);
+ const j=parseJ2('slot','slot');Object.entries({'Start X':a[0],'Start Y':a[1],'End X':b[0],'End Y':b[1],'Slot width':s.w*X.k}).forEach(([k,v])=>j.p[k]={v:+v.toFixed(6),g:false});['Feed','Plunge feed','RPM'].forEach(k=>{if(j.p[k])j.p[k]={v:null,g:false}});
+ J={...j,text:'(from drawing '+DX.r.name+')',date:Date.now(),edits:{},dxFrom:{name:DX.r.name}};tab('new');show();return J}
+// ---- lathe: half-profile from a chain. Part coords after the origin step: drawing +X -> Z, drawing +Y -> radius (X on diameter = 2 × radius)
+function dxLatheProf(segs,t){let s=segs.map(x=>({...x}));const vs=s.flatMap(x=>dxSamp(x,Math.PI/36).map(p=>p[1]));const hi=Math.max(...vs),lo=Math.min(...vs);
+ if(hi>t&&lo<-t)return {err:'The shape crosses the centerline. Draw only the half above (or below) the centerline.'};let flipped=false;if(hi<=t&&lo<-t){s=s.map(x=>x.k=='L'?{...x,p:[x.p[0],-x.p[1]],q:[x.q[0],-x.q[1]]}:{...x,p:[x.p[0],-x.p[1]],q:[x.q[0],-x.q[1]],c:[x.c[0],-x.c[1]],ccw:!x.ccw});flipped=true}
+ const onC=x=>x.k=='L'&&Math.abs(x.p[1])<=t&&Math.abs(x.q[1])<=t;const closed=s.length>1&&dxD(s[0].p,s.at(-1).q)<=t;
+ if(closed){const k=s.findIndex(onC);if(k>=0)s=[...s.slice(k+1),...s.slice(0,k)]}let path=s.filter(x=>!onC(x));if(path.length!=s.length&&!closed){if(onC(s[0]))path=s.slice(1);if(onC(s.at(-1)))path=path.slice(0,-1);if(path.some(onC))return {err:'Centerline lines sit in the middle of the shape — draw the half-profile as one line from the face to the chuck.'}}
+ if(path.some(onC))return {err:'More than one piece of the shape lies on the centerline. Draw one half-profile.'};if(!path.length)return {err:'Nothing left after removing the centerline.'};
+ for(let k=1;k<path.length;k++)if(dxD(path[k-1].q,path[k].p)>t)return {err:'The half-profile is not one connected line.'};
+ if(path[0].p[0]<path.at(-1).q[0])path=path.slice().reverse().map(dxRev);
+ const dropped=[];while(path.length>1){const z=path.at(-1);if(z.k=='L'&&Math.abs(z.p[0]-z.q[0])<=t&&z.q[1]<z.p[1]-t){dropped.push('back face');path=path.slice(0,-1)}else break}
+ // rule checks (Type I G71): Z never moves back toward the face; X (radius) never gets smaller
+ for(const x of path){const pts=dxSamp(x,Math.PI/90);for(let k=1;k<pts.length;k++){const a=pts[k-1],b=pts[k];
+  if(b[0]>a[0]+t)return {err:`Z goes back toward the face near Z${f4(b[0])} (a back taper or undercut). G71 can't cut a Z reversal inside P–Q — refused.`,zrev:1};
+  if(b[1]<a[1]-t)return {err:`X gets smaller again near Z${f4(b[0])} X${f4(2*b[1])} (a groove or undercut). That needs Type II G71, which this import does not write — Type II rules differ by control. Cut the groove with a groove job, or remove it from the profile.`,type2:1}}}
+ return {path,flipped,dropped}}
+function dxToLathe(i){const m=dxModel(),c=m.chains.filter(c=>!c.branch)[i];if(!c||!dxOK())return;const X=dxXf({...DX.o}),segs=c.segs.map(X.seg),pr=dxLatheProf(segs,dxTolIn());
+ if(pr.err){DX.lmsg={i,html:`<div class="ok bad" id="dxlref">⛔ Not written: ${esc(pr.err)}</div>`};dxImp();return null}
+ return dxOpen('dxlathe',{...dxCtx(),prof:pr.path,flipped:pr.flipped,dropped:pr.dropped,shape:i+1})}
+const _feat55=dxFeat;dxFeat=function(m){if(!isL())return _feat55(m);const ok=dxOK();let h=`<div class="card" id="dxshapes"><div class="t">Half-profiles (lathe)</div><div class="s">Pick X0 Z0 on the centerline at the face. After rotation and mirror, the drawing's +X runs along Z and +Y is the radius (X in the program is the diameter). Holes are not used on a lathe.</div>`;
+ m.chains.filter(c=>!c.branch).forEach((c,i)=>{h+=`<div class="set dxs"><span>Shape ${i+1}: ${c.segs.length} segment${c.segs.length==1?'':'s'} · ${c.closed?'closed':'open'}${DX.lmsg&&DX.lmsg.i==i?DX.lmsg.html:''}</span><button class="chip y dxlt" data-i="${i}"${ok?'':' disabled'}>Turn this (G71 / G70)</button></div>`});
+ if(m.branches.length)h+=`<div class="ok bad">${m.branches.length} branch point(s): lines cross or meet three ways — those shapes are not offered.</div>`;
+ h+=(ok?'':`<div class="ok bad" id="dxlock">Confirm units (with one known dimension) and origin first — then the job buttons unlock.</div>`)+'</div>';return h};
+const _wm55=dxWireMore;dxWireMore=function(){_wm55();V.querySelectorAll('.dxbc').forEach(b=>b.onclick=()=>dxToBolt(+b.dataset.i));V.querySelectorAll('.dxgr').forEach(b=>b.onclick=()=>dxToGrid(+b.dataset.i));
+ V.querySelectorAll('.dxsl').forEach(b=>b.onclick=()=>dxToSlot(+b.dataset.i));V.querySelectorAll('.dxlt').forEach(b=>b.onclick=()=>dxToLathe(+b.dataset.i));
+ if(isL()){const ax=$('#dxax');if(ax){const t=ax.querySelectorAll('text');if(t[0])t[0].textContent='Z';if(t[1])t[1].textContent='X (radius)'}const n=[...V.querySelectorAll('#dxorg .s')].find(e=>/Red arrow/.test(e.textContent));if(n)n.textContent='Red arrow = +Z, green arrow = +X (radius) of the part as the lathe will see it. The centerline runs through X0 along the red arrow.'}};
+Object.assign(UNIT,{'Nose comp':'G42 for OD turning toward the chuck, or none (part line) — you pick','Retract':'in, G71 retract (Fanuc first block)'});
+['Stock Ø','Start Z','Depth of cut','Retract','X allowance (dia)','Z allowance'].forEach(k=>KL.add(k));
+function dxLz(s){return s.k=='L'?`G01 X${f4(2*s.q[1])} Z${f4(s.q[0])}`:`${s.ccw?'G03':'G02'} X${f4(2*s.q[1])} Z${f4(s.q[0])} R${f4(s.r)}`}
+defJ('dxlathe',{name:'G71 rough + G70 finish from a drawing (lathe)',lathe:1,re:/(?!)/,
+ req:['Stock Ø','Start Z','Depth of cut','X allowance (dia)','Z allowance','Rough feed','Finish feed','SFM','Tool','Finish tool','Nose comp'],sug:{},choices:{'Nose comp':['G42 (OD, toward the chuck)','none (part line)']},extra:j=>hkC()?[]:['Retract'],parse:()=>{},
+ block:j=>{if(!(j.dx&&j.dx.prof))return'This job needs its drawing: import the DXF again (drawing geometry is not kept in shared files).';const P=j.dx.prof,xmax=2*Math.max(...P.map(s=>Math.max(s.p[1],s.q[1]))),zf=P[0].p[0];
+  if(!(jv(j,'Stock Ø')>=xmax-1e-9))return'Stock Ø ('+f4(jv(j,'Stock Ø'))+') is smaller than the biggest profile Ø ('+f4(xmax)+').';if(!(jv(j,'Start Z')>zf))return'Start Z must be in front of the face (more than Z'+f4(zf)+').';
+  if(!(jv(j,'Depth of cut')>0))return'Depth of cut must be more than 0.';if(!hkC()&&!(jv(j,'Retract')>0))return'Retract must be more than 0.';if(!(jv(j,'Rough feed')>0)||!(jv(j,'Finish feed')>0))return'Feeds must be more than 0.';if(jv(j,'Tool')==null)return'Tool needed.';
+  if(P.some(s=>s.k=='A'&&s.sw>180+1e-6))return'An arc over 180° in the profile — can\'t write it with R.';return null},
+ gen:(j,L)=>{const P=j.dx.prof,st=jv(j,'Stock Ø'),xs=st+0.1,zs=jv(j,'Start Z'),d=jv(j,'Depth of cut'),ua=jv(j,'X allowance (dia)'),wa=jv(j,'Z allowance'),rf=jv(j,'Rough feed'),ff=jv(j,'Finish feed'),nc=/G42/.test(jv(j,'Nose comp')),sfm=jv(j,'SFM');
+  lhdr(L,2950,'G71 ROUGH + G70 FINISH FROM DRAWING');dxHdr(L,j,'HALF-PROFILE '+j.dx.shape+(j.dx.flipped?' (BELOW CENTERLINE, FLIPPED)':''));if(j.dx.dropped&&j.dx.dropped.length)L('(BACK FACE LEFT OUT - PROFILE ENDS AT THE LARGEST DIAMETER)');L('(TYPE I: Z ONLY TOWARD THE CHUCK, X ONLY GROWS - CHECKED)');
+  lstart36(L,jv(j,'Tool'),sfm);L(`${nc?'G42 ':''}G00 X${f4(xs)} Z${f4(zs)} (CYCLE START POINT - CLEAR OF STOCK${nc?' - NOSE COMP ON':''})`);
+  if(hkC())L(`G71 P10 Q20 D${f4(d)} U${f4(ua)} W${f4(wa)} F${f4(rf)} (HAAS ONE-BLOCK - D PER PASS, RADIUS)`);else{L(`G71 U${f4(d)} R${f4(jv(j,'Retract'))} (FANUC FIRST BLOCK - DEPTH PER PASS RADIUS, RETRACT)`);L(`G71 P10 Q20 U${f4(ua)} W${f4(wa)} F${f4(rf)} (U = X ALLOWANCE ON DIAMETER)`)}
+  const x0=2*P[0].p[1],z0=P[0].p[0],body=[];body.push(`G01 Z${f4(z0)}`);P.forEach(s=>body.push(dxLz(s)));const xe=2*P.at(-1).q[1];if(st>xe+1e-9)body.push(`G01 X${f4(st)} (OUT TO STOCK DIA)`);
+  L(`N10 G01 X${f4(x0)} F${f4(ff)} (FIRST BLOCK G01, X ONLY - NO RAPID IN P-Q)`);body.forEach((b,k)=>L((k==body.length-1?'N20 ':'')+b));
+  L(`${nc?'G40 ':''}G00 X${f4(xs)} Z${f4(zs)}${nc?' (NOSE COMP OFF)':''}`);L('G28 U0. W0. (TOOL CHANGE POSITION)');lstart36(L,jv(j,'Finish tool'),sfm);L(`${nc?'G42 ':''}G00 X${f4(xs)} Z${f4(zs)}`);L('G70 P10 Q20 (FINISH ALONG THE SAME PROFILE)');if(nc)L(`G40 G00 X${f4(xs)} Z${f4(zs)}`);lend(L);
+  const zmin=Math.min(...P.map(s=>Math.min(s.p[0],s.q[0])));j.stock=[0,0,zmin-0.25,st/2,0,0];j.lb={R:st/2,L:Math.abs(zmin)+0.25,z:0};return 1},
+ checks:j=>{const t=txt().join('\n'),pq=(t.split(/\bN10\b/)[1]||'').split(/\bN20\b/)[0];return [['First block in P–Q is G01, X only',/N10 G01 X[\d.-]+ F/.test(t)],['No rapid (G00) between N10 and N20',!/G0?0\b/.test(pq)],['No chamfer / corner-R words (,C ,R) inside P–Q',!/,[CR]/.test(pq)],['Z never goes back toward the face; X never gets smaller (Type I)',true],
+  [hkC()?'Haas one-block G71 P Q D U W F':'Fanuc two-block G71 (U R, then P Q U W F)',true],['Nose comp '+(/G42/.test(jv(j,'Nose comp'))?'G42 on before G71, G40 after':'not used (part line)'),true],['Profile from your drawing (units + origin confirmed)',!!(j.dx&&j.dx.prof)]]}});
+const _hlp55=dxHelp;dxHelp=()=>_hlp55()+`<p><b>Lathe (G71 / G70):</b> pick X0 Z0 on the centerline at the face. After rotation and mirror, drawing +X is Z and +Y is the radius (arrows labeled Z and X). Draw only the half above (or below) the centerline; a closed half-section works too: the line on the centerline and the back face are left out. The profile must be <b>Type I</b>: Z only moves toward the chuck and X only grows. The program starts P–Q with <b>G01 X only</b>, has no rapids or ,C / ,R corner words inside P–Q, and ends out at your stock Ø. A Z reversal is refused. An X that dips back down (groove, undercut) needs Type II, which this import does not write, so it is refused with where it happens. Arcs are written G02 / G03 with R, as seen with X up and Z to the right (the usual G18 view); dry-run the first part. Haas uses one G71 block (P Q D U W F), Fanuc 0i two (U R, then P Q U W F). Stock Ø, start Z, depth of cut, allowances, feeds, SFM, tools and nose comp are red.</p>
+<p><b>Patterns (mill):</b> a hole group that sits equally spaced around one circle offers the <b>Bolt circle</b> job (center, Ø, count and start angle from the drawing). Holes on a square grid offer the <b>Hole grid</b> job. A closed shape made of two equal lines and two half arcs offers the <b>Slot</b> job (end centers and width). Unequal spacing stays a point list. Depth, Z0, tool, drill or cutter Ø, feeds and work offset stay red.</p>`;
+LOG.unshift(['2.1 · Oct 13','DXF import: lathe half-profiles → G71 / G70 with Type I rule checks (refused with the reason), bolt circle / grid / slot detection → the existing jobs.']);
 </script>
 
 </body></html>
