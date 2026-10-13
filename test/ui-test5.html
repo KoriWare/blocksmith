@@ -1,0 +1,25 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
+ setTimeout(async()=>{const d=w.document,E=x=>w.eval(x),cl=()=>d.querySelector('#cl').textContent;w.confirm=()=>true;try{
+  E('S.cur=0');w.tab('new');w.ex('G54 T20 probe bore 2.0 dia center x0 y0 probe z -0.25 tip 0.157 write to g55');w.ed('Confirm write');
+  log('bore probe sim: no tolerance alarm',!E('J.run.alarms.length')&&!E('J.run.err'));
+  const mx=E('Math.max(...J.M.map(m=>m.b[0]))');log('probe stops at wall (max X '+mx.toFixed(3)+' = 1-0.0785)',Math.abs(mx-(1-0.0785))<0.01);
+  w.ex('G54 T20 probe web 1.5 wide axis x center x1 y1 probe z -0.3 tip 0.157 write to g56');w.ed('Confirm write');log('web probe: no alarm',!E('J.run.alarms.length'));
+  w.ex('G54 T6 rigid tap 1/4-20 4 hole bolt circle 2.0 dia center x0 y0 z0 0 start 45 0.5 deep 600 rpm');log('tap refused w/o rigid option',/Rigid tapping/.test(d.querySelector('#out').textContent));
+  E('S.m[0].opt.rigid=1');w.show();const t=E("txt().join('\\n')");log('tap code: M29 S600 + G84, F=30',/M29 S600/.test(t)&&/G84 Z-#26 R#18 F#9/.test(t)&&/F30/.test(t));log('G84 simulated (moves>10)',E('J.M.length')>10&&!E('J.run.err'));
+  log('rigid style red until confirmed',/❌ Rigid tap style confirmed/.test(cl()));
+  w.ex('G54 T2 index 4 faces hole x1.0 y0 z0 0.75 0.3 deep drill');log('4th axis refused w/o option',/4th axis/.test(d.querySelector('#out').textContent));
+  E('S.m[0].opt.ax4=1');w.show();const t2=E("txt().join('\\n')");log('index code G00 A[360*#100/#11]',/G00 A\[360\*#100\/#11\]/.test(t2));
+  const zs=E('J.M.filter(m=>!m.r).map(m=>[m.b[1].toFixed(2),m.b[2].toFixed(2)].join(","))');log('holes land on 4 different faces: '+[...new Set(zs)].join(' '),new Set(zs.map(z=>z.split(',').map(Number).map(Math.round).join())).size>=4);
+  log('rotary direction red',/❌ Rotary direction confirmed/.test(cl()));
+  w.ex('G54 T2 12 hole bolt circle 1.0 dia center x0 y0 z0 0 start 0 0.5 deep 0.3 drill');log('BHC overlap flagged',/❌ Holes don't overlap/.test(cl()));
+  E("J.p['Clear Z'].v=-0.1;J.p.Feed.v=0;J.p.RPM.v=99999");w.show();log('neg clearance, feed 0, RPM>max flagged',/❌ Clearance is positive/.test(cl())&&/❌ Feed is not 0/.test(cl())&&/❌ RPM 99999/.test(cl()));
+  w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep');d.querySelector('#tm').checked=true;d.querySelector('#tm').onchange({target:{checked:true}});
+  const ln=[...d.querySelectorAll('.ln')].find(e=>/^WHILE/.test(e.textContent));ln.click();log('teach explains WHILE',/WHILE/.test(d.querySelector('#teach').textContent)&&/Verify/.test(d.querySelector('#teach').textContent));
+  const g=[...d.querySelectorAll('.ln')].find(e=>/^G65/.test(e.textContent));g.click();log('teach maps G65 args',/H=6 → #11/.test(d.querySelector('#teach').textContent));
+  w.prompt=(()=>{let n=0;return()=>'1234'})();w.alert=()=>{};await w.setPin();log('PIN stored hashed (no plain PIN)',!!w.localStorage.mc_lock&&!w.localStorage.mc_lock.includes('1234'));
+  w.lockScreen();log('lock screen shows',!!d.querySelector('#lock'));d.querySelector('#pin').value='0000';await d.querySelector('#pgo').onclick();log('wrong PIN rejected',!!d.querySelector('#lock'));
+  d.querySelector('#pin').value='1234';await d.querySelector('#pgo').onclick();log('right PIN unlocks',!d.querySelector('#lock'));
+ }catch(e){out.push('ERROR '+e.message+' '+(e.stack||'').split('\n')[1])}o.textContent=out.join('\n')},800)};
+</script></body>

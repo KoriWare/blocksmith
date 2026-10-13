@@ -28,7 +28,7 @@ textarea,input,select{width:100%;background:#0a0a0a;color:#eee;border:1px solid 
 <script>
 const $=s=>document.querySelector(s),V=$('#v');
 const PRESETS={'Vertical mills':['Generic 3-axis VMC','Generic VMC w/ 4th axis','Small toolroom mill'],'Horizontal mills':['Generic HMC w/ pallet','Generic HMC 4-axis'],'Lathes':['Generic 2-axis lathe','Lathe w/ live tooling','Lathe w/ sub-spindle']};
-const SETS=[['Control','Fanuc-style'],['Units','Inch'],['Rapid rate (in/min)','400'],['Program memory (lines)','8000'],['Probe','none'],['Skip code (probe)','G31',1],['Extended offsets','none',1],['Offset syntax','G54.1 Pn',1],['Max RPM','8000']];
+const SETS=[['Control','Fanuc-style'],['Units','Inch'],['Rapid rate (in/min)','400'],['Program memory (lines)','8000'],['Probe','none'],['Skip code (probe)','G31',1],['Rigid tap style','M29 S (before G84)',1],['Rotary axis','A',1],['Rotary direction','+ = CCW looking from +X end',1],['Extended offsets','none',1],['Offset syntax','G54.1 Pn',1],['Max RPM','8000']];
 const LSETS=[['Control','Fanuc-style'],['Units','Inch'],['Rapid rate (in/min)','400'],['Program memory (lines)','8000'],['Diameter mode','Diameter',1],['Extended offsets','none',1],['Offset syntax','G54.1 Pn',1],['Tool numbering','T0101'],['Max RPM (G50)','3000',1],['Spindle mode','G96 CSS']];
 const isLT=t=>/lathe/i.test(t);
 function mk(name,type,user){return{id:Date.now()+Math.random(),name,type,s:(isLT(type)?LSETS:SETS).map(([k,v],i)=>({k,v,st:i==0||(isLT(type)?LSETS:SETS)[i][2]?'confirm':(user||[]).includes(k)?'user':'suggested'}))}}
@@ -70,7 +70,7 @@ function parse(t){t=t.toLowerCase().replace(/\b(one|two|three|four|five|six|seve
  return{op,p,text:t}}
 const OPN={bolt:'Bolt circle',grid:'Hole grid',face:'Face mill',lturn:'OD turn',lface:'Lathe face',lgroove:'OD groove',ldrill:'Center drill'};
 function nw(){$('#ttl').textContent='New job · '+(S.m[S.cur]||{name:'?'}).name;
-V.innerHTML=`<textarea id="q" rows="3" placeholder="${isL()?'e.g. G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0':'e.g. G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck'}">${J?J.text:''}</textarea><div class="row" style="margin-top:6px">${isL()?`<button class="chip gr" onclick="ex('G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0 chamfer 0.03')">OD turn</button><button class="chip gr" onclick="ex('G54 T1 face 0.05 off 2.0 bar z0 0')">Face</button><button class="chip gr" onclick="ex('G54 T3 groove 0.25 wide 0.1 deep at z-1.0 2.0 bar insert 0.125 z0 0')">Groove</button><button class="chip gr" onclick="ex('G54 T5 center drill 0.5 deep peck 0.1 z0 0')">Drill</button>`:`<button class="chip gr" onclick="ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1')">Bolt circle</button><button class="chip gr" onclick="ex('G54 T2 3 x 4 grid 0.75 spacing start x0 y0 z0 0 0.4 deep drill')">Grid</button><button class="chip gr" onclick="ex('G54 T20 probe bore 2.0 dia center x0 y0 probe z -0.25 tip 0.157 write to g55')">Probe</button><button class="chip gr" onclick="ex('G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 70 z0 0')">Face</button>`}</div><button class="btn" onclick="go()">Make my macro</button><div id="out"></div>`}
+V.innerHTML=`<textarea id="q" rows="3" placeholder="${isL()?'e.g. G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0':'e.g. G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck'}">${J?J.text:''}</textarea><div class="row" style="margin-top:6px">${isL()?`<button class="chip gr" onclick="ex('G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0 chamfer 0.03')">OD turn</button><button class="chip gr" onclick="ex('G54 T1 face 0.05 off 2.0 bar z0 0')">Face</button><button class="chip gr" onclick="ex('G54 T3 groove 0.25 wide 0.1 deep at z-1.0 2.0 bar insert 0.125 z0 0')">Groove</button><button class="chip gr" onclick="ex('G54 T5 center drill 0.5 deep peck 0.1 z0 0')">Drill</button>`:`<button class="chip gr" onclick="ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1')">Bolt circle</button><button class="chip gr" onclick="ex('G54 T2 3 x 4 grid 0.75 spacing start x0 y0 z0 0 0.4 deep drill')">Grid</button><button class="chip gr" onclick="ex('G54 T6 rigid tap 1/4-20 4 hole bolt circle 2.0 dia center x0 y0 z0 0 start 45 0.5 deep 600 rpm')">Tap</button><button class="chip gr" onclick="ex('G54 T2 index 4 faces hole x1.0 y0 z0 0.75 0.3 deep drill')">4th axis</button><button class="chip gr" onclick="ex('G54 T20 probe bore 2.0 dia center x0 y0 probe z -0.25 tip 0.157 write to g55')">Probe</button><button class="chip gr" onclick="ex('G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 70 z0 0')">Face</button>`}</div><button class="btn" onclick="go()">Make my macro</button><div id="out"></div>`}
 function ex(s){$('#q').value=s;go()}
 function go(){const j=req((isL()?parseL:parse)($('#q').value));if(!j){$('#out').innerHTML=`<div class="ok bad">${isL()?'Try “turn”, “face”, “groove”, or “center drill”.':'Try “bolt circle”, “grid”, or “face mill”.'}</div>`;return}J={...j,date:Date.now(),edits:{}};show()}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
@@ -251,10 +251,12 @@ function interp(lines,o){o=o||{};const lathe=o.lathe,M=[],alarms=[],V={};const R
  let loc=[{}];const get=n=>{n=Math.round(n);if(n==0)return null;if(n<=33){const v=loc.at(-1)[n];return v==null?null:v}const v=V[n];return v==null?null:v};
  const set=(n,v)=>{n=Math.round(n);if(n<=33)loc.at(-1)[n]=v;else V[n]=v};
  const ev=e=>mexpr(e,get);const val=x=>{const v=ev(x);return v==null?0:v};
- const mv=(b,r,l)=>{const m={a:[...pos],b,r:r?1:0,f:feed,l};M.push(m);pos=[...b]};
+ const RT=p=>{if(!o.rot||!o.ang)return[...p];const a=-o.ang*Math.PI/180,c=Math.cos(a),s=Math.sin(a);return o.rot=='A'?[p[0],p[1]*c-p[2]*s,p[1]*s+p[2]*c]:[p[0]*c+p[2]*s,p[1],-p[0]*s+p[2]*c]};
+ const mv=(b,r,l)=>{const m={a:RT(pos),b:RT(b),r:r?1:0,f:feed,l};M.push(m);pos=[...b]};
  function motion(s,i){const w=words(s);let g=[],P={};w.forEach(([L,x])=>{if(L=='G')g.push(+x);else P[L]=x});
+  if(o.rot&&P[o.rot]!=null){o.ang=val(P[o.rot]);delete P[o.rot]}
   if(g.includes(65)){const pr=val(P.P),args={};Object.keys(P).forEach(k=>{if(k!='P'&&ARG[k])args[ARG[k]]=val(P[k])});loc.push(args);R.push(i);return findO(pr)}
-  g.forEach(x=>{if(x==0||x==1||x==2||x==3)mode=x;if(x==90)abs=1;if(x==91)abs=0;if(x==80)can=null;if(x==81||x==83)can=x;if(x==98||x==99)ret=x});
+  g.forEach(x=>{if(x==0||x==1||x==2||x==3)mode=x;if(x==90)abs=1;if(x==91)abs=0;if(x==80)can=null;if(x==81||x==83||x==84)can=x;if(x==98||x==99)ret=x});
   if(P.F!=null)feed=val(P.F);
   if(g.includes(52)){['X','Y','Z'].forEach((k,n)=>{if(P[k]!=null)shift[n]=val(P[k])});return}
   if(g.includes(28)){mv(lathe?[...home]:[pos[0],pos[1],home[2]+shift[2]],1,i);return}
@@ -266,7 +268,7 @@ function interp(lines,o){o=o||{};const lathe=o.lathe,M=[],alarms=[],V={};const R
   if(lathe){if(P.U!=null){any=1;t[0]+=val(P.U)/2}if(P.W!=null){any=1;t[2]+=val(P.W)}}
   if(!any)return;
   if(can&&!lathe){const z0=pos[2],rz=val(P.R??'0')+shift[2],zb=t[2],q=P.Q!=null?val(P.Q):0;mv([t[0],t[1],z0],1,i);mv([t[0],t[1],rz],1,i);
-   if(can==83&&q>0){let z=rz;while(z>zb+1e-9){const nz=Math.max(zb,z-q);mv([t[0],t[1],nz],0,i);mv([t[0],t[1],rz],1,i);if(nz>zb)mv([t[0],t[1],nz+0.01],1,i);z=nz}}else{mv([t[0],t[1],zb],0,i);}
+   if(can==83&&q>0){let z=rz;while(z>zb+1e-9){const nz=Math.max(zb,z-q);mv([t[0],t[1],nz],0,i);mv([t[0],t[1],rz],1,i);if(nz>zb)mv([t[0],t[1],nz+0.01],1,i);z=nz}}else{mv([t[0],t[1],zb],0,i);if(can==84){mv([t[0],t[1],rz],0,i)}}
    mv([t[0],t[1],ret==98?z0:rz],1,i);if(ret==98)pos[2]=z0;return}
   if(mode==2||mode==3){const a=lathe?[pos[2],pos[0]]:[pos[0],pos[1]],b=lathe?[t[2],t[0]]:[t[0],t[1]];let c;
    if(P.R!=null){const r=val(P.R),dx=b[0]-a[0],dy=b[1]-a[1],d=Math.hypot(dx,dy),h=Math.sqrt(Math.max(0,r*r-d*d/4)),sgn=(mode==2)==(r>0)?-1:1;c=[(a[0]+b[0])/2-sgn*h*dy/d,(a[1]+b[1])/2+sgn*h*dx/d]}
@@ -274,6 +276,7 @@ function interp(lines,o){o=o||{};const lathe=o.lathe,M=[],alarms=[],V={};const R
    let a0=Math.atan2(a[1]-c[1],a[0]-c[0]),a1=Math.atan2(b[1]-c[1],b[0]-c[0]),r=Math.hypot(a[0]-c[0],a[1]-c[1]);const cw=mode==2;
    if(cw&&a1>=a0)a1-=2*Math.PI;if(!cw&&a1<=a0)a1+=2*Math.PI;const n=Math.max(4,Math.ceil(Math.abs(a1-a0)/0.15));
    for(let k=1;k<=n;k++){const an=a0+(a1-a0)*k/n,x=c[0]+r*Math.cos(an),y=c[1]+r*Math.sin(an),z=pos[2]+(t[2]-pos[2])/(n-k+1);mv(lathe?[y,0,x]:[x,y,lathe?pos[2]:z],0,i)}return}
+  if(g.includes(31)&&o.contact){const c=o.contact(pos,t);V[5061]=c[0];V[5062]=c[1];V[5063]=c[2];mv(c,0,i);return}
   mv(t,mode==0,i)}
  function stmt(s,i){
   if(/^#/.test(s)&&s.includes('=')){const k=s.indexOf('=');let L=s.slice(1,k);const n=L[0]=='['?val(L.slice(1,-1)):+L;const v=ev(s.slice(k+1));if(n==3000){alarms.push({n:v,msg:cl[i].c,l:i});throw{alarm:1}}set(n,v);return}
@@ -296,7 +299,7 @@ function interp(lines,o){o=o||{};const lathe=o.lathe,M=[],alarms=[],V={};const R
  return{moves:M,alarms,err}}
 // ---------- round 3: run sim from edited text
 const LET=Object.fromEntries(Object.entries(ARG).map(([k,v])=>[v,k]));
-function refresh(){const st=J.stock;let r;try{r=interp(txt(),{lathe:J.lathe,start:(J.moves[0]||{a:[0,0,2]}).a})}catch(e){r={moves:[],alarms:[],err:e.message}}
+function refresh(){const st=J.stock;let r;try{r=interp(txt(),{lathe:J.lathe,start:(J.moves[0]||{a:[0,0,2]}).a,contact:mkContact(J)})}catch(e){r={moves:[],alarms:[],err:e.message}}
  J.run=r;J.M=r.err||!r.moves.length?J.moves:r.moves;
  J.M.forEach(m=>{m.out=0;if(J.lathe?(m.b[0]<-1e-6||(!m.r&&m.b[2]<st[2]-1e-6)):(!m.r&&m.b[2]<st[2]-1e-6))m.out=1});
  const ch=checks(J);ch.unshift(['Program runs in simulator'+(r.err?': '+r.err:''),!r.err],['No #3000 alarm on this run'+(r.alarms.length?' (alarm '+r.alarms[0].n+': '+r.alarms[0].msg+')':''),!r.alarms.length]);
@@ -356,7 +359,7 @@ function snips(){document.querySelectorAll('.tabs button').forEach(b=>b.classLis
 // ---------- samples (§27), about + change log (§33)
 const SAMPLES=[['Mill A','Bolt circle (mill)','G54 T5 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1'],['Mill A','Hole grid (mill)','G55 T2 3 x 4 grid 0.75 spacing start x0.5 y0.5 z0 0 0.4 deep drill'],['Mill A','Face mill','G54 T1 face 4 x 3 take off 0.06 stepdown 0.02 stepover 70 z0 0'],['Lathe 1','OD turn (lathe)','G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0 chamfer 0.03'],['Lathe 1','OD groove (lathe)','G54 T3 groove 0.25 wide 0.1 deep at z-1.0 2.0 bar z0 0']];
 function sample(i){const s=SAMPLES[i],k=S.m.findIndex(m=>m.name==s[0]);if(k>=0)S.cur=k;tab('new');ex(s[2])}
-const LOG=[['0.4 · Oct 12','Probing jobs (bore, surface, web, pocket) with G31 + G10 write, machine options checklist, reference, compare, batch check, tool life, backup/import/clear, snippet insert.'],['0.3 · Oct 12','Simulator now runs your edited macro text (small Macro B interpreter). Lathe view fit/pan/zoom. Tool library, G-code scanner, calculators, alarm preview, export, setup sheet, samples, snippets.'],['0.2 · Oct 12','Lathe jobs, tool shown in sim, scrub + line highlight, required positional values, extended work offsets.'],['0.1 · Oct 12','First prototype: machines, bolt circle/grid/face, Macro B generator, checker, 3D view, recent.']];
+const LOG=[['0.5 · Oct 12','Probe sim touches the stock wall; rigid tap (G84, M29 per machine); 4th-axis every-face drilling; teach mode; PIN lock; more edge-case checks.'],['0.4 · Oct 12','Probing jobs (bore, surface, web, pocket) with G31 + G10 write, machine options checklist, reference, compare, batch check, tool life, backup/import/clear, snippet insert.'],['0.3 · Oct 12','Simulator now runs your edited macro text (small Macro B interpreter). Lathe view fit/pan/zoom. Tool library, G-code scanner, calculators, alarm preview, export, setup sheet, samples, snippets.'],['0.2 · Oct 12','Lathe jobs, tool shown in sim, scrub + line highlight, required positional values, extended work offsets.'],['0.1 · Oct 12','First prototype: machines, bolt circle/grid/face, Macro B generator, checker, 3D view, recent.']];
 function about(){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t=='more'));$('#ttl').textContent='About';V.innerHTML=`<div class="card"><div class="t">Macro Catculator 😼 prototype</div><div class="s">Fully offline. Generic Fanuc-style Macro B only. Not affiliated with any machine or control maker. Demo data only.</div><div class="foot">Always dry-run and single-block on the machine before production.</div></div><div class="card"><div class="t">Change log</div>${LOG.map(l=>`<div class="s"><b style="color:#ffd21f">${l[0]}</b> — ${l[1]}</div>`).join('')}</div><button class="btn o" onclick="more()">Back</button>`}
 function more(){$('#ttl').textContent='More';document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t=='more'));
  V.innerHTML=[['🔧 Tool library & life','tools()'],['📖 Reference','reference()'],['⇄ Compare programs','compare()'],['✅ Batch check','batch()'],['💾 Your data (backup / clear)','data()'],['🔍 G-code scanner','scanner()'],['🧮 Calculators','calc()'],['⭐ Snippets','snips()'],['ℹ️ About & change log','about()']].map(([n,f])=>`<div class="card" onclick="${f}"><div class="t">${n}</div></div>`).join('')+`<div class="card"><div class="t">Sample jobs</div>${SAMPLES.map((s,i)=>`<button class="chip y" onclick="sample(${i})">${s[1]}</button>`).join('')}</div>`}
@@ -431,7 +434,7 @@ function genP(j){const p=k=>j.p[k]?j.p[k].v:0,c=[],L=s=>c.push(s),wo=offCode(p('
  const cx=p('Center X')||p('Start X'),cy=p('Center Y')||p('Start Y'),sz=Math.max(p('Dia')||0,p('Width')||0,1)+1;j.stock=[cx-sz/2,cy-sz/2,p('Probe Z')-0.5,cx+sz/2,cy+sz/2,0];
  return{code:c,moves:[{a:[cx,cy,cz+1],b:[cx,cy,cz+1],r:1,l:5}],out:0}}
 // interpreter: G31 = feed move that "touches" at the target; G10 ignored
-const _interp=interp;interp=function(lines,o){const r=_interp(lines.map(l=>/^\s*G91\s*G10|^\s*G10/.test(l.toUpperCase())?'(G10 WRITE - NOT SIMULATED)':l.replace(/\bG31\b/,'G01')),o);return r};
+const _interp=interp;interp=function(lines,o){const r=_interp(lines.map(l=>/^\s*G91\s*G10|^\s*G10/.test(l.toUpperCase())?'(G10 WRITE - NOT SIMULATED)':l),o);return r};
 const _checks=checks;checks=function(j){const c=_checks(j);c.push(['Custom Macro B option on',opt('macroB')]);if(/^P/.test((j.p['Work offset']||{}).v||''))c.push(['Extended offsets option on',opt('ext')]);
  if(OPN2[j.op]){const so=sv('Skip code (probe)'),ro=j.p['Result offset'].v;c.push(['Probing option on',opt('probe')],['G10 option on',opt('g10')],['Skip code '+(so?so.v:'G31')+' confirmed on control',so&&so.st=='user'],['Result offset '+offLbl(ro||'?')+' exists on this machine',offOK(ro)],['You confirmed the offset write',j.p['Confirm write'].v=='YES'],['Size tolerance alarm before write',/GOTO98|N98/.test(txt().join('\n'))||j.op=='psurf'])}return c};
 // §28 tool life: parts count per tool
@@ -468,7 +471,77 @@ function tabOn(){document.querySelectorAll('.tabs button').forEach(b=>b.classLis
 function insSnip(i){const s=S.snips[i];if(!s||!J)return;const at=J.focus!=null?+J.focus+1:J.code.findIndex(l=>/^M30/.test(l));const lines=s.c.split('\n');
  const ne={};Object.entries(J.edits).forEach(([k,v])=>{ne[+k>=at?+k+lines.length:k]=v});lines.forEach((l,n)=>ne[at+n]=l);J.edits=ne;(J.ins=J.ins||[]).push({at,lines});show()}
 
+// ---------- round 5
+// probe contact model for the sim
+function mkContact(j){if(!OPN2[j.op])return null;const v=k=>j.p[k]?j.p[k].v:0,r=v('Tip Ø')/2,cx=v('Center X')||v('Start X'),cy=v('Center Y')||v('Start Y');
+ return(a,b)=>{const N=400;for(let k=1;k<=N;k++){const p=a.map((x,n)=>x+(b[n]-x)*k/N);let hit=0;
+  if(j.op=='pbore')hit=Math.hypot(p[0]-cx,p[1]-cy)>=v('Dia')/2-r;
+  else if(j.op=='ppocket'){const ax=v('Axis')=='X'?0:1;hit=Math.abs(p[ax]-(ax?cy:cx))>=v('Width')/2-r}
+  else if(j.op=='pweb'){const ax=v('Axis')=='X'?0:1,d0=Math.abs(a[ax]-(ax?cy:cx));hit=d0>v('Width')/2+r&&Math.abs(p[ax]-(ax?cy:cx))<=v('Width')/2+r}
+  else if(j.op=='psurf'){const ax=v('Axis')[0]=='X'?0:1;hit=Math.abs(p[ax]-(ax?cy:cx))>=0.25-r}
+  if(hit)return p}return b}}
+// rigid tap + 4th axis settings/options in jobs
+const _parse5=parse;parse=function(t){const l=t.toLowerCase();
+ if(/index|every face|4th|rotary/.test(l)){const p={},G=(k,v,g)=>p[k]={v,g:!!g};G('Faces',num(/(\d+)\s*faces?/,l));G('Depth',num(/([\d.]+)\s*(?:"|in)?\s*deep/,l));const f=num(/\bf(?:eed)?\s*([\d.]+)/,l);G('Feed',f??8,f==null);G('RPM',num(/(\d{3,5})\s*rpm/,l)??2500,!/rpm/.test(l));G('Clear Z',0.1,true);
+  const dd=num(/([\d.]+)\s*(?:"|in)?\s*drill/,l);G('Drill Ø',dd??0.25,dd==null);return{op:'index',p,text:l}}
+ const j=_parse5(t);if(j&&/\btap\b|tapp/.test(l)&&(j.op=='bolt'||j.op=='grid')){j.p.Cycle={v:'Rigid tap G84',g:false};delete j.p['Peck Q'];const m=l.match(/(\d+)\s*tpi|-(\d+)\b/);j.p.TPI={v:m?+(m[1]||m[2]):null};j.tap=1;const r=num(/(\d{3,5})\s*rpm/,l);j.p.RPM={v:r??500,g:r==null}}return j};
+Object.assign(OPN,{index:'4th-axis: holes on every face'});REQ.index=['Faces','Hole X','Hole Y','Z0','Depth'];Object.assign(UNIT,{'Faces':'count, evenly indexed','Hole X':'in along rotary axis','Hole Y':'in across face','TPI':'threads per inch'});
+const _req5=req;req=function(j){if(j&&j.op=='index'){const xy=j.text.match(/(?:hole|at)\s*x\s*(-?[\d.]+)\s*,?\s*y\s*(-?[\d.]+)/);j.p['Hole X']={v:xy?+xy[1]:null};j.p['Hole Y']={v:xy?+xy[2]:null};const z=num(/z0\s*(-?[\d.]+)/,j.text);j.p.Z0={v:z};
+  j.p['Work offset']={v:normOff(j.text)};const tl=j.text.match(/\bt(?:ool)?\s*(\d+)/);j.p.Tool={v:tl?+tl[1]:null};return j}
+ j=_req5(j);if(j&&j.tap){REQ[j.op].includes('TPI')||0;if(j.p.TPI.v!=null)j.p.Feed={v:+(j.p.RPM.v/j.p.TPI.v).toFixed(3),g:false,calc:1}}return j};
+UNIT.Z0='in (top of part; 4th axis: face height above rotary centerline)';
+const _gen5=gen;gen=function(j){const p=k=>j.p[k]?j.p[k].v:0;
+ if(j.op=='index'){const c=[],L=s=>c.push(s),T=p('Tool'),ax=((sv('Rotary axis')||{v:'A'}).v||'A').toUpperCase()[0],H=p('Z0');
+  L('%');L('O1400 (4TH AXIS HOLES EVERY FACE - DEMO)');L('(GENERIC FANUC-STYLE - VERIFY ROTARY DIRECTION AND CENTERLINE)');L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06`);L(`${offCode(p('Work offset'))} G00 X0. Y0. ${ax}0. S${p('RPM')} M03`);L('(WORK ZERO: Y0 Z0 ON ROTARY CENTERLINE)');L(`G43 H${T} Z${f4(H+1)} M08`);
+  L(`G65 P9400 H${p('Faces')} X${f4(p('Hole X'))} Y${f4(p('Hole Y'))} W${f4(H)} Z${f4(p('Depth'))} R${f4(p('Clear Z'))} F${f4(p('Feed'))}`);L(`G00 Z${f4(H+1)} ${ax}0.`);L('G80 M09');L('G91 G28 Z0. (SAFE END)');L('G90 M05');L('M30');L('');
+  L('O9400 (INDEX AND DRILL EVERY FACE)');[11,24,25,23,26,18,9].forEach(v=>L(`IF[#${v}EQ#0]GOTO99`));L('IF[#11LT1]GOTO99');L('#100=0');L('WHILE[#100LT#11]DO1');L(`G00 Z[#23+#18+1]`);L(`G00 ${ax}[360*#100/#11]`);L('G00 X#24 Y#25');L('G90 G99 G81 X#24 Y#25 Z[#23-#26] R[#23+#18] F#9');L('G80');L('#100=#100+1');L('END1');L('M99');L('N99 #3000=1 (MISSING ARGUMENT)');L('M99');L('%');
+  j.stock=[p('Hole X')-1,-H,-H,p('Hole X')+1,H,H];j.rot=ax;return{code:c,moves:[{a:[0,0,H+1],b:[0,0,H+1],r:1,l:7}],out:0}}
+ const g=_gen5(j);if(j.tap){g.code=g.code.map(l=>l.replace(/G8[13] Z-#26 R#18( Q#17)? F#9/,'G84 Z-#26 R#18 F#9'));const st=(sv('Rigid tap style')||{v:'M29 S'}).v;
+  if(/M29/.test(st)){const k=g.code.findIndex(l=>/^G65/.test(l));g.code.splice(k,0,`M29 S${p('RPM')} (RIGID TAP MODE)`)}g.code.splice(1,0,'(RIGID TAP '+p('TPI')+' TPI - FEED = RPM / TPI)')}return g};
+// interpreter: G84 + rotary display
+const _interp5=interp;interp=function(lines,o){o=o||{};if(J&&J.rot&&!o.noRot){o.rot=J.rot}return _interp5(lines,o)};
+// §24 edge cases
+const _checks5=checks;checks=function(j){const c=_checks5(j),v=k=>j.p[k]?j.p[k].v:null,mx=+((sv('Max RPM (G50)')||sv('Max RPM')||{v:1e9}).v);
+ if(v('Feed')!=null)c.push(['Feed is not 0',v('Feed')>0]);if(v('Feed/rev')!=null)c.push(['Feed/rev is not 0',v('Feed/rev')>0]);
+ if(v('RPM')!=null)c.push([`RPM ${v('RPM')} within machine max ${mx}`,v('RPM')<=mx]);
+ if(v('Depth')!=null)c.push(['Depth is not 0',v('Depth')!=0]);
+ if(v('Clear Z')!=null)c.push(['Clearance is positive',v('Clear Z')>0]);
+ const td=v('Drill Ø')||v('Cutter');
+ if(j.op=='bolt'&&td){const ch=v('Dia')*Math.sin(Math.PI/v('Holes'));c.push([`Holes don't overlap on the BHC (gap ${(ch-td).toFixed(3)} in)`,ch>td])}
+ if(j.op=='grid'&&td)c.push(['Grid holes don\'t overlap',Math.min(v('Pitch X')||9,v('Pitch Y')||9)>td]);
+ if(j.op=='pbore')c.push(['Probe tip smaller than bore',v('Tip Ø')<v('Dia')]);if(j.op=='ppocket')c.push(['Probe tip smaller than pocket',v('Tip Ø')<v('Width')]);
+ if(j.op=='lgroove')c.push(['Insert not wider than groove',v('Insert W')<=v('Width')]);
+ if(j.tap){c.push(['Rigid tapping option on',opt('rigid')],['Rigid tap style confirmed on control',(sv('Rigid tap style')||{}).st=='user'],['TPI given',v('TPI')>0])}
+ if(j.op=='index'){c.push(['4th axis option on',opt('ax4')],['Rotary axis letter confirmed',(sv('Rotary axis')||{}).st=='user'],['Rotary direction confirmed',(sv('Rotary direction')||{}).st=='user'],['Faces ≥ 1',v('Faces')>=1],['Depth less than face height',v('Depth')<v('Z0')])}
+ return c};
+// refuse when option missing
+const _show5=show;show=function(){if(J&&!Object.values(J.p).some(x=>x.v==null)){const need=J.op=='index'&&!opt('ax4')?'4th axis':J.tap&&!opt('rigid')?'Rigid tapping':null;
+  if(need){_show5();const o=$('#out');o.innerHTML=o.innerHTML.split('<div class="ok')[0]+`<div class="ok bad">⛔ Not written: this machine's options don't include ${need}. Turn it on in Machines → ${(S.m[S.cur]||{}).name} → Options after checking the control.</div>`;return}}
+ _show5();if(J&&J.code&&$('#ed')){const b=document.createElement('div');b.innerHTML=`<label style="font-size:13px"><input type="checkbox" id="tm" style="width:auto" ${J.teach?'checked':''}> 🎓 Teach mode — tap a line to explain it</label><div id="teach" class="card hid" style="margin-top:6px"></div>`;$('#ed').before(b);
+  $('#tm').onchange=e=>{J.teach=e.target.checked;$('#teach').classList.toggle('hid',!J.teach)};if(J.teach)$('#teach').classList.remove('hid');V.querySelectorAll('.ln').forEach(el=>el.addEventListener('click',()=>{if(J.teach)$('#teach').innerHTML=explain(el.textContent)}))}};
+// §20 teach mode
+function explain(line){const raw=line,s=line.replace(/\([^)]*\)/g,'').toUpperCase().replace(/\s+/g,''),cm=(line.match(/\(([^)]*)\)/)||[])[1],out=[];
+ const ref=k=>REFMB.find(x=>x.k.toUpperCase().replace(/\s/g,'').startsWith(k));
+ if(/^IF\[.*\]GOTO/.test(s))out.push(['IF … GOTO',(ref('IF[COND]GOTO')||{}).m||'Jump when the condition is true']);else if(/^IF\[.*\]THEN/.test(s))out.push(['IF … THEN',(ref('IF[COND]THEN')||{}).m||'Do one statement when true']);
+ if(/^WHILE/.test(s))out.push(['WHILE … DO',(ref('WHILE')||{}).m||'Loop while true']);if(/^END\d/.test(s))out.push(['END',(ref('END')||{}).m||'End of loop']);if(/GOTO/.test(s)&&!/^IF/.test(s))out.push(['GOTO','Jump to that N block']);
+ if(/#3000=/.test(s))out.push(['#3000','Stops the machine with alarm message “'+(cm||'')+'”']);
+ if(/^#\d+=/.test(s)){const n=+s.match(/^#(\d+)/)[1];out.push(['#'+n+' =','Store a value in '+(n<=33?'local variable (macro-call only)':n<200?'common variable #100–199 (shared, usually cleared at reset)':n<1000?'permanent variable (kept at power off)':'system variable — check your control')])}
+ (s.match(/G\d+(\.\d)?|M\d+/g)||[]).forEach(c=>{const k=c[0]+(c.includes('.')?c.slice(1):c.slice(1).padStart(2,'0'));if(GD[k])out.push([k,GD[k]]);else if(/^G1[1-2]\d$/.test(c))out.push([c,'Haas-style extended work offset']);else if(c!='G65')out.push([c,'Not in the reference — check the control manual'])});
+ if(/G65/.test(s)){const w=s.replace(/.*G65P\d+/,'');out.push(['Arguments',(w.match(/[A-Z][-\d.]+/g)||[]).map(a=>a[0]+'='+a.slice(1)+' → #'+(ARG[a[0]]||'?')).join(', ')])}
+ const lv=[...new Set((s.match(/#\d+/g)||[]))].filter(x=>+x.slice(1)<=26&&LET[+x.slice(1)]);if(lv.length)out.push(['Locals',lv.map(x=>x+' = argument '+LET[+x.slice(1)]).join(', ')]);
+ if(/#506[1-3]/.test(s))out.push(['#5061–5063','Where the probe touched (skip position)']);if(cm)out.push(['Comment',cm]);
+ return`<div class="t" style="font-family:ui-monospace,monospace;font-size:13px">${esc(raw)}</div>${out.map(([k,m])=>`<div class="s"><b style="color:#14b8a6">${esc(k)}</b> ${esc(m)}</div>`).join('')||'<div class="s">Plain line — nothing to explain.</div>'}<div class="s">Verify on your control.</div>`}
+// §32 local PIN lock
+async function hpin(pin,salt){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+pin));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+async function setPin(){const a=prompt('New PIN (4–8 digits). There is NO recovery: if you forget it, the only way back is clearing all app data.');if(a==null)return;if(!/^\d{4,8}$/.test(a))return alert('Use 4–8 digits');if(prompt('Type the PIN again')!==a)return alert("PINs didn't match");
+ const salt=crypto.getRandomValues(new Uint32Array(2)).join('-');localStorage.setItem('mc_lock',JSON.stringify({salt,h:await hpin(a,salt)}));data()}
+function lockScreen(){const L=JSON.parse(localStorage.getItem('mc_lock')||'null');if(!L)return;const o=document.createElement('div');o.id='lock';o.style.cssText='position:fixed;inset:0;background:#111;z-index:99;display:flex;flex-direction:column;justify-content:center;padding:30px';
+ o.innerHTML=`<div style="font-size:40px;text-align:center">😼🔒</div><div class="t" style="text-align:center;margin:10px">Macro Catculator is locked</div><input id="pin" type="password" inputmode="numeric" placeholder="PIN" style="text-align:center;font-size:22px"><button class="btn" id="pgo">Unlock</button><div class="s" id="perr" style="text-align:center"></div><button class="btn o" style="margin-top:30px;border-color:#ff8a8a;color:#ff8a8a" onclick="clearAll()">Forgot PIN — clear all data</button>`;document.body.appendChild(o);
+ const go=async()=>{if(await hpin($('#pin').value,L.salt)==L.h)o.remove();else $('#perr').textContent='Wrong PIN'};$('#pgo').onclick=go;$('#pin').onkeydown=e=>{if(e.key=='Enter')go()}}
+const _data5=data;data=function(){_data5();const L=localStorage.getItem('mc_lock');const c=document.createElement('div');c.className='card';c.innerHTML=`<div class="t">PIN lock ${L?'<span class="chip g">on</span>':'<span class="chip gr">off</span>'}</div><div class="s">Asks for a PIN when the app opens. The PIN is stored only as a salted hash on this phone. It's a lock screen, not encryption. No recovery — forgetting it means clearing all data.</div><button class="btn o" onclick="setPin()">${L?'Change PIN':'Set PIN'}</button>${L?`<button class="btn o" onclick="if(confirm('Turn off the PIN lock?')){localStorage.removeItem('mc_lock');data()}">Turn off</button>`:''}`;V.insertBefore(c,V.querySelector('.btn'))};
+const _clearAll=clearAll;clearAll=function(){if(!confirm('Delete ALL machines, tools, jobs and snippets on this phone? Export a backup first if unsure.'))return;if(prompt('Type DELETE to confirm')!=='DELETE')return;localStorage.removeItem('mc');localStorage.removeItem('mc_lock');location.reload()};
+
 if('serviceWorker'in navigator&&location.protocol!='file:')navigator.serviceWorker.register('sw.js');
-tab('machines');
-let H=decodeURIComponent(location.hash.slice(1));if(H.startsWith('more:')){const f=H.slice(5);({tools,calc,snips,about,more,reference,compare,batch,data,scanner:()=>scanner('O1234\nG17 G20 G90 G54.1 P2\nG43 H1 Z1.\nG96 S400\nG71 U0.05 R0.02\nG81 X1 Y1 Z-0.5 R0.1 F8\nG12.1\nM30')})[f]();H=''}else if(H.startsWith('edit:')){H=H.slice(5);window.__edit=1}if(H.startsWith('L:')){S.cur=S.m.findIndex(m=>isLT(m.type));H=H.slice(2)}if(H=='presets')addM();else if(H=='recent'){tab('new');ex('6 hole bolt circle 3.0 dia 0.5 deep');saveJob()}else if(H){tab('new');ex(H);if(window.__edit&&J&&J.code){J.code.forEach((l,i)=>{if(l=='#102=#7/2*COS[#101]')J.edits[i]='#102=#7*COS[#101]';if(l=='G01 Z-#26 F#9'&&J.lathe)J.edits[i]='G01 Z[-#26+1.0] F#9'});show()}const q=new URLSearchParams(location.search);if(q.has('cw')&&J){window.confirm=()=>true;ed('Confirm write');if(J.M)scrub(Math.floor(J.M.length*.4))}if(J&&J.M){if(q.has('rev'))rev();if(q.has('n'))scrub(Math.floor(J.M.length*+q.get('n')));if(q.has('sheet'))sheet();}}
+tab('machines');lockScreen();
+let H=decodeURIComponent(location.hash.slice(1));if(H.startsWith('more:')){const f=H.slice(5);({tools,calc,snips,about,more,reference,compare,batch,data,scanner:()=>scanner('O1234\nG17 G20 G90 G54.1 P2\nG43 H1 Z1.\nG96 S400\nG71 U0.05 R0.02\nG81 X1 Y1 Z-0.5 R0.1 F8\nG12.1\nM30')})[f]();H=''}else if(H.startsWith('edit:')){H=H.slice(5);window.__edit=1}if(H.startsWith('L:')){S.cur=S.m.findIndex(m=>isLT(m.type));H=H.slice(2)}if(H=='presets')addM();else if(H=='recent'){tab('new');ex('6 hole bolt circle 3.0 dia 0.5 deep');saveJob()}else if(H){tab('new');ex(H);if(window.__edit&&J&&J.code){J.code.forEach((l,i)=>{if(l=='#102=#7/2*COS[#101]')J.edits[i]='#102=#7*COS[#101]';if(l=='G01 Z-#26 F#9'&&J.lathe)J.edits[i]='G01 Z[-#26+1.0] F#9'});show()}const q=new URLSearchParams(location.search);if(q.has('opt')&&J){const m=S.m[S.cur];m.opt.ax4=1;m.opt.rigid=1;show()}if(q.has('teach')&&J&&J.code){J.teach=1;show();const e=[...V.querySelectorAll('.ln')].find(e=>/^G65/.test(e.textContent));e.click();e.classList.add('cur')}if(q.has('cw')&&J){window.confirm=()=>true;ed('Confirm write');if(J.M)scrub(Math.floor(J.M.length*.4))}if(J&&J.M){if(q.has('rev'))rev();if(q.has('n'))scrub(Math.floor(J.M.length*+q.get('n')));if(q.has('sheet'))sheet();}}
 </script></body></html>
