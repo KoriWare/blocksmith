@@ -390,3 +390,17 @@ Amber (thin):
 
 Never guessed / always red: kinematics, axis letters (prefilled from preset name but still red), limits, + directions, pivot/MRZP offsets, all code lines, option yes/no, Fanuc clamp M-codes (no public source — builder specific).
 Unsourced defaults (gray): tilted-face drill feed 6, RPM 2000, start angle 0; centerline check skip feed 10, over-travel 0.1.
+
+## Round 36 — cycles, strategies, optimization, calculators (Oct 13, 2026)
+All rewritten in our own words; generic Haas / Fanuc 0i only.
+- Haas lathe G71 / G72 / G76 (official haascnc.com G-code pages): one-block D form, U/W allowances, P modal caution, Type I vs II; G76 A, D, K, P1–P4 infeed, Settings 86/95/96/99.
+- Fanuc turning G71/G72/G70/G76/G74/G75 + G-code system A/B/C table: zappettiniconsulting.com Fanuc turning page; agrees with the Fanuc 30i manual p.45 (official, cncmanuals.com copy: G50→G92 in B/C, G70–G76 → G72–G78 in C).
+- Fanuc G05.1 Q1/Q0 (30i manual p.540, official). R level + G43/G49 ordering: Doosan/Fanuc PDF + Practical Machinist thread → THIN (amber).
+- Haas mill G150, G187, G77, G83 (I J K, Setting 52), G12/G13, G70/G71/G72 bolt patterns (official Haas pages). G72 "does L count the start hole" → THIN.
+- Fanuc G87 back boring: Power Mate i manual (official) + 21i parameter manual (5101 RD1/RD2) + Practical Machinist + blog.
+- Plunge milling: Sandvik Coromant plunge-milling page (75%/50% step, hook retract, no drill cycle, fz table).
+- Chip thinning / peel: Harvey Performance chip-thinning article + Make It From Metal (same formula, 2 independent).
+- Ramping / helix: Harvey ramping article + Haas/forum helix pitch (Z per rev = π·D·tan a).
+- Face milling patterns: Sandvik face-milling page + Sandvik trajectory article + Caltech machine-shop PDF (agree → not thin).
+- THIN (amber, never auto-filled): high-feed lead angle (one page), Taylor n (one calculator page), Fanuc AICC R level, Haas T pre-staging, Haas G72 start-hole count, Haas lathe G73/G74/G75 (not built), adaptive feed by spindle load (builder option).
+- Unsourced defaults (gray, editable): G71/G72 retract 0.02, allowances 0.02/0.005, feeds 0.01/0.005, SFM 400; start point = stock + 0.1 dia; plunge feed 4, peel chip load 0.002; back bore Start Z 0.1.

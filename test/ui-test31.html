@@ -1,0 +1,56 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=44" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+
+const MJ=[['hsm','high speed mode wrapper program o2000 safe z1.0 t4 g54'],
+['g150','g150 pocket contour x0,y0; x3,y0; x3,y2; x0,y2 start x1.5 y1 depth z-0.5 per pass 0.25 stepover 0.15 finish 0.01 r plane 0.1 step axis i n1000 t5 g54'],
+['plunge','plunge roughing from x0 y0 to x2 y0.5 z top 0 1.0 deep 0.75 cutter row step 0.5 t6 g54'],
+['peel','peel milling x-0.5 to x3.5 wall y0 stock +y 0.5 of stock z top 0 0.75 deep 0.5 end mill t7 g54'],
+['bback','back bore holes x1 y1; x3 y1 bottom z-1.0 cut to z-0.8 r plane -1.2 shift 0.1 shift dir +x t8 g54'],
+['hpat','haas native bolt circle center x0 y0 radius 1.5 6 holes start 0 deg z0 0 0.5 deep t9 g54']];
+const LJ=[['g71','g71 rough and finish profile x0.5,z0; x0.5,z-1; x1.1,z-1.2 1.0 bar start z0.1 doc 0.06 t1 finish t2'],
+['g72','g72 face rough profile x1.9,z-0.3; x1,z-0.3; x0.6,z0; x-0.06,z0 1.9 bar start z0.1 doc 0.05 t1 finish t2']];
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+  const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)},v:''};S.m[S.cur].s.push(x)}if(${JSON.stringify(v)}!==null)x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  const okall=()=>E("S.m[S.cur].s.forEach(x=>{if(x.st=='confirm'&&x.v)x.st='user'});save()");
+  const run=(nm,jobs,hk)=>jobs.forEach(([op,t])=>{w.tab('new');d.querySelector('#q').value=t;w.go();const j0=E('J&&J.op');E('show()');const miss=E('J?Object.entries(J.p).filter(([k,x])=>x.v==null).map(([k])=>k):[]');
+    const code=E('J&&J.code?txt().join("\\n"):""');let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{contact:mkContact(J),lathe:J.lathe});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
+    const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+d.querySelector('#out').innerText.slice(0,400).replace(/\s+/g,' ')];
+    const blocked=!hk&&(op=='g150'||op=='hpat');
+    if(blocked){const ot=d.querySelector('#out').innerText;log(`${nm} ${op}: refused on Fanuc`,j0==op&&/Haas only/.test(ot),j0+' '+ot.slice(0,300));return}
+    log(`${nm} ${op}: recognised, code written`,j0==op&&!!code,'op='+j0+' miss='+miss.join(',')+' '+ck.join('|'));
+    if(!code)return;log(`${nm} ${op}: sim runs`,!sim[0]&&!sim[1]&&sim[2]>0,JSON.stringify(sim));log(`${nm} ${op}: checks pass`,!ck.length,ck.join(' | '));
+    const C={hsm:hk?/G187 P3[\s\S]*G43 H4[\s\S]*M98 P2000[\s\S]*\nG187 \(/:/G05\.1 Q1[^\n]*\nG43 H4[\s\S]*G49\nG05\.1 Q0/,
+     g150:/G150 X1\.5 Y1\.0 Z-0\.5 Q0\.25 R0\.1 I0\.15 K0\.01 P1000 G41 D05[\s\S]*M30[\s\S]*N1000[\s\S]*M99/,
+     plunge:/G01 Z-1\.0[^\n]*\nG01 X-0\.04/,peel:/G01 X3\.5/,bback:hk?/G77 Z-0\.8 R-1\.2 Q0\.1/:/G98 G87 X1\.0 Y1\.0 Z-0\.8 R-1\.2 Q0\.1/,
+     hpat:/L0[\s\S]*G70 I1\.5 J0\.0 L6/,g71:hk?/G71 P10 Q20 D0\.06/:/G71 U0\.06 R0\.02[^\n]*\nG71 P10 Q20 U0\.02 W0\.005/,g72:hk?/G72 P10 Q20 D0\.05/:/G72 W0\.05 R0\.02[^\n]*\nG72 P10 Q20/};
+    log(`${nm} ${op}: codes`,C[op].test(code),code.split('\n').join(' / '));
+    if(op=='g71')log(nm+' g71 N10 X only + G70',/N10 G00 X0\.5[^Z]*\n/.test(code)&&/N20 G01 X1\.1 Z-1\.2/.test(code)&&/G70 P10 Q20/.test(code));
+  });
+  [['Haas VF-style VMC (generic)','Vertical mills','Haas NGC','Haas mill'],['Generic 3-axis VMC','Vertical mills','Fanuc 0i','Fanuc mill']].forEach(([p,g,ctl,nm])=>{const hk=/Haas/.test(nm);w.pick(p,g);w.cur(E('S.m.length')-1);setv('Control',ctl);okall();
+   w.tab('new');d.querySelector('#q').value=MJ[0][1];w.go();log(nm+' hsm red until option confirmed',!E('J.code'));setv('High-speed mode option (G05.1 Q1 / G187)','yes');
+   run(nm,MJ,hk);
+   w.tab('new');d.querySelector('#q').value='custom peck holes x0 y0; x1 y0 z0 0 1.0 deep first 0.2 min 0.05 t3 g54';w.go();E("J.p['Output']={v:'Haas native cycle',g:false};show()");const pc=E('J.code?txt().join("\\n"):""');
+   const pot=d.querySelector('#out').innerText;log(nm+' native G83 '+(hk?'I J K':'refused'),hk?/G83 G98[^\n]*I0\.2 J0\.04 K0\.05/.test(pc)&&!/Q/.test(pc.match(/G83[^\n]*/)[0]):/Haas only|Haas native cycle is Haas only/.test(pot),pc.split('\n').join(' / '));
+   w.tab('new');d.querySelector('#q').value='circular pocket center x0 y0 1.5 dia 0.5 deep z0 0 0.5 cutter step down 0.25 t2 g54';w.go();E("J.p['Output']={v:'Haas native cycle',g:false};show()");const cp=E('J.code?txt().join("\\n"):""');
+   if(hk){log(nm+' native G13',/G91 G13 Z-0\.25[^\n]*K0\.75[^\n]*L2 D02/.test(cp),cp.split('\n').join(' / '));log(nm+' native G13 sim',E('(()=>{const r=interp(txt(),{contact:mkContact(J)});return !r.err&&!r.alarms.length})()'))}
+  });
+  [['Haas NGC','Haas lathe'],['Fanuc 0i','Fanuc lathe']].forEach(([ctl,nm])=>{const hk=/Haas/.test(nm);w.pick('Generic 2-axis lathe','Lathes');w.cur(E('S.m.length')-1);setv('Control',ctl);setv('Max RPM (G50)','3000');okall();run(nm,LJ,hk);
+   w.tab('new');d.querySelector('#q').value='thread od 1.0 dia lead 0.0625 height 0.0383 z0.2 to z-1.0 first depth 0.01 t3';w.go();
+   E(hk?"J.p['Haas infeed']={v:'P2 double edge, constant amount',g:false};show()":"J.p['Chamfer x0.1 lead']={v:10,g:false};show()");const tc=E('J.code?txt().join("\\n"):""');
+   log(nm+' G76 upgrade',hk?/G76 X[^\n]*A60 P2 /.test(tc):/G76 P011060 /.test(tc),tc.split('\n').join(' / '))});
+  // optimizer
+  w.pick('Haas VF-style VMC (generic)','Vertical mills');w.cur(E('S.m.length')-1);setv('Control','Haas NGC');okall();
+  const prog='%\nO1000\nT1 M06\nG54 G90 G00 X0 Y0\nG83 Z-1. R0.1 Q0.2 F5.\nG04 P1.\nG80\nG91 G28 Z0.\nT2 M06\nX1.\nX1.\nX1.\nM30\n%';
+  E(`importToEditor(${JSON.stringify(prog)})`);E('show()');const ot=(d.querySelector('#opt36')||{}).innerText||'';const after=E('txt().join("\\n")');
+  log('optimizer card shows',/suggestions only/i.test(ot)&&/G53/.test(ot)&&/M06/.test(ot)&&/modal/.test(ot)&&/identical/.test(ot)&&/not staged/.test(ot),ot);
+  log('optimizer never rewrites',after.includes('G91 G28 Z0.')&&after.includes('G04 P1.'));
+  // calculators
+  w.calc();const cv=d.querySelector('#ko').textContent,gv=d.querySelector('#go').textContent;log('chip thinning calc',/0\.00\d/.test(cv)&&!!d.querySelector('a[href="https://koriware.github.io/team-kori-shop-calc/"]'),cv);
+  log('A/B/C converter',/^G92 S2000/m.test(gv)&&/^G77 X1\./m.test(gv),gv);log('ramp + taylor + hf',/Z drop/.test(d.querySelector('#ro').textContent)&&/Speed for/.test(d.querySelector('#yo').textContent)&&/Chip/.test(d.querySelector('#ho').textContent));
+  log('help pages',E("['jobs36','calc36','tips36'].every(k=>HELP.some(h=>h[0]==k))"));
+  log('thin entries',E("['aicc','g72line','g83j'].every(k=>THIN.some(t=>t[0]==k))"));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>
