@@ -1,0 +1,50 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=36" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+const JOBS=[['lotc','reset counter every shift count #610 key #611 shifts 0600 1400 2200',{}],
+ ['lotc','lot counter count #612 key #613 lot number in #614',{}],
+ ['ctime','log cycle time count #620 over 90 sec',{}],
+ ['idlew','warm up after 4 hours idle #630 #631 warm-up program o9010',{}],
+ ['keyway','keyway 1.0 dia shaft top z0 center y0 from x0 to x2 0.25 wide 0.125 deep 0.25 cutter stepdown 0.05 T4 G54',{}],
+ ['keyway','mill a flat on a 1.0 dia shaft top z0 center y0 from x0 to x1.5 0.1 deep 0.5 cutter stepdown 0.05 T4 G54',{}],
+ ['family','family of parts selector #640 table 1: 2.0 1.0, 2: 3.0 1.5 sub o2000',{}],
+ ['rotp','probe edge angle g68 from y- at x0 and x3 edge y0 probe z-0.2 safe z0.5 tip 0.118 store #650 max 2 T1 G54',{}],
+ ['a4p','4th axis align probe at x1 y-1 and y1 face z0 safe z1 tip 0.118 max 3 T1 G54 write g54',{'A direction':'A+ raises the Y+ side','Confirm write':'YES'}]];
+const LJOBS=[['lpeck','peck groove 2.0 bar to x1.6 at z-0.5 insert 0.125 left corner peck 0.05 T3'],
+ ['lpeck','part off 2.0 bar to x-0.02 at z-1.5 insert 0.118 right corner peck 0.1 T4'],
+ ['ltaper','taper from 1.0 at z0 to 1.5 at z-1.0 r0.125 shoulder 2.0 2.0 bar doc 0.05 T1'],
+ ['cdrill','cross drill 4 holes 2.0 bar at z-0.75 start angle 0 0.25 deep peck 0.1 T5']];
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+  const setv=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x)return;if(${JSON.stringify(v)}!==null)x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  ['Fanuc Robodrill-style (generic)','Haas VF-style VMC (generic)'].forEach(nm=>{const hk=/Haas/.test(nm);w.pick(nm,'Vertical mills');w.cur(E('S.m.length')-1);
+   w.tab('new');d.querySelector('#q').value=JOBS[2][1];w.go();
+   setv('Control',null);setv('Skip code (probe)',null);setv('Spindle probe on / off','M100 / M101');setv('DPRNT support','yes');setv('Max RPM','8000');E("S.m[S.cur].opt.probe=1;S.m[S.cur].opt.g10=1;S.m[S.cur].opt.rot=1;S.m[S.cur].opt.ax4=1;save()");
+   JOBS.forEach(([op,t,extra])=>{w.tab('new');d.querySelector('#q').value=t;w.go();const j0=E('J&&J.op');
+    const miss=E('J?Object.entries(J.p).filter(([k,x])=>x.v==null).map(([k])=>k):[]');
+    Object.entries(extra).forEach(([k,v])=>E(`J.p[${JSON.stringify(k)}]={v:${JSON.stringify(v)},g:false}`));E('show()');
+    const code=E('J&&J.code?txt().join("\\n"):""');let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{contact:mkContact(J)});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
+    const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+d.querySelector('#out').innerText.slice(0,300)];
+    log(`${hk?'Haas':'Fanuc'} ${op}: recognised, code written`,j0==op&&!!code,'op='+j0+' miss='+miss.join(','));
+    if(code)log(`${hk?'Haas':'Fanuc'} ${op}: sim runs, no alarm`,!sim[0]&&!sim[1],JSON.stringify(sim));
+    if(code)log(`${hk?'Haas':'Fanuc'} ${op}: all checks pass`,ck.length==0,ck.join(' | '));
+    
+    
+   });
+  });
+  ['Generic 2-axis lathe','Haas ST-style lathe (generic)'].forEach(nm=>{const hk=/Haas/.test(nm);w.pick(nm,'Lathes');w.cur(E('S.m.length')-1);setv('Control',hk?'Haas NGC':'Fanuc 0i');
+   w.tab('new');d.querySelector('#q').value=LJOBS[3][1];w.go();log(nm+' cdrill: red before C / live codes confirmed',/C axis on \/ off/.test(d.querySelector('#out').textContent)&&!E('J.code'));
+   setv('C axis on / off',hk?'M154 / M155':'M200 / M201');setv('Live tool start / stop',hk?'M133 P<RPM> / M135':'M203 S<RPM> / M205');E("S.m[S.cur].opt.live=1;S.m[S.cur].opt.cax=1;save()");
+   LJOBS.forEach(([op,t])=>{w.tab('new');d.querySelector('#q').value=t;w.go();const j0=E('J&&J.op'),miss=E('J?Object.entries(J.p).filter(([k,x])=>x.v==null).map(([k])=>k):[]');
+    const code=E('J&&J.code?txt().join("\\n"):""');let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{lathe:1});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
+    const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+d.querySelector('#out').innerText.slice(0,300)];
+    log(nm+' '+op+': recognised, code written',j0==op&&!!code,'op='+j0+' miss='+miss.join(','));if(code){log(nm+' '+op+': sim runs, no alarm',!sim[0]&&!sim[1]&&sim[2]>3,JSON.stringify(sim));log(nm+' '+op+': all checks pass',!ck.length,ck.join(' | '))}
+    if(code&&op=='cdrill')log(nm+' cdrill: 4 C positions, bottom X1.5',(code.match(/G00 C/g)||[]).length==4&&/G01 X1\.5 /.test(code));
+    if(code&&op=='ltaper')log(nm+' ltaper: fillet G02 R0.125',/G02 X[\d.]+ Z-1\.0 R0\.125/.test(code),code.split('\n').filter(l=>/G02/.test(l)).join());});
+  });
+  log('rotp red until G68 option ticked',(()=>{E("S.m.find(m=>/Robodrill/.test(m.name)).opt.rot=0");w.cur(E("S.m.findIndex(m=>/Robodrill/.test(m.name))"));w.tab('new');d.querySelector('#q').value=JOBS[7][1];w.go();const r=/Coordinate rotation \(G68\)/.test(d.querySelector('#out').textContent)&&!E('J.code');E("S.m[S.cur].opt.rot=1");return r})());
+  log('old phrases unchanged: part counter / warm up / slot / bolt circle',E('parse("part counter stop at 200 using #600").op')=='ctr'&&E('parse("warm up spindle").op')=='warm'&&E('parse("mill a slot from x0 y0 to x2 y0").op')=='slot'&&E('parse("G54 T2 6 hole bolt circle 3.0 dia").op')!='family');
+  log('Help topic jobs29',E("HELP.some(h=>h[0]=='jobs29')"));
+  log('No page errors',!errs.length,errs.join('|'));
+ }catch(e){out.push('FAIL exception '+e.message+' '+e.stack)}o.textContent=out.join('\n')},1500)}
+</script></body>
