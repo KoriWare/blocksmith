@@ -1,0 +1,30 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=21" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
+ setTimeout(()=>{const d=w.document,E=x=>w.eval(x);try{
+  const I=(t,o)=>w.interp(t.split('\n'),o||{lathe:1,start:[1.2,0,0.2]});
+  w.pick('Generic 2-axis lathe','Lathes');E('S.cur=S.m.length-1');w.tab('new');
+  let r=I(E('LCYC.g71'));log('G71/G70 runs: '+r.moves.length+' moves '+(r.err||''),!r.err&&r.moves.length>20);
+  log('G71 roughs down to profile (min X ~0.51 rad)',Math.abs(Math.min(...r.moves.filter(m=>!m.r).map(m=>m.b[0]))-0.5)<0.03);
+  log('G71 never cuts past Z-1.8',r.moves.every(m=>m.b[2]>=-1.81));
+  r=I(E('LCYC.g76'));const th=r.moves.filter(m=>m.th&&!m.r);log('G76 thread passes: '+th.length,th.length>=5&&!r.err);
+  log('G76 final depth at minor Ø',Math.abs(Math.min(...th.map(m=>m.b[0]))*2-0.9188)<1e-3);
+  r=I(E('LCYC.m98'));log('M98 sub runs (face to X-0.03)',!r.err&&r.moves.some(m=>Math.abs(m.b[0]+0.015)<1e-6));
+  log('G66 modal call dips at both points, not after G67',r.moves.filter(m=>!m.r&&Math.abs(m.b[0]-0.45)<1e-6).length==2);
+  w.lcyc('g71');let cl=d.querySelector('#cl').textContent;log('checker: G71 two-block + P/Q exist',/✅ G71 has two blocks/.test(cl)&&/✅ G70\/G71 P and Q/.test(cl));
+  w.lcyc('m98');cl=d.querySelector('#cl').textContent;log('checker: M98 sub exists, G66 cancelled',/✅ M98 subprograms exist/.test(cl)&&/✅ G66 modal call is cancelled/.test(cl));
+  w.ex('G54 lathe probe od 1.0 dia at z-0.5 write wear 1');let t=E("txt().join('\\n')");
+  log('lathe probe code: G31 + G10 wear',/G31 X0\.8/.test(t)&&/G10 P1 U-#101/.test(t)&&/#3000=1/.test(t));
+  log('probe sim stops at contact, no alarm',!E('J.run.err')&&!E('J.run.alarms.length')&&Math.abs(E('J.contactAt[0]')-0.5)<1e-6);
+  cl=d.querySelector('#cl').textContent;log('probe write is red until confirmed',/❌ Offset write format confirmed/.test(cl));
+  w.ex('G54 lathe probe face at x0.5 z0 0 write work');t=E("txt().join('\\n')");log('face probe writes work Z',/G31 Z-0\.2/.test(t)&&/G10 L2 P1 W#101/.test(t));
+  w.ex('G54 lathe probe od 1.0 dia');log('missing Z / write -> need card',/Need \d more/.test(d.body.textContent));
+  w.pick('Nakamura-Tome multitasking lathe (generic)','Multitasking lathes');const m=E('S.m.at(-1)');log('2nd turret red confirm',m.s.find(x=>x.k=='Second turret').st=='confirm');
+  E('S.cur=S.m.length-1');w.tab('new');w.ex('G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 center drill 0.2 deep part off 0.125');
+  log('twin timing shown as about',/Twin turret: about \d+:\d\d/.test(d.querySelector('#info').textContent));
+  w.scrub(E('J.M.length'));log('per-line spindle/turret',/lower turret/.test(d.querySelector('#tpos').textContent));
+  const n0=E('S.m.length'),j0=E('S.jobs.length');const bk=JSON.parse(JSON.stringify(E('S')));bk.m.push({name:'Merged mill',type:'mill',s:[],opt:{},tools:[{n:1,type:'Drill',dia:.2}]});bk.snips=[{n:'zz merged',c:'G0'}];
+  const r2=w.mergeBackup(bk);log('merge adds only new, keeps existing',r2.m==1&&E('S.m.length')==n0+1&&r2.kept==n0&&r2.s==1&&E('S.jobs.length')==j0);
+  w.data();log('Merge + Replace buttons',/Import backup \(Merge\)/.test(d.body.textContent)&&/Import backup \(Replace\)/.test(d.body.textContent));
+ }catch(e){out.push('ERROR '+e.message+' '+(e.stack||'').split('\n')[1])}o.textContent=out.join('\n')},800)};
+</script></body>

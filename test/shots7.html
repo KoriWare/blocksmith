@@ -1,11 +1,14 @@
-<!doctype html><body style="margin:0;background:#111"><iframe id="f" src="../index.html?v=19" style="width:390px;height:1500px;border:0"></iframe><script>
+<!doctype html><body style="margin:0;background:#111"><iframe id="f" src="../index.html?v=21" style="width:390px;height:1500px;border:0"></iframe><script>
 let first=1;const job=new URLSearchParams(location.search);
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
  setTimeout(()=>{const E=x=>w.eval(x),k=job.get('k');w.confirm=()=>true;
   if(k=='mill'){E('S.cur=0');w.tab('new');w.ex('G54 T2 3 x 4 grid 0.75 spacing start x0.5 y0.5 z0 0 0.4 deep drill');w.scrub(Math.floor(E('J.M.length')*.4))}
   if(k=='import'){E('S.cur=0');w.tab('new');w.importToEditor('%\nO0123 (IMPORTED POCKET)\nG17 G20 G90 G54\nG00 X0 Y0 Z1.\nG01 Z-0.2 F10.\nG01 X2.\nG03 X2. Y1. I0 J0.5\nG01 X0\nG02 X0 Y0 I0 J-0.5\nG00 Z1.\nM30\n%');w.scrub(E('J.M.length'))}
-  if(/^sw|^nt/.test(k)){if(/^nt/.test(k))w.pick('Nakamura-Tome multitasking lathe (generic)','Multitasking lathes');else w.pick(k=='swpart'?'Tsugami Swiss-type (generic)':'Generic Swiss-type','Swiss-type');E('S.cur=S.m.length-1');w.tab('new');w.ex('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 flat 0.05 deep 0.3 long cross drill 0.125 at z-0.55 0.15 deep center drill 0.1 deep part off 0.062');
+  if(/^sw|^nt/.test(k)){if(/^nt/.test(k))w.pick('Nakamura-Tome multitasking lathe (generic)','Multitasking lathes');else w.pick(k=='swpart'?'Tsugami Swiss-type (generic)':'Generic Swiss-type','Swiss-type');E('S.cur=S.m.length-1');w.tab('new');w.ex(/^nt/.test(k)?'G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 flat 0.08 deep 0.5 long cross drill 0.25 at z-1.0 0.2 deep center drill 0.2 deep part off 0.125':'G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 flat 0.05 deep 0.3 long cross drill 0.125 at z-0.55 0.15 deep center drill 0.1 deep part off 0.062');
     const want={ntturn:1,ntmill:3,nttransfer:2,swpart:2,swturn:1,swmill:3,swdrill:4}[k],M=E('J.M');let idx=M.findIndex(m=>w.swTool(m.l)==want);const last=M.map((m,i)=>w.swTool(m.l)==want?i:-1).filter(i=>i>=0);idx=last[Math.floor(last.length*0.6)];w.scrub(idx+1)}
+  if(/^lc_/.test(k)){w.pick('Generic 2-axis lathe','Lathes');E('S.cur=S.m.length-1');w.tab('new');w.lcyc(k.slice(3));w.scrub(Math.floor(E('J.M.length')*(+(new URLSearchParams(location.search).get('f')||1))))}
+  if(k=='lprobe'){w.pick('Generic 2-axis lathe','Lathes');E('S.cur=S.m.length-1');w.tab('new');w.ex('G54 lathe probe od 1.0 dia at z-0.5 write wear 1');w.scrub(Math.floor(E('J.M.length')*0.5))}
+  if(k=='merge'){w.data()}
   if(k=='lathe'){E('S.cur=2');w.tab('new');w.ex('G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0 chamfer 0.03');w.scrub(Math.floor(E('J.M.length')*.5))}
   if(k=='hmc'){w.pick('Generic HMC 4-axis','Horizontal mills');E('S.cur=S.m.length-1');w.tab('new');w.ex('G54 T2 index 4 faces hole x0.3 y0.2 z0 1.0 0.4 deep drill');w.vw('iso');w.scrub(E('J.M.length'))}
   if(k=='hmcmid'){w.pick('Generic HMC 4-axis','Horizontal mills');E('S.cur=S.m.length-1');w.tab('new');w.ex('G54 T2 index 4 faces hole x0.3 y0.2 z0 1.0 0.4 deep drill');w.vw('iso');w.scrub(Math.floor(E('J.M.length')*.42))}
