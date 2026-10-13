@@ -1,0 +1,54 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=49" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(async()=>{const E=x=>w.eval(x);try{E("NOASK=1");
+  const setC=c=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k=='Control');if(!x){x={k:'Control'};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(c)};x.st='user';save()})()`);
+  const mk=(n,g,c)=>{w.pick(n,g);w.cur(E('S.m.length')-1);setC(c);w.tab('new');return E('S.cur')};
+  const grp=l=>{const s=d.querySelector('#jpick');const g=s&&[...s.querySelectorAll('optgroup')].find(x=>x.label==l);return g?[...g.querySelectorAll('option')].map(o=>o.textContent):[]};
+  const first=()=>d.querySelector('#jpick optgroup')&&d.querySelector('#jpick optgroup').label;
+  const mill=mk('Haas VF-style VMC (generic)','Vertical mills','Haas NGC'),rd=mk('Fanuc Robodrill-style (generic)','Vertical mills','Fanuc 0i'),lat=mk('Common Fanuc lathe (generic)','Lathes','Fanuc 0i');
+  const MN=i=>E(`S.m[${i}].name`);
+  // saved library jobs: save through the real Save flow on the mill
+  const saveAs=(i,txt,name)=>{w.cur(i);w.tab('new');d.querySelector('#q').value=txt;w.go();E(`J.lathe=isL()`);const jn=d.querySelector('#jn');if(jn)jn.value=name;else{E(`(()=>{const e=document.createElement('input');e.id='jn';e.value=${JSON.stringify(name)};document.body.append(e)})()`)}w.saveJob();const x=d.getElementById('jn');if(x&&!x.closest('#v'))x.remove()};
+  saveAs(mill,'G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1','zeta bolt plate');
+  saveAs(mill,'G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 70 z0 0','Alpha face');
+  saveAs(rd,'G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1','Robo bolts');
+  saveAs(lat,'G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0 chamfer 0.03','Shaft turn');
+  log('jobs saved to Library tagged with machine name',E('S.jobs.length')==4&&E(`S.jobs.find(j=>j.name=="Alpha face").machine`)==MN(mill));
+  // untagged: one mill job with no machine, one lathe job whose machine was deleted, one with no type info
+  E(`S.jobs.push({...JSON.parse(JSON.stringify(S.jobs.find(j=>j.name=="Alpha face"))),name:"Loose mill job",machine:"",date:111});
+     S.jobs.push({...JSON.parse(JSON.stringify(S.jobs.find(j=>j.name=="Shaft turn"))),name:"Old lathe job",machine:"Deleted lathe",date:222});
+     S.jobs.push({name:"Mystery",op:"zzz",date:333,code:["G0"]});save()`);
+  w.cur(mill);w.tab('new');
+  log('"My jobs" optgroup is at the top',first()=='My jobs',first());
+  log('mill: only this machine\'s jobs, A–Z',JSON.stringify(grp('My jobs'))==JSON.stringify(['Alpha face','zeta bolt plate']),grp('My jobs').join(','));
+  log('mill: other machines\' jobs hidden',!grp('My jobs').includes('Robo bolts')&&!grp('My jobs').includes('Shaft turn'));
+  log('untagged compatible mill job listed under no-machine group',JSON.stringify(grp('My jobs (no machine set)'))=='["Loose mill job"]',grp('My jobs (no machine set)').join(','));
+  log('untagged job with unknown type is not listed',!d.querySelector('#jpick').textContent.includes('Mystery'));
+  log('label counts my jobs',/3 of mine/.test(d.querySelector('label[for=jpick]').textContent));
+  w.cur(rd);log('robodrill: its own job only',JSON.stringify(grp('My jobs'))=='["Robo bolts"]'&&grp('My jobs (no machine set)').includes('Loose mill job'));
+  w.cur(lat);log('lathe: own job + untagged lathe job (deleted machine), no mill jobs',JSON.stringify(grp('My jobs'))=='["Shaft turn"]'&&JSON.stringify(grp('My jobs (no machine set)'))=='["Old lathe job"]');
+  // pick opens with saved values
+  w.cur(mill);w.tab('new');const s=d.querySelector('#jpick');const ov=[...s.options].find(o=>o.textContent=='Alpha face');
+  E(`S.jobs.find(j=>j.name=="Alpha face").p.doc=0.0234`);s.value=ov.value;s.dispatchEvent(new w.Event('change'));
+  log('picking a My job opens it with its saved values',E('J&&J.name')=='Alpha face'&&E('J.p.doc')==0.0234&&E('S.cur')==mill);
+  log('picker shows the open My job selected',d.querySelector('#jpick').value==ov.value);
+  log('no position values invented (x/y/z keep saved state)',E(`JSON.stringify(['x','y','z'].map(k=>J.p[k]))`)==E(`JSON.stringify(['x','y','z'].map(k=>S.jobs.find(j=>j.name=="Alpha face").p[k]))`));
+  // live update: switch to robodrill -> cleared with note
+  w.cur(rd);log('switching machine updates My jobs',JSON.stringify(grp('My jobs'))=='["Robo bolts"]');
+  log('open My job from another machine cleared with note',E('J')==null&&/Alpha face/.test((d.querySelector('#jpnote')||{}).textContent||'')&&/Library/.test(d.querySelector('#jpnote').textContent));
+  log('still in Library after clearing',E('S.jobs.some(j=>j.name=="Alpha face")'));
+  // untagged job stays when still compatible
+  w.cur(mill);w.tab('new');const s2=d.querySelector('#jpick');s2.value=[...s2.options].find(o=>o.textContent=='Loose mill job').value;s2.dispatchEvent(new w.Event('change'));
+  w.cur(rd);log('untagged compatible job kept across mill→mill switch',E('J&&J.name')=='Loose mill job'&&!d.querySelector('#jpnote'));
+  w.cur(lat);log('untagged mill job cleared on a lathe',E('J')==null&&!!d.querySelector('#jpnote'));
+  // live poll (machine changed elsewhere)
+  w.cur(mill);w.tab('new');E('S.cur='+lat);await new Promise(r=>setTimeout(r,1200));log('live update without re-render call',JSON.stringify(grp('My jobs'))=='["Shaft turn"]');
+  // presets unaffected
+  log('preset categories still listed after My jobs',[...d.querySelectorAll('#jpick optgroup')].length>4);
+  w.localStorage.setItem('x','1');E('S.jobs=[];save()');w.cur(mill);w.tab('new');log('no My jobs group when Library empty',first()!='My jobs');
+  log('help topic mentions My jobs',/My jobs \(no machine set\)/.test(E("HELP.find(h=>h[0]=='pickjob')[2]()")));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>

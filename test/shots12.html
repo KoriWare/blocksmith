@@ -1,0 +1,17 @@
+<!doctype html><body style="margin:0;background:#111"><iframe id="f" src="../index.html?v=49" style="width:390px;height:844px;border:0"></iframe><script>
+let first=1;const q=new URLSearchParams(location.search),v=q.get('v');
+f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
+ setTimeout(()=>{const E=x=>w.eval(x),D=f.contentDocument;E('NOASK=1');
+  if(v=='help'){w.help();setTimeout(()=>{D.querySelectorAll('#hl details').forEach(x=>x.open=false);const d=[...D.querySelectorAll('#hl details')].find(x=>/Picking a preset job/.test(x.textContent));d.open=true;D.scrollingElement.scrollTop=d.getBoundingClientRect().top+D.scrollingElement.scrollTop+260},300);return}
+  const setC=c=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k=='Control');if(!x){x={k:'Control'};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(c)};x.st='user';save()})()`);
+  const mk=(n,g,c)=>{w.pick(n,g);w.cur(E('S.m.length')-1);setC(c);w.tab('new');return E('S.cur')};
+  const mill=mk('Haas VF-style VMC (generic)','Vertical mills','Haas NGC'),lat=mk('Common Fanuc lathe (generic)','Lathes','Fanuc 0i');
+  let t=1000;const sv=(i,txt,name,m)=>{w.cur(i);w.tab('new');D.querySelector('#q').value=txt;w.go();E('J.lathe=isL()');const r={...JSON.parse(JSON.stringify(E('J'))),name,date:t++,machine:m===undefined?E('S.m[S.cur].name'):m,saved:[]};E('S.jobs.unshift('+JSON.stringify(r)+');save()')};
+  const B='G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1',F='G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 70 z0 0';
+  sv(mill,B,'Valve body bolt circle');sv(mill,F,'Fixture plate face');sv(mill,B,'Cover holes');sv(mill,F,'Old face job','');sv(lat,'G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0 chamfer 0.03','Pin shaft OD');
+  w.cur(v=='lathe'?lat:mill);w.tab('new');
+  if(v=='pick'){w.pickJob(E(`myKey(S.jobs.find(j=>j.name=='Fixture plate face'))`));return}
+  if(v=='clear'){w.pickJob(E(`myKey(S.jobs.find(j=>j.name=='Fixture plate face'))`));w.cur(lat);return}
+  const s=D.querySelector('#jpick');s.size=14;s.style.height='auto';s.scrollIntoView();
+ },1500)};
+</script></body>

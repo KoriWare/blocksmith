@@ -3812,4 +3812,21 @@ HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='build')+1),0,['pickjob','Picking
 const _time40=time;time=function(m,rr){if(J)return _time40(m,rr);J={p:{},lathe:isL()};try{return _time40(m,rr)}finally{J=null}};
 const _ct40=curTopic;curTopic=function(){const t=_ct40();return t=='build'&&$('#jpick')&&!J?'pickjob':t};
 </script>
+<script>
+// ---- Round 41 · "My jobs" in the preset picker: the user's own Library jobs (S.jobs) for the selected machine
+// Library jobs are tagged with the machine NAME they were saved on (j.machine) plus j.lathe / j.op from the job itself.
+function myKey(j){return 'my:'+j.date+'|'+(j.name||'')+'|'+(j.machine||'')}
+function myTag(j){const m=j&&j.machine;return m&&S.m.some(x=>x.name==m)?'tagged':'none'}  // name gone / blank = no machine set
+function myFits(j){if(j.lathe!=null&&!!j.lathe!=!!isL())return false;if(j.op&&(J2[j.op]||JB[j.op]))return jAvail(j.op);return j.lathe!=null}
+function myLists(){const m=S.m[S.cur]||{},nm=j=>String(j.name||OPN[j.op]||'Job'),srt=l=>l.sort((a,b)=>nm(a).localeCompare(nm(b),undefined,{sensitivity:'base'}));
+ const mine=[],none=[];(S.jobs||[]).forEach(j=>{if(!j||!j.date)return;if(myTag(j)=='tagged'){if(j.machine==m.name)mine.push(j)}else if(myFits(j))none.push(j)});return [srt(mine),srt(none),nm]}
+function myOpen(){return J&&J.name&&J.date&&(S.jobs||[]).some(x=>myKey(x)==myKey(J))}
+const _ph41=pickerHTML;pickerHTML=function(){let h=_ph41();const [a,b,nm]=myLists();if(!a.length&&!b.length)return h;const cur=myOpen()?myKey(J):'';if(cur)h=h.replace(/ selected>/g,'>');
+ const g=(lab,l)=>l.length?`<optgroup label="${lab}">${l.map(j=>`<option value="${myKey(j)}"${myKey(j)==cur?' selected':''}>${esc(nm(j))}</option>`).join('')}</optgroup>`:'';
+ return h.replace('<option value="">Choose a job…</option>',m=>m+g('My jobs',a)+g('My jobs (no machine set)',b)).replace('</label>',` · ${a.length+b.length} of mine</label>`)};
+const _pj41=pickJob;pickJob=function(v){if(v&&v.startsWith('my:')){const i=S.jobs.findIndex(x=>myKey(x)==v);if(i<0)return;const j=S.jobs[i],[a,b]=myLists();if(!a.includes(j)&&!b.includes(j))return;reopen(i);return}return _pj41(v)};
+const _nw41=nw;nw=function(){const was=myOpen()?J:null;let gone=false;if(was){const [a,b]=myLists();gone=!a.concat(b).some(x=>myKey(x)==myKey(was));if(gone)J=null}
+ _nw41.apply(this,arguments);if(gone){const q=$('#q');if(q)q.value='';const o=$('#out');if(o)o.innerHTML='';const box=$('#jpbox');if(box&&!$('#jpnote'))box.insertAdjacentHTML('beforeend',`<div class="ok bad" id="jpnote" style="margin-top:6px">Your job “${esc(was.name)}” was saved for ${esc(was.machine||'another machine')}, not ${esc((S.m[S.cur]||{name:'this machine'}).name)} — cleared. It's still in your Library.</div>`)}};
+{const k=HELP.findIndex(h=>h[0]=='pickjob');if(k>=0){const f=HELP[k][2];HELP[k][2]=()=>f()+`<p><b>My jobs</b> (top of the list) are the jobs you saved to your Library on <b>this machine</b>, A–Z by the name you gave them. Jobs saved on another machine are hidden; they show again when you switch back. Picking one opens it with the values you saved — nothing is guessed, and any position value you left unset is still red and needs you.</p><p><b>My jobs (no machine set)</b> holds saved jobs with no machine, or whose machine you've since deleted. They're only listed when the job's type matches (mill vs lathe) and the job can run here. If you switch machines while one of your jobs is open and it doesn't belong to the new machine, it's cleared with a note (it stays in your Library).</p>`}}
+</script>
 </body></html>

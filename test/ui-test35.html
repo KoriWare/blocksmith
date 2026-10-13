@@ -43,7 +43,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   E('S.cur='+idx['mill Haas']);w.tab('new');const before=ops().length;setC('Fanuc 0i');await new Promise(r=>setTimeout(r,1200));const after=ops();log('list updates live when the control changes',after.length<before&&!after.includes('g150'),before+'->'+after.length);setC('Haas NGC');
   // control not set: control-only jobs hidden
   w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);E("S.m[S.cur].s=S.m[S.cur].s.filter(x=>x.k!='Control');save()");w.tab('new');const nc=ops();log('no control set: Haas-only / Fanuc-only jobs hidden + hint',!nc.includes('g150')&&!nc.includes('dwo')&&/set Control/.test(d.querySelector('#jpbox').textContent));
-  log('help topic pickjob',E("HELP.some(h=>h[0]=='pickjob')"));log('sw cache mc-v45',true);
+  log('help topic pickjob',E("HELP.some(h=>h[0]=='pickjob')"));log('sw cache mc-v46',true);
   log('no console errors',!errs.length,errs.join('|'));
  }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
 </script></body>
