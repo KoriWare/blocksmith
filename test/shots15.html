@@ -1,0 +1,25 @@
+<!doctype html><body style="margin:0"><script src="dxf/fixtures.js"></script><iframe id="f" src="../index.html?v=57s" style="width:390px;height:844px;border:0"></iframe><script>
+const Q=new URLSearchParams(location.search),S0=+Q.get('s');let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+setTimeout(()=>{const E=x=>w.eval(x);E("NOASK=1;S.tip42=1");w.FIXT=window.FIX;
+ const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)}};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+ const L=n=>E(`dxImp();dxLoad(FIXT[${JSON.stringify(n)}],${JSON.stringify(n)})`);
+ const conf=(u,kd,kv)=>E(`(()=>{const s=$('#dxu');s.value='${u}';s.onchange();$('#dxkd').value='${kd}';$('#dxkv').value='${kv}';$('#dxkb').click();dxSetO(0,0);const r=$('#dxr');r.value='0';r.onchange();const m=$('#dxm');m.value='none';m.onchange();$('#dxoc').click()})()`);
+ const fill=o=>E(`Object.entries(${JSON.stringify(o)}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);
+ const toOut=()=>{const o=d.querySelector('#out');if(o)w.scrollTo(0,o.getBoundingClientRect().top+w.scrollY-60)};
+ const LV={'Stock Ø':1.6,'Start Z':0.1,'Depth of cut':0.05,'Retract':0.02,'X allowance (dia)':0.02,'Z allowance':0.005,'Rough feed':0.01,'Finish feed':0.005,'SFM':400,'Tool':1,'Finish tool':2,'Nose comp':'G42 (OD, toward the chuck)'};
+ const P0={'Side':'outside','Side OK':'YES','Cut direction':'climb (G41)','Cutter':0.25,'Lead-in':0.25,'Lead-in OK':'YES','Z0':0,'Depth':0.1,'Stepdown':0.1,'Clear Z':0.1,'Feed':20,'Plunge feed':5,'RPM':5000,'Tool':4,'Work offset':'G54'};
+ const lathe=()=>{w.pick('Generic 2-axis lathe','Lathes');w.cur(E('S.m.length')-1);setv('Control','Fanuc 0i');setv('Max RPM (G50)','3000');setv('Diameter mode','yes')};
+ const mill=()=>{w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);setv('Control','Haas NGC');L('plate_r12.dxf');conf('in','w','4');const i=E('dxModel().loops.filter(l=>!l.circle)').findIndex(l=>l.segs.length==4);d.querySelectorAll('.dxpf')[i].click();fill(P0)};
+ const share=()=>{mill();E(`S.jobs.unshift({...JSON.parse(JSON.stringify(J)),name:'Plate edge',date:Date.now(),machine:S.m[S.cur].name,saved:J.code,versions:[]});save()`);return JSON.stringify(E('mbFile(S.jobs[0])'))};
+ if(S0==1){lathe();L('lathe_half.dxf');conf('in','w','2');d.querySelector('.dxlt').click();fill(LV);const e=d.querySelector('#out [data-k="Work offset"]');if(e)w.scrollTo(0,e.getBoundingClientRect().top+w.scrollY-300)}
+ if(S0==2){lathe();L('lathe_half.dxf');conf('in','w','2');d.querySelector('.dxlt').click();fill({...LV,'Work offset':'G55','X0 Z0 at':'X0 spindle centerline, Z0 stock front face'});w.tab('edit');const fx=()=>{d.querySelectorAll('*').forEach(x=>{if(x.scrollHeight>x.clientHeight+2&&x!==d.documentElement&&x!==d.body)x.scrollTop=0});w.scrollTo(0,250)};fx();setTimeout(fx,50)}
+ if(S0==3){lathe();w.tab('new');d.querySelector('#q').value='T1 g71 profile x0.5,z0; x0.5,z-1; x1.1,z-1.2 1.0 bar start z0.1 doc 0.06 finish t2';w.go();toOut()}
+ if(S0==4){mill();w.tab('new');d.querySelector('#q').value=E('J.text');w.go();w.scrollTo(0,0)}
+ if(S0==5){const t=share();w.tab('recent');E(`mbPreview(${JSON.stringify(t)})`);w.scrollTo(0,0)}
+ if(S0==6||S0==7){const t=share();w.tab('recent');E(`mbPreview(${JSON.stringify(t)})`);d.querySelector('#mbgo').click();E('reopen(0)');
+  if(S0==7)fill({...P0,'Drawing units':'mm','Origin, rotation, mirror':'YES — X0 and axis directions match my setup','Known size (overall length: X on a mill, Z on a lathe)':4});toOut();if(S0==7){const b=d.querySelector('#out .bad');if(b)b.scrollIntoView({block:'center'})}}
+ if(S0==8){w.help('share');setTimeout(()=>{const p=[...d.querySelectorAll('p')].find(p=>/Drawing jobs:/.test(p.textContent));if(p)p.scrollIntoView({block:'start'})},100)}
+ if(S0==9)w.help('lwo');
+},1500)};
+</script></body>

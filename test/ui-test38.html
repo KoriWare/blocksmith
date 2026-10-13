@@ -13,7 +13,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   const orig=E('JSON.stringify(S.jobs.find(j=>j.name=="Bolts").p)');
   const keys=JSON.parse(orig);log('source job has filled values',Object.values(keys).filter(x=>x.v!=null).length>3,orig);
   E('S.pin="1234"');const file=E('JSON.stringify(mbFile(S.jobs.find(j=>j.name=="Bolts")))');const fo=JSON.parse(file);
-  log('file: app id + format + type',fo.app=='koriware-macro-builder'&&fo.format==1&&fo.job.type==E('S.jobs.find(j=>j.name=="Bolts").op'));
+  log('file: app id + format + type',fo.app=='koriware-macro-builder'&&fo.format==2&&!fo.job.drawing&&fo.job.type==E('S.jobs.find(j=>j.name=="Bolts").op'));
   log('file: no versions, PIN or machine name',!/versions|1234|"machine"/.test(file)&&!file.includes(MN(mill)),file.slice(0,300));
   log('file: source type/control info',/Haas/.test(fo.from.control)&&!!fo.from.machineType);
   log('file is small',file.length<8000,file.length);
@@ -51,7 +51,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   log('Haas-only job refused on Fanuc-only shop',!!d.querySelector('#mbref'));
   // malformed
   const bad=[['garbage','not json {{'],['wrong app',JSON.stringify({app:'x',format:1,job:{type:'bc'}})],['newer format',JSON.stringify({...fo,format:9})],['unknown type',JSON.stringify({...fo,job:{...fo.job,type:'zzz'}})],
-   ['script key',JSON.stringify({...fo,job:{...fo.job,values:{"x');alert(1)//":{v:1}}}})],['oversize',JSON.stringify({...fo,pad:'x'.repeat(70000)})],['array',JSON.stringify([1,2])],['null','null']];
+   ['script key',JSON.stringify({...fo,job:{...fo.job,values:{"x');alert(1)//":{v:1}}}})],['oversize',JSON.stringify({...fo,pad:'x'.repeat(530000)})],['array',JSON.stringify([1,2])],['null','null']];
   const before=E('S.jobs.length');bad.forEach(([l,t])=>{E('mbPreview('+JSON.stringify(t)+')');log('malformed refused: '+l,!!d.querySelector('#mberr')&&!d.querySelector('#mbgo'))});
   log('malformed files added nothing',E('S.jobs.length')==before);
   const xs=E('mbParse('+JSON.stringify(JSON.stringify({...fo,job:{...fo.job,name:'<img src=x onerror=alert(1)>',note:'<scr'+'ipt>alert(2)</scr'+'ipt>'}}))+')');log('name/note sanitized',xs.ok&&!/[<>]/.test(xs.name+xs.note));

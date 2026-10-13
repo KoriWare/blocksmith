@@ -1,0 +1,78 @@
+<!doctype html><body><pre id="o"></pre><script src="dxf/fixtures.js"></script><iframe id="f" src="../index.html?v=57" style="width:390px;height:844px"></iframe><script>
+// Round 57 · Make my macro keeps drawing jobs · lathe work offset everywhere · drawing jobs in .mbjob format 2
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.FIXT=window.FIX;
+  const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)}};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+  const L=n=>E(`dxImp();dxLoad(FIXT[${JSON.stringify(n)}],${JSON.stringify(n)})`);
+  const conf=(u,kd,kv,ox,oy,rot,mir)=>E(`(()=>{const s=$('#dxu');s.value='${u}';s.onchange();$('#dxkd').value='${kd}';$('#dxkv').value='${kv}';$('#dxkb').click();dxSetO(${ox},${oy});const r=$('#dxr');r.value='${rot}';r.onchange();const m=$('#dxm');m.value='${mir}';m.onchange();$('#dxoc').click()})()`);
+  const fill=o=>E(`Object.entries(${JSON.stringify(o)}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);const code=()=>E('(J.code||[]).join("\\n")'),outT=()=>(d.querySelector('#out')||{textContent:''}).textContent;
+  const mmm=()=>{w.tab('new');const q=d.querySelector('#q');if(q)q.value=E('J.text');w.go()};
+  // ---------- (1) Make my macro keeps a drawing job
+  w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);setv('Control','Haas NGC');const mill=E('S.cur');
+  L('plate_r12.dxf');conf('in','w','4',0,0,0,'none');
+  const shp=E('dxModel().loops.filter(l=>!l.circle)').findIndex(l=>l.segs.length==4);d.querySelectorAll('.dxpf')[shp].click();
+  const P0={'Side':'outside','Side OK':'YES','Cut direction':'climb (G41)','Cutter':0.25,'Lead-in':0.25,'Lead-in OK':'YES','Z0':0,'Depth':0.1,'Stepdown':0.1,'Clear Z':0.1,'Feed':20,'Plunge feed':5,'RPM':5000,'Tool':4,'Work offset':'G54'};
+  fill(P0);const c0=code();log('profile from drawing writes code',/PROFILE FROM DRAWING/.test(c0),outT().slice(0,200));
+  const segs0=E('JSON.stringify(J.dx.segs)');mmm();
+  log('(1) Make my macro on a drawing profile keeps the job',E('J&&J.op')=='dxprof'&&E('JSON.stringify(J.dx.segs)')==segs0&&E('J.p.Tool.v')==4,E('J&&J.op'));
+  log('(1) …and regenerates the same code',code()==c0&&!d.querySelector('#out .bad'));
+  d.querySelectorAll('.dxdr')[0]&&0;E('dxImp()');const bi=E('dxModel().groups').findIndex((g,i)=>!!d.querySelector('.dxbc[data-i="'+i+'"]'));
+  if(d.querySelector('.dxbc')){d.querySelector('.dxbc').click();const op=E('J.op'),p0=E('JSON.stringify(J.p)');mmm();log('(1) Make my macro on a bolt-circle hand-off keeps its drawing values',E('J.op')==op&&E('JSON.stringify(J.p)')==p0,op)}
+  w.tab('new');d.querySelector('#q').value='(from drawing gone.dxf)';E('J=null');w.go();log('(1) a bare “(from drawing …)” line explains instead of guessing',!!d.querySelector('#dxgone'));
+  // lathe drawing job
+  w.pick('Generic 2-axis lathe','Lathes');w.cur(E('S.m.length')-1);setv('Control','Fanuc 0i');setv('Max RPM (G50)','3000');setv('Diameter mode','yes');const lat=E('S.cur');
+  L('lathe_half.dxf');conf('in','w','2',0,0,0,'none');d.querySelector('.dxlt').click();
+  const LV={'Stock Ø':1.6,'Start Z':0.1,'Depth of cut':0.05,'Retract':0.02,'X allowance (dia)':0.02,'Z allowance':0.005,'Rough feed':0.01,'Finish feed':0.005,'SFM':400,'Tool':1,'Finish tool':2,'Nose comp':'G42 (OD, toward the chuck)'};
+  fill(LV);log('(2) DXF G71: Work offset + X0 Z0 at red, no code',E('J.p["Work offset"].v')==null&&E('J.p["X0 Z0 at"].v')==null&&!/G71/.test(code())&&d.querySelectorAll('#out [data-k="Work offset"],#out [data-k="X0 Z0 at"]').length==2);
+  fill({'Work offset':'G55','X0 Z0 at':'X0 spindle centerline, Z0 stock front face'});let c=code();
+  log('(2) DXF G71 Fanuc: G55 after safe start, before the tool',/\(SAFE START\)\nG55 \(WORK OFFSET - X0 ON SPINDLE CENTERLINE, Z0 STOCK FRONT FACE\)/.test(c)&&c.indexOf('G55 (')<c.search(/\nT\d/),c.slice(0,300).replace(/\n/g,' / '));
+  log('(2) checks list shows the work offset',E(`checks(J).some(c=>/^Work offset G55 written/.test(c[0])&&c[1])`));
+  const lc=c;mmm();log('(1) Make my macro on the lathe drawing job keeps it',E('J.op')=='dxlathe'&&code()==lc);
+  // ---------- (2) audit every lathe J2 job on Haas + Fanuc lathes
+  ['Fanuc 0i','Haas NGC'].forEach(ct=>{w.cur(lat);setv('Control',ct);const bad=E(`Object.keys(J2).filter(isLJ).filter(op=>{const r=j2Req({op,p:{}});return !(r.includes('Work offset')&&r.includes('X0 Z0 at'))})`);log('(2) '+ct+': every lathe job requires Work offset + X0 Z0 at ('+E('Object.keys(J2).filter(isLJ).length')+' jobs)',!bad.length,bad.join(','))});
+  w.cur(lat);setv('Control','Fanuc 0i');
+  w.tab('new');d.querySelector('#q').value='T1 g71 profile x0.5,z0; x0.5,z-1; x1.1,z-1.2 1.0 bar start z0.1 doc 0.06 finish t2';w.go();
+  log('(2) G71 job: offset red when not typed',E('J.op')=='g71'&&E('J.p["Work offset"].v')==null&&!/G71 /.test(code()));
+  w.tab('new');d.querySelector('#q').value='G56 T1 g71 profile x0.5,z0; x0.5,z-1; x1.1,z-1.2 1.0 bar start z0.1 doc 0.06 finish t2 z0 at finished face';w.go();
+  log('(2) G71 job: typed G56 + “z0 at finished face” are read (yellow) and written',E('J.p["Work offset"].v')=='G56'&&/^G56 \(WORK OFFSET/m.test(code()),code().slice(0,300).replace(/\n/g,' / '));
+  // non-J2 lathe jobs and editor samples already carry G54
+  [['turn','G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0'],['face','G54 T1 face 0.05 off 2.0 bar z0 0'],['drill','G54 T5 center drill 0.5 deep peck 0.1 z0 0']].forEach(([n,t])=>{w.tab('new');d.querySelector('#q').value=t.replace('G54 ','');w.go();
+   const red=E('J.p["Work offset"]&&J.p["Work offset"].v==null');d.querySelector('#q')&&(w.tab('new'),d.querySelector('#q').value=t,w.go());log('(2) lathe '+n+': offset red without G54, written with it',red&&/^G54\b/m.test(code()),red+' '+E('J.op')+' '+code().slice(0,200).replace(/\n/g,' / '))});
+  log('(2) lathe editor samples (G71, G76, M98) carry G54',E(`['g71','g76','m98'].every(k=>/\\nG54\\b/.test(LCYC[k]))`));
+  // ---------- (3) share a drawing job
+  w.cur(mill);L('plate_r12.dxf');conf('in','w','4',0,0,0,'none');d.querySelectorAll('.dxpf')[shp].click();fill(P0);
+  E(`S.jobs.unshift({...JSON.parse(JSON.stringify(J)),name:'Plate edge',date:Date.now(),machine:S.m[S.cur].name,saved:J.code,versions:[]});save()`);
+  const fo=E(`mbFile(S.jobs[0])`);log('(3) file is format 2 with drawing shapes in inches',fo.format==2&&fo.job.drawing&&fo.job.drawing.units=='in'&&fo.job.drawing.segs.length==4);
+  log('(3) no drawing origin / file path in the file',!('ox' in fo.job.drawing)&&!('oy' in fo.job.drawing)&&!/[\\/]/.test(fo.job.drawing.name));
+  const txt=JSON.stringify(fo);let x=E(`mbParse(${JSON.stringify(txt)})`);log('(3) parses with geometry',x.ok&&x.geo&&x.geo.segs.length==4);
+  w.tab('recent');E(`mbPreview(${JSON.stringify(txt)})`);const n0=E('S.jobs.length');d.querySelector('#mbgo').click();log('(3) imported into Library',E('S.jobs.length')==n0+1&&E('S.jobs[0].dx&&S.jobs[0].dx.shared')&&/from drawing/.test(E('S.jobs[0].text')));
+  E('reopen(0)');E('show()');const k='Known size (overall length: X on a mill, Z on a lathe)';
+  log('(3) units, origin, known size and all positions red; no code',['Drawing units','Origin, rotation, mirror',k,'Side','Cutter','Z0','Depth','Tool','Work offset','Lead-in OK'].every(q=>E(`J.p[${JSON.stringify(q)}]&&J.p[${JSON.stringify(q)}].v`)==null)&&!/PROFILE FROM DRAWING/.test(code()));
+  fill({...P0,'Drawing units':'mm','Origin, rotation, mirror':'YES — X0 and axis directions match my setup',[k]:4});log('(3) 25.4× units miss caught',/25\.4×/.test(outT())&&!/PROFILE FROM/.test(code()),outT().slice(-250));
+  fill({'Drawing units':'in',[k]:3.5});log('(3) wrong known size refused',/doesn't match/.test(outT()));
+  const W=E('J.dx.shared.w');fill({[k]:+W.toFixed(4)});c=code();log('(3) confirmed → code rebuilt on this phone, shared-drawing line',/PROFILE FROM DRAWING/.test(c)&&/SHARED DRAWING - UNITS IN, KNOWN SIZE/.test(c)&&/G54/.test(c),outT().slice(-300));
+  log('(3) same toolpath as the sender',c.split('\n').filter(l=>/^G0[123] X/.test(l)).join()==c0.split('\n').filter(l=>/^G0[123] X/.test(l)).join());
+  // lathe drawing share -> mill machine refused, lathe ok, mm known size ok
+  w.cur(lat);L('lathe_half.dxf');conf('in','w','2',0,0,0,'none');if(!d.querySelector('.dxlt'))throw new Error('no dxlt: '+E('isL()')+' '+d.body.innerText.slice(0,400));d.querySelector('.dxlt').click();fill({...LV,'Work offset':'G54','X0 Z0 at':'X0 spindle centerline, Z0 finished front face'});
+  E(`S.jobs.unshift({...JSON.parse(JSON.stringify(J)),name:'Shaft dwg',date:Date.now(),machine:S.m[S.cur].name,saved:J.code,versions:[]});save()`);const lt=JSON.stringify(E('mbFile(S.jobs[0])'));
+  x=E(`mbParse(${JSON.stringify(lt)})`);{const tg=E(`mbTargets(mbParse(${JSON.stringify(lt)}))`);log('(3) lathe drawing: only lathes offered',tg.length&&tg.every(k=>E('(()=>{const c=S.cur;S.cur='+k+';const r=isL();S.cur=c;return r})()')),JSON.stringify(tg))}
+  w.tab('recent');E(`mbPreview(${JSON.stringify(lt)})`);if(!d.querySelector('#mbgo'))throw new Error('lathe preview: '+JSON.stringify(x).slice(0,300)+' '+(d.querySelector('#mbimp')||{}).textContent);d.querySelector('#mbgo').click();E('reopen(0)');const LW=E('J.dx.shared.w');
+  fill({...LV,'Work offset':'G54','X0 Z0 at':'X0 spindle centerline, Z0 finished front face','Drawing units':'mm','Origin, rotation, mirror':'YES — X0 and axis directions match my setup',[k]:+(LW*25.4).toFixed(3)});
+  log('(3) imported lathe drawing (known size in mm) → G71 with G54',/G71 P10 Q20/.test(code())&&/^G54 \(WORK OFFSET/m.test(code()),outT().slice(-300));
+  // validation
+  const bad=(n,mut)=>{const o=JSON.parse(txt);mut(o);const r=E(`mbParse(${JSON.stringify(JSON.stringify(o))})`);log('(3) refused: '+n,!r.ok&&!!r.err,JSON.stringify(r).slice(0,150))};
+  bad('NaN-like string coordinate',o=>o.job.drawing.segs[0].p=['1e999',0]);bad('huge coordinate',o=>o.job.drawing.segs[0].p=[1e9,0]);bad('null point',o=>o.job.drawing.segs[0].q=null);
+  bad('arc with negative radius',o=>{o.job.drawing.segs[0]={k:'A',p:[0,0],q:[1,0],c:[0.5,0],r:-1,sw:180}});bad('unknown segment kind',o=>o.job.drawing.segs[0].k='SPLINE');
+  bad('too many pieces',o=>{o.job.drawing.segs=Array.from({length:4001},(_,i)=>({k:'L',p:[i,0],q:[i+1,0]}))});bad('units not inches',o=>o.job.drawing.units='mm');
+  bad('drawing on a non-drawing job',o=>o.job.type='bolt');bad('newer format',o=>o.format=3);
+  const f1=JSON.parse(txt);f1.format=1;delete f1.job.drawing;x=E(`mbParse(${JSON.stringify(JSON.stringify(f1))})`);log('(3) format 1 still reads (drawing job then asks for the DXF)',x.ok&&x.geo==null);
+  w.tab('recent');E(`mbPreview(${JSON.stringify(JSON.stringify(f1))})`);d.querySelector('#mbgo').click();E('reopen(0)');fill(P0);log('(3) format-1 drawing job: no code, asks to import the DXF',/import the DXF again/.test(outT())&&!/PROFILE FROM/.test(code()),outT().slice(-200));
+  log('(3) size cap raised to 512 KB, bigger refused',E('MBJ.max')==524288&&/512 KB/.test(E(`mbParse('x'.repeat(524289)).err`)));
+  const big={app:'koriware-macro-builder',format:2,job:{...fo.job,drawing:{...fo.job.drawing,segs:[]}}};const bt=E(`(()=>{const segs=Array.from({length:4000},(_,i)=>({k:i%2?'L':'A',p:[i/7000+1.123456789,2.987654321],q:[(i+1)/7000+1.123456789,2.987654321],c:[i/7000+1.1234567,2.5],r:0.4876543219,ccw:true,sw:1.23456789}));return JSON.stringify({...${JSON.stringify(big)},job:{...${JSON.stringify(big.job)},drawing:mbGeo({dx:{name:"big.dxf",segs,units:"in",sug:"outside"}})}})})()`);
+  log('(3) a 4,000-piece drawing (the limit) fits under the cap and parses ('+Math.round(bt.length/1024)+' KB)',bt.length<524288&&E(`mbParse(${JSON.stringify(bt)}).ok`));
+  log('help: sharing + DXF + lathe work offset',(()=>{const s=E(`HELP.find(h=>h[0]=='share')[2]()`),x=E(`HELP.find(h=>h[0]=='dxf')[2]()`),l=E(`HELP.find(h=>h[0]=='lwo')[2]()`);return /known size/.test(s)&&/512 KB/.test(s)&&/Make my macro/.test(x)&&!/not kept in shared/.test(x)&&/X0 Z0 at/.test(l)})());
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>
