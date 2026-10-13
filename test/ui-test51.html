@@ -68,7 +68,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   E("{const b=S.progs[1];for(let i=0;i<50;i++)S.progs.push({...JSON.parse(JSON.stringify(b)),id:pgUid(),gid:'g'+(i%25),ver:Math.floor(i/25)+1,date:Date.now()+i});save()}");
   const t=E("(()=>{const t0=performance.now();pgList();const t1=performance.now();pgOpen(S.progs.at(-1).id);return [t1-t0,performance.now()-t1]})()");
   log('perf 50 programs list '+t[0].toFixed(1)+'ms open '+t[1].toFixed(1)+'ms',t[0]<300&&t[1]<300);
-  log('sw.js is mc-v64',E("(()=>{var x=new XMLHttpRequest();x.open('GET','sw.js',false);x.send();return /mc-v64/.test(x.responseText)})()"));
+  log('sw.js cache bumped (mc-v64+)',E("(()=>{var x=new XMLHttpRequest();x.open('GET','sw.js',false);x.send();var m=/mc-v(\\d+)/.exec(x.responseText);return !!m&&+m[1]>=64})()"));
   setTimeout(()=>{log('share returns (job list file)',w.__sr&&/"kind":"joblist"/.test(w.__mbLast||'')&&!/O1000 \(/.test(w.__mbLast||''),w.__sr);log('no console errors',!errs.length,errs.join('|'));d.defaultView&&0;document.getElementById('o').textContent=out.join('\n')},1500);
  }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '));document.getElementById('o').textContent=out.join('\n')}},8000)};
 </script></body>

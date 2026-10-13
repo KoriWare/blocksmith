@@ -13,7 +13,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   const orig=E('JSON.stringify(S.jobs.find(j=>j.name=="Bolts").p)');
   const keys=JSON.parse(orig);log('source job has filled values',Object.values(keys).filter(x=>x.v!=null).length>3,orig);
   E('S.pin="1234"');const file=E('JSON.stringify(mbFile(S.jobs.find(j=>j.name=="Bolts")))');const fo=JSON.parse(file);
-  log('file: app id + format + type',fo.app=='koriware-macro-builder'&&fo.format==2&&!fo.job.drawing&&fo.job.type==E('S.jobs.find(j=>j.name=="Bolts").op'));
+  log('file: app id + format + type',fo.app=='koriware-blocksmith'&&fo.format==2&&!fo.job.drawing&&fo.job.type==E('S.jobs.find(j=>j.name=="Bolts").op'));
   log('file: no versions, PIN or machine name',!/versions|1234|"machine"/.test(file)&&!file.includes(MN(mill)),file.slice(0,300));
   log('file: source type/control info',/Haas/.test(fo.from.control)&&!!fo.from.machineType);
   log('file is small',file.length<8000,file.length);

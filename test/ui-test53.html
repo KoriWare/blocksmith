@@ -1,0 +1,21 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=53" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+ setTimeout(async()=>{const E=x=>w.eval(x);try{
+  log('title BlockSmith with Macro B',d.title=='BlockSmith with Macro B');
+  log('home-screen title meta',d.querySelector('meta[name="apple-mobile-web-app-title"]').content=='BlockSmith');
+  log('home tagline with Macro B (no Support)',/with Macro B/.test(d.querySelector('#home').textContent)&&!/Support|Macro Builder/.test(d.querySelector('#home').textContent));
+  const mf=await (await w.fetch('manifest.json')).json();
+  log('manifest short_name BlockSmith + scope',mf.short_name=='BlockSmith'&&mf.scope=='./'&&mf.start_url=='index.html'&&/Not affiliated/.test(mf.description));
+  log('old .mbjob app id still imports',!E(`mbParse(JSON.stringify({app:'koriware-macro-builder',format:1,job:{name:'x',op:'bolt'}}))`).err||!/not made by/.test(E(`mbParse(JSON.stringify({app:'koriware-macro-builder',format:1,job:{name:'x',op:'bolt'}}))`).err));
+  log('foreign file rejected',/not made by BlockSmith/.test(E(`mbParse(JSON.stringify({app:'other',format:1,job:{}}))`).err));
+  E('about()');const t=d.body.textContent;
+  log('about: changelog Renamed to BlockSmith',/Renamed to BlockSmith/.test(t));
+  log('about: footer KoriWare credit, Stacey, Casey',/Stacey \(free check\)/.test(t)&&/Casey \(launch\)/.test(t)&&/© 2026 KoriWare/.test(t));
+  log('about: Not affiliated, no employer',/Not affiliated/.test(t)&&!/Ruger/i.test(t));
+  log('storage key unchanged',/localStorage\.setItem\('mc'/.test(await (await w.fetch('index.html')).text()));
+ }catch(e){log('exception '+e.message,false)}
+ log('no console errors',!errs.length);
+ o.textContent=out.join('\n')+'\n'+out.filter(x=>x.startsWith('PASS')).length+'/'+out.length},1500)};
+</script>

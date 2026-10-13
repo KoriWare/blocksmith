@@ -1,4 +1,4 @@
-# Macro Builder source log
+# BlockSmith (formerly Macro Builder) source log
 
 Rule (Kori, Oct 13 2026): official public docs, or 2+ independent public sources that agree. Own words only. Nothing from work. Generic Haas / Fanuc 0i-style. Not affiliated with any machine or control maker.
 
