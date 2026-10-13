@@ -72,7 +72,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   log('(3) size cap raised to 512 KB, bigger refused',E('MBJ.max')==524288&&/512 KB/.test(E(`mbParse('x'.repeat(524289)).err`)));
   const big={app:'koriware-macro-builder',format:2,job:{...fo.job,drawing:{...fo.job.drawing,segs:[]}}};const bt=E(`(()=>{const segs=Array.from({length:4000},(_,i)=>({k:i%2?'L':'A',p:[i/7000+1.123456789,2.987654321],q:[(i+1)/7000+1.123456789,2.987654321],c:[i/7000+1.1234567,2.5],r:0.4876543219,ccw:true,sw:1.23456789}));return JSON.stringify({...${JSON.stringify(big)},job:{...${JSON.stringify(big.job)},drawing:mbGeo({dx:{name:"big.dxf",segs,units:"in",sug:"outside"}})}})})()`);
   log('(3) a 4,000-piece drawing (the limit) fits under the cap and parses ('+Math.round(bt.length/1024)+' KB)',bt.length<524288&&E(`mbParse(${JSON.stringify(bt)}).ok`));
-  log('help: sharing + DXF + lathe work offset',(()=>{const s=E(`HELP.find(h=>h[0]=='share')[2]()`),x=E(`HELP.find(h=>h[0]=='dxf')[2]()`),l=E(`HELP.find(h=>h[0]=='lwo')[2]()`);return /known size/.test(s)&&/512 KB/.test(s)&&/Make my macro/.test(x)&&!/not kept in shared/.test(x)&&/X0 Z0 at/.test(l)})());
+  log('help: sharing + DXF + lathe work offset',(()=>{const s=E(`HELP.find(h=>h[0]=='share')[2]()`),x=E(`HELP.find(h=>h[0]=='dxf')[2]()`),l=E(`HELP.find(h=>h[0]=='offsets')[2]()`);return /known size/.test(s)&&/512 KB/.test(s)&&/Make my macro/.test(x)&&!/not kept in shared/.test(x)&&/X0 Z0 at/.test(l)})());
   log('no console errors',!errs.length,errs.join('|'));
  }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
 </script></body>

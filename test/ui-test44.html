@@ -32,7 +32,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   w.cur(0);E("J=parseJ2('G55 bolt pattern at the jogged spot','mdipat')");log('typed G55 read (yellow)',E('J.p["Work offset"].v')=='G55');
   // no-move jobs untouched
   log('no-move jobs do not ask for a work offset',E(`['ctr','nstop','hlife','drift','ctime','tlog','rpmg','offexp','eos','dx32'].every(op=>!j2Req({op,p:{}}).includes('Work offset'))`));
-  log('help offsets topic lists the audit',/Machine coordinates only/.test(E(`HELP.find(h=>h[0]=='offsets')[2]()`))&&/X0 Y0 Z0 at/.test(E(`HELP.find(h=>h[0]=='offsets')[2]()`)));
+  log('help offsets topic lists the audit',/machine coordinates only/i.test(E(`HELP.find(h=>h[0]=='offsets')[2]()`))&&/X0 Y0 Z0 at/.test(E(`HELP.find(h=>h[0]=='offsets')[2]()`)));
   log('no console errors',!errs.length,errs.join('|'));
  }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
 </script></body>

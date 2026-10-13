@@ -1,0 +1,16 @@
+<!doctype html><body style="margin:0"><iframe id="f" src="../index.html?v=66s" style="width:390px;height:844px;border:0"></iframe><script>
+const S0=+new URLSearchParams(location.search).get('s');let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+setTimeout(()=>{const E=x=>w.eval(x);E("NOASK=1;S.tip42=1");
+ const op=id=>{const x=d.querySelector('#h-'+id);x.open=true;w.scrollTo(0,x.getBoundingClientRect().top+w.scrollY-60)};
+ const q=v=>{const h=d.querySelector('#hq');h.value=v;h.dispatchEvent(new w.Event('input'));w.scrollTo(0,0)};
+ if(S0==1)E("help()");
+ if(S0==2){E("tab('new')");d.querySelector('#qhelp').click()}
+ if(S0==3){E("help('offsets')");op('offsets')}
+ if(S0==4){E("help()");q('job manager')}
+ if(S0==5){E("help('faq')");op('faq')}
+ if(S0==6){E("help()");q('tool list')}
+ if(S0==7){E("help('library')");op('library')}
+ if(S0==8){E("help('editor')");op('editor')}
+},1500)};
+</script></body>

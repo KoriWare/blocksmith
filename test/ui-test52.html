@@ -1,0 +1,29 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=68" style="width:390px;height:844px"></iframe><script>
+// Round 68 · Help review: order, merged topics, current labels, '?' routing, search, troubleshooting
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||x===undefined?'':' ['+x+']'));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.addEventListener('error',e=>errs.push(e.message));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{
+  const ids=E('HELP.map(h=>h[0])');log('45 topics, no duplicates',ids.length==45&&new Set(ids).size==ids.length,ids.length);
+  const pos=k=>ids.indexOf(k),seq=['start','nav','machines','tools','build','editor','sim','library','programs','jobmgr','share','dxf','colors','haas','calc36','theme','backup','faq'];
+  log('logical order',seq.every((k,i)=>i==0||pos(k)>pos(seq[i-1])),seq.map(pos).join());
+  log('faq last',ids[ids.length-1]=='faq');
+  log('ready + lwo merged away',!ids.includes('ready')&&!ids.includes('lwo'));
+  const all=E("HELP.map(h=>h[1]+' '+h[2]()).join(' ')");
+  log('no stale labels',!/New job ·|Round 58|Or tap a sample|under the Build box|More → Tool library shows|Batch 6|Batch 7|Round 4 jobs/.test(all));
+  const off=E("HELP.find(h=>h[0]=='offsets')[2]()");log('offsets: required + optional + lathe in one topic',/X0 Y0 Z0 at/.test(off)&&/X0 Z0 at/.test(off)&&/Add a work offset line/.test(off)&&/spindle centerline/.test(off));
+  log('editor has Ready badge',/Ready badge/.test(E("HELP.find(h=>h[0]=='editor')[2]()")));
+  const fq=E("HELP.find(h=>h[0]=='faq')[2]()");log('troubleshooting covers new features',['Preset job list','🔧 Pick','⧉ Copy','Job manager','out of date','25.4×','Import job','Theme','Work offset'].every(k=>fq.includes(k)));
+  E("help()");const hq=d.querySelector('#hq');const srch=q=>{hq.value=q;hq.dispatchEvent(new w.Event('input'));return [...d.querySelectorAll('#hl details[id^="h-"]')].filter(x=>x.style.display!='none').map(x=>x.id)};
+  log('search: job manager',srch('job manager').includes('h-jobmgr'));log('search: programs',srch('programs').includes('h-programs'));
+  log('search: DXF',srch('dxf').includes('h-dxf'));log('search: tool list',srch('tool list').includes('h-tools'));log('search: theme',srch('theme').includes('h-theme'));
+  log('aliases open merged topic',(E("help('lwo')"),d.querySelector('#h-offsets').open)&&(E("help('ready')"),d.querySelector('#h-editor').open));
+  log('footer names both controls',/Haas \/ Fanuc 0i-style/.test(d.body.textContent));
+  const route=(c,t)=>{E(c);const r=E('curTopic()');log("'?' "+c+' → '+t,r==t,r)};
+  route("tab('home')",'start');route("tab('machines')",'machines');route("tab('new')",'pickjob');route("tab('edit')",'editor');route("tab('sim')",'sim');route("tab('recent')",'library');route("tab('more')",'more');
+  route('tools()','tools');route('data()','backup');route('calc()','calc36');route('jobMgr()','jobmgr');route('pgList()','programs');route('reference()','haas');
+  E("tab('more')");const tr=[...d.querySelectorAll('.card')].find(c=>/Transfer notes/.test(c.textContent));if(tr){tr.click();route('0','export')}else log('transfer card',false);
+  E("tab('new')");d.querySelector('#qhelp').click();log("'?' click opens Help at pickjob",d.querySelector('#ttl').textContent=='Help'&&d.querySelector('#h-pickjob').open);
+  log('no page / console errors',!errs.length,errs.join('|'));o.textContent=out.join('\n')
+ }catch(e){out.push('FAIL exception '+e.message);o.textContent=out.join('\n')}},1500)}
+</script>
