@@ -207,3 +207,30 @@ Heuristics (our own defaults, not from any source, shown as suggestions):
 - Groove plunge step = 80% of insert width (mgroove).
 - Chamfer with a 90° spot/chamfer tool: tip depth = chamfer width + hole radius geometry (45° each side). Plain geometry, check your tool's tip angle.
 - Shrinking peck factor in peck2 (each peck smaller, never below min peck).
+
+## Round 29 · Batch 3 jobs (Oct 13)
+
+| Fact | Used by | Sources | Status |
+|---|---|---|---|
+| #3001 millisecond timer, can be reset by writing 0 | ctime | Haas Mill Macros chapter (official) haascnc.com/service/online-operator-s-manuals/mill-operator-s-manual/mill---macros.html; Fanuc: Series 15i Macro manual page (cncmanuals.com) + MMS "Timing Events In A Program" + zappettiniconsulting.com alarms-timers (agree) | OK |
+| #3002 hour timer | not used | Fanuc manual / Zappettini: counts only while cycle start lamp is on; MMS article: "always runs" — DISAGREE | FLAGGED, not used. Idle time uses #3011 / #3012 instead |
+| #3011 date YYYYMMDD, #3012 time HHMMSS | lotc, idlew, ctime | Round 25 rows + Haas Macros chapter + MMS "Converting Time and Date" | OK |
+| #3006 message stop | ctime | Haas Macros chapter (official); Fanuc: Zappettini + Fanuc Macro B pdf (cnctar.hobbycnc.hu) | OK |
+| G65 argument letters A=#1 B=#2 C=#3 D=#7 E=#8 F=#9 H=#11 M=#13 Q=#17 … Z=#26 | family | Haas Macros chapter (official); Fanuc: MMS "Understanding Argument Assignment Number Two" + Zappettini Haas arguments page (agree) | OK |
+| Haas G65 alarms if the sub is missing | family | Haas lathe G65 page (official) | OK, sub is yours |
+| G68 X Y R, positive R = counter-clockwise, G69 cancels; Haas needs Rotation and Scaling option; comp on after G68 | rotp | Haas G68 page (official) haascnc.com/service/codes-settings.type=gcode.machine=mill.value=G68.html; Fanuc: cnccookbook.com G68/G69 + cncknowledge.in Fanuc G68 example (agree) | OK; option kept red ("Coordinate rotation (G68)") |
+| Fanuc ATAN[a]/[b] two-argument form, result 0–360 | rotp, a4p | industrialmonitordirect.com Fanuc macro article + practicalmachinist.com thread (agree on form); 0–360 range from the first only | Form OK; we normalise >180 to negative so either range works — FLAG: check on control |
+| G31 skip; #5061–#5063 skip positions; G10 L2 incremental under G91 | rotp, a4p | Round 27 rows | OK |
+| Haas live tool M133 P(rpm) / M135, C axis M154 / M155, G28 H0 after engage advised | cdrill (comment / placeholder only) | Haas Factory Outlet live-tool training pdf (productivity.com) + Morris Trident HFO pdf on haascnc.com + helmancnc.com G81 C-axis (agree) | Codes NOT written by us — user must type them in Machines (red). G28 H0 is only a comment |
+| Live tool cutting with G98 feed per minute | cdrill | Haas lathe options programming chapter (official) + the HFO pdfs | OK for Haas; Fanuc lathe G98 = per minute in G-code system A — FLAGGED, verify |
+| Lathe G18/G97/G99 safe start | lpeck, ltaper, cdrill | Round 28 row (Haas official; Fanuc flagged) | as Round 28 |
+| G02 = clockwise viewed with X up, Z right (standard lathe convention) | ltaper fillet | Plain right-hand-rule geometry; Haas lathe G02/G03 pages use the same view | FLAG: front-turret machines — check direction on a dry run |
+
+Our own defaults / methods (unsourced, shown as suggestions or stated in the program):
+- Day-number formula used to compare dates (standard calendar arithmetic, our own code).
+- Shift key = day number × 10 + shift index; shift before the first start belongs to yesterday's last shift.
+- Chip-break back-off on lathe pecks = Retract (gray 0.01 in); re-approach at 2× feed.
+- Keyway: straight plunge per stepdown (needs center-cutting end mill); flat: 50% stepover zigzag.
+- Taper roughing: passes parallel to the taper at DOC per side, no finish allowance; no nose radius comp.
+- Cross-drill: peck re-approach 0.01 in radial above last depth, OD clearance 0.02 in radial.
+- Feeds / RPM gray suggestions (0.002 in/rev groove, 0.008/0.004 in/rev turn, 4 in/min live drill, 1500 live RPM, 800/1200 RPM).
