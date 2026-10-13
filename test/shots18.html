@@ -1,0 +1,23 @@
+<!doctype html><body style="margin:0"><iframe id="f" src="../index.html?v=60s" style="width:390px;height:844px;border:0"></iframe><script>
+const Q=new URLSearchParams(location.search),S0=+Q.get('s');let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+setTimeout(()=>{const E=x=>w.eval(x);E("NOASK=1;S.tip42=1");
+ const setv=(k,v)=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x){x={k:${JSON.stringify(k)}};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+ const H={'Free common variables':'#600-#699','DPRNT support':'yes','Skip code (probe)':'G31','Spindle probe on / off':'M59 / M69','Max RPM':'8000','Setter diameter call':'G65 P9023 A12. T<T>','Setter diameter result #':'#199','D offsets hold':'diameter','Tool offset memory (Fanuc)':'C'};
+ const mach=(n,g,ct)=>{w.pick(n,g);w.cur(E('S.m.length')-1);setv('Control',ct);Object.entries(H).forEach(([k,v])=>setv(k,v));E("Object.keys(S.m[S.cur].opt||{}).length;S.m[S.cur].opt=Object.assign(S.m[S.cur].opt||{},{macroB:1,g10:1,probe:1,tset:1,ext:1});save()")};
+ const fill=o=>E(`Object.entries(${JSON.stringify(o)}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);
+ const go=t=>{w.tab('new');d.querySelector('#q').value=t;w.go()};
+ const toOut=()=>{const o=d.querySelector('#wonote')||d.querySelector('#out');if(o)w.scrollTo(0,o.getBoundingClientRect().top+w.scrollY-120)};
+ const code=()=>{w.tab('edit');setTimeout(()=>w.scrollTo(0,0),50)};
+ const MP={'Holes':6,'Bolt circle Ø':2,'Start angle':0,'Depth Z':-0.5,'R plane':0.1,'Feed':10,'Tool':3};
+ const HM=()=>mach('Haas VF-style VMC (generic)','Vertical mills','Haas NGC');const top=()=>{const o=d.querySelector('#wotg');if(o)o.scrollIntoView({block:'center'})};
+ const TL=()=>{HM();[['Tool setter type','touch'],['Tool setter macro call','G65 P9023 T<T>'],['Setter writes length to','geometry'],['Setter moves to itself','yes']].forEach(([k,v])=>setv(k,v));go('check tool length tool 8 length 4.125 tolerance 0.002')};
+ const scode=()=>{code();setTimeout(()=>{setInterval(()=>d.querySelectorAll('*').forEach(e=>{if(e.scrollHeight>e.clientHeight+5&&e.tagName!='HTML'&&e.tagName!='BODY')e.scrollTop=0}),200);const l=d.querySelector('#ed');if(l)l.scrollIntoView({block:'start'})},400)};
+ if(S0==1){TL();top()}
+ if(S0==2){TL();E('woSet(1)');top()}
+ if(S0==3){TL();E('woSet(1)');fill({'Work offset':'G57','X0 Y0 Z0 at':'X0 Y0 Z0 as on my setup sheet'});E('J.code=null;show()');scode()}
+ if(S0==4){mach('Generic 3-axis VMC','Vertical mills','Fanuc 0i');go('safe home');fill({'Park X':-10,'Park Y':-1,'Program end':'M30'});E('woSet(1)');fill({'Work offset':'G55','X0 Y0 Z0 at':'X0 Y0 Z0 as on my setup sheet'});E('J.code=null;show()');scode()}
+ if(S0==5){HM();go('T5 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep');}
+ if(S0==6){w.help('offsets');setTimeout(()=>{const p=[...d.querySelectorAll('p')].find(p=>/Older built-in jobs/.test(p.textContent));if(p)p.scrollIntoView({block:'start'})},100)}
+},1500)};
+</script></body>

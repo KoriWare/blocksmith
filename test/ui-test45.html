@@ -1,4 +1,4 @@
-<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=59" style="width:390px;height:844px"></iframe><script>
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=60" style="width:390px;height:844px"></iframe><script>
 // Round 59 · optional work offset
 const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
 f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
@@ -13,19 +13,41 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   const n=E('Object.keys(J2).filter(woOpt).length'),nl=E('Object.keys(J2).filter(o=>woOpt(o)&&woKey(o)==LWO).length');log(`optional-offset jobs counted: ${n} (lathe/Swiss ${nl})`,n>0);
   log('no job that requires an offset gets the switch',E(`Object.keys(J2).filter(woOpt).every(o=>!j2Req({op:o,p:{}}).includes('Work offset'))`));
   log('3+2 face feature has no switch',!E("woOpt('dx32')"));
-  ['warm','shome','ctr'].forEach(op=>{open(op);fillAll(op);const c0=code();
-   log(`${op}: switch shown, default off`,!!d.querySelector('#wocb')&&!d.querySelector('#wocb').checked);
-   log(`${op}: default off code identical to before (no offset line)`,!/OPTIONAL WORK OFFSET/.test(c0)&&E('!("Work offset" in J.p)'));
-   E('woSet(1)');log(`${op}: on => Work offset + X0 Y0 Z0 red, no code`,E('J.p["Work offset"].v==null&&J.p["X0 Y0 Z0 at"].v==null')&&code()=='');
-   if(op!='ctr')log(`${op}: amber machine-coords note`,!!d.querySelector('#womc'));
+  const MCRE=/^\(G53\/G28\/SETTER MOVES IN MACHINE COORDINATES - WORK OFFSET G57 SET FOR LATER PART MOVES\)$/m;
+  const runOps=(tag,ops)=>ops.forEach(op=>{open(op);fillAll(op);const c0=code();
+   log(`${tag}${op}: switch shown, default off`,!!d.querySelector('#wocb')&&!d.querySelector('#wocb').checked);
+   log(`${tag}${op}: default off code identical to before (no offset line)`,!/OPTIONAL WORK OFFSET/.test(c0)&&E('!("Work offset" in J.p)'));
+   E('woSet(1)');log(`${tag}${op}: on => Work offset + X0 Y0 Z0 red, no code`,E('J.p["Work offset"].v==null&&J.p["X0 Y0 Z0 at"].v==null')&&code()=='');
+   if(op!='ctr')log(`${tag}${op}: amber machine-coords note`,!!d.querySelector('#womc'));
    fillAll(op,{'Work offset':'G57'});const c=code(),L=c.split('\n'),io=L.findIndex(l=>/^G57 \(OPTIONAL WORK OFFSET - /.test(l)),is=L.findIndex(l=>/SAFE START/.test(l)),im=L.findIndex((l,i)=>i>is&&/^(G0[0-3]|G53|G91 G28|G28|T\d+ M06|M98|G65)\b/.test(l));
-   log(`${op}: line after safe start, before first move`,io>0&&(is<0||io==is+1)&&(im<0||io<im),c.slice(0,400));
-   const strip=x=>x.split('\n').filter(l=>!/OPTIONAL WORK OFFSET/.test(l)).join('\n');log(`${op}: machine-coord moves unchanged`,strip(c)==c0,c);
-   if(op!='ctr')log(`${op}: code comment says moves stay machine coords`,/STAY IN MACHINE COORDINATES/.test(c));
-   E('saveJob()');E('reopen(0)');log(`${op}: saved job remembers switch`,E('J.wo==1')&&d.querySelector('#wocb').checked&&/OPTIONAL WORK OFFSET/.test(code()));
-   const f=E('JSON.stringify(mbFile(S.jobs[0]))');log(`${op}: share file carries switch`,/"workOffsetLine":true/.test(f));
-   const x=E(`(()=>{const x=mbParse(${JSON.stringify(f)});return x&&x.wo})()`);log(`${op}: import reads switch`,x==1);
+   log(`${tag}${op}: line after safe start, before first move`,io>0&&(is<0||io==is+1)&&(im<0||io<im),c.slice(0,400));
+   const strip=x=>x.split('\n').filter(l=>!/OPTIONAL WORK OFFSET|^\(MACHINE COORDINATES ONLY|^\(G53\/G28\/SETTER MOVES/.test(l)).join('\n');log(`${tag}${op}: machine-coord moves unchanged`,strip(c)==strip(c0),strip(c0)+'\n=====\n'+strip(c));
+   if(op!='ctr')log(`${tag}${op}: code comment says moves stay machine coords`,MCRE.test(c)&&!/MACHINE COORDINATES ONLY|STAY IN MACHINE COORDINATES/.test(c)&&c.split('\n').filter(l=>/MOVES IN MACHINE COORDINATES/.test(l)).length==1,c.slice(0,500));
+   if(op!='ctr')log(`${tag}${op}: check row uses the new comment`,E(`checks(J).some(r=>/^G53 \\/ G28 \\/ setter moves stay in machine coordinates/.test(r[0])&&r[1])`));
+   E('saveJob()');E('reopen(0)');log(`${tag}${op}: saved job remembers switch`,E('J.wo==1')&&d.querySelector('#wocb').checked&&/OPTIONAL WORK OFFSET/.test(code()));
+   const f=E('JSON.stringify(mbFile(S.jobs[0]))');log(`${tag}${op}: share file carries switch`,/"workOffsetLine":true/.test(f));
+   const x=E(`(()=>{const x=mbParse(${JSON.stringify(f)});return x&&x.wo})()`);log(`${tag}${op}: import reads switch`,x==1);
   });
+  runOps('Haas: ',['warm','shome','ctr']);
+  // Fanuc coverage (safe home, warm-up)
+  w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);setv('Control','Fanuc 0i');setv('Max RPM','8000');E("S.m[S.cur].name='Fanuc VMC 45';save()");const fi=E('S.cur');
+  runOps('Fanuc: ',['shome']);w.cur(fi);runOps('Fanuc: ',['warm']);
+  log('Fanuc: warm header is Fanuc-style',/FANUC 0I-STYLE/.test(code()),code().slice(0,200));
+  // Round 60: older built-in jobs
+  w.cur(0);const run=q=>{w.tab('new');d.querySelector('#q').value=q;w.go();return E('J&&J.op')};
+  [['T5 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep','bolt'],['T2 3 x 4 grid 0.75 spacing start x0.5 y0.5 z0 0 0.4 deep drill','grid'],['T1 face 4 x 3 take off 0.06 stepdown 0.02 stepover 70 z0 0','face'],['T20 probe bore 2.0 dia center x0 y0 probe z -0.25 tip 0.157 write to g55','pbore'],['T20 probe surface z','psurf'],['T20 probe web 1.0 wide center x0 y0','pweb'],['T20 probe pocket 2.0 x 1.0 center x0 y0','ppocket'],['T7 engrave "AB" in a circle radius 0.25 center x0 y0 0.125 tall 0.005 deep centered on 90 deg ccw inside not mirrored zero on top','engrave']].forEach(([q,op])=>{const o=run(q);
+   log(`older ${op}: Work offset red-required, no switch`,o==op&&E('J.p["Work offset"]&&J.p["Work offset"].v==null')&&!d.querySelector('#wocb')&&!E(`woOpt('${op}')`),o)});
+  log('older import: no switch (your own code)',!E("woOpt('import')"));
+  // tlen: optional switch
+  w.cur(0);setv('Control','Haas NGC');[['Tool setter type','touch'],['Tool setter macro call','G65 P9023 T<T>'],['Setter writes length to','geometry'],['Setter moves to itself','yes']].forEach(([k,v])=>setv(k,v));E("S.m[S.cur].opt=Object.assign(S.m[S.cur].opt||{},{tset:1});save()");
+  run('check tool length tool 8 length 4.125 tolerance 0.002');const tc=()=>E('(J.code||[]).join("\\n")');
+  log('tlen: switch shown, default off',E("J.op")=='tlen'&&!!d.querySelector('#wocb')&&!d.querySelector('#wocb').checked,(d.querySelector('#out')||{}).textContent.slice(0,300));
+  const t0=tc();log('tlen: off = old comment, no offset line',/MACHINE COORDINATES ONLY - NO WORK OFFSET USED/.test(t0)&&!/OPTIONAL WORK OFFSET/.test(t0),t0.slice(0,300));
+  E('woSet(1)');log('tlen: on => Work offset + X0 Y0 Z0 at red, no code',E('J.p["Work offset"].v==null&&J.p["X0 Y0 Z0 at"].v==null')&&!tc());
+  E('ed("X0 Y0 Z0 at")');E('J.p["Work offset"]={v:"G57",g:false};J.code=null;show()');const t1=tc(),T1=t1.split('\n'),i1=T1.findIndex(l=>/^G57 \(OPTIONAL WORK OFFSET - /.test(l)),s1=T1.findIndex(l=>/SAFE START/.test(l));
+  log('tlen: offset line after safe start + one new comment',i1==s1+1&&MCRE.test(t1)&&!/MACHINE COORDINATES ONLY/.test(t1),t1.slice(0,500));
+  log('tlen: setter moves unchanged',t1.split('\n').filter(l=>!/OPTIONAL WORK OFFSET|^\(G53\/G28\/SETTER/.test(l)).join('\n')==t0.split('\n').filter(l=>!/^\(MACHINE COORDINATES ONLY/.test(l)).join('\n'));
+  E('woSet(0)');log('tlen: off again = byte-identical',tc()==t0);
   log('no console errors',!errs.length,errs.join('|'));
  }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
 </script></body>

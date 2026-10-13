@@ -1,4 +1,4 @@
-<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=58" style="width:390px;height:844px"></iframe><script>
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=60" style="width:390px;height:844px"></iframe><script>
 // Round 58 · mill / 5-axis work-offset audit (Haas + Fanuc)
 const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
 f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
@@ -25,6 +25,9 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
     if(op=='runw')log(`${tag} runw: moves are G53 / G28 only`,c.split('\n').filter(l=>/\b[XYZABC]-?[\d.]/.test(l)&&!/^\(/.test(l)).every(l=>/G53|G28/.test(l)),c)});
   });
   w.cur(0);w.tab('new');d.querySelector('#q').value='check tool length tool 8';w.go();log('tlen: machine-coordinates comment + card note (when code is written)',E('J.op')=='tlen'&&/Machine coordinates only/.test(outT())&&(!E('J.code&&J.code.length')||/MACHINE COORDINATES ONLY/.test(E('J.code.join("\\n")'))),outT().slice(0,200));
+  // Round 60: switch on => old 'NO WORK OFFSET USED' comment replaced by one consistent comment
+  w.cur(E('S.m.length')-3);['warm','shome','tsman','tdia'].forEach(op=>{open(op);fillAll(op);E('woSet(1)');fillAll(op,{'Work offset':'G55','X0 Y0 Z0 at':'X0 Y0 Z0 as on my setup sheet'});E('J.code=null');const c=code();
+   log(`switch on ${op}: old comment gone, one new comment`,!/MACHINE COORDINATES ONLY - NO WORK OFFSET USED/.test(c)&&c.split('\n').filter(l=>l=='(G53/G28/SETTER MOVES IN MACHINE COORDINATES - WORK OFFSET G55 SET FOR LATER PART MOVES)').length==1,c.slice(0,400));E('woSet(0)')});
   // Haas: typed G55 is read
   w.cur(0);E("J=parseJ2('G55 bolt pattern at the jogged spot','mdipat')");log('typed G55 read (yellow)',E('J.p["Work offset"].v')=='G55');
   // no-move jobs untouched
