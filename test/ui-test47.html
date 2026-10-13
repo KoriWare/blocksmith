@@ -1,5 +1,5 @@
-<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=62" style="width:390px;height:844px"></iframe><script>
-// Round 62 · new machines start with an empty tool list; empty-list hint; copy from another machine
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=63" style="width:390px;height:844px"></iframe><script>
+// Round 63 · empty list hides old + Add tool / Demo note; with tools they stay; Round 62 empty-list + copy-from
 const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
 f.onload=()=>{const w=f.contentWindow,d=w.document;
  if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
@@ -15,10 +15,20 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   w.pick('Haas VF-style VMC (generic)','Vertical mills');log('Haas preset starts empty (no demo engraving tool)',E('S.m.at(-1).tools.length')===0);
   w.cur(N);E("tools()");log('empty hint shown',!!d.querySelector('#tlempty')&&/No tools/.test(d.querySelector('#tlempty').textContent));
   log('hint has + New tool and Copy from another machine',!!d.querySelector('#tlenew')&&!!d.querySelector('#tlefrom'));
+  const oa=d.querySelector('#tloldadd'),on=d.querySelector('#tloldnote');
+  log('empty: old + Add tool hidden',!!oa&&oa.style.display==='none'&&!/\+ Add tool/.test([...d.querySelectorAll('button.btn')].filter(b=>getComputedStyle(b).display!=='none').map(b=>b.textContent).join('|')),oa&&oa.style.display);
+  log('empty: Demo tools only note hidden',!!on&&on.style.display==='none');
   E("tlNewForm('')");log('library new-tool form opens without a job',!!d.querySelector('#tn_save')&&/Save tool$/.test(d.querySelector('#tn_save').textContent));
   d.querySelector('#tn_n').value='4';d.querySelector('#tn_dia').value='0.5';E("tlNewSave('')");
   log('library new tool saved to this machine',E(`S.m[${N}].tools.length`)==1&&E(`S.m[${N}].tools[0].n`)==4&&!d.querySelector('#tlmod'));
   log('hint gone once list has a tool',!d.querySelector('#tlempty'));
+  const oa2=d.querySelector('#tloldadd'),on2=d.querySelector('#tloldnote');
+  log('with tools: old + Add tool shown where it was',!!oa2&&oa2.style.display!=='none'&&oa2.textContent.trim()==='+ Add tool');
+  log('with tools: Demo tools only note shown',!!on2&&on2.style.display!=='none'&&/Demo tools only/.test(on2.textContent));
+  log('with tools: Back still follows Demo note',!!on2&&on2.nextElementSibling&&on2.nextElementSibling.classList.contains('btn')&&on2.nextElementSibling.classList.contains('o')&&/Back/.test(on2.nextElementSibling.textContent));
+  E(`S.m[${N}].tools=[];save();tools()`);
+  const oa3=d.querySelector('#tloldadd'),on3=d.querySelector('#tloldnote');
+  log('cleared empty again: old Add + Demo hidden, empty card back',!!d.querySelector('#tlempty')&&!!oa3&&oa3.style.display==='none'&&!!on3&&on3.style.display==='none');
   E(`S.m[${N}].tools=[];save();tools()`);E("tlFromPick()");const srcs=[...d.querySelectorAll('#tlmod [data-src]')].map(b=>+b.dataset.src);
   log('source list: machines with fitting tools, not itself, not lathes-only',srcs.length>0&&!srcs.includes(N)&&!srcs.includes(Lt)&&srcs.includes(0),JSON.stringify(srcs));
   E("tlFromList(0)");const fl=[...d.querySelectorAll('#tlfl input[data-fid]')].map(x=>x.dataset.fid);

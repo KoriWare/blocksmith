@@ -409,7 +409,7 @@ S.tools=S.tools||[{n:1,type:'Face mill',dia:2,len:3,fl:5},{n:2,type:'Drill',dia:
 const TT=['End mill','Face mill','Drill','Spot drill','Tap','Turning insert','Groove insert','Boring bar'];
 function tools(){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t=='more'));$('#ttl').textContent='Tool library';V.innerHTML=S.tools.map((t,i)=>`<div class="card"><div class="row"><input style="width:60px;flex:0 0 60px" value="${t.n}" data-f="n" data-i="${i}"><select data-f="type" data-i="${i}">${TT.map(x=>`<option ${x==t.type?'selected':''}>${x}</option>`).join('')}</select></div>
  <div class="row" style="margin-top:6px">${[['dia','Ø in'],['len','stick-out in'],['fl','flutes']].map(([f,l])=>`<label style="flex:1">${l}<input inputmode="decimal" value="${t[f]}" data-f="${f}" data-i="${i}"></label>`).join('')}</div><button class="chip r" onclick="S.tools.splice(${i},1);save();tools()">Remove</button></div>`).join('')+
- `<button class="btn" onclick="S.tools.push({n:(Math.max(0,...S.tools.map(t=>t.n))+1),type:'End mill',dia:0.5,len:3,fl:3});save();tools()">+ Add tool</button><div class="s" style="margin-top:8px">Jobs look up the tool by number (T1, T2…) for its diameter. Demo tools only.</div><button class="btn o" onclick="more()">Back</button>`;
+ `<button class="btn" id="tloldadd" onclick="S.tools.push({n:(Math.max(0,...S.tools.map(t=>t.n))+1),type:'End mill',dia:0.5,len:3,fl:3});save();tools()">+ Add tool</button><div class="s" id="tloldnote" style="margin-top:8px">Jobs look up the tool by number (T1, T2…) for its diameter. Demo tools only.</div><button class="btn o" onclick="more()">Back</button>`;
  V.querySelectorAll('[data-f]').forEach(el=>el.onchange=()=>{const t=S.tools[el.dataset.i];t[el.dataset.f]=el.dataset.f=='type'?el.value:+el.value;save()})}
 const _req=req;req=function(j){j=_req(j);if(!j)return j;const t=S.tools.find(x=>x.n==(j.p.Tool||{}).v);if(t){
  if(j.op=='face'&&j.p.Cutter.v==null)j.p.Cutter={v:t.dia,g:false,lib:1};if(j.p['Drill Ø']&&j.p['Drill Ø'].g)j.p['Drill Ø']={v:t.dia,g:false,lib:1};if(j.op=='lgroove'&&j.p['Insert W'].v==null)j.p['Insert W']={v:t.dia,g:false,lib:1}}return j};
@@ -4723,11 +4723,17 @@ function tlFromList(si){const dst=tlCurM(),src=S.m[si];if(!src||src===dst)return
  tlModal(`<div class="t">From ${esc(src.name)} → ${esc(dst.name)}</div><div class="s">Tick the tools to copy. Type, Ø, flutes, material and notes copy as-is; number, length and offsets come in <b style="color:#ff8a8a">red</b> to confirm.</div><div id="tlfl">${list.map(t=>`<label class="set" style="display:flex;gap:8px;align-items:center;justify-content:flex-start;text-align:left"><input type="checkbox" data-fid="${t.id}" checked style="width:auto"><span style="flex:1;text-align:left">T${esc(String(t.n))} · ${esc(t.type)}${t.name?' · '+esc(t.name):''}${t.dia!=null?' · Ø'+(+(t.dia*ku).toFixed(4))+u:''}</span></label>`).join('')}</div><button class="btn" id="tlfgo" onclick="tlFromGo(${si})">⧉ Copy ticked tools</button>`)}
 function tlFromGo(si){const dst=tlCurM(),ti=S.m.indexOf(dst),src=S.m[si];if(!src)return;const ids=[...document.querySelectorAll('#tlfl input[data-fid]:checked')].map(x=>x.dataset.fid);if(!ids.length)return;
  TLSEL={};ids.forEach(id=>TLSEL[id]=true);const r=tlCopy(ti,si);return r}
-const _tools62=tools;tools=function(){_tools62();try{const m=tlCurM();if(!m||m.tools.length||$('#tlempty'))return;const e=document.createElement('div');e.className='card';e.id='tlempty';
- e.innerHTML=`<div class="t">No tools on ${esc(m.name)} yet</div><div class="s">New machines start with an empty list so you never get another machine's tools by accident.</div><div class="row" style="margin-top:6px"><button class="chip y" id="tlenew" onclick="tlNewForm('')">+ New tool</button><button class="chip gr" id="tlefrom" onclick="tlFromPick()">⧉ Copy from another machine</button></div>`;
- const h=$('#tlhead');if(h)h.after(e);else V.prepend(e)}catch(x){}};
+const _tools62=tools;tools=function(){_tools62();try{const m=tlCurM();if(!m)return;
+ // Empty list: keep the new empty-list card; hide the old + Add tool button and its Demo tools only note.
+ // With 1+ tools: leave the old button exactly where it was (nothing else moves).
+ if(!m.tools.length){const a=$('#tloldadd'),n=$('#tloldnote');if(a)a.style.display='none';if(n)n.style.display='none';
+  if(!$('#tlempty')){const e=document.createElement('div');e.className='card';e.id='tlempty';
+   e.innerHTML=`<div class="t">No tools on ${esc(m.name)} yet</div><div class="s">New machines start with an empty list so you never get another machine's tools by accident.</div><div class="row" style="margin-top:6px"><button class="chip y" id="tlenew" onclick="tlNewForm('')">+ New tool</button><button class="chip gr" id="tlefrom" onclick="tlFromPick()">⧉ Copy from another machine</button></div>`;
+   const h=$('#tlhead');if(h)h.after(e);else V.prepend(e)}}
+ else{const a=$('#tloldadd'),n=$('#tloldnote');if(a)a.style.display='';if(n)n.style.display=''}}catch(x){}};
 (function(){const h=HELP.find(x=>x[0]=='tools');if(h){const f=h[2];h[2]=()=>f()+`<p><b>New machines start with an empty tool list.</b> On an empty list, tap <b>+ New tool</b> to add one, or <b>⧉ Copy from another machine</b>: pick the machine to copy from, tick the tools that fit, and they come in with the number, length and offsets in <b style="color:#ff8a8a">red</b> to confirm — the same rules as Copy to another machine. Existing machines keep their tools.</p>`}})();
 LOG.unshift(['2.8 · Oct 13','New machines start with an empty tool list; empty-list hint with + New tool and Copy from another machine.']);
+LOG.unshift(['3.1 · Oct 13','Empty tool list hides the old + Add tool button and Demo tools only note; with tools, that button stays where it was.']);
 </script>
 
 </body></html>
