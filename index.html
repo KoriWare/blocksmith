@@ -144,7 +144,7 @@ function C(x){return GENMM?nice(x*25.4)/25.4:x}
 function gen(j){const p=k=>j.p[k]?j.p[k].v:0,c=[],mv=[];let pos=[0,0,2],out=0;
  const L=s=>c.push(s);const R=(x,y,z)=>{mv.push({a:[...pos],b:[x??pos[0],y??pos[1],z??pos[2]],r:1});pos=mv.at(-1).b},F=(x,y,z,f)=>{mv.push({a:[...pos],b:[x??pos[0],y??pos[1],z??pos[2]],f});pos=mv.at(-1).b};
  const T=p('Tool'),cz=p('Clear Z');
- L('%');L('O1000 ('+OPN[j.op].toUpperCase()+' - DEMO)');L('(GENERIC FANUC-STYLE MACRO B - VERIFY ON CONTROL)');
+ L('%');L('O1000 ('+OPN[j.op].toUpperCase()+' - DEMO)');L(ctrlHdr());
  L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06`);L(`${offCode(p('Work offset'))} G00 X0. Y0. S${p('RPM')} M03`);{const sx=j.p['Center X']||j.p['Start X'],sy=j.p['Center Y']||j.p['Start Y'];L(`G52 X${f4(sx?sx.v:0)} Y${f4(sy?sy.v:0)} Z${f4(p('Z0'))} (LOCAL SHIFT TO PART ZERO)`)}L(`G43 H${T} Z${f4(cz+C(1))} M08`);
  const drill=(x,y)=>{const d=-p('Depth'),q=p('Peck Q');R(x,y,null);R(null,null,cz);if(j.p['Peck Q']){let z=0;while(z>d){const nz=Math.max(d,z-q);F(null,null,nz,p('Feed'));R(null,null,cz);if(nz>d)R(null,null,nz+0.01);z=nz}}else{F(null,null,d,p('Feed'));R(null,null,cz)}};
  const cyc=j.p['Peck Q']?`G83 Z-#26 R#18 Q#17 F#9`:`G81 Z-#26 R#18 F#9`;
@@ -208,7 +208,7 @@ function genL(j){const p=k=>j.p[k]?j.p[k].v:0,c=[],mv=[],L=s=>c.push(s);let TG='
  const st=j.p['Bar Ø']?p('Bar Ø'):1,Rr=st/2,T=p('Tool'),tt='T'+String(T).padStart(2,'0')+String(T).padStart(2,'0');
  const mx=+(sv('Max RPM (G50)')||{v:3000}).v;pos=[Rr+0.5,0,1];
  const R=(x,z)=>{mv.push({a:[...pos],b:[x==null?pos[0]:x/2,0,z??pos[2]],r:1,t:TG});pos=mv.at(-1).b},F=(x,z,f)=>{mv.push({a:[...pos],b:[x==null?pos[0]:x/2,0,z??pos[2]],f:f||p('Feed/rev'),t:TG});pos=mv.at(-1).b};
- L('%');L('O2000 ('+OPN[j.op].toUpperCase()+' - DEMO)');L('(GENERIC FANUC-STYLE LATHE MACRO B - X IN DIAMETER)');L('G18 G20 G40 G80 G99 (SAFE START)');L(`${tt} (TOOL ${T})`);L(`${offCode(p('Work offset'))} G52 Z${f4(p('Z0'))} (LOCAL Z SHIFT - CONFIRM G52 ON CONTROL)`);L(`G50 S${mx} (MAX RPM CLAMP)`);
+ L('%');L('O2000 ('+OPN[j.op].toUpperCase()+' - DEMO)');L(ctrlHdr(' LATHE - X IN DIAMETER'));L('G18 G20 G40 G80 G99 (SAFE START)');L(`${tt} (TOOL ${T})`);L(`${offCode(p('Work offset'))} G52 Z${f4(p('Z0'))} (LOCAL Z SHIFT - CONFIRM G52 ON CONTROL)`);L(`G50 S${mx} (MAX RPM CLAMP)`);
  L(j.op=='ldrill'?`G97 S${p('RPM')} M03`:`G96 S${p('SFM')} M03`);L(`G00 X${f4(st+C(0.1))} Z0.1 M08`);R(st+0.1,0.1);
  let Lst=2,zmax=0,sub=[];
  if(j.op=='lturn'){const fin=p('Finish Ø'),len=p('Length'),doc=p('DOC'),ch=p('Chamfer');Lst=len+0.5;
@@ -491,7 +491,7 @@ const _req2=req;req=function(j){if(j&&OPN2[j.op]){const t=j.text,xy=t.match(/(?:
 const _ed=ed;ed=function(k){if(k=='Confirm write'){if(confirm('This program WRITES a work offset with G10. Wrong values move every later job on that offset. Confirm?')){J.p[k]={v:'YES',g:false};show()}return}_ed(k)};
 function g10(o){if(/^G5/.test(o))return'L2 P'+(+o.slice(1)-53);return'L20 P'+o.slice(1)}
 function genP(j){const p=k=>j.p[k]?j.p[k].v:0,c=[],L=s=>c.push(s),wo=offCode(p('Work offset')),T=p('Tool'),r=p('Tip Ø')/2,cz=p('Clear Z'),ro=p('Result offset');
- L('%');L('O3000 ('+OPN[j.op].toUpperCase()+' - DEMO)');L('(GENERIC FANUC-STYLE G31 PROBING - VERIFY SKIP AND G10 ON CONTROL)');L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06 (PROBE)`);L(`${wo} G00 X${f4(p('Center X')||p('Start X'))} Y${f4(p('Center Y')||p('Start Y'))}`);L(`G43 H${T} Z${f4(cz+C(1))}`);
+ L('%');L('O3000 ('+OPN[j.op].toUpperCase()+' - DEMO)');L(ctrlHdr(' G31 PROBING - VERIFY SKIP AND G10'));L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06 (PROBE)`);L(`${wo} G00 X${f4(p('Center X')||p('Start X'))} Y${f4(p('Center Y')||p('Start Y'))}`);L(`G43 H${T} Z${f4(cz+C(1))}`);
  L('(PROBE ON - MACHINE SPECIFIC M CODE HERE)');const ax=p('Axis');
  if(j.op=='pbore')L(`G65 P9300 X${f4(p('Center X'))} Y${f4(p('Center Y'))} Z${f4(p('Probe Z'))} D${f4(p('Dia'))} R${f4(r)} F${f4(p('Skip feed'))}`);
  if(j.op=='psurf')L(`G65 P9301 X${f4(p('Start X'))} Y${f4(p('Start Y'))} Z${f4(p('Probe Z'))} A${ax[0]=='X'?1:2} B${ax[1]=='+'?1:-1} R${f4(r)} F${f4(p('Skip feed'))}`);
@@ -573,7 +573,7 @@ const _req5=req;req=function(j){if(j&&j.op=='index'){const xy=j.text.match(/(?:h
 UNIT.Z0='in (top of part; 4th axis: face height above rotary centerline)';
 const _gen5=gen;gen=function(j){const p=k=>j.p[k]?j.p[k].v:0;
  if(j.op=='index'){const c=[],L=s=>c.push(s),T=p('Tool'),ax=((sv('Rotary axis')||{v:'A'}).v||'A').toUpperCase()[0],H=p('Z0');
-  L('%');L('O1400 (4TH AXIS HOLES EVERY FACE - DEMO)');L('(GENERIC FANUC-STYLE - VERIFY ROTARY DIRECTION AND CENTERLINE)');L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06`);L(`${offCode(p('Work offset'))} G00 X0. Y0. ${ax}0. S${p('RPM')} M03`);L('(WORK ZERO: Y0 Z0 ON ROTARY CENTERLINE)');L(`G43 H${T} Z${f4(H+C(1))} M08`);
+  L('%');L('O1400 (4TH AXIS HOLES EVERY FACE - DEMO)');L('('+ctrlLbl()+' - VERIFY ROTARY DIRECTION AND CENTERLINE)');L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06`);L(`${offCode(p('Work offset'))} G00 X0. Y0. ${ax}0. S${p('RPM')} M03`);L('(WORK ZERO: Y0 Z0 ON ROTARY CENTERLINE)');L(`G43 H${T} Z${f4(H+C(1))} M08`);
   L(`G65 P9400 H${p('Faces')} X${f4(p('Hole X'))} Y${f4(p('Hole Y'))} W${f4(H)} Z${f4(p('Depth'))} R${f4(p('Clear Z'))} F${f4(p('Feed'))}`);L(`G00 Z${f4(H+C(1))} ${ax}0.`);L('G80 M09');L('G91 G28 Z0. (SAFE END)');L('G90 M05');L('M30');L('');
   L('O9400 (INDEX AND DRILL EVERY FACE)');[11,24,25,23,26,18,9].forEach(v=>L(`IF[#${v}EQ#0]GOTO99`));L('IF[#11LT1]GOTO99');L('#100=0');L('WHILE[#100LT#11]DO1');L(`G00 Z[#23+#18+1]`);L(`G00 ${ax}[360*#100/#11]`);L('G00 X#24 Y#25');L('G90 G99 G81 X#24 Y#25 Z[#23-#26] R[#23+#18] F#9');L('G80');L('#100=#100+1');L('END1');L('M99');L('N99 #3000=1 (MISSING ARGUMENT)');L('M99');L('%');
   if(ax=='B'){const hy=Math.max(0.75,Math.abs(p('Hole Y'))+0.5);j.stock=[-H,-hy,-H,H,hy,H];j.hmc=1}else j.stock=[p('Hole X')-1,-H,-H,p('Hole X')+1,H,H];j.rot=ax;return{code:c,moves:[{a:[0,0,H+1],b:[0,0,H+1],r:1,l:7}],out:0}}
@@ -756,7 +756,7 @@ const _parseL11=parseL;parseL=function(t){const l=t.toLowerCase();if(!isSw())ret
  G('Feed/rev',0.003,true);G('SFM',300,true);G('Mill feed',8,true);G('Tool',1,false);return{op:'swiss',p,text:l,lathe:1}};
 const _req11=req;req=function(j){if(j&&j.op=='swiss'){j.p.Z0={v:num(/z0\s*(-?[\d.]+)/,j.text)};j.p['Work offset']={v:normOff(j.text)};['Flat depth','Flat L','Cross Ø','Cross at Z','Cross depth','End drill depth','Part-off W'].forEach(k=>{if(j.p[k]&&j.p[k].g)j.p[k].v=null});return j}return _req11(j)};
 function genS(j){const p=k=>j.p[k]?j.p[k].v:0,has=k=>j.p[k]&&j.p[k].v!=null,c=[],L=s=>c.push(s),st=p('Bar Ø'),fin=p('Finish Ø'),len=p('Length'),mx=+((sv('Max RPM (G50)')||{v:6000}).v),lm=((sv('Live tool M-code')||{v:'M51'}).v.match(/M\d+/)||['M51'])[0];
- L('%');L('O5000 (SWISS SAMPLE - DEMO)');L('(GENERIC SLIDING-HEADSTOCK FANUC-STYLE - Z+ OUT OF GUIDE BUSHING)');L('G18 G20 G40 G80 G99 (SAFE START)');L(`G50 S${mx}`);L(`${offCode(p('Work offset'))} G52 Z${f4(p('Z0'))} (Z0 = PART FACE)`);
+ L('%');L('O5000 (SWISS SAMPLE - DEMO)');L(ctrlHdr(isNT()?' - X IN DIAMETER':' - Z+ OUT OF GUIDE BUSHING'));L('G18 G20 G40 G80 G99 (SAFE START)');L(`G50 S${mx}`);L(`${offCode(p('Work offset'))} G52 Z${f4(p('Z0'))} (Z0 = PART FACE)`);
  L('T0101 (GANG: OD TURNING)');L(`G96 S${p('SFM')} M03`);L(`G00 X${f4(st+C(0.04))} Z0.02`);
  L(`G65 P9500 A${f4(st)} B${f4(fin)} Z${f4(len)} K${f4(p('Segment'))} F${f4(p('Feed/rev'))}`);
  if(has('End drill depth')){L('T0505 (END DRILL ON CENTER - ALONG Z)');L('G97 S2000 M03');L('G00 X0 Z0.05');L(`G01 Z-${f4(p('End drill depth'))} F0.002`);L('G00 Z0.05');}
@@ -809,7 +809,7 @@ const NTS=[['C-axis','yes',1],['Y-axis','yes',1],['Live tools','yes',1],['Live t
 const _pick14=pick;pick=function(n,g){if(g=='Multitasking lathes'){S.m.push(mk(n,'multitasking lathe'));const m=S.m.at(-1);NTS.forEach(([k,v,c])=>m.s.push({k,v,st:c?'confirm':'suggested'}));m.opt={macroB:1};m.tools=[];save();edit(S.m.length-1);return}_pick14(n,g)};
 function isNT(){return /multitask/i.test((S.m[S.cur]||{}).type||'')}
 const _isNTold=()=>/multitask/i.test((S.m[S.cur]||{}).type||'');
-const _genS14=genS;genS=function(j){const r=_genS14(j);if(!isNT())return r;j.nt=1;const c=[];r.code.forEach(x=>{x=x.replace('SWISS SAMPLE','MULTITASKING SAMPLE').replace(/\(GENERIC SLIDING-HEADSTOCK[^)]*\)/,'(GENERIC FIXED-HEADSTOCK TURNING CENTER FANUC-STYLE - X IN DIAMETER)').replace('GANG: OD TURNING','TURRET: OD TURN + FACE').replace('TURN IN SHORT SEGMENTS NEAR THE BUSHING','OD ROUGH IN Z STEPS').replace(/\(GANG/g,'(TURRET');
+const _genS14=genS;genS=function(j){const r=_genS14(j);if(!isNT())return r;j.nt=1;const c=[];r.code.forEach(x=>{x=x.replace('SWISS SAMPLE','MULTITASKING SAMPLE').replace('GANG: OD TURNING','TURRET: OD TURN + FACE').replace('TURN IN SHORT SEGMENTS NEAR THE BUSHING','OD ROUGH IN Z STEPS').replace(/\(GANG/g,'(TURRET');
  if(/^T0202/.test(x)){c.push('(TRANSFER: SUB SPINDLE SYNC, ADVANCE, CLAMP - MACHINE M CODES HERE)');x='T0202 (PART-OFF BLADE - TRANSFER TO SUB)'}c.push(x);
  if(/^G00 X.* Z0\.02$/.test(x)&&c.filter(y=>/FACE TO Z0/.test(y)).length==0){c.push(`G01 X-0.03 Z0 F${f4(j.p['Feed/rev'].v)} (FACE TO Z0)`);c.push('G00 Z0.02');c.push(x)}});
  const o=[];let skip=0;c.forEach(x=>{if(/^O9500/.test(x))skip=1;if(skip&&x=='%')skip=0;if(skip)return;if(/^G65 P9500/.test(x)){const st=j.p['Bar Ø'].v,fin=j.p['Finish Ø'].v,len=j.p.Length.v,F=f4(j.p['Feed/rev'].v);o.push(`(OD ROUGH - FULL-LENGTH PASSES, ${GENMM?'1 MM':'0.04'} DIA PER PASS)`);let d=st;while(d>fin+1e-6){d=Math.max(fin,d-C(0.04));o.push(`G00 X${f4(d)}`);o.push(`G01 Z-${f4(len)} F${F}`);o.push(`G01 X${f4(st+C(0.04))}`);o.push('G00 Z0.02')}return}o.push(x)});
@@ -826,7 +826,7 @@ const _parseL16=parseL;parseL=function(t){const l=t.toLowerCase();if(!/probe/.te
  G('Probe feed',10,true);G('Tol',0.02,true);G('Tool',9,true);return{op:'lprobe',p,text:l,lathe:1}};
 const _req16=req;req=function(j){if(j&&j.op=='lprobe'){const need=j.p['Probe mode'].v=='Face Z'?['Probe at X']:['Probe at Z'];REQ.lprobe=['Probe mode','Touch at','Offset #','Write to',...need];j.p['Work offset']={v:normOff(j.text)};return j}return _req16(j)};
 function genLP(j){const p=k=>j.p[k]?j.p[k].v:0,c=[],L=s=>c.push(s),face=p('Probe mode')=='Face Z',n=p('Offset #'),w=p('Write to'),f=p('Probe feed'),tc=p('Touch at');
- L('%');L(`O3100 (LATHE PROBE ${face?'FACE Z':'OD X'} - DEMO)`);L('(GENERIC FANUC-STYLE G31 SKIP - VERIFY SKIP CODE, #5061 DIA/RADIUS AND G10 FORMAT)');L('G18 G20 G40 G80 G99 (SAFE START)');L(`T${String(p('Tool')).padStart(2,'0')}${String(p('Tool')).padStart(2,'0')} (TOUCH PROBE)`);
+ L('%');L(`O3100 (LATHE PROBE ${face?'FACE Z':'OD X'} - DEMO)`);L(ctrlHdr(' G31 SKIP - VERIFY SKIP CODE, #5061 DIA/RADIUS AND G10 FORMAT'));L('G18 G20 G40 G80 G99 (SAFE START)');L(`T${String(p('Tool')).padStart(2,'0')}${String(p('Tool')).padStart(2,'0')} (TOUCH PROBE)`);
  if(!face){L(`G00 X${f4(tc+C(0.3))} Z${f4(p('Probe at Z'))}`);L('G98 (FEED PER MIN)');L(`G31 X${f4(tc-C(0.2))} F${f4(f)}`);L('#100=#5061 (SKIP X - TREATED AS DIAMETER)');L(`#101=#100-${f4(tc)} (ERROR ON DIAMETER)`);L(`IF[ABS[#101]GT${f4(p('Tol'))}]GOTO90`);L(`G00 X${f4(tc+C(0.3))}`);
   if(w=='work')L('(OD TOUCH CANNOT SET WORK Z - USE FACE MODE)');else L(`G10 P${w=='geometry'?10000+n:n} U-#101 (WRITE ${w.toUpperCase()} OFFSET ${n} X - CONFIRM SIGN)`)}
  else{L(`G00 X${f4(p('Probe at X'))} Z${f4(tc+C(0.3))}`);L('G98 (FEED PER MIN)');L(`G31 Z${f4(tc-C(0.2))} F${f4(f)}`);L('#100=#5063 (SKIP Z)');L(`#101=#100-${f4(tc)} (ERROR IN Z)`);L(`IF[ABS[#101]GT${f4(p('Tol'))}]GOTO90`);L(`G00 Z${f4(tc+C(0.3))}`);
@@ -923,6 +923,18 @@ const _data16=data;data=function(){_data16();const lb=V.querySelector('label.btn
 const CTRL={"haas":{"name":"haas_ngc","r":[[0,0,"null","R",null,"sourced"],[1,33,"local / G65 args","RW",false,"sourced"],[100,146,"general (mill)","RW",true,"sourced"],[147,199,"probe values if installed (mill)","RW",true,"sourced"],[500,549,"general","RW",true,"sourced"],[550,599,"probe calibration if installed (mill; lathe 550-580)","RW",true,"sourced"],[600,699,"general","RW",true,"sourced"],[700,749,"hidden internal - forbidden","none",null,"sourced"],[709,709,"fixture clamp input - forbidden","none",null,"sourced"],[800,999,"general","RW",true,"sourced"],[1064,1068,"max axis loads","R",null,"sourced"],[1601,2000,"tool flutes / vibration","RW",null,"sourced"],[2001,2800,"mill tool offsets H geom/wear, D geom/wear (lathe differs)","RW",null,"sourced"],[3000,3000,"alarm","W",null,"sourced"],[3001,3002,"timers ms/hours (verify)","RW",null,"verify"],[3003,3004,"single block / feed hold overrides","RW",null,"sourced"],[3006,3006,"stop with message","W",null,"sourced"],[3011,3012,"date/time (verify)","R",null,"verify"],[3020,3027,"timers, tool in spindle, rpm (verify)","R",null,"verify"],[3030,3034,"single block, block delete, opt stop, safe run","RW",null,"sourced"],[3201,3600,"tool actual dia / coolant pos","RW",null,"sourced"],[3901,3902,"M30 counters","RW",null,"sourced"],[4001,4099,"previous block G groups (doc text says 4001-4021)","R",null,"sourced"],[4101,4126,"previous block address A-Z","R",null,"sourced"],[4132,4132,"active work offset number","R",null,"sourced"],[5001,5006,"last target position","R",null,"sourced"],[5011,5019,"skip pos machine coords (NGC)","R",null,"sourced"],[5021,5026,"machine position (not while moving)","R",null,"sourced"],[5041,5046,"work position (not while moving)","R",null,"sourced"],[5061,5069,"skip position work coords","R",null,"sourced"],[5081,5086,"tool length comp","R",null,"sourced"],[5201,5326,"G52, G54-G59 offsets (20 per set)","RW",null,"sourced"],[5401,6000,"tool timers / life / load","RW",null,"sourced"],[6001,6999,"reserved - do not use (except documented #6198, #6996-#6999)","none",null,"sourced"],[7001,7386,"G110-G129 = G154 P1-P20","RW",null,"sourced"],[7501,7806,"pallet data","RW",null,"sourced"],[8500,8567,"ATM","R/W select",null,"sourced"],[9000,9031,"thermal comp - reserved","none",null,"sourced"],[10000,10999,"NGC general (same storage as legacy 3-digit)","RW",true,"sourced"],[11000,11255,"discrete inputs","R",null,"sourced"],[12000,12255,"discrete outputs (check the I/O page - many are machine-owned)","RW",null,"sourced"],[13000,13063,"analog inputs","R",null,"sourced"],[14001,15966,"G154 P1-P99 (20 per P)","RW",null,"sourced"],[20000,29999,"settings","RW",null,"sourced"],[30000,39999,"parameters","R",null,"sourced"],[50001,56900,"tool table extras","RW",null,"sourced"]],"lr":[[2001,2050,"X tool shift/geom (lathe)","RW",null,"sourced"],[2101,2150,"Z geom (lathe)","RW",null,"sourced"],[2201,2250,"nose radius (lathe)","RW",null,"sourced"],[2301,2350,"tip direction","RW",null,"sourced"],[2701,2950,"X/Y/Z/radius wear (lathe)","RW",null,"sourced"]],"dwell":"G04 P (P10.=s, P10=ms)","notes":["3-digit globals map to #10000+n (#100 = #10100)","ALL globals #100-#199 / #500-#999 are retained on Haas, unlike Fanuc","probe and options may own ranges; app warns","G65 nesting up to 9 deep; integer args scale (write decimals)","#3000 n = 1-999, shown 1000+n"],"src":["https://haascnc.com/service/online-operator-s-manuals/mill-operator-s-manual/mill---macros.html","https://www.haascnc.com/service/online-operator-s-manuals/lathe-operator-s-manual/lathe---macros.html","https://www.haascnc.com/service/codes-settings.type=gcode.machine=mill.value=G31.html"]},"fanuc0i":{"name":"fanuc_0i_generic","r":[[0,0,"null","R",null,"sourced"],[1,33,"local","RW",false,"sourced"],[100,199,"common volatile","RW",false,"sourced"],[500,999,"common retained","RW",true,"sourced"],[1000,1035,"interface inputs","R",null,"sourced"],[1100,1135,"interface outputs","RW",null,"sourced"],[2001,2400,"tool offsets #2xxx alias (memory type dependent)","RW",null,"sourced"],[3000,3000,"alarm","W",null,"sourced"],[3001,3002,"timers (verify)","RW",null,"verify"],[3003,3004,"single block / feed hold control","RW",null,"sourced"],[3006,3006,"stop with message","W",null,"sourced"],[3007,3007,"mirror status","R",null,"sourced"],[3011,3012,"date/time (verify)","R",null,"verify"],[3901,3902,"parts made/required","RW",null,"sourced"],[4001,4022,"modal G groups (0i-B)","R",null,"sourced"],[4102,4130,"modal B D F H M N O S T P","R",null,"sourced"],[5001,5004,"previous block end (4 axes on 0i-B)","R",null,"sourced"],[5021,5024,"machine pos","R",null,"sourced"],[5041,5044,"work pos","R",null,"sourced"],[5061,5064,"skip pos","R",null,"sourced"],[5081,5084,"tool length comp","R",null,"sourced"],[5101,5104,"servo deviation","R",null,"sourced"],[5201,5324,"EXT, G54-G59 offsets (20 per set)","RW",null,"sourced"],[7001,7944,"G54.1 P1-P48 (20 per P)","RW",null,"sourced"],[10001,13999,"tool offsets 5-digit (memory type dependent)","RW",null,"sourced"],[14001,19988,"G54.1 P1-P300 option (verify)","RW",null,"verify"]],"lr":[],"dwell":"G04 X s / P ms (no decimal)","notes":["Custom Macro B is an option; test with #100=1 in MDI (MB)","#100-#199 cleared at power off, #500-#999 kept","0i-B: #100-#199 and #500-#999 standard; 16i base smaller; parameter 8135 NCV changes usable ranges (MB) - ask user","G65/G66 nesting 5 levels, subprograms 15 (MB)","WHILE DO ids 1-3","#3000 n 0-200, message about 26 chars on 0i/16i (Zappettini)","0i-B has 4 axes per position block"],"src":["https://zappettiniconsulting.com/wiki/fanuc-system-variables","https://www.mentorcnc.com/en/fanuc-custom-macro-b-guide/","https://zappettiniconsulting.com/wiki/fanuc-turning-programming"]}};
 const KWST={"IF [cond] GOTO n":"sourced","IF [cond] THEN stmt":"sourced","GOTO n":"sourced","WHILE [cond] DO m":"sourced","END m":"sourced","EQ":"sourced","NE":"sourced","GT":"sourced","GE":"sourced","LT":"sourced","LE":"sourced","AND":"sourced","OR":"sourced","XOR":"verify","SIN":"sourced","COS":"sourced","TAN":"sourced","ASIN":"verify","ACOS":"verify","ATAN":"sourced","SQRT":"sourced","ABS":"sourced","ROUND":"sourced","FIX":"sourced","FUP":"sourced","LN":"sourced","EXP":"sourced","BIN/BCD":"verify","MOD":"verify","+ - * /":"sourced","[ ]":"sourced","#0":"sourced","#1-#33":"sourced","#100-#199":"sourced","#500-#999":"sourced","#1000+":"sourced","#3000":"sourced","#3006":"sourced","#3001/#3002":"verify","#3901/#3902":"sourced","#4001-#4130":"sourced","#5021-#5026":"sourced","#5041-#5046":"sourced","#5061-#5066":"sourced","#5221+":"sourced","G65 P#### args":"sourced","G66 P####":"sourced","G67":"sourced","M98/M99":"sourced","G31":"sourced","POPEN/DPRNT/PCLOS":"sourced","#3011/#3012":"verify","#3003":"sourced","#3004":"sourced","#3101":"sourced","G04":"sourced"};
 function ctrlKey(){const c=String((sv('Control')||{v:''}).v);return /haas/i.test(c)?'haas':/0i|0-i/i.test(c)?'fanuc0i':null}
+function ctrlLbl(){const c=String((sv('Control')||{v:''}).v);let b;
+ if(/haas/i.test(c))b=/classic/i.test(c)?'HAAS CLASSIC':/ngc|next\s*gen/i.test(c)?'HAAS NGC':'HAAS';
+ else if(/0i|0-i/i.test(c))b='FANUC 0I';
+ else if(/fanuc/i.test(c))b='FANUC';
+ else if(/mazak|mazatrol/i.test(c))b='MAZATROL EIA';
+ else if(/okuma|osp/i.test(c))b='OKUMA OSP';
+ else if(/brother/i.test(c))b='BROTHER';
+ else if(c.trim())b=c.toUpperCase().replace(/[()]/g,'').replace(/\s+/g,' ').replace(/-STYLE|\bVERIFY\b/gi,'').trim().slice(0,28)||'CONTROL';
+ else b='CONTROL NOT SET';
+ try{if(typeof isNT=='function'&&isNT())return 'GENERIC MULTITASK · '+b;if(/swiss/i.test((S.m[S.cur]||{}).type||''))return 'GENERIC SWISS · '+b}catch(e){}
+ return b}
+function ctrlHdr(extra){return '('+ctrlLbl()+(extra||'')+' - VERIFY ON CONTROL)'}
 function ctrlChecks(t,lathe){const k=ctrlKey();if(!k)return[];const C=CTRL[k],nm=k=='haas'?'Haas':'Fanuc 0i',c=[],code=t.replace(/\([^)]*\)/g,'');
  const R=[...(lathe?C.lr:[]),...C.r],find=n=>R.find(r=>n>=r[0]&&n<=r[1]);const used=new Map();
  for(const m of code.matchAll(/#\[?(\d+)\]?\s*(=)?/g)){const n=+m[1];if(!used.has(n))used.set(n,{w:0});if(m[2])used.get(n).w=1}
@@ -1077,7 +1089,7 @@ G01 U-[#1*2] F0.08
 G00 U[#1*2]
 M99
 %`};
-const _lcyc19=lcyc;lcyc=function(k){if(UN()!='mm')return _lcyc19(k);importToEditor(LCYC_MM[k])};
+const _lcyc19=lcyc;lcyc=function(k){const src=UN()=='mm'?LCYC_MM:LCYC;let t=src[k];if(!t)return;t=t.replace(/^\(GENERIC FANUC-STYLE[^)]*\)$/m,ctrlHdr(/THREAD|G71|G76|SUB CALL|X IN DIAMETER|LATHE/i.test(t)?' LATHE':''));importToEditor(t)};
 // checker: program units vs machine units
 const _checks19=checks;checks=function(j){const c=_checks19(j);let t='';try{t=txt().map(l=>l.replace(/\([^)]*\)/g,'')).join('\n')}catch(e){}const h21=/\bG21\b/.test(t),h20=/\bG20\b/.test(t),u=UN();
  c.unshift([`Program units ${h21&&h20?'G20 and G21 both':h21?'G21 (mm)':h20?'G20 (inch)':'not set'} match this machine (${u=='mm'?'mm, G21':'inch, G20'})`,u=='mm'?h21&&!h20:h20&&!h21]);return c};
@@ -1829,7 +1841,7 @@ function genT(j){const v=k=>(j.p[k]||{}).v,T=v('Tool'),H=v('Offset no. (H)')||T,
  const br=v('Mode')=='Broken-tool check',upd=v('Update offset')=='YES',tol=v('Tolerance'),ex=v('Expected length'),geoOnly=v('Offset page value')=='Geometry only';
  const page=vr.single?`#${vr.single}`:geoOnly?`#${vr.geo}`:`#${vr.geo}+#${vr.wear}`,call=TV('Tool setter macro call').replace(/<T>/gi,T+'.').replace(/<H>/gi,H+'.');
  const tgt=reg.kind=='off'?reg.n:(vr.single||vr.geo),K=UN()=='mm'?25.4:1,num=s=>{const x=parseFloat(s);return isNaN(x)?null:x/K};
- L('%');L(`O7000 (TOOL LENGTH ${br?'BROKEN-TOOL CHECK':'CHECK'} - MACRO BUILDER)`);L(`(T${T} H${H} - ${hk?'HAAS-STYLE':'FANUC 0I-STYLE MEMORY '+vr.mem+(vr.v15?' V15=1':'')} - VERIFY ON CONTROL)`);
+ L('%');L(`O7000 (TOOL LENGTH ${br?'BROKEN-TOOL CHECK':'CHECK'} - MACRO BUILDER)`);L(`(T${T} H${H} - ${ctrlLbl()}${hk?'':' MEMORY '+vr.mem+(vr.v15?' V15=1':'')} - VERIFY ON CONTROL)`);
  L(vr.single?`(H${H} OFFSET #${vr.single} - MEMORY A HAS ONE VALUE)`:`(H${H} GEOMETRY #${vr.geo} WEAR #${vr.wear})`);
  L(br?'(BROKEN-TOOL: MEASURED VS OFFSET BEFORE MEASURING)':'(EXPECTED LENGTH AND TOLERANCE ARE FROM YOUR PROGRAM)');
  L('G17 G20 G40 G49 G80 G90 (SAFE START)');L('G91 G28 Z0.');L('G90');L(`T${T} M06`);
@@ -1906,7 +1918,7 @@ Object.assign(UNIT,{'Counter #':'#, a free common variable kept at power off','T
  'RPM steps':'rpm list, e.g. 2000 4000 6000','Passes per step':'count','X min':'in, G53 machine','X max':'in, G53 machine','Y min':'in, G53 machine','Y max':'in, G53 machine','Z clear':'in, G53 machine'});
 // ---- shared helpers
 const jv=(j,k)=>(j.p[k]||{}).v,hkC=()=>ctrlKey()=='haas';
-function hdr(L,o,name){L('%');L(`O${o} (${name} - MACRO BUILDER)`);L(`(${hkC()?'HAAS-STYLE':'FANUC 0I-STYLE'} - VERIFY ON CONTROL)`);L('G17 G20 G40 G49 G80 G90 (SAFE START)')}
+function hdr(L,o,name){L('%');L(`O${o} (${name} - MACRO BUILDER)`);L(ctrlHdr());L('G17 G20 G40 G49 G80 G90 (SAFE START)')}
 function endP(L){L('G91 G28 Z0.');L('G90');L('M30')}
 function tstart(L,j,x,y,z){const T=jv(j,'Tool');L(`T${T} M06`);L(`${offCode(jv(j,'Work offset'))} G00 X${f4(x)} Y${f4(y)}`);if(jv(j,'RPM'))L(`S${jv(j,'RPM')} M03`);L(`G43 H${T} Z${f4(z)}`)}
 function varOK(n){n=+n;const k=ctrlKey();if(!(n>0))return'a variable number like #500';if(k=='haas'){if(n==3901||n==3902)return null;if((n>=600&&n<=699)||(n>=800&&n<=999)||(n>=10600&&n<=10699)||(n>=10800&&n<=10999)||(n>=10200&&n<=10499))return null;if((n>=100&&n<=199)||(n>=500&&n<=599)||(n>=10100&&n<=10199)||(n>=10500&&n<=10599))return'#'+n+' is in the Haas range kept for probes / pallets — use #600–#699 or #800–#999';return'#'+n+' is not a Haas variable kept at power off (use #600–#699 or #800–#999)'}
@@ -2186,7 +2198,7 @@ defJ('mgroove',{name:'Multi-groove pattern (lathe)',lathe:1,re:/(?:multi(?:ple)?
  parse:(l,G,n)=>{G('Bar Ø',n(/([\d.]+)\s*(?:"|in)?\s*(?:dia\s*)?(?:bar|stock)/));G('Groove Ø',n(/(?:to|bottom|groove\s*dia(?:meter)?)\s*([\d.]+)/));const z=n(/(?:first\s*(?:groove)?\s*(?:at)?\s*z|at\s*z)\s*(-?[\d.]+)/);G('First groove Z',z);G('Groove pitch',n(/(?:pitch|apart|spacing)\s*([\d.]+)/)??n(/([\d.]+)\s*(?:"|in)?\s*(?:pitch|apart)/));G('Count',n(/(\d+)\s*grooves?/));G('Groove width',n(/([\d.]+)\s*(?:"|in)?\s*wide/));G('Insert W',n(/insert\s*([\d.]+)/));if(/left\s*corner/.test(l))G('Insert reference','left corner (-Z side)');if(/right\s*corner/.test(l))G('Insert reference','right corner (+Z side)')},
  block:j=>{if(sp(j,'Groove Ø')>=sp(j,'Bar Ø'))return'Groove Ø must be smaller than the bar.';if(sp(j,'Insert W')>sp(j,'Groove width')+1e-9)return'Insert is wider than the groove.';if(sp(j,'Groove pitch')<sp(j,'Groove width')-1e-9)return'Pitch is smaller than the groove width — grooves would overlap.';if(!(sp(j,'Count')>=1))return'Count must be 1 or more.';return null},
  gen:(j,L)=>{const T=sp(j,'Tool'),tt='T'+String(T).padStart(2,'0')+String(T).padStart(2,'0'),B=sp(j,'Bar Ø'),Gd=sp(j,'Groove Ø'),z1=sp(j,'First groove Z'),P=sp(j,'Groove pitch'),N=sp(j,'Count'),W=sp(j,'Groove width'),iw=sp(j,'Insert W'),left=/left/.test(sp(j,'Insert reference')),xc=B+0.1,f=sp(j,'Feed/rev');
-  L('%');L('O2100 (MULTI-GROOVE PATTERN - MACRO BUILDER)');L(`(${hkC()?'HAAS-STYLE':'FANUC 0I-STYLE'} LATHE - X IN DIAMETER - VERIFY ON CONTROL)`);L(`G18 ${GU()} G40 G80 G99 (SAFE START)`);L(`${tt} (GROOVE TOOL, Z SET TO ${left?'LEFT':'RIGHT'} CORNER)`);L(`G97 S${sp(j,'RPM')} M03`);L(`G00 X${f4(xc)} Z${f4(sp(j,'Clear Z'))}`);
+  L('%');L('O2100 (MULTI-GROOVE PATTERN - MACRO BUILDER)');L(ctrlHdr(' LATHE - X IN DIAMETER'));L(`G18 ${GU()} G40 G80 G99 (SAFE START)`);L(`${tt} (GROOVE TOOL, Z SET TO ${left?'LEFT':'RIGHT'} CORNER)`);L(`G97 S${sp(j,'RPM')} M03`);L(`G00 X${f4(xc)} Z${f4(sp(j,'Clear Z'))}`);
   for(let g=0;g<N;g++){const zr=z1-g*P;L(`(GROOVE ${g+1} - WALLS Z${f4(zr)} TO Z${f4(zr-W)})`);const pl=[];let e=zr;for(;;){pl.push(e);if(e-iw<=zr-W+1e-9)break;e=Math.max(zr-W+iw,e-iw*0.8)}
    pl.forEach(e=>{const zt=left?e-iw:e;L(`G00 Z${f4(zt)}`);L(`G01 X${f4(Gd)} F${f4(f)}`);L(`G00 X${f4(xc)}`)})}
   L(`G00 Z${f4(sp(j,'Clear Z'))}`);L('M05');L('G28 U0. W0.');L('M30');L('%');return 1},
@@ -2238,7 +2250,7 @@ if(!OPTS.find(o=>o[0]=='rot'))OPTS.push(['rot','Coordinate rotation (G68)','Axes
 const pair=k=>{const x=sv(k);if(!x||x.st!='user'||!String(x.v).trim())return null;const p=String(x.v).split('/').map(s=>s.trim());return p.length>=2&&p[0]&&p[1]?{on:p[0],off:p[1]}:null};
 const vnum=(l,re)=>{const m=l.match(re);return m?+m[1]:null};
 const lt2=T=>'T'+String(T).padStart(2,'0')+String(T).padStart(2,'0');
-function lhdr(L,o,name){L('%');L(`O${o} (${name} - MACRO BUILDER)`);L(`(${hkC()?'HAAS-STYLE':'FANUC 0I-STYLE'} LATHE - X IN DIAMETER - VERIFY ON CONTROL)`);L(`G18 ${GU()} G40 G80 G99 (SAFE START)`)}
+function lhdr(L,o,name){L('%');L(`O${o} (${name} - MACRO BUILDER)`);L(ctrlHdr(' LATHE - X IN DIAMETER'));L(`G18 ${GU()} G40 G80 G99 (SAFE START)`)}
 function lend(L){L('M05');L('G28 U0. W0.');L('M30');L('%')}
 // day number from a YYYYMMDD variable (plain calendar math, our own) -> #out
 function jdn(L,src,out,tag){L(`#26=${src} (${tag} YYYYMMDD)`);L('#27=FIX[#26/10000]');L('#28=FIX[#26/100]-#27*100');L('#29=#26-FIX[#26/100]*100');L('#30=FIX[[14-#28]/12]');L('#31=#27+4800-#30');L('#32=#28+12*#30-3');L(`${out}=#29+FIX[[153*#32+2]/5]+365*#31+FIX[#31/4]-FIX[#31/100]+FIX[#31/400]-32045 (${tag} DAY NUMBER)`)}
@@ -4767,6 +4779,7 @@ function jmRender(e,k){const sg=jmSig(e,k);if(JMC.has(sg))return JMC.get(sg);
 function jmWhy(r){return r.miss.length?`${r.miss.length} red value${r.miss.length>1?'s':''}: ${r.miss.slice(0,4).join(', ')}${r.miss.length>4?'…':''}`:r.block?r.block:r.cv.length?'common variables not confirmed free: #'+r.cv.slice(0,4).join(', #'):r.err?'error: '+r.err:!r.code?'no code written':''}
 // ---- program text helpers
 const jmOut=(l,f)=>l.split(/(\([^)]*\))/).map((s,i)=>i%2?s:f(s)).join('');   // apply f outside ( comments )
+const jmIsCtrl=x=>{const t=String(x||'').trim();return /^\((?:GENERIC\s+(?:FANUC|SLIDING|FIXED|SWISS|MULTITASK)|HAAS(?:-STYLE|\s+NGC|\s+CLASSIC)?|FANUC(?:\s*0I)?(?:-STYLE)?|CONTROL NOT SET|MAZATROL|OKUMA|BROTHER)/i.test(t)&&!/FROM DRAWING|SECTION |WORK OFFSET|HIGH RISK|MACHINE:|DATE:|UNITS:|JOB LIST|HAAS MANUAL|HAAS TRAINING|G53|SETTER/i.test(t)};
 const jmPad=(n,w)=>'O'+String(n).padStart(w||4,'0');
 function jmSplit(lines){const L=lines.map(s=>String(s).replace(/\s+$/,'')).filter(s=>s.trim()&&s.trim()!='%'),blk=[];let cur=null;
  L.forEach(s=>{const m=s.match(/^\s*O0*(\d+)\b/);if(m){cur={num:+m[1],w:Math.max(4,(s.match(/^\s*O(\d+)/)[1]).length),head:s.trim(),lines:[]};blk.push(cur)}else if(cur)cur.lines.push(s);else{cur={num:null,w:4,head:'',lines:[s]};blk.push(cur)}});
@@ -4784,7 +4797,7 @@ function jmBuild(l){const k=jmMI(l),out={lines:[],notes:[],warn:[],err:[],secs:[
  const ents=l.entries.filter(e=>e.on!==false);if(!ents.length){out.err.push('No enabled jobs in this list.');return out}
  const R=ents.map(e=>jmRender(e,k));R.forEach((r,i)=>{if(r.red)out.err.push(`#${l.entries.indexOf(ents[i])+1} “${jmName(ents[i])}” is not ready — ${jmWhy(r)}.`)});if(out.err.length)return out;
  return jmSand(k,()=>{const L=isL(),HK=ctrlKey()=='haas',mode=l.mode=='sub'?'sub':l.mode=='m97'&&HK?'m97':'inline',P=Math.max(1,Math.min(99999,Math.round(+l.prog||1000)));
-  const S2=R.map(r=>jmSplit(r.code));let safe=null,gen=null;
+  const S2=R.map(r=>jmSplit(r.code));let safe=null;
   // all original O numbers (so a new number never lands on one used later)
   const used=new Set([P]);S2.forEach(s=>s.subs.forEach(b=>used.add(b.num)));const allV=new Set();S2.forEach((s,i)=>jmVars(R[i].code.join('\n')).forEach(v=>allV.add(v)));
   const free=n=>{let x=n+1;while(used.has(x)||x>99999){x++;if(x>99999)x=1000}used.add(x);return x};
@@ -4793,7 +4806,7 @@ function jmBuild(l){const k=jmMI(l),out={lines:[],notes:[],warn:[],err:[],secs:[
   const labUsed=new Set();let labNext=1000;if(l.mode=='m97'&&!HK)out.notes.push('M97 local subprograms are Haas-only — built inline instead.');
   S2.forEach((s,i)=>{const e=ents[i],r=R[i],no=l.entries.indexOf(e)+1,nm=jmName(e);let body=s.main.lines.slice();const sec={no,name:nm,op:r.op,tool:null,wo:r.wo,skipped:null,high:r.high,ct:r.ct};
    // header comment + safe start (kept once)
-   body=body.filter(x=>{if(/^\s*\(GENERIC .*\)\s*$/.test(x)){gen=gen||x.trim();return false}return true});
+   body=body.filter(x=>{if(jmIsCtrl(x))return false;return true});
    const si=body.findIndex(jmSafe);if(si>=0){safe=safe||body[si].trim();body.splice(si,1)}
    if(body.some(x=>/\bM30\b|\bM99\b|\bM02\b/.test(jmNC(x))))out.err.push(`#${no} “${nm}” ends or loops the program itself (M30 / M99 / M02 in its main part) — it can't be combined; run it on its own.`);
    // subprograms: same number + same code = shared; same number + different code = renumbered
@@ -4832,7 +4845,7 @@ function jmBuild(l){const k=jmMI(l),out={lines:[],notes:[],warn:[],err:[],secs:[
    sec.ban=ban;sec.body=body;out.secs.push(sec);out.ct+=r.ctMove!=null?r.ctMove:(r.ct||0)});
   if(out.err.length)return out;
   const SAFE=safe||(L?`G18 ${GU()} G40 G80 G99 (SAFE START)`:`G17 ${GU()} G40 G49 G80 G90 (SAFE START)`);
-  const hd=['%',`${jmPad(P)} (${jmCm(l.name||'JOB LIST')})`,`(JOB LIST - ${ents.length} JOB${ents.length>1?'S':''} - ${mode=='sub'?'MAIN CALLS SUBPROGRAMS':mode=='m97'?'MAIN CALLS LOCAL SUBPROGRAMS M97':'INLINE'})`];if(gen)hd.push(gen);hd.push(SAFE);
+  const hd=['%',`${jmPad(P)} (${jmCm(l.name||'JOB LIST')})`,`(JOB LIST - ${ents.length} JOB${ents.length>1?'S':''} - ${mode=='sub'?'MAIN CALLS SUBPROGRAMS':mode=='m97'?'MAIN CALLS LOCAL SUBPROGRAMS M97':'INLINE'})`,ctrlHdr(L?' LATHE - X IN DIAMETER':''),SAFE];
   const lines=hd.slice(),subs=[];
   if(mode=='sub')out.secs.forEach(sec=>{const n=free(P);sec.sub=n;lines.push(...sec.ban,`M98 P${n} (${jmCm(sec.name).slice(0,30)})`);subs.push([`${jmPad(n)} (${jmCm('SECTION '+sec.no+' '+sec.name)})`,...sec.body,'M99'])});
   else if(mode=='m97'){let nx=9001;out.secs.forEach(sec=>{while(labUsed.has(nx))nx++;labUsed.add(nx);sec.lab=nx;lines.push(...sec.ban,`M97 P${nx} (${jmCm(sec.name).slice(0,30)})`);subs.push([`N${nx} (${jmCm('SECTION '+sec.no+' '+sec.name)})`,...sec.body,'M99'])})}
@@ -5014,6 +5027,7 @@ async function jmExport(){const l=jmL(),o=JMR;if(!l||!o||!o.lines.length||o.err.
  window.__jmFiles=fs;const base=mbFname(l.name).replace(/\.mbjob$/,'');
  try{const F=fs.map(f=>new File([f.text],f.name,{type:'text/plain'}));if(navigator.canShare&&navigator.canShare({files:F})){await navigator.share({files:F,title:l.name});return 'shared'}}catch(e){if(e&&e.name=='AbortError')return 'cancelled'}
  const zb=mkZip(fs);window.__jmZip=zb;const a=document.createElement('a');a.href=URL.createObjectURL(zb);a.download=base+'-programs.zip';document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return 'downloaded'}
+LOG.unshift(['3.4 · Oct 13','Program headers name the selected control (HAAS NGC / HAAS CLASSIC / FANUC 0I / Swiss · Multitask generics) instead of a fixed Fanuc-style line — single jobs, Job manager, DXF jobs, exports and lathe cycle samples.']);
 LOG.unshift(['3.3 · Oct 13','Job manager: Simulate shows the whole-program checks for a combined program (single-job checks hidden); Haas layouts (inline default, M97 local subprograms, M98 + separate files) and 📦 export as separate program files (.zip or share) on both controls; per-machine Tool change time (s) — gray 5 s until set — used in every cycle-time estimate; stronger #500+ and HIGH-risk tests.']);
 </script>
 

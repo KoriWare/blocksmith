@@ -32,7 +32,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   // Fanuc coverage (safe home, warm-up)
   w.pick('Generic 3-axis VMC','Vertical mills');w.cur(E('S.m.length')-1);setv('Control','Fanuc 0i');setv('Max RPM','8000');E("S.m[S.cur].name='Fanuc VMC 45';save()");const fi=E('S.cur');
   runOps('Fanuc: ',['shome']);w.cur(fi);runOps('Fanuc: ',['warm']);
-  log('Fanuc: warm header is Fanuc-style',/FANUC 0I-STYLE/.test(code()),code().slice(0,200));
+  log('Fanuc: warm header is Fanuc-style',/FANUC 0I/.test(code())&&!/FANUC 0I-STYLE|GENERIC FANUC/.test(code()),code().slice(0,200));
   // Round 60: older built-in jobs
   w.cur(0);const run=q=>{w.tab('new');d.querySelector('#q').value=q;w.go();return E('J&&J.op')};
   [['T5 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep','bolt'],['T2 3 x 4 grid 0.75 spacing start x0.5 y0.5 z0 0 0.4 deep drill','grid'],['T1 face 4 x 3 take off 0.06 stepdown 0.02 stepover 70 z0 0','face'],['T20 probe bore 2.0 dia center x0 y0 probe z -0.25 tip 0.157 write to g55','pbore'],['T20 probe surface z','psurf'],['T20 probe web 1.0 wide center x0 y0','pweb'],['T20 probe pocket 2.0 x 1.0 center x0 y0','ppocket'],['T7 engrave "AB" in a circle radius 0.25 center x0 y0 0.125 tall 0.005 deep centered on 90 deg ccw inside not mirrored zero on top','engrave']].forEach(([q,op])=>{const o=run(q);

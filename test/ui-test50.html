@@ -1,0 +1,70 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=66" style="width:390px;height:844px"></iframe><script>
+// Round 66 · Program headers name the selected control (not a fixed Fanuc-style line)
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;
+ if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;w.alert=()=>{};w.prompt=()=>null;
+  const code=()=>E("(J.code||[]).join('\\n')");
+  const setCtrl=v=>E("{const c=S.m[S.cur].s.find(x=>x.k=='Control');c.v="+JSON.stringify(v)+";c.st='user';S.m[S.cur].s.forEach(x=>{if(x.st=='confirm'||x.st=='suggested')x.st='user'});save()}");
+  const fillMill=()=>E("Object.keys(J.p||{}).forEach(k=>{if(J.p[k].v!=null)return;let v=1;if(k=='Work offset')v='G54';else if(k=='Tool')v=1;else if(/Dia|Length|Width/.test(k))v=2;else if(/Holes|Count|Rows|Cols|Faces/.test(k))v=4;else if(/RPM/.test(k))v=2000;else if(/Feed|Stepover/.test(k))v=8;else if(J2[J.op]&&J2[J.op].choices&&J2[J.op].choices[k])v=J2[J.op].choices[k][0];else v=0.1;J.p[k]={v:v,g:false}});show()");
+  const fillLathe=()=>E("Object.keys(J.p||{}).forEach(k=>{if(J.p[k].v!=null)return;let v=1;if(k=='Work offset')v='G54';else if(k=='Tool')v=1;else if(k=='Bar \\u00d8')v=2;else if(/Groove|Finish/.test(k))v=1.5;else if(/\\u00d8|Dia/.test(k))v=1.5;else if(/Count|RPM|SFM/.test(k))v=/RPM|SFM/.test(k)?800:3;else if(J2[J.op]&&J2[J.op].choices&&J2[J.op].choices[k])v=J2[J.op].choices[k][0];else v=0.1;J.p[k]={v:v,g:false}});show()");
+
+  E("S.cur=0");
+  log('ctrlLbl: Haas NGC',E("(()=>{const c=S.m[0].s.find(x=>x.k=='Control'),o=c.v;c.v='Haas NGC';const r=ctrlLbl();c.v=o;return r})()")==='HAAS NGC');
+  log('ctrlLbl: Haas NGC-style (verify)',E("(()=>{const c=S.m[0].s.find(x=>x.k=='Control'),o=c.v;c.v='Haas NGC-style (verify)';const r=ctrlLbl();c.v=o;return r})()")==='HAAS NGC');
+  log('ctrlLbl: Haas Classic',E("(()=>{const c=S.m[0].s.find(x=>x.k=='Control'),o=c.v;c.v='Haas Classic';const r=ctrlLbl();c.v=o;return r})()")==='HAAS CLASSIC');
+  log('ctrlLbl: Fanuc 0i-MF',E("(()=>{const c=S.m[0].s.find(x=>x.k=='Control'),o=c.v;c.v='Fanuc 0i-MF';const r=ctrlLbl();c.v=o;return r})()")==='FANUC 0I');
+  log('ctrlLbl: Fanuc-style',E("(()=>{const c=S.m[0].s.find(x=>x.k=='Control'),o=c.v;c.v='Fanuc-style';const r=ctrlLbl();c.v=o;return r})()")==='FANUC');
+  log('ctrlHdr wraps VERIFY ON CONTROL',E("(()=>{const c=S.m[0].s.find(x=>x.k=='Control'),o=c.v;c.v='Haas NGC';const r=ctrlHdr();c.v=o;return r})()")==='(HAAS NGC - VERIFY ON CONTROL)');
+
+  setCtrl('Haas NGC');E("S.m[0].name='VF-2 NGC';save();tab('new');pickJob('shome')");fillMill();
+  let c=code();
+  log('Haas NGC shome (hdr)',/\(HAAS NGC - VERIFY ON CONTROL\)/.test(c)&&!/GENERIC FANUC|HAAS-STYLE|FANUC 0I/.test(c),c.slice(0,220));
+  E("pickJob('bolt')");fillMill();c=code();
+  log('Haas NGC bolt (early gen)',/\(HAAS NGC - VERIFY ON CONTROL\)/.test(c)&&!/GENERIC FANUC/.test(c),c.slice(0,220));
+  E("pickJob('cpock')");fillMill();c=code();
+  log('Haas NGC pocket (hdr)',/\(HAAS NGC - VERIFY ON CONTROL\)/.test(c)&&!/HAAS-STYLE|GENERIC FANUC/.test(c),c.slice(0,220));
+  E("pickJob('face')");fillMill();c=code();
+  log('Haas NGC face (early gen)',/\(HAAS NGC - VERIFY ON CONTROL\)/.test(c)&&!/GENERIC FANUC/.test(c),c.slice(0,220));
+
+  setCtrl('Haas Classic');E("pickJob('shome')");fillMill();c=code();
+  log('Haas Classic shome',/\(HAAS CLASSIC - VERIFY ON CONTROL\)/.test(c)&&!/HAAS NGC|GENERIC FANUC/.test(c),c.slice(0,220));
+
+  setCtrl('Fanuc 0i-MF');E("pickJob('shome')");fillMill();c=code();
+  log('Fanuc 0i shome',/\(FANUC 0I - VERIFY ON CONTROL\)/.test(c)&&!/FANUC 0I-STYLE|GENERIC FANUC|HAAS/.test(c),c.slice(0,220));
+  E("pickJob('bolt')");fillMill();c=code();
+  log('Fanuc 0i bolt',/\(FANUC 0I - VERIFY ON CONTROL\)/.test(c)&&!/GENERIC FANUC/.test(c),c.slice(0,220));
+
+  setCtrl('Haas NGC');
+  E("(()=>{const l=jmNew('Hdr check');['op:face','op:bolt','op:cpock'].forEach(v=>jmAdd(l,v));l.entries.forEach(e=>{const p=e.job.p;Object.keys(p).forEach(k=>{if(p[k].v==null)p[k]={v:k=='Work offset'?'G54':k=='Tool'?1:/X|Y|Z0|Center|Start/.test(k)?0:k=='Dia'?2:k=='Cutter'?0.5:k=='Depth'?0.1:k=='Stepdown'?0.05:k=='Holes'?6:k=='RPM'?2000:k=='Feed'?8:k=='Length'?3:k=='Width'?2:k=='Stepover %'?50:1,g:false}})});jmOpen(l.id)})()");
+  let o=E("jmBuildUI()");let t=(o.lines||[]).join('\n');
+  log('Haas NGC Job manager header',/\(HAAS NGC - VERIFY ON CONTROL\)/.test(t)&&!/GENERIC FANUC|HAAS-STYLE/.test(t),t.slice(0,450));
+  log('Haas NGC Job manager no leftover Fanuc lines',!(o.lines||[]).some(x=>/GENERIC FANUC|FANUC-STYLE MACRO B|HAAS-STYLE/.test(x)),(o.lines||[]).filter(x=>/FANUC|HAAS/.test(x)).slice(0,8).join(' | '));
+  log('Haas NGC Job manager builds clean',!o.err.length&&o.checks.every(x=>x[1]),(o.err||[]).concat((o.checks||[]).filter(x=>!x[1]).map(x=>x[0])).join('|'));
+
+  setCtrl('Fanuc 0i');E("JMC.clear();jmOpen(S.jlists[0].id)");o=E("jmBuildUI()");t=(o.lines||[]).join('\n');
+  log('Fanuc Job manager header',/\(FANUC 0I - VERIFY ON CONTROL\)/.test(t)&&!/GENERIC FANUC|HAAS NGC/.test(t),t.slice(0,450));
+
+  w.pick('Haas ST-style lathe (generic)','Lathes');E("S.cur=S.m.length-1");setCtrl('Haas NGC');
+  E("tab('new');pickJob('mgroove')");fillLathe();c=code();
+  log('Haas NGC lathe mgroove',/\(HAAS NGC LATHE - X IN DIAMETER - VERIFY ON CONTROL\)/.test(c)&&!/GENERIC FANUC|HAAS-STYLE/.test(c),c.slice(0,280)+' op='+E("J&&J.op"));
+  w.pick('Common Fanuc lathe (generic)','Lathes');E("S.cur=S.m.length-1");setCtrl('Fanuc 0i');
+  E("tab('new');pickJob('lturn')");fillLathe();c=code();
+  log('Fanuc lathe lturn',/\(FANUC 0I LATHE - X IN DIAMETER - VERIFY ON CONTROL\)/.test(c)&&!/GENERIC FANUC|HAAS/.test(c),c.slice(0,280)+' op='+E("J&&J.op"));
+
+  E("S.cur=0");setCtrl('Haas NGC');
+  E("window.__hdrAudit=function(){var bad=[],ok=[],ops=Object.keys(J2);for(var i=0;i<ops.length;i++){var op=ops[i],S2=J2[op];if(!S2||!S2.gen)continue;try{if(!jAvail(op))continue;J={op:op,p:{},edits:{},date:1,lathe:!!S2.lathe};j2Norm(J);Object.keys(J.p).forEach(function(k){if(J.p[k].v!=null)return;var v=1;if(k=='Work offset')v='G54';else if(k=='Tool')v=1;else if(k.indexOf('Bar')==0)v=2;else if(/Groove|Finish/.test(k))v=1.5;else if(/Dia|Length|Width/.test(k)||k.indexOf('\\u00d8')>=0)v=2;else if(/Holes|Count|Faces|Rows|Cols|Digits|Samples|Quantity|Cycles|Parts/.test(k))v=4;else if(/RPM|SFM/.test(k))v=2000;else if(/Feed/.test(k))v=8;else if(S2.choices&&S2.choices[k])v=S2.choices[k][0];else if(/confirm|Accept|OK|YES|understand|Risk/i.test(k))v='YES';else v=0.1;J.p[k]={v:v,g:false}});if(S2.refuse&&S2.refuse(J))continue;if(S2.block&&S2.block(J))continue;var L=[];S2.gen(J,function(s){L.push(s)});var tx=L.join('\\n');if(!tx||tx.length<20)continue;var hit=tx.split('\\n').find(function(x){return /GENERIC FANUC|HAAS-STYLE|FANUC 0I-STYLE/.test(x)});if(hit){bad.push(op+':'+hit);continue}var hdr=tx.split('\\n').find(function(x){return /VERIFY ON CONTROL\\)/.test(x)});if(hdr&&!/HAAS NGC/.test(hdr))bad.push(op+':wrong:'+hdr);else ok.push(op)}catch(e){}}return {ok:ok.length,bad:bad.slice(0,8)}}");
+  const audit=E("__hdrAudit()");
+  log('Haas NGC audit no wrong labels ('+audit.ok+' jobs)',audit.bad.length===0&&audit.ok>=20,JSON.stringify(audit).slice(0,500));
+
+  setCtrl('Fanuc 0i');
+  const fanOps=['shome','bolt','face','cpock'];
+  let fBad=[];
+  fanOps.forEach(op=>{E("tab('new');pickJob('"+op+"')");fillMill();const tx=code();if(/GENERIC FANUC|HAAS-STYLE|HAAS NGC/.test(tx)||!/FANUC 0I/.test(tx))fBad.push(op+':'+tx.split(/\n/).slice(0,3).join('|'))});
+  log('Fanuc sample jobs are FANUC 0I',!fBad.length,fBad.join(' || '));
+
+  log('sw.js is mc-v62',E("(()=>{var x=new XMLHttpRequest();x.open('GET','sw.js',false);x.send();return /mc-v62/.test(x.responseText)})()"));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},8000)};
+</script></body>

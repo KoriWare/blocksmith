@@ -1,0 +1,10 @@
+<!doctype html><body style="margin:0"><iframe id="f" src="../index.html?v=64s" style="width:390px;height:844px;border:0"></iframe><script>
+const S0=+new URLSearchParams(location.search).get('s');let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+setTimeout(()=>{const E=x=>w.eval(x);E("NOASK=1;S.tip42=1");w.confirm=()=>true;
+ E("S.cur=0;S.m[0].name='VF-2 NGC';{const c=S.m[0].s.find(x=>x.k=='Control');c.v='Haas NGC';c.st='user'}S.m[0].s.forEach(x=>{if(x.st!='user')x.st='user'});save()");
+ if(S0==1){E("tab('new');pickJob('bolt');Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k=='Work offset'?'G54':k=='Tool'?2:k=='Holes'?6:k=='Dia'?3:k=='RPM'?2000:k=='Feed'?8:0.1,g:false}});show();tab('edit')")}
+ if(S0==2){E("(()=>{const l=jmNew('Bracket op 1');['op:face','op:bolt'].forEach(v=>jmAdd(l,v));l.entries.forEach(e=>{const p=e.job.p;Object.keys(p).forEach(k=>{if(p[k].v==null)p[k]={v:k=='Work offset'?'G54':k=='Tool'?1:/X|Y|Z0|Center|Start/.test(k)?0:k=='Dia'?2:k=='Cutter'?0.5:k=='Depth'?0.1:k=='Stepdown'?0.05:k=='Holes'?6:k=='RPM'?2000:k=='Feed'?8:k=='Length'?3:k=='Width'?2:1,g:false}})});jmOpen(l.id);jmBuildUI()})()")}
+ if(S0==3){E("{const c=S.m[0].s.find(x=>x.k=='Control');c.v='Fanuc 0i-MF';c.st='user'}save();tab('new');pickJob('bolt');Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k=='Work offset'?'G54':k=='Tool'?2:k=='Holes'?6:k=='Dia'?3:k=='RPM'?2000:k=='Feed'?8:0.1,g:false}});show();tab('edit')")}
+},1500)};
+</script></body>
