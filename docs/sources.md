@@ -349,3 +349,24 @@ Amber (thin): Renishaw output / calibration variable numbers differ by control (
 
 Our own defaults (unsourced, shown gray or stated in the program): gray feed / RPM / clear Z (the app's usual starting values); trochoidal and polygon-pocket helix = one turn per step-down level; the helix starts 0.02 above the previous level; entry 0.1 + tool radius outside on ellipse / polygon boss; polygon pocket helix radius = min(half the tool radius, pocket); 'First flat angle' 0 and the Renishaw default A0 (that one is from the manual).
 Skipped: ellipse pocket (concentric ellipse offsets self-intersect; contour only — rough with the circular / rectangular pocket jobs); X/Y-surface stock checks (Z only); vector calibration O9804.
+
+## Round 34 · batch 7 (Oct 13)
+
+Pages opened and read this round: Renishaw contact tool-setting manual H-2000-6223 (haascnc.com PDF, pdftotext), Renishaw Inspection Plus manual (O9835, settings macro O9724 #170), Haas mill Macros chapter (variable table), Haas mill G47 page (G47 + G107 example), Fanuc 30i/31i user manual modal-information page (cncmanuals.com), zappettiniconsulting.com Fanuc system variables, a CNCzone thread on #4120.
+
+| Fact used | Sources | Used in |
+|---|---|---|
+| G65 P9851 T [S]: length after you jog about 10 mm / 0.4 in above the stylus; G65 P9852 S D: diameter | Renishaw tool-setting manual (official) | tsman |
+| G65 P9853 B1/2/3 T(.ttt) H M: M = spare offset set to 1 when out of tolerance (no BROKEN TOOL alarm), 0 when OK; the cycle ends with G28 | same | tsauto |
+| Flag read from the offset variable (Haas #2000+H; Fanuc by memory type) | Round 26 rows | tsauto |
+| Flag-only mode: #170 = 7 / 23 in O9724 (install setting); #198 flag | Renishaw Inspection Plus manual (official) + zappettini Haas page | pflag |
+| G31 skip; #5063 in work coordinates with the length offset (Haas page says so); G10 offset write | Haas Macros page (official) + Round 25 / 27 rows | g31z |
+| G65 P9835 T M V C (C default 3); measuring cycle without T before it; spare pair set to 0 first; radius register unless Z | Renishaw Inspection Plus manual (official) | spcavg |
+| Haas #5601–#5699 tool life limit, #5701–#5800 counter, #3026 tool in spindle | Haas mill Macros variable table (official) | hlife, tlog |
+| Fanuc #4120 = modal T of the buffered block | Fanuc 30i/31i user manual (official copy) + zappettini Fanuc variables; CNCzone: not the spindle tool on swing-arm changers | tlog (amber) |
+| G47 P0 / P1 (####) X Y I J R Z F E; G107 A0. Y0. R; G187 P3 E0.002 / G187; order G107 → G47 → G107 | Haas mill G47 page (official) | g47w |
+| G12.1 / G112 polar interpolation, X dia / C radius (Fanuc), G17 + G112 / G113 + G18 (Haas) | Round 30 polygon rows | xcpock |
+
+Amber (thin): Renishaw setter macros (one manual; WIPS may differ; rotating speed from the macro settings); Fanuc #4120 meaning; X-C face pocket (no worked public example; codes from the polygon job); O9835 radius-only.
+Our own defaults (unsourced): gray feeds / RPM (G47 30 / 10 follow the Haas example values); G31 approach at 5× skip feed; ramp entry along X on the face pocket and the 0.02 restart above the previous level; tool-life "near end" uses the % you type.
+Not built / limited: Haas tool life for tools 100–200 (Haas lists the limit only to #5699); Fanuc tool life (option-specific variables, zero public sources checked); face pocket off-center (pocket is centered on the spindle).
