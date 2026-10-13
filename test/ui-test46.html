@@ -5,7 +5,7 @@ const LEG={m:[{name:'Old VMC',type:'demo VMC',s:[],jobs:[]}],jobs:[],cur:0,snips
 f.onload=()=>{const w=f.contentWindow,d=w.document;
  if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc',JSON.stringify(LEG));w.location.reload();return}
  const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
- setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");const P=[];w.prompt=()=>P.length?P.shift():null;w.confirm=()=>true;w.alert=()=>{};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");const P=[];w.UIA.prompt=()=>P.length?P.shift():null;w.UIA.confirm=()=>true;w.UIA.alert=()=>{};
   // migration
   log('legacy global tools assigned to the current machine (not copied everywhere, not lost)',E("S.m[S.cur].name")=='Old VMC'&&E("S.m[S.cur].tools.map(t=>t.n).join()")=='7,8',E("JSON.stringify(S.m.map(m=>m.tools))"));
   E(`S=${JSON.stringify(Object.assign({},LEG,{m:[{name:'Old VMC',type:'demo VMC',s:[],tools:[{n:1,type:'Drill',dia:0.1}]}]}))};bindTools();save()`);
@@ -53,7 +53,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   log('new tool fills job',E("J.p.Tool.v==14&&J.p.Tool.lib"));
   log('mbjob carries no tool list or tool id',(()=>{const s=E("JSON.stringify(mbFile(Object.assign({},J,{name:'x'})))");return !/tid|Jobber|"tools"/.test(s)})());
   // delete warning
-  E("S.jobs.push({name:'Saved bolt',op:J.op,machine:S.m[S.cur].name,mid:S.m[S.cur].id,p:{Tool:{v:14}}});save()");let msg='';w.confirm=m=>{msg=m;return true};E("tools()");const i14=E("S.tools.findIndex(t=>t.n==14)");E(`tlDel(${i14})`);
+  E("S.jobs.push({name:'Saved bolt',op:J.op,machine:S.m[S.cur].name,mid:S.m[S.cur].id,p:{Tool:{v:14}}});save()");let msg='';w.UIA.confirm=m=>{msg=m;return true};E("tools()");const i14=E("S.tools.findIndex(t=>t.n==14)");E(`tlDel(${i14})`);
   log('delete confirms and warns a saved job uses it',/1 saved job/.test(msg)&&/Saved bolt/.test(msg)&&!E("S.tools.some(t=>t.n==14)"),msg);
   // copy
   E("TLSEL={a1:true,a2:true};tools()");log('copy button appears for selection',/Copy 2/.test(d.querySelector('#tlbar').textContent));

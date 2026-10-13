@@ -4,7 +4,7 @@ const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x))
 f.onload=()=>{const w=f.contentWindow,d=w.document;
  if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
  const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
- setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;w.alert=()=>{};w.prompt=()=>null;
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.UIA.confirm=()=>true;w.UIA.alert=()=>{};w.UIA.prompt=()=>null;
   const code=()=>E("(J.code||[]).join('\\n')");
   const setCtrl=v=>E("{const c=S.m[S.cur].s.find(x=>x.k=='Control');c.v="+JSON.stringify(v)+";c.st='user';S.m[S.cur].s.forEach(x=>{if(x.st=='confirm'||x.st=='suggested')x.st='user'});save()}");
   const fillMill=()=>E("Object.keys(J.p||{}).forEach(k=>{if(J.p[k].v!=null)return;let v=1;if(k=='Work offset')v='G54';else if(k=='Tool')v=1;else if(/Dia|Length|Width/.test(k))v=2;else if(/Holes|Count|Rows|Cols|Faces/.test(k))v=4;else if(/RPM/.test(k))v=2000;else if(/Feed|Stepover/.test(k))v=8;else if(J2[J.op]&&J2[J.op].choices&&J2[J.op].choices[k])v=J2[J.op].choices[k][0];else v=0.1;J.p[k]={v:v,g:false}});show()");

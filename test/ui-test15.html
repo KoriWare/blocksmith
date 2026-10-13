@@ -9,7 +9,7 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');
   log('A3 example shows mm text in the box',d.querySelector('#q').value=='G54 T2 6 hole bolt circle 75 dia center x0 y0 z0 0 start 15 12 deep peck 2.5');
   log('A1 user values exact (D75. Z12.), built-in clearance round (R2.5, G43 Z27.5)',/D75\. A15\.0* Z12\. R2\.5/.test(code())&&/G43 H2 Z27\.5/.test(code()));
-  const c1=code();w.go();log('A3 Make my macro again reads the box the same',code()==c1);
+  const c1=code();w.go();log('A3 Process Code again reads the box the same',code()==c1);
   w.ex('G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 70 z0 0');
   log('A1 macro body constants round in mm (X[-#7/2-2.5], G00 Z25.)',/X\[-#7\/2-2\.5\]/.test(code())&&/G00 Z25\./.test(code())&&!/27\.94|2\.54\b/.test(code()));
   w.pick('Nakamura-Tome multitasking lathe (generic)','Multitasking lathes');E('S.cur=S.m.length-1');w.tab('new');

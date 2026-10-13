@@ -2,7 +2,7 @@
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let step=0;
 f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
  const errs=[];w.onerror=m=>errs.push(String(m));
- setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.UIA.confirm=()=>true;
   const mach=(n,g)=>{w.pick(n,g);w.cur(E('S.m.length')-1)};const setv=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(${JSON.stringify(v)}!==null)x.v=${JSON.stringify(v)};x.st='user';save()})()`);
   const run=(t,ex,tol)=>{w.tab('new');d.querySelector('#q').value=t;w.go();d.querySelectorAll('#out [data-k]').forEach(el=>{if(el.dataset.k=='Expected length'&&ex!=null)el.value=ex;if(el.dataset.k=='Tolerance'&&tol!=null)el.value=tol});if(d.querySelector('#out [data-k]'))w.fill();return E('J&&J.code?txt().join("\\n"):""')};
   const RQ="I'm on a Robodrill vertical mill, can you measure the tool length with the probe and compare the length in the offset page to the length and tolerance in the program? It's tool number 8.";

@@ -1,7 +1,7 @@
 <!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=28" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
- setTimeout(async()=>{w.eval('NOASK=1');const d=w.document,E=x=>w.eval(x),cl=()=>d.querySelector('#cl').textContent;w.confirm=()=>true;try{
+ setTimeout(async()=>{w.eval('NOASK=1');const d=w.document,E=x=>w.eval(x),cl=()=>d.querySelector('#cl').textContent;w.UIA.confirm=()=>true;try{
   E('S.cur=0');w.tab('new');w.ex('G54 T20 probe bore 2.0 dia center x0 y0 probe z -0.25 tip 0.157 write to g55');w.ed('Confirm write');
   log('bore probe sim: no tolerance alarm',!E('J.run.alarms.length')&&!E('J.run.err'));
   const mx=E('Math.max(...J.M.map(m=>m.b[0]))');log('probe stops at wall (max X '+mx.toFixed(3)+' = 1-0.0785)',Math.abs(mx-(1-0.0785))<0.01);
@@ -18,7 +18,7 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep');d.querySelector('#tm').checked=true;d.querySelector('#tm').onchange({target:{checked:true}});
   const ln=[...d.querySelectorAll('.ln')].find(e=>/^WHILE/.test(e.textContent));ln.click();log('teach explains WHILE',/WHILE/.test(d.querySelector('#teach').textContent)&&/Verify/.test(d.querySelector('#teach').textContent));
   const g=[...d.querySelectorAll('.ln')].find(e=>/^G65/.test(e.textContent));g.click();log('teach maps G65 args',/H=6 → #11/.test(d.querySelector('#teach').textContent));
-  w.prompt=(()=>{let n=0;return()=>'1234'})();w.alert=()=>{};await w.setPin();log('PIN stored hashed (no plain PIN)',!!w.localStorage.mc_lock&&!w.localStorage.mc_lock.includes('1234'));
+  w.UIA.prompt=(()=>{let n=0;return()=>'1234'})();w.UIA.alert=()=>{};await w.setPin();log('PIN stored hashed (no plain PIN)',!!w.localStorage.mc_lock&&!w.localStorage.mc_lock.includes('1234'));
   w.lockScreen();log('lock screen shows',!!d.querySelector('#lock'));d.querySelector('#pin').value='0000';await d.querySelector('#pgo').onclick();log('wrong PIN rejected',!!d.querySelector('#lock'));
   d.querySelector('#pin').value='1234';await d.querySelector('#pgo').onclick();log('right PIN unlocks',!d.querySelector('#lock'));
  }catch(e){out.push('ERROR '+e.message+' '+(e.stack||'').split('\n')[1])}o.textContent=out.join('\n')},800)};

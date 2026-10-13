@@ -1,0 +1,134 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=71" style="width:360px;height:740px;border:0"></iframe><script>
+// Round 71 · phone fixes: fixed width, red ! toggle, delete machine, job switch reset, in-app dialogs, favorite star, number keypad, 3-line sim code
+const W=+(document.body.dataset.w||360);
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;
+ if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ let nat=0;w.alert=w.confirm=w.prompt=()=>{nat++;return null};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");
+  const over=()=>{const iw=w.innerWidth,bad=[];d.querySelectorAll('#v *, .h, .h *, .tabs, .tabs *, #qhelp').forEach(el=>{const r=el.getBoundingClientRect();if(!r.width||r.right<=iw+1)return;let p=el.parentElement,clip=0;while(p&&p!=d.body){const ox=w.getComputedStyle(p).overflowX;if(/auto|scroll|hidden/.test(ox)&&p.getBoundingClientRect().right<=iw+1){clip=1;break}p=p.parentElement}if(!clip)bad.push((el.id||el.className||el.tagName)+':'+Math.round(r.right))});return {sw:d.documentElement.scrollWidth,iw,bad}};
+  const pages=[['machines','tab("machines")'],['edit machine','edit(0)'],['add machine','addM()'],['build','tab("new");ex("G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1")'],['long line','J.edits[2]="(" + "VERYLONGCOMMENTWITHOUTSPACES".repeat(12)+")";show()'],['editor','tab("edit")'],['simulate','tab("sim");document.querySelector("#simcode").open=true;scrub(3)'],['recent','tab("recent")'],['more','tab("more")'],['help','help()'],['reference','reference()'],['tools','tools()'],['data','data()'],['job manager','jobMgr()'],['programs','pgList()']];
+  const vp=d.querySelector('meta[name=viewport]').content;
+  log(W+'px: viewport locked (no zoom-out widening)',/minimum-scale=1/.test(vp)&&/user-scalable=no/.test(vp),vp);
+  pages.forEach(([n,c])=>{try{E(c)}catch(e){log(W+'px '+n+' opens',false,e.message);return}const o=over();log(W+'px '+n+': no sideways overflow',o.sw<=o.iw+1&&!o.bad.length,o.sw+'>'+o.iw+' '+o.bad.slice(0,4).join(' '))});
+  if(W==360){
+  // 2 red ! toggle
+  E("tab('machines');edit(0)");const j=E("S.m[0].s.findIndex(x=>x.st=='confirm')");
+  E(`chipTap(0,${j})`);log('red ! tap confirms (green)',E(`S.m[0].s[${j}].st`)=='user');
+  E(`chipTap(0,${j})`);log('tap again undoes it (red again)',E(`S.m[0].s[${j}].st`)=='confirm'&&!E(`S.m[0].s[${j}].was`));
+  log('red chip has in-page undo hint',/Tap it again to undo/.test(d.body.textContent));
+  const gs=E("S.m[0].s.findIndex(x=>x.st=='suggested')");if(gs>=0){E(`chipTap(0,${gs});chipTap(0,${gs})`);log('gray chip toggles back to suggested',E(`S.m[0].s[${gs}].st`)=='suggested')}
+  // 5 in-app dialogs
+  E("edit(0);delM(0)");let dl=d.querySelector('#dlg');log('in-app confirm modal shows (no native dialog)',!!dl&&nat==0&&/Delete/.test(dl.textContent));
+  d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));log('Esc closes it, machine kept',!d.querySelector('#dlg')&&E("S.m.length")>0);
+  E("askText('Tool number','5',v=>{window.__pv=v})");const inp=d.querySelector('#dlgin');log('prompt modal with input, numeric keypad for Tool number',!!inp&&inp.value=='5'&&inp.getAttribute('inputmode')=='numeric');
+  inp.value='7';d.querySelector('#dlgok').click();log('prompt OK returns the value',E("window.__pv")=='7'&&!d.querySelector('#dlg'));
+  E("note('Hello')");log('info modal themed (uses theme surface var)',/var\(--sf/.test([...d.styleSheets].map(s=>{try{return [...s.cssRules].map(r=>r.cssText).join('')}catch(e){return ''}}).join(''))&&!!d.querySelector('#dlg'));
+  d.querySelector('#dlgok').click();
+  E("ask('Q?',()=>{window.__a=1},()=>{window.__a=2})");E("dlgClose(DLG.cancel,1)");log('Back (popstate) cancels a confirm',E("window.__a")==2&&!d.querySelector('#dlg'));
+  log('app source has zero alert(/confirm(/prompt( calls',!/(^|[^.\w])(alert|confirm|prompt)\(/m.test([...d.scripts].map(s=>s.textContent).join('\n')));
+  // 6 favorite star
+  E("S.cur=0;machines()");const card=d.querySelector('.card[onclick^="edit("]');log('current machine: no ⭐ in its title, green In use chip instead',!/⭐/.test(card.querySelector('.t').textContent)&&!!card.querySelector('.inuse'));
+  log('no machine favorited by default',E("S.m.every(m=>!m.fav)"));
+  const fb=()=>[...d.querySelectorAll('.card[onclick^="edit("] button')].find(b=>/Favorite/.test(b.textContent));
+  fb().click();log('★ tap favorites it and does not open the machine',E("S.m[0].fav")==1&&/My Machines/.test(d.querySelector('#ttl').textContent));
+  fb().click();log('★ tap again unfavorites (saved)',E("S.m[0].fav")==0&&JSON.parse(w.localStorage.getItem('mc')).m[0].fav==0);
+  E("S.m[0].fav=1;save();machines()");fb().click();log('an existing (old) favorite can be removed',E("S.m[0].fav")==0);
+  E("edit(0)");log('opening a machine card does not change fav',E("S.m[0].fav")==0);
+  // 4 job switch resets
+  E("tab('new')");const sel=d.querySelector('#jpick');const ops=[...sel.options].map(o=>o.value).filter(v=>v&&!v.startsWith('my:'));
+  E(`pickJob('${ops[0]}')`);E("J.edits[1]='(OLDJOB-MARK)';show()");E(`pickJob('${ops[3]}')`);
+  log('switching jobs clears old job edits/code/output',!/OLDJOB-MARK/.test(d.querySelector('#v').textContent)&&E("!J||!J.edits||!Object.values(J.edits).includes('(OLDJOB-MARK)')"),ops[0]+'→'+ops[3]);
+  log('new job shown',E("J&&J.op")==ops[3]||!E("J"),String(E("J&&J.op")));
+  // 7 number keypad
+  E("tab('new');ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');edit(0);numTag()");
+  const nums=[...d.querySelectorAll('#v input[data-j]')].filter(i=>/^-?\d*\.?\d+$/.test(i.value));log('numeric machine settings open the number pad',nums.length>0&&nums.every(i=>/decimal|numeric/.test(i.getAttribute('inputmode'))),nums.length);
+  log('text fields stay alphanumeric (machine name)',!d.querySelector('#mn').getAttribute('inputmode'));
+  const ni=nums[0];ni.focus();const pm=d.querySelector('#pmkey');log('± key appears for decimal fields',!!pm&&!pm.hidden);const v0=ni.value;pm.click();log('± makes it negative',ni.value=='-'+v0.replace(/^-/,'')||ni.value==v0.slice(1),ni.value);
+  d.querySelector('#mn').focus();log('± hides on text fields',pm.hidden);
+  // 8 sim 3 lines
+  E("tab('sim')");d.querySelector('#simcode').open=true;const L=()=>[...d.querySelectorAll('#simcode pre div')];
+  E("scrub(5)");let ls=L();log('sim code: exactly 3 lines, middle highlighted',ls.length==3&&ls[1].classList.contains('cur'),ls.length);
+  const h1=d.querySelector('#simcode pre').getBoundingClientRect().height;E("scrub(9)");ls=L();const h2=d.querySelector('#simcode pre').getBoundingClientRect().height;
+  log('sim code updates and keeps a fixed height',ls.length==3&&ls[1].classList.contains('cur')&&Math.abs(h1-h2)<1,h1+' '+h2);
+  E("view.n=0;simCode()");ls=L();log('at start: current + next only, current highlighted first',ls.length==2&&ls[0].classList.contains('cur'),ls.length);
+  E("view.n=J.M.length;simCode()");ls=L();log('near end: no blank padding',ls.length>=2&&ls.every(x=>x.textContent.trim()));
+  E("step()");ls=L();log('step keeps 3-line window',ls.length<=3&&ls.length>=2);
+  // 9 quick chip edit (engrave)
+  E("tab('new');exE(0)");const chips=()=>[...d.querySelectorAll('#out .card .chip')];
+  const chipBy=re=>chips().find(c=>re.test(c.textContent));
+  const rd=chipBy(/^Reading|Reading/);if(rd){rd.click();const pk=d.querySelector('#dlgpk');log('choice chip (Reading) opens an in-app pick list',!!pk&&pk.querySelectorAll('button').length>=2&&nat==0);[...pk.querySelectorAll('button')].find(b=>/around/.test(b.textContent)).click();log('pick saves + regenerates code',E("J.p.Reading.v")=='AROUND'&&!d.querySelector('#dlg')&&E("!!(J.code&&J.code.length)"))}else log('Reading chip present',false,chips().map(c=>c.textContent).join('|'));
+  const lh=chipBy(/Letter height/);lh.click();const li=d.querySelector('#dlgin');log('number chip opens in-app editor with number pad + units',!!li&&li.getAttribute('inputmode')=='decimal'&&/\((in|mm)/.test(d.querySelector('#dlg').textContent),d.querySelector('#dlg')&&d.querySelector('#dlg').textContent);
+  li.value='0.2';d.querySelector('#dlgok').click();log('number saved, chip updated, code regenerated',Math.abs(E("J.p['Letter height'].v")-0.2)<1e-9&&/0\.2/.test(chipBy(/Letter height/).textContent)&&E("J.code.length>0"));
+  const tx=chipBy(/^Text|Text/);tx.click();const ti=d.querySelector('#dlgin');log('text chip opens text input (alphanumeric)',!!ti&&!ti.getAttribute('inputmode'));ti.value='AB';d.querySelector('#dlgok').click();log('text saved',E("J.p.Text.v")=='AB');
+  const wo=chipBy(/G5[4-9]|Work offset/);wo.click();log('work offset opens pick list',!!d.querySelector('#dlgpk'));d.querySelector('#dlgno').click();
+  E("tab('new');exE(0)");log('Build header ? and tabs not clipped',(()=>{const iw=w.innerWidth;return [...d.querySelectorAll('.tabs button,#qhelp,.h *')].every(b=>b.getBoundingClientRect().right<=iw+1)})());
+  log('no native dialogs used at all',nat==0,nat);
+  // 10 tool access
+  E("S.m.push(mk('Tool VMC','vmc'));S.m.at(-1).tools=[{id:'t9',n:9,type:'drill',name:'nine'}];save();S.cur=0;machines()");
+  const mb=[...d.querySelectorAll('.mtl')];log('each machine card has 🔧 Tools (n)',mb.length==E("S.m.length")&&mb.some(b=>/Tools \(1\)/.test(b.textContent)));
+  mb.find(b=>/Tools \(1\)/.test(b.textContent)).click();log('card button opens that machine\'s tool list (current machine unchanged)',/T9|nine/.test(d.querySelector('#v').textContent)&&E("S.cur")==0&&/Tool VMC/.test(d.querySelector('#ttl').textContent));
+  E("tab('new');ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1')");const op0=E("J.op"),code0=E("J.code.join('|')");const bt=d.querySelector('#bldtl');
+  log('Build has a 🔧 Tools button inside the width',!!bt&&bt.getBoundingClientRect().right<=w.innerWidth+1);
+  bt.click();log('Build 🔧 opens the current machine\'s tools',/Tool library|Tools/.test(d.querySelector('#ttl').textContent)&&E("tlCurM()===S.m[S.cur]"));
+  E("tab('new')");log('back in Build the same job and code are kept',E("J&&J.op")==op0&&E("J.code.join('|')")==code0&&!!d.querySelector('#out .card'));
+  E("S.m.pop();save()");
+  // 11 tool picker on every tool-using job (mill + lathe), only this machine's tools
+  const tp=E(`(()=>{const res={jobs:0,keys:0,bad:[]};[0,2].forEach(mi=>{S.cur=mi;save();tab('new');const m=S.m[mi];m.tools=[{id:'ta'+mi,n:11,type:mi?TL_LATHE[0]:'Drill',name:'only-here',dia:0.25},{id:'tb'+mi,n:12,type:mi?(TL_BOTH[0]||TL_LATHE[1]):'End mill',name:'em',dia:0.5}];S.m.forEach((o,i)=>{if(i!=mi)(o.tools||[]).forEach(x=>x.name=x.name&&x.name.replace('only-here',''))});
+   const sel=document.querySelector('#jpick');[...sel.options].map(o=>o.value).filter(v=>v&&!v.startsWith('my:')).forEach(op=>{try{J=null;pickJob(op)}catch(e){res.bad.push(op+':'+e.message);return}if(!J||!J.p)return;const ks=Object.keys(J.p).filter(isToolKey);if(!ks.length)return;res.jobs++;
+    ks.forEach(k=>{res.keys++;tlPick.all=1;ed(k);tlPick.all=0;const pl=document.querySelector('#tlpl');const bs=pl?[...pl.querySelectorAll('[data-pick]')]:[];
+     const ids=bs.map(b=>b.dataset.pick);if(!pl||!ids.length||ids.some(id=>!m.tools.some(t=>t.id==id))||!document.querySelector('#tlnew')){res.bad.push(op+'/'+k+' list');tlClose();return}
+     const t=m.tools.find(x=>x.id==ids[0]);tlPicked(k,ids[0]);if(+J.p[k].v!=+t.n)res.bad.push(op+'/'+k+' fill '+J.p[k].v);tlClose()})})});return res})()`);
+  log('every tool-using job opens this machine\'s tool picker and fills the number ('+tp.jobs+' jobs, '+tp.keys+' tool fields)',tp.jobs>40&&!tp.bad.length,tp.bad.slice(0,6).join(' | '));
+  E("S.cur=0;S.m[0].tools=[];save();tab('new');ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');ed('Tool')");
+  log('empty tool list offers Copy from another machine + New tool',!!d.querySelector('.tlcp')&&!!d.querySelector('#tlnew'));
+  d.querySelector('.tlcp').click();log('copy from another machine fills the list and keeps the job',E("S.m[0].tools.length")>0&&E("J&&J.op")=='bolt'&&!!d.querySelector('#tlpl'));
+  E("tlClose()");
+  E("(()=>{const l=jmNew('TL');jmAdd(l,'op:bolt');jmOpen(l.id)})()");const fx=E("typeof jmFix=='function'");if(fx){E("jmFix(0)");E("ed('Tool')");log('Job manager entry: Tool opens the same picker',!!d.querySelector('#tlpl'));E("tlClose()")}
+  // 12 category bar + search
+  E("S.cur=0;save();tab('new')");const bar=d.querySelector('#jcbar');const cats=[...bar.querySelectorAll('[data-cat]')].map(b=>b.dataset.cat);const gl=[...d.querySelectorAll('#jpick optgroup')].filter(g=>g.querySelector('option[value]:not([value=""])')).map(g=>g.label);
+  log('category tabs = only categories with jobs for this machine',cats.length>3&&cats.join('|')==gl.join('|'),cats.join(',')+' vs '+gl.join(','));
+  log('big text box and dropdown hidden (no duplicate pickers)',d.querySelector('#q').style.display=='none'&&d.querySelector('#jpick').style.display=='none'&&d.querySelectorAll('#jcbar').length==1);
+  log('tab bar scrolls inside itself, page does not widen',w.getComputedStyle(bar).overflowX=='auto'&&bar.getBoundingClientRect().right<=w.innerWidth+1&&d.documentElement.scrollWidth<=w.innerWidth+1);
+  bar.querySelector(`[data-cat="${cats[2]}"]`).click();const jb=[...d.querySelectorAll('#jcjobs [data-op]')];const nm=jb.map(b=>b.textContent.replace(/^⚠\s*/,''));
+  log('tab shows that category\'s jobs alphabetically',jb.length>0&&nm.join('|')==[...nm].sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'})).join('|'));
+  log('last tab remembered',E("S.jtab")==cats[2]&&(E("tab('machines');tab('new')"),d.querySelector('#jcbar .chip.y').dataset.cat==cats[2]));
+  const jb2=d.querySelector('#jcjobs [data-op]');const op2=jb2.dataset.op;jb2.click();log('tapping a job opens it',E("J&&J.op")==op2||!!d.querySelector('#tlmod')||!!d.querySelector('#out .card'),op2);
+  const qq=d.querySelector('#jcq');qq.value='bolt';qq.oninput();const sj=[...d.querySelectorAll('#jcjobs [data-op]')];log('search filters jobs by name',sj.length>0&&sj.every(b=>/bolt/i.test(b.textContent)));qq.value='';qq.oninput();
+  // 13 tidy grid
+  E("tlClose&&tlClose();exE(0)");const gb=[...d.querySelectorAll('#out .jgrid>button')];const hs=new Set(gb.map(b=>Math.round(b.getBoundingClientRect().height)));
+  log('setting chips in a 2-column grid, all the same height',gb.length>8&&hs.size==1&&w.getComputedStyle(d.querySelector('#out .jgrid')).gridTemplateColumns.split(' ').length==2,[...hs].join(','));
+  const narrow=gb.filter(b=>!b.classList.contains('wide')).map(b=>Math.round(b.getBoundingClientRect().width));log('non-wide chips equal width; long ones full width',new Set(narrow).size==1&&gb.some(b=>b.classList.contains('wide')&&/Zero point/.test(b.textContent)));
+  log('chips keep label + value and colors, still tap-to-edit',gb.every(b=>b.querySelector('small')&&b.querySelector('b')&&/chip (y|gr|r|g)/.test(b.className)&&/^ed\(/.test(b.getAttribute('onclick'))));
+  const jg=[...d.querySelectorAll('#jcjobs>button')].map(b=>Math.round(b.getBoundingClientRect().height));log('job buttons uniform height',jg.length>0&&new Set(jg).size==1);
+  log('Build button renamed to Process Code (no Make my macro left)',!/Make my macro/i.test(d.documentElement.innerHTML+[...d.scripts].map(s=>s.textContent).join(''))&&[...d.querySelectorAll('button')].some(b=>b.textContent.trim()=='Process Code'&&b.offsetParent));
+  log('Help explains the category tabs',/category tabs/.test(E("HELP.find(x=>x[0]=='build')[2]()")));
+  // 15 Library: no sample chips
+  E("tab('recent')");log('Library shows no sample/demo chips',!d.querySelector('#v [onclick^="sample("]'));
+  log('Library empty state line (or only saved items)',E("S.jobs.length")?true:/No saved jobs yet/.test(d.querySelector('#v').textContent));
+  // 16 text size 90% default, tap targets >= 40px
+  log('90% text still uses the full screen width',Math.abs(d.querySelector('#v').getBoundingClientRect().width*0.9-w.innerWidth)<3||Math.abs(d.querySelector('#v').getBoundingClientRect().width-w.innerWidth)<3,d.querySelector('#v').getBoundingClientRect().width+' vs '+w.innerWidth);
+  log('default text size 90% (new user)',E("S.ts")==90&&d.querySelector('#v').style.zoom=='0.9');
+  E("tab('machines')");const small=[...d.querySelectorAll('#v button')].filter(b=>b.offsetParent&&b.getBoundingClientRect().height<39.5);log('tap targets at least 40px',!small.length,small.slice(0,5).map(b=>b.textContent.slice(0,20)+':'+b.getBoundingClientRect().height.toFixed(1)).join('|'));
+  E("setTS(1)");log('user choice kept (100%) and marked as chosen',E("S.ts")==100&&E("S.tsUser")==1);E("S.ts=90;S.tsUser=0;save();applyTS()");
+  // 17 More: no Sample jobs section
+  E("tab('more')");log('More has no Sample jobs section',!/Sample jobs/.test(d.querySelector('#v').textContent)&&!d.querySelector('#v [onclick^="sample("]'));
+  log('Help has no Sample jobs / tap a sample references',!/Sample jobs|tap a sample/i.test(E("HELP.map(h=>{try{return h[2]()}catch(e){return ''}}).join(' ')")));
+  // 18 home: new mark, button, copy
+  E("home()");const hsv=d.querySelector('#home svg[aria-label="BlockSmith"]');log('home card shows the new BlockSmith anvil mark (#f7c613), no M',!!hsv&&/#f7c613/i.test(hsv.innerHTML)&&!/M14 34V14/.test(hsv.innerHTML));
+  log('big button says Start a program',d.querySelector('#hBuild').textContent.trim()=='Start a program');
+  const ht=d.querySelector('#home').textContent;log('home subtitle updated, no plain-words copy',/Pick a job, check the code\. Works offline\./.test(ht)&&!/Plain words in|type it in plain words/.test(d.body.textContent));
+  log('apple-touch-icon + svg icon linked',!!d.querySelector('link[rel=apple-touch-icon][href="icons/apple-touch-icon.png"]')&&!!d.querySelector('link[rel=icon][href="icons/a.svg"]'));
+  // 3 delete machine
+  w.UIA.confirm=()=>true;
+  E("S.m.push(mk('Del VMC','vmc'));S.m.at(-1).tools=[{n:1,type:'drill',name:'d1'}];S.jlists.push({id:'zz',name:'L',mid:S.m.at(-1).id,entries:[]});save()");const n0=E("S.m.length"),u0=E("(S.utools||[]).length");
+  E("delM(S.m.length-1)");log('delete machine: keep as Unassigned moves tools, list unassigned',E("S.m.length")==n0-1&&E("S.utools.length")==u0+1&&E("S.jlists.find(l=>l.id=='zz').mid")==null);
+  let k=0;w.UIA.confirm=()=>(k++==0);E("S.m.push(mk('Del2','vmc'));S.m.at(-1).tools=[{n:2,type:'drill'}];S.progs.push({id:'pp',gid:'pp',mid:S.m.at(-1).id,name:'P',ver:1,lines:[]});save();delM(S.m.length-1)");
+  log('delete machine: "Delete them too" removes its programs',!E("S.progs.some(p=>p.id=='pp')")&&E("S.m.length")==n0-1);
+  w.UIA.confirm=()=>true;E("while(S.m.length)delMgo(0,1)");let ok=true;try{E("machines();tab('new');tab('more');tools();jobMgr();pgList();tab('machines')")}catch(e){ok=false;log('x',false,e.message)}
+  log('deleting the last machine does not crash',ok&&E("S.m.length")==0);
+  E("addCustom()");log('can add a machine again after',E("S.m.length")==1);}
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}d.title='';document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>

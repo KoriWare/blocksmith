@@ -1,7 +1,7 @@
 <!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=28" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
- setTimeout(()=>{w.eval('NOASK=1');const d=w.document,E=x=>w.eval(x);w.confirm=()=>true;try{
+ setTimeout(()=>{w.eval('NOASK=1');const d=w.document,E=x=>w.eval(x);w.UIA.confirm=()=>true;try{
   E('S.cur=0');w.tab('new');log('import button on New',/Import .nc/.test(d.body.textContent));
   w.importToEditor('%\nO0123 (TEST)\nG17 G20 G90 G54\nG00 X0 Y0 Z1.\nG01 Z-0.2 F10.\nG01 X2. Y1.\nG00 Z1.\nM30\n%');
   log('imported lines are pink user lines',d.querySelectorAll('.ln.u').length==9);log('sim runs imported moves',E('J.M.length')>=4&&!E('J.run.err'));

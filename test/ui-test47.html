@@ -4,7 +4,7 @@ const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x))
 f.onload=()=>{const w=f.contentWindow,d=w.document;
  if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
  const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
- setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;w.alert=()=>{};w.prompt=()=>null;
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.UIA.confirm=()=>true;w.UIA.alert=()=>{};w.UIA.prompt=()=>null;
   const before=E("JSON.stringify(S.m.map(m=>m.tools))");
   E("S.m[0].tools.push({id:'s1',n:11,type:'End mill',dia:0.375,len:2.5,fl:4,H:11,D:31,name:'3/8 4FL'},{id:'s2',n:12,type:'Turning insert',nr:0.031});save()");
   const b2=E("JSON.stringify(S.m.map(m=>m.tools))");

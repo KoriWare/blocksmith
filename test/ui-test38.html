@@ -2,7 +2,7 @@
 const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
 f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
  const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
- setTimeout(async()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.alert=()=>{errs.push('alert called')};
+ setTimeout(async()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.UIA.alert=()=>{errs.push('alert called')};
   const setC=c=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k=='Control');if(!x){x={k:'Control'};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(c)};x.st='user';save()})()`);
   const mk=(n,g,c)=>{w.pick(n,g);w.cur(E('S.m.length')-1);setC(c);w.tab('new');return E('S.cur')};
   const mill=mk('Haas VF-style VMC (generic)','Vertical mills','Haas NGC'),rd=mk('Fanuc Robodrill-style (generic)','Vertical mills','Fanuc 0i'),lat=mk('Common Fanuc lathe (generic)','Lathes','Fanuc 0i');

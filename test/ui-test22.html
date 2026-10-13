@@ -11,7 +11,7 @@ const JOBS=[['ctr','part counter stop at 200 using #600',{}],['life','tool life 
  ['warm','warm up rpm steps 2000 4000 6000 2 passes',{'X min':-15,'X max':-5,'Y min':-10,'Y max':-2,'Z clear':-1}]];
 f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
  const errs=[];w.onerror=m=>errs.push(String(m));
- setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.UIA.confirm=()=>true;
   const setv=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(!x)return;if(${JSON.stringify(v)}!==null)x.v=${JSON.stringify(v)};x.st='user';save()})()`);
   ['Fanuc Robodrill-style (generic)','Haas VF-style VMC (generic)'].forEach(nm=>{const hk=/Haas/.test(nm);w.pick(nm,'Vertical mills');w.cur(E('S.m.length')-1);
    // before setup: probe job lists red setup

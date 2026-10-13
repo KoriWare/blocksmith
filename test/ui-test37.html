@@ -56,15 +56,15 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   log('Use buttons named consistently',[...d.querySelectorAll('#v button')].filter(b=>/^Use\b/.test(b.textContent.trim())).every(b=>b.textContent.trim()=='Use this machine'));
   // separate pages with shared job
   w.tab('new');d.querySelector('#q').value='G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1';w.go();await sl(200);
-  log('Build shows code',vis(d.querySelector('#ed')));log('Build hides simulator',!vis(d.querySelector('#cv')));log('Build shows job inputs',vis(d.querySelector('#q')));
+  log('Build shows code',vis(d.querySelector('#ed')));log('Build hides simulator',!vis(d.querySelector('#cv')));log('Build shows job inputs',vis(d.querySelector('#jcwrap')));
   log('Save… next to checks bar',vis(d.querySelector('#qsave'))&&d.querySelector('#qsave').previousElementSibling&&['ck','ready'].includes(d.querySelector('#qsave').previousElementSibling.id));
   w.tab('edit');await sl(100);log('Editor page: code, no job inputs, no sim',vis(d.querySelector('#ed'))&&!vis(d.querySelector('#q'))&&!vis(d.querySelector('#cv'))&&vis(d.querySelector('#ck')));
   w.tab('sim');await sl(100);log('Simulate page: canvas only, no editor/inputs',vis(d.querySelector('#cv'))&&!vis(d.querySelector('#ed'))&&!vis(d.querySelector('#q')));
   log('sim canvas sized on its own page',d.querySelector('#cv').width>100,d.querySelector('#cv').width);log('job kept across pages',E('J&&J.op')=='bolt');
-  await back();log('Back: Simulate → Editor',/^Editor ·/.test(T()),T());await back();log('Back: Editor → Build',/^Build ·/.test(T())&&vis(d.querySelector('#q')),T());
+  await back();log('Back: Simulate → Editor',/^Editor ·/.test(T()),T());await back();log('Back: Editor → Build',/^Build ·/.test(T())&&vis(d.querySelector('#jcwrap')),T());
   // Save… prompt
-  w.prompt=()=>'Nav bolts';const nj=E('S.jobs.length');d.querySelector('#qsave button').click();log('Save… asks a name and saves to Library',E('S.jobs.length')==nj+1&&E('S.jobs[0].name')=='Nav bolts'&&T()=='Library',T());
-  w.prompt=()=>null;w.reopen(0);log('reopened job has Save…',!!d.querySelector('#qsave'),d.querySelector('#out')&&d.querySelector('#out').textContent.slice(0,200));const nj2=E('S.jobs.length');d.querySelector('#qsave button').click();log('Save… cancel saves nothing',E('S.jobs.length')==nj2);
+  w.UIA.prompt=()=>'Nav bolts';const nj=E('S.jobs.length');d.querySelector('#qsave button').click();log('Save… asks a name and saves to Library',E('S.jobs.length')==nj+1&&E('S.jobs[0].name')=='Nav bolts'&&T()=='Library',T());
+  w.UIA.prompt=()=>null;w.reopen(0);log('reopened job has Save…',!!d.querySelector('#qsave'),d.querySelector('#out')&&d.querySelector('#out').textContent.slice(0,200));const nj2=E('S.jobs.length');d.querySelector('#qsave button').click();log('Save… cancel saves nothing',E('S.jobs.length')==nj2);
   // safety: positions still not guessed
   w.tab('new');d.querySelector('#q').value='G54 T2 6 hole bolt circle 3.0 dia 0.5 deep';w.go();log('missing positions still red (not guessed)',/Center X|Z0/.test((d.querySelector('#out .card')||{}).textContent||'')&&!d.querySelector('#ed'));
   w.tab('edit');log('Editor with unanswered job sends you to Build',/Finish this job in Build first/.test(d.querySelector('#v').textContent));

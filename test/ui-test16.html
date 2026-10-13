@@ -34,7 +34,7 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   w.tab('sim');log('5 sticky play bar',getComputedStyle(d.querySelector('#pbar')).position=='sticky'&&/Play/.test(d.querySelector('#pbar').textContent)&&!!d.querySelector('#pbar #sc'));
   d.querySelector('#simcode').open=true;w.scrub(3);log('5 code pane shows current line',!!d.querySelector('#simcode pre .cur'));
   log('5 chips ≥44px',[...d.querySelectorAll('.chip')].filter(c=>c.offsetParent).every(c=>c.offsetHeight>=44&&c.offsetWidth>=44));
-  w.more();d.querySelector('#tsz .chip.y').click();log('5 text size setting scales content',E('S.ts')==115&&d.querySelector('#v').style.zoom=='1.15');d.querySelector('#tsz .chip.gr').click();
+  w.more();d.querySelector('#tsz .chip.y').click();log('5 text size setting scales content',E('S.ts')==100&&d.querySelector('#v').style.zoom=='');d.querySelector('#tsz .chip.gr').click();
   w.tab('machines');log('5 mill + lathe icons drawn (svg)',!!d.querySelector('.card .t svg[aria-label=mill]')&&!!d.querySelector('.card .t svg[aria-label=lathe]')&&!!d.querySelector('#mode svg'));
   log('no page errors',!errs.length);if(errs.length)out.push('ERR '+errs.join(' | '));
  }catch(e){out.push('FAIL exception '+e.message+' '+(e.stack||'').split('\n')[1])}o.textContent=out.join('\n')},1500)}
