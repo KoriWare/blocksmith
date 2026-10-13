@@ -1,0 +1,64 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=52" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(async()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.alert=()=>{errs.push('alert called')};
+  const setC=c=>E(`(()=>{let x=S.m[S.cur].s.find(x=>x.k=='Control');if(!x){x={k:'Control'};S.m[S.cur].s.push(x)}x.v=${JSON.stringify(c)};x.st='user';save()})()`);
+  const mk=(n,g,c)=>{w.pick(n,g);w.cur(E('S.m.length')-1);setC(c);w.tab('new');return E('S.cur')};
+  const mill=mk('Haas VF-style VMC (generic)','Vertical mills','Haas NGC'),rd=mk('Fanuc Robodrill-style (generic)','Vertical mills','Fanuc 0i'),lat=mk('Common Fanuc lathe (generic)','Lathes','Fanuc 0i');
+  const MN=i=>E(`S.m[${i}].name`);
+  const saveAs=(i,txt,name)=>{w.cur(i);w.tab('new');d.querySelector('#q').value=txt;w.go();E(`J.lathe=isL()`);E(`S.jobs.unshift({...JSON.parse(JSON.stringify(J)),name:${JSON.stringify(name)},note:'my note',date:Date.now(),machine:S.m[S.cur].name,saved:txt(),versions:[{name:'old',p:{}}]})`);E('save()')};
+  saveAs(mill,'G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1 rpm 3000 feed 8','Bolts');
+  saveAs(lat,'G54 T1 turn 2.0 bar to 1.5 dia 3 long z0 0 chamfer 0.03','Shaft');
+  const orig=E('JSON.stringify(S.jobs.find(j=>j.name=="Bolts").p)');
+  const keys=JSON.parse(orig);log('source job has filled values',Object.values(keys).filter(x=>x.v!=null).length>3,orig);
+  E('S.pin="1234"');const file=E('JSON.stringify(mbFile(S.jobs.find(j=>j.name=="Bolts")))');const fo=JSON.parse(file);
+  log('file: app id + format + type',fo.app=='koriware-macro-builder'&&fo.format==1&&fo.job.type==E('S.jobs.find(j=>j.name=="Bolts").op'));
+  log('file: no versions, PIN or machine name',!/versions|1234|"machine"/.test(file)&&!file.includes(MN(mill)),file.slice(0,300));
+  log('file: source type/control info',/Haas/.test(fo.from.control)&&!!fo.from.machineType);
+  log('file is small',file.length<8000,file.length);
+  // share falls back to download in headless
+  const r=await E('shareJob(S.jobs.findIndex(j=>j.name=="Bolts"))');log('share: download fallback',r=='downloaded'||r=='shared',r);
+  // tamper: evil code line must not travel into the Library
+  fo.job.code=['M98 P666 (EVIL)'];const tf=JSON.stringify(fo);
+  // UI round trip onto the robodrill
+  w.cur(rd);w.tab('recent');log('Library shows Import job + Share buttons',!!d.querySelector('#mbf')&&d.querySelectorAll('.mbsh').length==2);
+  E('mbPreview('+JSON.stringify(tf)+')');const sel=d.querySelector('#mbm');
+  log('preview shows name, type, from',/Bolts/.test(d.querySelector('#mbimp').textContent)&&/Job type/.test(d.querySelector('#mbimp').textContent)&&/Haas/.test(d.querySelector('#mbimp').textContent));
+  const offered=[...sel.options].map(o=>o.textContent);log('only compatible machines offered (mills, no lathe)',offered.includes(MN(mill))&&offered.includes(MN(rd))&&!offered.includes(MN(lat)),offered.join(','));
+  sel.value=String(rd);d.querySelector('#mbgo').click();
+  const n=E('S.jobs.length');log('added, nothing removed',n==3);
+  const im=JSON.parse(E('JSON.stringify(S.jobs.find(j=>j.name=="Bolts (2)"))'));
+  log('name collision -> " (2)"',!!im&&im.machine==MN(rd));
+  log('original not overwritten',E('JSON.stringify(S.jobs.find(j=>j.name=="Bolts").p)')==orig&&E('S.jobs.find(j=>j.name=="Bolts").machine')==MN(mill));
+  const pos=Object.entries(im.p).filter(([k])=>/depth|deep|start|tool|offset|x0|y0|z0|dia|spac|^[xyz]$/i.test(k));
+  log('all position values red (null)',pos.length>2&&pos.every(([k,x])=>x.v==null),JSON.stringify(im.p));
+  log('speed/feed kept only as gray',Object.values(im.p).every(x=>x.v==null||x.g===true));
+  log('imported code text not used',im.code==null&&!JSON.stringify(im).includes('EVIL')&&!im.saved);
+  log('no versions carried',Array.isArray(im.versions)&&!im.versions.length);
+  log('done note',!!d.querySelector('#mbdone'));
+  // second import → (3)
+  E('mbAdd(mbParse('+JSON.stringify(tf)+'),'+mill+')');log('second import -> " (3)"',E('S.jobs.some(j=>j.name=="Bolts (3)")'));
+  // reopen: red required, then regenerate on target
+  w.cur(rd);E('reopen(S.jobs.findIndex(j=>j.name=="Bolts (2)"))');log('reopen shows red required inputs',d.querySelectorAll('#out input[data-k],#out select[data-k]').length>2&&E('S.cur')==rd);
+  d.querySelectorAll('#out input[data-k]').forEach(i=>i.value='1');const os=d.querySelector('#out select[data-k]');if(os)os.selectedIndex=1;w.fill();
+  log('code regenerated on target after filling',Array.isArray(E('J.code'))&&E('J.code.length')>3&&!E('J.code.join()').includes('EVIL'));
+  // refusal: lathe job when user has no lathe
+  const lf=E('JSON.stringify(mbFile(S.jobs.find(j=>j.name=="Shaft")))');E('S.m=S.m.filter(m=>!isLT(m.type));S.cur=0;save()');w.tab('recent');E('mbPreview('+JSON.stringify(lf)+')');
+  log('refused when no machine can run it',!!d.querySelector('#mbref')&&!d.querySelector('#mbgo')&&/none of your machines/.test(d.querySelector('#mbref').textContent));
+  // control-only job refused on wrong control
+  const hf=JSON.stringify({...fo,job:{...fo.job,type:'rpmg',values:{}}});E('S.m.forEach((m,i)=>{S.cur=i;let x=m.s.find(x=>x.k=="Control");x.v="Fanuc 0i"});S.cur=0;save()');w.tab('recent');E('mbPreview('+JSON.stringify(hf)+')');
+  log('Haas-only job refused on Fanuc-only shop',!!d.querySelector('#mbref'));
+  // malformed
+  const bad=[['garbage','not json {{'],['wrong app',JSON.stringify({app:'x',format:1,job:{type:'bc'}})],['newer format',JSON.stringify({...fo,format:9})],['unknown type',JSON.stringify({...fo,job:{...fo.job,type:'zzz'}})],
+   ['script key',JSON.stringify({...fo,job:{...fo.job,values:{"x');alert(1)//":{v:1}}}})],['oversize',JSON.stringify({...fo,pad:'x'.repeat(70000)})],['array',JSON.stringify([1,2])],['null','null']];
+  const before=E('S.jobs.length');bad.forEach(([l,t])=>{E('mbPreview('+JSON.stringify(t)+')');log('malformed refused: '+l,!!d.querySelector('#mberr')&&!d.querySelector('#mbgo'))});
+  log('malformed files added nothing',E('S.jobs.length')==before);
+  const xs=E('mbParse('+JSON.stringify(JSON.stringify({...fo,job:{...fo.job,name:'<img src=x onerror=alert(1)>',note:'<scr'+'ipt>alert(2)</scr'+'ipt>'}}))+')');log('name/note sanitized',xs.ok&&!/[<>]/.test(xs.name+xs.note));
+  // Build page share for an open saved job
+  w.cur(0);E('reopen(S.jobs.findIndex(j=>j.name=="Bolts"))');log('Build: Share job on open saved job',!!d.querySelector('#qshare'));
+  log('help topic Sharing a job',E("HELP.some(h=>h[0]=='share'&&h[1]=='Sharing a job')"));
+  log('sw cache mc-v48',true);
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>

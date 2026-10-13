@@ -1,1 +1,1 @@
-{"name":"Macro Builder (prototype)","short_name":"Macro","start_url":"index.html","display":"standalone","background_color":"#111111","theme_color":"#ffd21f"}
+{"name": "Macro Builder (prototype)", "short_name": "Macro", "start_url": "index.html", "display": "standalone", "background_color": "#111111", "theme_color": "#ffd21f", "file_handlers": [{"action": "index.html", "accept": {"application/json": [".mbjob"]}}]}

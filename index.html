@@ -3915,4 +3915,60 @@ LOG.unshift(['1.7 · Oct 13','Navigation: phone Back works screen by screen (and
 ['tab','home','help','more','machines','recent','addM','edit','tools','xfer','reference','compare','batch','data','scanner','calc','snips','about'].forEach(navWrap);
 {const t=$('#ttl').textContent,hs=history.state;NAV.cur={k:t=='Home'?'home':'start',f:t=='Home'?'home':'startView',a:[],i:hs&&hs.i||0};history.replaceState(NAV.cur,'');if(t=='Home'){NAV.rest=1;try{home()}finally{NAV.rest=0}}helpBtn()}  // re-render: the first Home ran before later rounds added machine settings (stale setup %)
 </script>
+<script>
+// ---- Round 43 · share one job between users (.mbjob) — offline, no server. Positions never travel as values; code is regenerated on the target machine.
+const MBJ={app:'koriware-macro-builder',fmt:1,max:65536};
+const MBJ_KEEP=/rpm|sfm|surface speed|feed|ipm|ipr|chip ?load|clearance|coolant|dwell/i,MBJ_POS=/depth|deep|start|tool|offset|x0|y0|z0|\bx\b|\by\b|\bz\b|stock|dia|spac|pitch|width|length|centre|center|angle|radius|finish|count|holes|confirm|risk|accept/i;
+function mbClean(s,n){return String(s==null?'':s).replace(/[\u0000-\u001f\u007f<>"'`\\]/g,' ').replace(/\s+/g,' ').trim().slice(0,n||120)}
+function mbCtrl(m){try{const c=(m.s||[]).find(x=>x.k=='Control');return c&&c.v?String(c.v):''}catch(e){return ''}}
+function mbFile(j){const m=S.m.find(x=>x.name==j.machine)||{};const p={};Object.entries(j.p||{}).forEach(([k,x])=>{p[k]={v:x&&x.v!=null?x.v:null,g:!!(x&&x.g)}});
+ return {app:MBJ.app,format:MBJ.fmt,exported:new Date().toISOString().slice(0,10),job:{type:j.op,typeName:mbClean(jName(j.op)),name:mbClean(j.name||jName(j.op)),note:mbClean(j.note,500),values:p,code:(j.saved||j.code||[]).slice(0,3000).map(l=>String(l).slice(0,200))},
+  from:{machineType:mbClean(m.type||(j.lathe?'lathe':'mill')),control:mbClean(mbCtrl(m)),lathe:!!j.lathe,note:'info only — values are cleared and the code is rebuilt on import'}}}
+function mbFname(n){return (mbClean(n,60).replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'-')||'job')+'.mbjob'}
+async function shareJob(i){const j=S.jobs[i];if(!j)return;const f=mbFile(j),txt=JSON.stringify(f,null,1),fn=mbFname(j.name);
+ try{const file=new File([txt],fn,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:f.job.name,text:'Macro Builder job — open it with Library → Import job'});return 'shared'}}catch(e){if(e&&e.name=='AbortError')return 'cancelled'}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));a.download=fn;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);window.__mbLast=txt;return 'downloaded'}
+// parse + validate. Never evals, never trusts code text.
+function mbParse(text){if(typeof text!='string')return {err:'Not a job file.'};if(text.length>MBJ.max)return {err:'File is too big for one job (limit 64 KB) — not opened.'};
+ let d;try{d=JSON.parse(text)}catch(e){return {err:'This is not a Macro Builder job file (not readable JSON).'}}
+ if(!d||typeof d!='object'||d.app!==MBJ.app)return {err:'This file was not made by Macro Builder\'s Share job.'};
+ if(typeof d.format!='number'||d.format>MBJ.fmt)return {err:'Made by a newer version of the app (format '+mbClean(d.format,8)+'). Update the app first.'};
+ if(d.format<1)return {err:'Unknown file format.'};const j=d.job;if(!j||typeof j!='object'||typeof j.type!='string')return {err:'The file has no job in it.'};
+ const op=j.type;if(!/^[\w-]{1,40}$/.test(op)||!(OPN[op]||J2[op]||JB[op]||JX[op]))return {err:'Unknown job type “'+mbClean(op,40)+'” — this app version does not have it.'};
+ const vals=j.values&&typeof j.values=='object'&&!Array.isArray(j.values)?j.values:{};const ks=Object.keys(vals);if(ks.length>200)return {err:'Too many values in the file.'};
+ const p={};for(const k of ks){if(!/^[^\u0000-\u001f'"<>&\\`]{1,60}$/.test(k))return {err:'A value name in the file has characters that are not allowed — not opened.'};const x=vals[k]||{};p[k]={v:(typeof x.v=='number'&&isFinite(x.v))?x.v:null,g:!!x.g}}
+ const fr=d.from&&typeof d.from=='object'?d.from:{};
+ return {ok:1,op,name:mbClean(j.name,80)||mbClean(jName(op),80),note:mbClean(j.note,500),p,from:{type:mbClean(fr.machineType,60),control:mbClean(fr.control,30),lathe:!!fr.lathe}}}
+function mbFits(op,lathe,k){const c=S.cur;S.cur=k;try{const kd=jKind(op);if(kd)return jAvail(op);return !!lathe==!!isL()}catch(e){return false}finally{S.cur=c}}
+function mbTargets(x){return S.m.map((m,k)=>k).filter(k=>mbFits(x.op,x.from.lathe,k))}
+// clear positions to red, keep only speed/feed/clearance numbers as gray suggestions
+function mbValues(p){const o={};Object.entries(p).forEach(([k,x])=>{o[k]=(MBJ_KEEP.test(k)&&(/clear/i.test(k)||!MBJ_POS.test(k))&&x.v!=null)?{v:x.v,g:true}:{v:null,g:false}});return o}
+function mbName(n){let b=n,i=2;while(S.jobs.some(j=>j.name==b))b=n+' ('+(i++)+')';return b}
+function mbAdd(x,k){if(!mbTargets(x).includes(k))return null;const m=S.m[k],c=S.cur;S.cur=k;const L=isL();S.cur=c;
+ const rec={op:x.op,p:mbValues(x.p),lathe:L,text:jName(x.op).replace(/^⚠\s*/,''),name:mbName(x.name),note:x.note,edits:{},code:null,date:Date.now(),machine:m.name,versions:[],change:'imported',
+  imported:{fromType:x.from.type,fromControl:x.from.control,on:new Date().toISOString().slice(0,10)}};S.jobs.unshift(rec);save();return rec}
+let MBX=null;
+function mbPreview(text){const o=$('#mbimp');if(!o)return;const x=mbParse(text);MBX=null;
+ if(!x.ok){o.innerHTML=`<div class="ok bad" id="mberr">⛔ ${esc(x.err)}</div>`;return}
+ const t=mbTargets(x),opts=t.map(k=>`<option value="${k}"${k==S.cur?' selected':''}>${esc(S.m[k].name)}</option>`).join('');
+ const hd=`<div class="t">📥 ${esc(x.name)}</div><div class="s">Job type: <b>${esc(jName(x.op))}</b></div><div class="s">From: ${esc(x.from.type||'unknown machine type')}${x.from.control?' · '+esc(x.from.control):''} (info only)</div>`;
+ if(!S.m.length){o.innerHTML=hd+`<div class="ok bad" id="mbref">Add a machine first — a shared job goes on one of your machines.</div>`;return}
+ if(!t.length){o.innerHTML=hd+`<div class="ok bad" id="mbref">⛔ Not imported: none of your machines can run “${esc(jName(x.op))}” (machine type, control or options don't fit). Nothing was added.</div>`;return}
+ MBX=x;o.innerHTML=hd+`<label class="s" for="mbm">Put it on which of your machines? (only ones that can run it)</label><select id="mbm" style="width:100%;min-height:44px">${opts}</select><div class="s" style="color:#ff8a8a">Every position value (depths, start points, spacing, stock, diameters, tool, work offset / X0 Y0 Z0) comes in <b>red</b> — you enter your own. Speeds, feeds and clearance come in gray. The code is rebuilt for your machine; the sender's code is not used.</div><button class="btn" id="mbgo" onclick="mbDo()">Add to Library</button>`}
+function mbDo(){if(!MBX)return;const k=+$('#mbm').value,r=mbAdd(MBX,k);MBX=null;if(!r)return;tab('recent');const o=$('#mbimp');if(o)o.innerHTML=`<div class="ok" id="mbdone">✓ Added “${esc(r.name)}” on ${esc(r.machine)}. Open it and fill the red values.</div>`}
+function mbRead(f){const o=$('#mbimp');if(!f)return;if(f.size>MBJ.max){if(o)o.innerHTML=`<div class="ok bad" id="mberr">⛔ File is too big for one job (limit 64 KB) — not opened.</div>`;return}const r=new FileReader();r.onload=()=>mbPreview(String(r.result));r.readAsText(f)}
+function mbLibUI(){if(!/^Library/.test($('#ttl').textContent)||$('#mbcard'))return;const c=document.createElement('div');c.className='card';c.id='mbcard';
+ c.innerHTML=`<label class="btn o" style="display:block;text-align:center">📥 Import job (.mbjob)<input type="file" id="mbf" accept=".mbjob,application/json,.json" style="display:none"></label><div id="mbimp"></div><div class="s">Tap 📤 Share job on a saved job to send it by text, email or AirDrop. <a href="#" onclick="help('share');return false">How sharing works</a></div>`;
+ V.prepend(c);$('#mbf').onchange=e=>{mbRead(e.target.files[0]);e.target.value=''};mbBtns()}
+function mbBtns(){V.querySelectorAll('div[onclick^="reopen("]').forEach(d=>{const card=d.closest('.card')||d;if(card.querySelector('.mbsh'))return;const i=+d.getAttribute('onclick').match(/\d+/)[0],j=S.jobs[i];
+ if(j&&j.imported){d.insertAdjacentHTML('afterbegin',`<span class="chip gr" style="float:right">📥 imported</span>`)}const b=document.createElement('button');b.className='chip y mbsh';b.type='button';b.textContent='📤 Share job';b.onclick=e=>{e.stopPropagation();shareJob(i)};card.append(b)})}
+const _recent43=recent;recent=function(){const r=_recent43.apply(this,arguments);mbLibUI();const q=$('#lq');if(q){const f=q.oninput;q.oninput=function(){f&&f.apply(this,arguments);mbBtns()}}return r};
+const _show43=show;show=function(){const r=_show43.apply(this,arguments);try{const qs=$('#qsave');const mn=(S.m[S.cur]||{}).name;const i=J&&J.name?S.jobs.findIndex(j=>j.name==J.name&&j.machine==mn):-1;
+ if(qs&&i>=0&&!$('#qshare')){const b=document.createElement('button');b.id='qshare';b.className='chip y';b.type='button';b.textContent='📤 Share job';b.onclick=()=>shareJob(S.jobs.findIndex(j=>j.name==J.name&&j.machine==mn));qs.prepend(b)}}catch(e){}return r};
+// open a .mbjob with the installed app (file handler) — same validated path
+if('launchQueue' in window)launchQueue.setConsumer(async p=>{if(!p.files||!p.files.length)return;const f=await p.files[0].getFile();tab('recent');mbRead(f)});
+HELP.push(['share','Sharing a job',()=>`<p><b>Share:</b> in <b>Library</b> (or on Build with a saved job open) tap <b>📤 Share job</b>. The app makes one small <b>.mbjob</b> file and opens your phone's share sheet (text, email, AirDrop). If sharing isn't available it downloads the file instead.</p><p>The file holds the job type, name, note, the values and the code, plus the machine type and control it came from — <b>info only</b>. It never holds your machine names, your PIN, other jobs or version history.</p><p><b>Import:</b> Library → <b>📥 Import job</b>, pick the file. You see the name, job type and where it came from, then pick which of <b>your</b> machines it goes on. Only machines that can run that job are offered; if none can (type, control or options), it's refused and nothing is added.</p><p><b>Safety:</b> every value that sets where the tool goes — depths, start points, spacing, stock, finish diameters, tool number, work offset and X0 Y0 Z0 — comes in <b>red</b> and you enter your own. Write / risk confirms come in red too, and your machine's own settings and confirms apply. Speeds, feeds and clearance come in <b>gray</b> as suggestions. The sender's code is never used — the app rebuilds it for your machine.</p><p>An import never overwrites: if the name is taken it becomes “name (2)”. Files that aren't Macro Builder jobs, are from a newer app version, are damaged or are over 64 KB are refused. Everything stays on your phone — no account, no server.</p>`]);
+LOG.unshift(['1.8 · Oct 13','Share one job (.mbjob) and Import job in Library: preview, only compatible machines offered, positions come in red, code rebuilt on your machine, never overwrites.']);
+</script>
+
 </body></html>
