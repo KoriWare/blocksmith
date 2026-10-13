@@ -4736,4 +4736,236 @@ LOG.unshift(['2.8 · Oct 13','New machines start with an empty tool list; empty-
 LOG.unshift(['3.1 · Oct 13','Empty tool list hides the old + Add tool button and Demo tools only note; with tools, that button stays where it was.']);
 </script>
 
+<script>
+// ---- Round 64 · Job manager: per-machine job lists -> one program (inline or main + subprograms). Each entry is rendered by the
+//      normal job pipeline in a sandbox (same red values / ⛔ refusals / risk gates / free-variable check), then merged.
+S.jlists=Array.isArray(S.jlists)?S.jlists:[];
+const JMC=new Map();let JML=null,JMF=null,JMR=null;
+const jmUid=()=>'l'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const jmMI=l=>S.m.findIndex(m=>m.id==l.mid);
+const jmGet=id=>S.jlists.find(l=>l.id==id);
+function jmMine(k){const m=S.m[k];return m?S.jlists.filter(l=>l.mid==m.id):[]}
+function jmClean(j){const o=JSON.parse(JSON.stringify(j||{}));['code','moves','M','run','ct','ct0','focus','versions','saved','raw2'].forEach(k=>delete o[k]);o.edits=o.edits||{};o.p=o.p||{};return o}
+const jmName=e=>String(e.label||e.job.name||jName(e.job.op)||'Job').replace(/^⚠\s*/,'');
+const jmCm=s=>String(s||'').toUpperCase().replace(/[()]/g,' ').replace(/[^\x20-\x7E]/g,'').replace(/\s+/g,' ').trim().slice(0,44);
+// run fn with machine k selected and a throwaway Build page; everything on screen is put back after
+function jmSand(k,fn){const keep={J,cur:S.cur,html:V.innerHTML,page:V.dataset.page,ttl:$('#ttl').textContent,cv:typeof cv!='undefined'?cv:null};
+ S.cur=k;$('#ttl').textContent='Build · '+((S.m[k]||{}).name||'');V.innerHTML='<textarea id="q"></textarea><div id="out"></div>';NAV.d++;
+ try{return fn()}finally{NAV.d--;try{clearInterval(pl)}catch(e){}J=keep.J;S.cur=keep.cur;V.innerHTML=keep.html;if(keep.page==null)delete V.dataset.page;else V.dataset.page=keep.page;$('#ttl').textContent=keep.ttl;try{if(keep.cv)cv=keep.cv}catch(e){}}}
+function jmSig(e,k){const m=S.m[k]||{};return JSON.stringify([e.job,k,m.type,m.s,m.opt,(m.tools||[]).length,UN()])}
+function jmRender(e,k){const sg=jmSig(e,k);if(JMC.has(sg))return JMC.get(sg);
+ const r=jmSand(k,()=>{const r={miss:[],block:'',code:null,cv:[],ct:0,err:''};J=jmClean(e.job);J.date=J.date||1;
+  try{show()}catch(x){r.err=String(x&&x.message||x)}
+  const out=$('#out'),t=out?out.innerText:'';r.miss=Object.entries(J.p||{}).filter(([,x])=>x&&x.v==null).map(([q])=>q);
+  const b=t.match(/⛔[^\n]*/),ms=t.match(/Machine setup still red[^\n]*\n[^\n]*\n([^\n]*)/);r.block=b?b[0].slice(0,200):ms?('machine setup still red — '+ms[1]).slice(0,200):'';r.code=J.code&&J.code.length?txt().map(String):null;
+  try{r.cv=r.code?cvPending():[]}catch(x){}r.ct=+J.ct||0;r.lathe=!!J.lathe;r.high=!!(J.p&&J.p[RISK])||JCAT.Risky.split(' ').includes(J.op)||(r.code||[]).some(x=>/\(\s*(VERY )?HIGH RISK/.test(x))||/^⚠/.test(String(jName(J.op)||''))||(J2[J.op]&&(()=>{try{return j2Req(J).includes(RISK)}catch(x){return false}})());r.op=J.op;
+  try{r.thin=thinFor(S.m[k],J.op).length}catch(x){r.thin=0}const ck=out&&out.querySelector('#ck');const im=ck&&ck.textContent.match(/(\d+) issues?/);r.issues=im?+im[1]:0;
+  r.wo=J.p&&J.p['Work offset']&&J.p['Work offset'].v!=null?offLbl(J.p['Work offset'].v):null;
+  r.red=!!(r.miss.length||r.block||!r.code||r.cv.length||r.err);return r});
+ if(JMC.size>400)JMC.clear();JMC.set(sg,r);return r}
+function jmWhy(r){return r.miss.length?`${r.miss.length} red value${r.miss.length>1?'s':''}: ${r.miss.slice(0,4).join(', ')}${r.miss.length>4?'…':''}`:r.block?r.block:r.cv.length?'common variables not confirmed free: #'+r.cv.slice(0,4).join(', #'):r.err?'error: '+r.err:!r.code?'no code written':''}
+// ---- program text helpers
+const jmOut=(l,f)=>l.split(/(\([^)]*\))/).map((s,i)=>i%2?s:f(s)).join('');   // apply f outside ( comments )
+const jmPad=(n,w)=>'O'+String(n).padStart(w||4,'0');
+function jmSplit(lines){const L=lines.map(s=>String(s).replace(/\s+$/,'')).filter(s=>s.trim()&&s.trim()!='%'),blk=[];let cur=null;
+ L.forEach(s=>{const m=s.match(/^\s*O0*(\d+)\b/);if(m){cur={num:+m[1],w:Math.max(4,(s.match(/^\s*O(\d+)/)[1]).length),head:s.trim(),lines:[]};blk.push(cur)}else if(cur)cur.lines.push(s);else{cur={num:null,w:4,head:'',lines:[s]};blk.push(cur)}});
+ if(!blk.length)return {main:{num:null,lines:[]},subs:[]};let main=blk[0];if(main.num==null&&blk[1]&&blk[1].num!=null){blk[1].lines=main.lines.concat(blk[1].lines);blk.shift();main=blk[0]}
+ const ml=main.lines,e=ml.map((s,i)=>/\bM30\b/.test(jmOut(s,x=>x).replace(/\([^)]*\)/g,''))?i:-1).filter(i=>i>=0).pop();
+ return {main:{num:main.num,w:main.w,head:main.head,lines:e!=null&&e>=0?ml.slice(0,e):ml.slice(),endTail:e!=null&&e>=0?ml.slice(e+1):[]},subs:blk.slice(1).map(b=>({num:b.num,w:b.w,head:b.head,lines:b.lines}))}}
+const jmNC=s=>s.replace(/\([^)]*\)/g,'');
+const jmSafe=s=>{const t=jmNC(s);return /G40/.test(t)&&/G80/.test(t)&&/G49|G99/.test(t)&&!/[XYZUW]-?[\d.#\[]/.test(t)};
+const jmIsMove=s=>{const t=jmNC(s);return /(^|\s|G0?[0-3]\s*)[XYZUW]\s*-?[\d.#\[]/.test(t)&&!/G53|G28|G30/.test(t)};
+const jmOffRe=/\bG5[4-9](?:\.1)?(?:\s*P\s*\d+)?\b|\bG1[1-2]\d\b|\bG154\s*P\s*\d+/;
+const jmTool=(s,L)=>{const t=jmNC(s);if(L){const m=t.match(/^\s*(?:N\d+\s*)?(?:G\d+\s*)*T(\d{3,4})\b/);return m?m[1]:null}const m=t.match(/\bT(\d+)\s*M0?6\b/)||t.match(/\bM0?6\s*T(\d+)\b/);return m?String(+m[1]):null};
+function jmVars(t){return commonUsed(t)}
+// ---- build one program from a list. Returns {lines, notes, warn, err, secs, ct}
+function jmBuild(l){const k=jmMI(l),out={lines:[],notes:[],warn:[],err:[],secs:[],ct:0,tc:0};if(k<0){out.err.push('This list\'s machine was deleted — move it to a machine first.');return out}
+ const ents=l.entries.filter(e=>e.on!==false);if(!ents.length){out.err.push('No enabled jobs in this list.');return out}
+ const R=ents.map(e=>jmRender(e,k));R.forEach((r,i)=>{if(r.red)out.err.push(`#${l.entries.indexOf(ents[i])+1} “${jmName(ents[i])}” is not ready — ${jmWhy(r)}.`)});if(out.err.length)return out;
+ return jmSand(k,()=>{const L=isL(),mode=l.mode=='sub'?'sub':'inline',P=Math.max(1,Math.min(99999,Math.round(+l.prog||1000)));
+  const S2=R.map(r=>jmSplit(r.code));let safe=null,gen=null;
+  // all original O numbers (so a new number never lands on one used later)
+  const used=new Set([P]);S2.forEach(s=>s.subs.forEach(b=>used.add(b.num)));const allV=new Set();S2.forEach((s,i)=>jmVars(R[i].code.join('\n')).forEach(v=>allV.add(v)));
+  const free=n=>{let x=n+1;while(used.has(x)||x>99999){x++;if(x>99999)x=1000}used.add(x);return x};
+  const seen={};const keepSubs=[];const varsBefore=new Set(),pvBefore={};let lastTool=null;
+  const fr=freeRanges();const freeVar=()=>{for(let v=100;v<200;v++){if(allV.has(v))continue;if(fr&&!fr.some(([a,b])=>v>=a&&v<=b))continue;allV.add(v);return v}return null};
+  const labUsed=new Set();let labNext=1000;
+  S2.forEach((s,i)=>{const e=ents[i],r=R[i],no=l.entries.indexOf(e)+1,nm=jmName(e);let body=s.main.lines.slice();const sec={no,name:nm,op:r.op,tool:null,wo:r.wo,skipped:null,high:r.high,ct:r.ct};
+   // header comment + safe start (kept once)
+   body=body.filter(x=>{if(/^\s*\(GENERIC .*\)\s*$/.test(x)){gen=gen||x.trim();return false}return true});
+   const si=body.findIndex(jmSafe);if(si>=0){safe=safe||body[si].trim();body.splice(si,1)}
+   if(body.some(x=>/\bM30\b|\bM99\b|\bM02\b/.test(jmNC(x))))out.err.push(`#${no} “${nm}” ends or loops the program itself (M30 / M99 / M02 in its main part) — it can't be combined; run it on its own.`);
+   // subprograms: same number + same code = shared; same number + different code = renumbered
+   const map={};let shared=false;
+   s.subs.forEach(b=>{const key=b.lines.join('\n');if(b.num===P||(seen[b.num]&&seen[b.num].key!=key)){const n=free(b.num);map[b.num]=n;out.notes.push(`#${no}: subprogram O${b.num} clashed with ${b.num===P?'the main program number':'a different O'+b.num+' in #'+seen[b.num].no} — renumbered to O${n} (calls updated).`);keepSubs.push({num:n,w:b.w,head:b.head.replace(/^\s*O0*\d+/,jmPad(n,b.w)),lines:b.lines,no})}
+    else if(seen[b.num]){shared=true;if(!seen[b.num].noted){out.notes.push(`O${b.num} is the same code in #${seen[b.num].no} and #${no} — kept once.`);seen[b.num].noted=1}}
+    else{seen[b.num]={key,no};keepSubs.push({num:b.num,w:b.w,head:b.head,lines:b.lines,no})}});
+   const fix=x=>jmOut(x,t=>t.replace(/\b(G65|G66|M98)(\s*)P(\d+)/g,(m0,c,sp,p)=>{const n=+p;if(map[n]!=null)return c+sp+'P'+map[n];if(c=='M98'&&p.length>4&&map[+p.slice(-4)]!=null)return c+sp+'P'+p.slice(0,-4)+String(map[+p.slice(-4)]).padStart(4,'0');return m0}));
+   body=body.map(fix);keepSubs.filter(b=>b.no==no).forEach(b=>b.lines=b.lines.map(fix));
+   // common variables
+   const vt=[body.join('\n'),...keepSubs.filter(b=>b.no==no).map(b=>b.lines.join('\n'))].join('\n'),vs=jmVars(vt),ind=/#\[/.test(jmNC(vt));
+   const c1=vs.filter(v=>v<200&&varsBefore.has(v)),c5=vs.filter(v=>v>=500&&pvBefore[v]!=null);
+   if(c1.length){if(shared||ind)out.warn.push(`#${no} “${nm}” uses #${c1.join(', #')} like an earlier job and ${shared?'shares a subprogram with it':'uses computed variable numbers (#[…])'} — not renumbered. Check they don't need to keep values between jobs.`);
+    else{const vm={};c1.forEach(v=>{const n=freeVar();if(n!=null)vm[v]=n});const bad=c1.filter(v=>vm[v]==null);
+     if(Object.keys(vm).length){const rv=x=>jmOut(x,t=>t.replace(/#(\d+)(?!\d)/g,(m0,d)=>vm[+d]!=null?'#'+vm[+d]:m0));body=body.map(rv);keepSubs.filter(b=>b.no==no).forEach(b=>b.lines=b.lines.map(rv));out.notes.push(`#${no}: common variables ${Object.entries(vm).map(([a,b])=>'#'+a+'→#'+b).join(', ')} renumbered (an earlier job uses them).`)}
+     if(bad.length)out.warn.push(`#${no}: no free #100–#199 left to move #${bad.join(', #')} — they are shared with an earlier job.`)}}
+   if(c5.length)out.warn.push(`#${no} “${nm}” and #${pvBefore[c5[0]]} both use persistent variable${c5.length>1?'s':''} #${c5.join(', #')} (#500+ keep their value after power-off). Make sure they're meant to share it (e.g. the same counter). Not renumbered.`);
+   jmVars([body.join('\n'),...keepSubs.filter(b=>b.no==no).map(b=>b.lines.join('\n'))].join('\n')).forEach(v=>{if(v<200)varsBefore.add(v);else if(pvBefore[v]==null)pvBefore[v]=no});
+   // N labels / GOTO / M97 (inline only: all sections share one main program)
+   if(mode=='inline'){const labs=new Set();body.forEach(x=>{const t=jmNC(x);(t.match(/(?:^|\s)N(\d+)/g)||[]).forEach(m=>labs.add(+m.trim().slice(1)));(t.match(/GOTO\s*(\d+)|M97\s*P\s*(\d+)/g)||[]).forEach(m=>labs.add(+m.match(/(\d+)\s*$/)[1]))});
+    const lm={};labs.forEach(n=>{if(labUsed.has(n)){while(labUsed.has(labNext)||labs.has(labNext))labNext++;lm[n]=labNext;labUsed.add(labNext)}else labUsed.add(n)});
+    if(Object.keys(lm).length){body=body.map(x=>jmOut(x,t=>t.replace(/(^|\s)N(\d+)/g,(m0,a,d)=>lm[+d]!=null?a+'N'+lm[+d]:m0).replace(/(GOTO\s*)(\d+)/g,(m0,a,d)=>lm[+d]!=null?a+lm[+d]:m0).replace(/(M97\s*P\s*)(\d+)/g,(m0,a,d)=>lm[+d]!=null?a+lm[+d]:m0)));out.notes.push(`#${no}: line labels ${Object.entries(lm).map(([a,b])=>'N'+a+'→N'+b).join(', ')} renumbered (one main program).`)}}
+   // tool change: skip if the same tool is already in the spindle (mills); always keep lathe T calls (they pick the offset too)
+   const ti=body.findIndex(x=>jmTool(x,L));if(ti>=0){sec.tool=jmTool(body[ti],L);if(!L&&lastTool!=null&&sec.tool==lastTool){body[ti]=`(T${sec.tool} ALREADY IN SPINDLE - TOOL CHANGE SKIPPED)`;sec.skipped=sec.tool;out.notes.push(`#${no}: T${sec.tool} is already in the spindle — tool change skipped.`)}else out.tc++}
+   body.forEach(x=>{const t=jmTool(x,L);if(t)lastTool=t});
+   // work offset: re-state before the first part move in every section
+   const fm=body.findIndex(jmIsMove),wi=body.findIndex(x=>jmOffRe.test(jmNC(x)));
+   if(r.wo){if(wi<0||(fm>=0&&wi>fm)){const at=ti>=0?ti+1:0;body.splice(at,0,`${r.wo} (WORK OFFSET RE-STATED)`);out.notes.push(`#${no}: work offset ${r.wo} added before the first move.`)}sec.wo=r.wo}
+   else if(wi>=0&&(fm<0||wi<fm))sec.wo=jmNC(body[wi]).match(jmOffRe)[0];
+   else{body.unshift('(NO WORK OFFSET IN THIS JOB - MACHINE COORDINATES ONLY)');sec.wo=null}
+   // spindle + coolant off at the end of each section
+   const tail=body.slice(-6).map(jmNC).join(' ');if(!/\bM0?9\b/.test(tail))body.push('M09');if(!/\bM0?5\b/.test(tail))body.push('M05');
+   const ban=['(==============================)',`(${jmCm('SECTION '+(i+1)+' OF '+ents.length+': '+nm)})`,`(${jmCm((jName(r.op)||'')+(sec.tool?' - T'+sec.tool:'')+(sec.wo?' - '+sec.wo:' - NO WORK OFFSET'))})`];
+   if(r.high)ban.push('(HIGH RISK JOB - RISK ACCEPTED ON THIS JOB - DRY RUN FIRST)');
+   if(i>0)body.unshift(L?'G40 G80 (MODE RESET)':'G40 G80 G90 (MODE RESET)');
+   sec.ban=ban;sec.body=body;out.secs.push(sec);out.ct+=r.ct||0});
+  if(out.err.length)return out;
+  const SAFE=safe||(L?`G18 ${GU()} G40 G80 G99 (SAFE START)`:`G17 ${GU()} G40 G49 G80 G90 (SAFE START)`);
+  const hd=['%',`${jmPad(P)} (${jmCm(l.name||'JOB LIST')})`,`(JOB LIST - ${ents.length} JOB${ents.length>1?'S':''} - ${mode=='sub'?'MAIN CALLS SUBPROGRAMS':'INLINE'})`];if(gen)hd.push(gen);hd.push(SAFE);
+  const lines=hd.slice(),subs=[];
+  if(mode=='sub')out.secs.forEach(sec=>{const n=free(P);sec.sub=n;lines.push(...sec.ban,`M98 P${n} (${jmCm(sec.name).slice(0,30)})`);subs.push([`${jmPad(n)} (${jmCm('SECTION '+sec.no+' '+sec.name)})`,...sec.body,'M99'])});
+  else out.secs.forEach(sec=>lines.push(...sec.ban,...sec.body));
+  lines.push('(==============================)','M30');
+  subs.forEach(s=>lines.push('',...s));keepSubs.forEach(b=>lines.push('',b.head,...b.lines));lines.push('%');
+  out.lines=lines;out.tcs=+((S.jmTc!=null?S.jmTc:5));out.ct+=out.tc*out.tcs;out.lathe=L;out.mode=mode;
+  out.checks=jmChecks(lines,out,L);return out})}
+function jmChecks(lines,o,L){const t=lines.join('\n'),nc=lines.map(jmNC).join('\n');const os=lines.map(s=>(s.match(/^\s*O0*(\d+)/)||[])[1]).filter(Boolean).map(Number);
+ const calls=[...nc.matchAll(/\b(G65|G66|M98)\s*P(\d+)/g)].map(m=>{const p=m[2];return m[1]=='M98'&&p.length>4?+p.slice(-4):+p}),ext=[...new Set(calls.filter(n=>!os.includes(n)))];
+ let sim;try{sim=interp(lines,{lathe:L})}catch(e){sim={moves:[],alarms:[],err:e.message}}o.sim=sim;
+ const fr=freeRanges(),cu=commonUsed(t),outR=fr?cu.filter(n=>!fr.some(([a,b])=>n>=a&&n<=b)):[];
+ const m30=(nc.match(/\bM30\b/g)||[]).length;const mainEnd=lines.findIndex(s=>/\bM30\b/.test(jmNC(s)));
+ const c=[['One program number (main O'+os[0]+')',os.length>0&&lines.slice(0,3).some(s=>/^\s*O\d/.test(s))],['No duplicate O-numbers',new Set(os).size==os.length],['One safe-start at the top',lines.filter(jmSafe).length==1&&lines.findIndex(jmSafe)<6],['One program end (M30), at the end of the main program',m30==1&&!lines.slice(0,mainEnd).some(s=>/\bM99\b/.test(jmNC(s)))],
+  ['Every job has a work offset (or says machine coordinates)',o.secs.every(s=>s.wo||s.body.some(x=>/NO WORK OFFSET/.test(x)))],['WHILE / END pairs match',(nc.match(/DO\d/g)||[]).length==(nc.match(/END\d/g)||[]).length],['Balanced [ ] brackets',(nc.match(/\[/g)||[]).length==(nc.match(/\]/g)||[]).length],
+  ['Program runs in the simulator'+(sim.err?': '+sim.err:''),!sim.err],['No #3000 alarm on this run'+(sim.alarms&&sim.alarms.length?' ('+sim.alarms[0].msg+')':''),!(sim.alarms&&sim.alarms.length)],
+  ['Common variables inside your free ranges'+(outR.length?': #'+outR.join(', #'):fr?'':' (free ranges not set — each job was checked on its own)'),!outR.length],['Line count under machine memory',lines.length<+((sv('Program memory (lines)')||{v:8000}).v)]];
+ o.ext=ext;return c}
+// ---- screens
+function jobMgr(){const k=S.cur,m=S.m[k];$('#ttl').textContent='Job manager · '+((m||{}).name||'?');tabOn();JMR=null;
+ if(!m){V.innerHTML=`<div class="card"><div class="s">Add a machine first.</div></div>`;return}
+ const ls=jmMine(k).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),undefined,{sensitivity:'base'}));
+ V.innerHTML=`<div class="card"><div class="t">📋 Job lists for ${esc(m.name)}</div><div class="s">Put several jobs in a list, put them in order, and build <b>one program</b>. Lists belong to this machine — switch machine to see its lists.</div>
+ ${ls.length?ls.map(l=>`<div class="set jmls" data-id="${l.id}"><span style="flex:1;cursor:pointer" onclick="jmOpen('${l.id}')"><b>${esc(l.name)}</b> <span class="s">· ${l.entries.length} job${l.entries.length==1?'':'s'}</span></span><button class="chip y" onclick="jmOpen('${l.id}')">Open</button><button class="chip gr" onclick="jmDel('${l.id}')">✕</button></div>`).join(''):`<div class="s" id="jmnone">No job lists on this machine yet.</div>`}
+ <div class="row" style="margin-top:8px"><input id="jmnew" placeholder="New list name (e.g. Bracket op 1)" style="flex:2" maxlength="60"><button class="chip y" id="jmnewb" onclick="jmNew()">+ New job list</button></div></div>
+ <button class="btn o" onclick="navBack(()=>tab('recent'))">‹ Back</button>`}
+function jmNew(n){const k=S.cur,m=S.m[k];if(!m)return null;const nm=mbClean(n!=null?n:(($('#jmnew')||{}).value||''),60)||('Job list '+(jmMine(k).length+1));
+ const l={id:jmUid(),name:nm,mid:m.id,mode:'inline',prog:1000,entries:[],date:Date.now()};S.jlists.push(l);save();jmOpen(l.id);return l}
+function jmDel(id){const l=jmGet(id);if(!l||!confirm(`Delete the job list “${l.name}”? The jobs in your Library are not touched.`))return;S.jlists.splice(S.jlists.indexOf(l),1);save();jobMgr()}
+function jmAddOpts(k){const m=S.m[k];let h='<option value="">Add a job…</option>';
+ if(J&&J.op&&J.p&&J.op!='import'&&mbFits(J.op,J.lathe,k))h+=`<optgroup label="Open job"><option value="cur">${esc(J.name||jName(J.op))} (open in Build)</option></optgroup>`;
+ const lib=(S.jobs||[]).map((j,i)=>[j,i]).filter(([j])=>j&&j.op&&(j.machine==m.name||!S.m.some(x=>x.name==j.machine))&&mbFits(j.op,j.lathe,k));
+ if(lib.length)h+=`<optgroup label="My jobs (Library)">${lib.sort((a,b)=>String(a[0].name||jName(a[0].op)).localeCompare(String(b[0].name||jName(b[0].op)))).map(([j,i])=>`<option value="lib:${i}">${esc(j.name||jName(j.op))}</option>`).join('')}</optgroup>`;
+ const c=S.cur;S.cur=k;try{h+=jCats().map(([cat,l])=>`<optgroup label="${cat}">${l.filter(op=>!JX[op]).map(op=>`<option value="op:${op}">${esc(jLabel(op))}</option>`).join('')}</optgroup>`).join('')}finally{S.cur=c}return h}
+function jmAdd(l,v){const k=jmMI(l);if(k<0||!v)return null;let job=null,label='';
+ if(v=='cur'){if(!(J&&J.op&&mbFits(J.op,J.lathe,k)))return null;job=jmClean(J);label=J.name||''}
+ else if(v.startsWith('lib:')){const j=S.jobs[+v.slice(4)];if(!j||!mbFits(j.op,j.lathe,k))return null;job=jmClean(j);label=j.name||''}
+ else if(v.startsWith('op:')){const op=v.slice(3);const c=S.cur;S.cur=k;const ok=jAvail(op)&&!JX[op];S.cur=c;if(!ok)return null;job=jmSand(k,()=>{J=null;try{pickJob(op)}catch(e){}return J&&J.op?jmClean(J):null});if(!job)return null;label=''}
+ if(!job)return null;delete job.name;const e={id:jmUid(),label:mbClean(label||jName(job.op),60).replace(/^⚠\s*/,''),job,on:true};l.entries.push(e);save();return e}
+function jmOpen(id){const l=jmGet(id);if(!l)return jobMgr();JML=id;const k=jmMI(l);if(k>=0&&k!=S.cur){S.cur=k;save();try{updMode()}catch(e){}}
+ const m=S.m[k]||{name:'(deleted machine)'};$('#ttl').textContent='Job manager · '+m.name;tabOn();
+ const R=l.entries.map(e=>k>=0?jmRender(e,k):{red:1,miss:[],block:'machine deleted',cv:[],code:null}),on=l.entries.filter(e=>e.on!==false),nred=l.entries.filter((e,i)=>e.on!==false&&R[i].red).length;
+ const st=(e,r)=>e.on===false?`<span class="chip gr">off</span>`:r.red?`<span class="chip r" title="${esc(jmWhy(r))}">● red</span>`:(r.high||r.thin||r.issues)?`<span class="chip y" style="background:#ffb020;color:#111">● amber</span>`:`<span class="chip g">● ready</span>`;
+ V.innerHTML=`<div class="card"><div class="row"><input id="jmname" value="${esc(l.name).replace(/"/g,'&quot;')}" maxlength="60" style="flex:2" aria-label="List name"></div>
+ <div class="row" style="margin-top:6px"><label class="s" style="flex:1">Program O<input id="jmprog" type="number" min="1" max="99999" value="${+l.prog||1000}" style="width:90px"></label>
+ <select id="jmmode" style="flex:1;min-height:44px" aria-label="Program layout"><option value="inline"${l.mode!='sub'?' selected':''}>Inline (one main program)</option><option value="sub"${l.mode=='sub'?' selected':''}>Main calls each job as a subprogram</option></select></div></div>
+ <div class="card"><div class="row"><select id="jmadd" style="flex:2;min-height:44px" aria-label="Add a job">${k>=0?jmAddOpts(k):''}</select><button class="chip y" id="jmaddb" onclick="jmAddUI()">+ Add</button></div><div class="s">Only jobs ${esc(m.name)} can run are listed.</div></div>
+ <div class="card"><div class="t">Jobs · ${on.length} of ${l.entries.length} on${nred?` · <span style="color:#ff8a8a">${nred} red</span>`:''}</div>
+ <div id="jmlist">${l.entries.map((e,i)=>{const r=R[i];return `<div class="jme set" data-i="${i}" draggable="true" style="flex-wrap:wrap;gap:4px;${e.on===false?'opacity:.55':''}"><span class="jmh" title="Drag to reorder" style="cursor:grab;touch-action:none;padding:4px 6px;font-size:18px" aria-hidden="true">☰</span><span style="flex:1;min-width:120px"><b>${i+1}. ${r.high?'⚠ ':''}${esc(jmName(e))}</b><br><span class="s">${esc(jName(e.job.op))}${r.ct?' · ~'+fmt(r.ct):''}${r.thin?' · amber: verify':''}${r.high?' · HIGH risk':''}</span>${e.on!==false&&r.red?`<br><span class="s jmwhy" style="color:#ff8a8a">${esc(jmWhy(r))}</span>`:''}</span>
+  ${st(e,r)}${e.on!==false&&(r.red||r.issues||r.thin)?`<button class="chip ${r.red?'r':'y'} jmfix" onclick="jmFix(${i})">Fix ›</button>`:`<button class="chip gr jmfix" onclick="jmFix(${i})">Open</button>`}
+  <label class="s" style="display:inline-flex;align-items:center;gap:2px"><input type="checkbox" class="jmon" ${e.on!==false?'checked':''} onchange="jmToggle(${i},this.checked)" style="width:auto">on</label>
+  <button class="chip gr" aria-label="Move up" onclick="jmMove(${i},-1)" ${i?'':'disabled'}>▲</button><button class="chip gr" aria-label="Move down" onclick="jmMove(${i},1)" ${i<l.entries.length-1?'':'disabled'}>▼</button><button class="chip gr" aria-label="Duplicate" onclick="jmDup(${i})">Dup</button><button class="chip gr" aria-label="Remove" onclick="jmRm(${i})">✕</button></div>`}).join('')||'<div class="s" id="jmempty">No jobs yet — add one above.</div>'}</div></div>
+ <button class="btn" id="jmbuild" onclick="jmBuildUI()" ${!on.length||nred?'disabled':''}>Build one program</button>${nred?`<div class="s" id="jmblock" style="color:#ff8a8a">Fix the red job${nred>1?'s':''} first (or switch ${nred>1?'them':'it'} off). Nothing is guessed.</div>`:''}<div id="jmres"></div>
+ <div class="row"><button class="btn o" onclick="jmShare('${l.id}')">📤 Share list</button><button class="btn o" onclick="help('jobmgr')">How it works</button></div><div class="s">Saved to your Library automatically (Library → Job lists) and included in backups.</div>
+ <button class="btn o" onclick="navBack(()=>jobMgr())">‹ Back</button>`;
+ $('#jmname').onchange=e=>{l.name=mbClean(e.target.value,60)||l.name;save()};$('#jmprog').onchange=e=>{const n=Math.round(+e.target.value);if(n>=1&&n<=99999){l.prog=n;save()}else e.target.value=l.prog};$('#jmmode').onchange=e=>{l.mode=e.target.value=='sub'?'sub':'inline';save();const r=$('#jmres');if(r)r.innerHTML=''};
+ jmDrag(l)}
+function jmL(){return jmGet(JML)}
+function jmAddUI(){const l=jmL(),s=$('#jmadd');if(!l||!s||!s.value)return;const e=jmAdd(l,s.value);jmOpen(l.id);if(!e)$('#jmres').innerHTML='<div class="ok bad">That job can\'t run on this machine — not added.</div>'}
+function jmMove(i,d){const l=jmL();if(!l)return;const j=i+d;if(j<0||j>=l.entries.length)return;const [e]=l.entries.splice(i,1);l.entries.splice(j,0,e);save();jmOpen(l.id)}
+function jmTo(i,j){const l=jmL();if(!l||i==j||j<0||j>=l.entries.length)return;const [e]=l.entries.splice(i,1);l.entries.splice(j,0,e);save();jmOpen(l.id)}
+function jmDup(i){const l=jmL();if(!l)return;const e=JSON.parse(JSON.stringify(l.entries[i]));e.id=jmUid();e.label=mbClean(jmName(e)+' (copy)',60);l.entries.splice(i+1,0,e);save();jmOpen(l.id)}
+function jmRm(i){const l=jmL();if(!l||!confirm(`Remove “${jmName(l.entries[i])}” from this list? (Your Library is not touched.)`))return;l.entries.splice(i,1);save();jmOpen(l.id)}
+function jmToggle(i,on){const l=jmL();if(!l)return;l.entries[i].on=!!on;save();jmOpen(l.id)}
+// drag: HTML5 on desktop, pointer on the ☰ handle for phones
+function jmDrag(l){const box=$('#jmlist');if(!box)return;let from=null;
+ box.querySelectorAll('.jme').forEach(el=>{el.ondragstart=e=>{from=+el.dataset.i;e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',String(from))}catch(x){}};el.ondragover=e=>{e.preventDefault()};el.ondrop=e=>{e.preventDefault();const t=+el.dataset.i;if(from!=null)jmTo(from,t);from=null}});
+ box.querySelectorAll('.jmh').forEach(h=>{h.onpointerdown=e=>{const el=h.closest('.jme'),i=+el.dataset.i;e.preventDefault();el.style.outline='2px solid #ffd21f';let t=i;
+  const mv=ev=>{const o=document.elementFromPoint(ev.clientX,ev.clientY),x=o&&o.closest&&o.closest('.jme');if(x){t=+x.dataset.i;box.querySelectorAll('.jme').forEach(z=>z.style.borderTop=z===x&&t!=i?'2px solid #ffd21f':'')}};
+  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);el.style.outline='';jmTo(i,t)};
+  addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up)}})}
+function jmBuildUI(){const l=jmL();if(!l)return;const t0=performance.now(),o=jmBuild(l);JMR=o;const r=$('#jmres');if(!r)return o;o.ms=performance.now()-t0;
+ if(o.err.length){r.innerHTML=`<div class="ok bad" id="jmerr">⛔ Not built:<br>${o.err.map(esc).join('<br>')}</div>`;return o}
+ const ok=o.checks.filter(c=>c[1]).length;
+ r.innerHTML=`<div class="card" id="jmout"><div class="t">Program O${+l.prog||1000} · ${o.secs.length} job${o.secs.length>1?'s':''} · cycle time about ${fmt(o.ct)}</div>
+ <div class="s">Sum of each job's simulated time + ${o.tc} tool change${o.tc==1?'':'s'} × ${o.tcs} s (gray estimate). ${o.lines.length} lines · ${o.mode=='sub'?'main program calls each job as a subprogram':'inline'}.</div>
+ <div class="ok ${ok==o.checks.length?'':'bad'}" id="jmck">${ok==o.checks.length?'✓':'⚠'} ${ok} of ${o.checks.length} whole-program checks pass</div>${o.checks.map(c=>`<div class="s">${c[1]?'✓':'✗'} ${esc(c[0])}</div>`).join('')}
+ ${o.ext&&o.ext.length?`<div class="s" style="color:#ffb020">Calls programs that are not in this file: O${o.ext.join(', O')} — they must already be loaded on the control (e.g. probe cycles).</div>`:''}
+ ${o.notes.length?`<div class="t" style="margin-top:6px">What changed while combining</div>${o.notes.map(n=>`<div class="s jmnote">• ${esc(n)}</div>`).join('')}`:''}
+ ${o.warn.length?`<div class="t" style="margin-top:6px;color:#ffb020">Check these (amber)</div>${o.warn.map(n=>`<div class="s jmwarn" style="color:#ffb020">• ${esc(n)}</div>`).join('')}`:''}
+ ${o.secs.some(s=>s.high)?`<div class="s" style="color:#ff8a8a">HIGH-risk jobs inside: ${o.secs.filter(s=>s.high).map(s=>'#'+s.no+' '+esc(s.name)).join(', ')} — each one's risk was accepted on that job. Dry run with no part.</div>`:''}
+ <div class="code" id="jmcode" style="max-height:320px;overflow:auto">${o.lines.map(x=>`<div class="ln">${esc(x)||'&nbsp;'}</div>`).join('')}</div>
+ <button class="btn" id="jmsim" onclick="jmSim()">▶ Open in Simulate (copy / download from there)</button><button class="btn o" onclick="jmSim('edit')">Open in Editor</button>
+ <div class="foot">⚠ Dry-run and single-block on the machine before production. Each job was checked on its own and the whole program again here.</div></div>`;return o}
+function jmSim(pg){const l=jmL(),o=JMR;if(!l||!o||!o.lines.length)return;const k=jmMI(l);S.cur=k;save();NAV.d++;try{tab('new');importToEditor(o.lines.join('\n'));J.name=l.name;J.text='(job list: '+l.name+')';J.jmList=l.id}finally{NAV.d--}tab(pg=='edit'?'edit':'sim')}
+// fix an entry in the normal Build page, then come back
+function jmFix(i){const l=jmL();if(!l)return;const e=l.entries[i],k=jmMI(l);if(!e||k<0)return;S.cur=k;save();JMF={lid:l.id,eid:e.id};J=jmClean(e.job);J.date=J.date||Date.now();J.name=jmName(e);tab('new');show()}
+function jmDone(){if(!JMF)return;const l=jmGet(JMF.lid),e=l&&l.entries.find(x=>x.id==JMF.eid);if(e&&J){const nm=J.name;e.job=jmClean(J);delete e.job.name;if(nm)e.label=mbClean(nm,60);save()}const id=JMF.lid;JMF=null;jmOpen(id)}
+const _show64=show;show=function(){const r=_show64.apply(this,arguments);try{if(JMF&&!NAV.d&&J&&$('#out')&&!$('#jmfixbar')){const l=jmGet(JMF.lid),e=l&&l.entries.find(x=>x.id==JMF.eid);if(e){$('#out').insertAdjacentHTML('afterbegin',`<div class="card pgkeep" id="jmfixbar" style="border:1px solid #ffd21f"><div class="s">Editing <b>${esc(jmName(e))}</b> in job list <b>${esc(l.name)}</b>. Changes stay in the list (not your Library).</div><button class="btn" id="jmdone" onclick="jmDone()">✓ Done — back to the list</button></div>`)}}}catch(x){}return r};
+// leaving Build some other way drops the edit link (the list keeps its last saved copy)
+const _tab64=tab;tab=function(t){if(JMF&&t!='new'&&t!='edit'&&t!='sim')JMF=null;return _tab64.apply(this,arguments)};
+// ---- entry points: Build (link under the preset picker + "➕ Job list" next to Save…) and Library (Job lists card)
+const _nw64=nw;nw=function(){_nw64.apply(this,arguments);try{const b=$('#jpbox');if(b&&!$('#jmlink'))b.insertAdjacentHTML('beforeend',`<div class="s" id="jmlink" style="margin-top:4px"><a href="#" onclick="jobMgr();return false">📋 Job manager</a> — put several jobs into one program</div>`)}catch(e){}};
+const _show64b=show;show=function(){const r=_show64b.apply(this,arguments);try{const qs=$('#qsave');if(qs&&J&&J.op&&J.op!='import'&&!$('#jmaddcur')&&!NAV.d){const b=document.createElement('button');b.id='jmaddcur';b.type='button';b.className='chip gr';b.textContent='➕ Job list';b.onclick=()=>jmPickList();qs.insertBefore(b,qs.querySelector('span'))}}catch(e){}return r};
+function jmPickList(){const k=S.cur,ls=jmMine(k);if(!J)return;let l=null;
+ if(ls.length){const names=ls.map((x,i)=>`${i+1}. ${x.name}`).join('\n');const a=prompt(`Add this job to which job list on ${S.m[k].name}?\n${names}\n\nType a number, or a new name to start a new list:`,'1');if(a==null)return;const n=+a;l=n>=1&&n<=ls.length?ls[n-1]:null;if(!l){l={id:jmUid(),name:mbClean(a,60)||'Job list',mid:S.m[k].id,mode:'inline',prog:1000,entries:[],date:Date.now()};S.jlists.push(l)}}
+ else{const a=prompt('Name for a new job list on '+S.m[k].name+':','Job list 1');if(a==null)return;l={id:jmUid(),name:mbClean(a,60)||'Job list 1',mid:S.m[k].id,mode:'inline',prog:1000,entries:[],date:Date.now()};S.jlists.push(l)}
+ save();JML=l.id;const e=jmAdd(l,'cur');jmOpen(l.id);if(!e)$('#jmres').innerHTML='<div class="ok bad">This job can\'t run on this machine — not added.</div>'}
+function jmLibUI(){if(!/^Library/.test($('#ttl').textContent)||$('#jmcard'))return;const c=document.createElement('div');c.className='card';c.id='jmcard';const all=S.jlists;
+ c.innerHTML=`<div class="t">📋 Job lists</div>${all.length?all.map(l=>{const k=jmMI(l);return `<div class="set"><span style="flex:1;cursor:pointer" onclick="jmOpen('${l.id}')">${esc(l.name)} <span class="s">· ${esc(k>=0?S.m[k].name:'deleted machine')} · ${l.entries.length} job${l.entries.length==1?'':'s'}</span></span><button class="chip y" onclick="jmOpen('${l.id}')">Open</button></div>`}).join(''):'<div class="s">No job lists yet.</div>'}<button class="chip gr" id="jmopenmgr" onclick="jobMgr()">Open Job manager</button>`;
+ const mb=$('#mbcard');if(mb)mb.after(c);else V.prepend(c)}
+const _recent64=recent;recent=function(){const r=_recent64.apply(this,arguments);jmLibUI();return r};
+// nav + help topic
+{const a=jobMgr,b=jmOpen;jobMgr=function(){const r=a.apply(this,arguments);try{helpBtn()}catch(e){}return r};jmOpen=function(){const r=b.apply(this,arguments);try{helpBtn()}catch(e){}return r}}
+['jobMgr','jmOpen'].forEach(navWrap);
+const _ct64=curTopic;curTopic=function(){return /^Job manager/.test($('#ttl').textContent)?'jobmgr':_ct64()};
+// ---- backups (backup() already writes all of S, so lists travel); Merge adds lists and maps them to machines by name
+const _merge64=mergeBackup;mergeBackup=function(d){const idName={};(d.m||[]).forEach(m=>{if(m&&m.id!=null)idName[m.id]=m.name});const r=_merge64.apply(this,arguments);
+ (Array.isArray(d.jlists)?d.jlists:[]).forEach(l=>{if(!l||!Array.isArray(l.entries))return;const m=S.m.find(x=>x.name==idName[l.mid]);let nm=mbClean(l.name,60)||'Job list',i=2;const base=nm;while(S.jlists.some(x=>x.name==nm&&x.mid==(m&&m.id)))nm=base+' ('+(i++)+')';
+  S.jlists.push({...JSON.parse(JSON.stringify(l)),id:jmUid(),name:nm,mid:m?m.id:null})});save();return r};
+// ---- share a list (.mbjob, kind "joblist"): each entry is a normal shared job; positions arrive red, code rebuilt
+function jmFile(l){const k=jmMI(l),mn=k>=0?S.m[k].name:'';const f={app:MBJ.app,format:MBJ.fmt,kind:'joblist',exported:new Date().toISOString().slice(0,10),list:{name:mbClean(l.name,60),mode:l.mode=='sub'?'sub':'inline',prog:+l.prog||1000,entries:[]},from:{}};
+ l.entries.slice(0,60).forEach(e=>{const g=mbFile({...e.job,name:jmName(e),machine:mn});f.list.entries.push({on:e.on!==false,job:g.job});f.from=g.from});return f}
+async function jmShare(id){const l=jmGet(id);if(!l)return;const f=jmFile(l),txt=JSON.stringify(f),fn=mbFname(l.name).replace(/\.mbjob$/,'-list.mbjob');if(txt.length>MBJ.max){alert('This list is too big to share (over 512 KB).');return 'too big'}
+ try{const file=new File([txt],fn,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:f.list.name,text:'Macro Builder job list — open it with Library → Import job'});return 'shared'}}catch(e){if(e&&e.name=='AbortError')return 'cancelled'}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));a.download=fn;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);window.__mbLast=txt;return 'downloaded'}
+function jmParse(text){let d;try{d=JSON.parse(text)}catch(e){return null}if(!d||d.app!==MBJ.app||d.kind!=='joblist')return null;
+ if(typeof d.format!='number'||d.format>MBJ.fmt)return {err:'Made by a newer version of the app. Update the app first.'};const L=d.list;if(!L||!Array.isArray(L.entries)||!L.entries.length)return {err:'The list file has no jobs in it.'};if(L.entries.length>60)return {err:'Too many jobs in this list file.'};
+ const xs=[];for(const e of L.entries){const x=mbParse(JSON.stringify({app:MBJ.app,format:d.format,job:e&&e.job,from:d.from||{}}));if(!x.ok)return {err:'A job in the list can\'t be read: '+x.err};x.on=!(e&&e.on===false);xs.push(x)}
+ return {ok:1,name:mbClean(L.name,60)||'Shared job list',mode:L.mode=='sub'?'sub':'inline',prog:Math.round(+L.prog)>=1&&Math.round(+L.prog)<=99999?Math.round(+L.prog):1000,xs,from:d.from||{}}}
+const jmTargets=x=>S.m.map((m,k)=>k).filter(k=>x.xs.every(j=>mbFits(j.op,j.from.lathe,k)));
+let JMX=null;
+function jmImport(x,k){if(!jmTargets(x).includes(k))return null;const m=S.m[k];let nm=x.name,i=2;while(S.jlists.some(l=>l.mid==m.id&&l.name==nm))nm=x.name+' ('+(i++)+')';
+ const l={id:jmUid(),name:nm,mid:m.id,mode:x.mode,prog:x.prog,entries:[],date:Date.now(),imported:1};
+ x.xs.forEach(j=>{const r=mbAdd(j,k);if(!r)return;const ix=S.jobs.indexOf(r);if(ix>=0)S.jobs.splice(ix,1);const job=jmClean(r);delete job.name;l.entries.push({id:jmUid(),label:mbClean(j.name,60),job,on:j.on})});
+ S.jlists.push(l);save();return l}
+const _mbPrev64=mbPreview;mbPreview=function(text){const x=jmParse(text);if(!x)return _mbPrev64(text);const o=$('#mbimp');if(!o)return;JMX=null;MBX=null;
+ if(x.err){o.innerHTML=`<div class="ok bad" id="mberr">⛔ ${esc(x.err)}</div>`;return}const t=jmTargets(x);
+ const hd=`<div class="t">📥 Job list: ${esc(x.name)}</div><div class="s">${x.xs.length} jobs: ${x.xs.map(j=>esc(j.name)).join(', ')}</div><div class="s">From: ${esc(mbClean(x.from.machineType,60)||'unknown machine type')} (info only)</div>`;
+ if(!t.length){o.innerHTML=hd+`<div class="ok bad" id="mbref">⛔ Not imported: none of your machines can run every job in this list. Nothing was added.</div>`;return}
+ JMX=x;o.innerHTML=hd+`<label class="s" for="mbm">Put the list on which of your machines? (only ones that can run every job)</label><select id="mbm" style="width:100%;min-height:44px">${t.map(k=>`<option value="${k}"${k==S.cur?' selected':''}>${esc(S.m[k].name)}</option>`).join('')}</select><div class="s" style="color:#ff8a8a">Every position value in every job comes in <b>red</b> — you enter your own (Fix › on each job). Speeds, feeds and clearance come in gray. Code is rebuilt for your machine.</div><button class="btn" id="mbgo" onclick="jmImpDo()">Add job list</button>`};
+function jmImpDo(){if(!JMX)return;const k=+$('#mbm').value,l=jmImport(JMX,k);JMX=null;if(l)jmOpen(l.id)}
+// ---- Help + change log
+HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='faq')),0,['jobmgr','Job manager (several jobs → one program)',()=>`<p><b>Open it</b> from Build (📋 Job manager under the preset list, or <b>➕ Job list</b> next to 💾 Save…) or from Library → <b>📋 Job lists</b>.</p><p><b>Lists belong to one machine.</b> Make a list, name it, then add jobs from your Library, from the preset list, or the job open in Build. Only jobs that machine can run are offered. Reorder with ▲ ▼ or drag the ☰ handle; <b>Dup</b> duplicates, ✕ removes, the <b>on</b> box leaves a job out without deleting it. Jobs in a list are copies — editing one (<b>Fix ›</b>) doesn't change your Library.</p><p><b>Status:</b> <b style="color:#ff8a8a">red</b> = a red value, a refusal, an unaccepted risk gate or an unconfirmed common variable — the program can't be built until you fix it or switch it off. <b style="color:#ffb020">amber</b> = HIGH-risk (accepted), thin-source or a failed check on that job — read it before running. Green = ready.</p><p><b>Build one program</b> makes: one program number and header, one safe-start line, each job as a section with a comment banner, and one M30. Between jobs: coolant and spindle off (M09 M05), a short mode reset (G40 G80${''} and G90 on mills). The <b>work offset is written again in every section</b>. On mills, a tool change is skipped when the next job uses the tool already in the spindle (lathe T calls are kept, because they also pick the offset). <b>Inline</b> puts every job in the main program; <b>Main calls each job as a subprogram</b> writes M98 P calls instead.</p><p><b>Clashes:</b> two different subprograms with the same O-number → the later one is renumbered and its G65 / M98 P calls are updated; the same subprogram in two jobs is kept once. Line labels (N / GOTO / M97) are renumbered in inline mode. Common variables #100–#199 used by an earlier job are moved to free numbers (inside your free ranges if set). <b>#500+ are never renumbered</b> — if two jobs use the same one you get an amber note, because they may be meant to share a counter.</p><p>The whole program is checked again (one O-number, no duplicate O-numbers, one safe-start, one M30, offsets, WHILE / END, brackets, simulator run, free variables, memory). Cycle time = each job's simulated time + tool changes × 5 s (a gray guess). <b>▶ Open in Simulate</b> runs it in the simulator; copy or download from there after “I'll verify on the control”.</p><p><b>Saved</b> automatically (Library → Job lists) and in backups. <b>📤 Share list</b> makes one .mbjob file; on import every job's position values come in red and the code is rebuilt, just like a single shared job.</p>`]);
+LOG.unshift(['3.2 · Oct 13','Job manager: per-machine job lists (Library, presets, open job), reorder / duplicate / on-off, red-amber status with Fix, one program (inline or subprograms) with tool-change skip, work offset per section, O-number / variable / label renumbering, whole-program checks, simulate, backups and .mbjob list sharing.']);
+</script>
+
 </body></html>

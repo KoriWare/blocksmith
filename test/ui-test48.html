@@ -1,0 +1,95 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=64" style="width:390px;height:844px"></iframe><script>
+// Round 64 · Job manager: lists, order, tool-change skip, offsets per section, renumbering, red blocks build, simulator, save / share / backup round trip, perf
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;
+ if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.confirm=()=>true;w.alert=()=>{};w.prompt=()=>null;
+  E("S.cur=0;{const c=S.m[0].s.find(x=>x.k=='Control');c.v='Fanuc 0i-MF';c.st='user'}save();tab('new')");log('Build has Job manager link',!!d.querySelector('#jmlink'));
+  E("jobMgr()");log('Job manager screen opens',/^Job manager/.test(d.querySelector('#ttl').textContent)&&!!d.querySelector('#jmnewb'));
+  E("help(curTopic())");log('? opens Job manager help',/several jobs/.test(d.body.textContent)&&/#500\+ are never renumbered/.test(d.body.textContent));
+  E("jobMgr()");d.querySelector('#jmnew').value='Bracket op 1';E("jmNew()");const lid=E("JML");
+  log('list created for this machine',E(`jmGet('${lid}').mid==S.m[0].id&&jmGet('${lid}').name=='Bracket op 1'`));
+  const opts=[...d.querySelectorAll('#jmadd option')].map(o=>o.value);
+  log('add list only has jobs this mill can run (no lathe jobs)',opts.includes('op:bolt')&&!opts.includes('op:lturn')&&!opts.includes('op:g71'),opts.length);
+  log('lathe job refused on a mill',E(`jmAdd(jmGet('${lid}'),'op:lturn')`)===null);
+  ['op:bolt','op:bolt','op:face'].forEach(v=>{d.querySelector('#jmadd').value=v;E("jmAddUI()")});
+  log('3 entries added',d.querySelectorAll('.jme').length==3);
+  // ordering
+  E("jmMove(2,-1)");log('▼▲ reorder',E(`jmGet('${lid}').entries.map(e=>e.job.op).join()`)=='bolt,face,bolt');
+  E("jmTo(1,2)");log('drag reorder (jmTo)',E(`jmGet('${lid}').entries.map(e=>e.job.op).join()`)=='bolt,bolt,face');
+  log('drag handles present',d.querySelectorAll('.jmh').length==3&&d.querySelector('.jme').draggable);
+  let o=E("jmBuildUI()");const code=o.lines.join('\n');
+  log('one program number + one M30 + one safe start',(code.match(/^O1000 /m)||[]).length==1&&(code.match(/\bM30\b/g)||[]).length==1&&(code.match(/G40 G49 G80 G90 \(SAFE START\)/g)||[]).length==1,code.slice(0,200));
+  log('sections have banners',(code.match(/\(SECTION \d OF 3: /g)||[]).length==3);
+  log('same tool consecutive: tool change skipped',(code.match(/^T2 M06/mg)||[]).length==1&&/T2 ALREADY IN SPINDLE - TOOL CHANGE SKIPPED/.test(code)&&o.notes.some(n=>/tool change skipped/.test(n)));
+  log('different tool: change kept',/^T1 M06/m.test(code));
+  const secs=code.split('(==============================)').slice(1,4);
+  log('work offset stated in every section before first move',secs.every(s=>{const L=s.split('\n');const wi=L.findIndex(x=>/\bG5[4-9]\b/.test(x.replace(/\([^)]*\)/g,''))),mi=L.findIndex(x=>/(^|\s)[XYZ]-?[\d.#]/.test(x.replace(/\([^)]*\)/g,''))&&!/G28|G53/.test(x));return wi>=0&&(mi<0||wi<=mi)}),secs.map(s=>s.slice(0,80)).join('||'));
+  log('coolant + spindle off between sections',secs.every(s=>/M09/.test(s)&&/M05/.test(s)));
+  log('identical subprogram kept once',(code.match(/^O9100 /mg)||[]).length==1);
+  log('whole-program checks pass',o.checks.every(c=>c[1]),o.checks.filter(c=>!c[1]).map(c=>c[0]).join('|'));
+  log('cycle time estimate shown',/cycle time about/.test(d.querySelector('#jmout').textContent)&&o.ct>0);
+  log('#100 vars of face renumbered (bolt used them)',o.notes.some(n=>/#100→#1\d\d/.test(n)));
+  // offset re-stated with a different offset per entry
+  E(`(()=>{const l=jmGet('${lid}');l.entries[2].job.p['Work offset'].v='G55';save();jmOpen(l.id)})()`);o=E("jmBuildUI()");
+  const s3=o.lines.join('\n').split('(==============================)')[3];log('third section uses its own G55',/\bG55\b/.test(s3)&&!/\bG54\b/.test(s3.replace(/\([^)]*\)/g,'')));
+  // renumbering: second bolt gets a different O9100 (edited line) -> renumbered + call updated
+  E(`(()=>{const l=jmGet('${lid}'),e=l.entries[1],r=jmRender(e,0),i=r.code.findIndex(x=>/^#100=0/.test(x));e.job.edits[i]='#100=1 (COUNT FROM 1)';save();jmOpen(l.id)})()`);o=E("jmBuildUI()");const c2=o.lines.join('\n');
+  log('clashing O9100 renumbered',/^O9101 /m.test(c2)&&/^O9100 /m.test(c2)&&o.notes.some(n=>/O9100 clashed .*renumbered to O9101/.test(n)),o.notes.join('|'));
+  log('G65 call updated to new number',/G65 P9101 /.test(c2)&&/G65 P9100 /.test(c2));
+  log('no duplicate O numbers',o.checks.find(c=>/duplicate O/.test(c[0]))[1]);
+  // persistent variable conflict flagged
+  E(`(()=>{const l=jmGet('${lid}');jmAdd(l,'op:ctr');jmAdd(l,'op:ctr');const n=l.entries.length;[n-2,n-1].forEach(i=>{const p=l.entries[i].job.p;Object.keys(p).forEach(k=>{if(p[k].v==null)p[k].v=/#/.test(k)?510:/offset/i.test(k)?'G54':1})});save();jmOpen(l.id)})()`);
+  const r5=E(`jmRender(jmGet('${lid}').entries[3],0)`);o=E("jmBuildUI()");
+  log('#500+ shared between jobs flagged amber (not renumbered)',r5.red||o.warn.some(w=>/#510/.test(w)&&/persistent/.test(w)),(r5.red?'red:'+JSON.stringify(r5.miss)+r5.block:'')+o.warn.join('|')+o.err.join('|'));
+  E(`(()=>{const l=jmGet('${lid}');l.entries.splice(3,2);save();jmOpen(l.id)})()`);
+  // red entry blocks build
+  d.querySelector('#jmadd').value='op:cpock';E("jmAddUI()");
+  log('red entry shows red status + Fix',!!d.querySelector('.jme:last-child .chip.r')&&/Fix/.test(d.querySelector('.jme:last-child').textContent)&&/red value/.test(d.querySelector('.jme:last-child').textContent));
+  log('Build button disabled while a job is red',d.querySelector('#jmbuild').disabled&&!!d.querySelector('#jmblock'));
+  o=E("jmBuild(jmGet(JML))");log('build refuses with the reason',o.err.length==1&&/not ready/.test(o.err[0])&&!o.lines.length);
+  E("jmToggle(3,false)");log('switching it off unblocks build',!d.querySelector('#jmbuild').disabled);E("jmToggle(3,true)");
+  // fix flow
+  E("jmFix(3)");log('Fix opens Build with a back bar',!!d.querySelector('#jmfixbar')&&/^Build/.test(d.querySelector('#ttl').textContent));
+  E("Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k=='Work offset'?'G56':k=='Tool'?7:k=='Z0'||k=='Center X'||k=='Center Y'?0:k=='Dia'?1.5:k=='Cutter'?0.5:k=='Depth'?0.25:k=='Stepdown'?0.05:1,g:false}});show();jmDone()");
+  log('Done returns to list; entry no longer red',/^Job manager/.test(d.querySelector('#ttl').textContent)&&!d.querySelector('#jmbuild').disabled,d.querySelector('.jme:last-child').textContent);
+  // risky gate per entry
+  
+  const hasR=E(`jAvail('splm19')`);if(hasR){E("jmAdd(jmGet(JML),'op:splm19');{const p=jmGet(JML).entries.at(-1).job.p;Object.keys(p).forEach(k=>{if(p[k].v==null&&k!=RISK)p[k]={v:({'Work offset':'G54','Teeth':12,'Start Ø':0.5,'Final Ø':0.6,'Depth per pass':0.01,'Z top':0,'Z bottom':-0.5,'Tip at orient 0':'+X','Angle direction':'CCW (+)','Feed':5,'Tool':3,'Center X':0,'Center Y':0})[k]??1,g:false}})}jmOpen(JML)");const rr=E(`jmRender(jmGet(JML).entries.at(-1),0)`);
+   log('HIGH-risk entry: amber/⚠ flagged and red while its gates are open',rr.red&&rr.high&&/accept the risk|setup/i.test(rr.block+rr.miss.join()),JSON.stringify(rr));E("jmGet(JML).entries.pop();save();jmOpen(JML)")}else log('HIGH-risk job available for gate test',false,'splm19 not available');
+  // subprogram mode
+  E("jmGet(JML).mode='sub';save();jmOpen(JML)");o=E("jmBuildUI()");const c3=o.lines.join('\n');
+  log('sub mode: main calls each job with M98',(c3.match(/^M98 P\d+ /mg)||[]).length==4&&(c3.match(/\bM30\b/g)||[]).length==1,c3.slice(0,400));
+  log('sub mode: each section ends M99, O numbers unique',o.checks.every(c=>c[1]),o.checks.filter(c=>!c[1]).map(c=>c[0]).join('|'));
+  E("jmGet(JML).mode='inline';save();jmOpen(JML)");o=E("jmBuildUI()");
+  // simulator
+  E("jmSim()");log('Open in Simulate: program runs in the sim',/^Simulate/.test(d.querySelector('#ttl').textContent)&&E("J.op=='import'&&J.M&&J.M.length>10&&!J.run.err"),E("J&&J.run&&J.run.err"));
+  log('sim shows cycle time',/Cycle time about/.test(d.body.textContent));
+  // Library + save
+  E("tab('recent')");log('Library shows Job lists card',!!d.querySelector('#jmcard')&&/Bracket op 1/.test(d.querySelector('#jmcard').textContent));
+  const before=E("JSON.stringify(S.jlists)");log('lists persist in storage',E("JSON.stringify(JSON.parse(localStorage.getItem('mc')).jlists)")==before);
+  // backup merge round trip
+  const bk=E("JSON.stringify({...S})");E("S.jlists=[];save()");E(`mergeBackup(JSON.parse(${JSON.stringify(bk)}))`);
+  log('backup merge restores the list on the same machine',E("S.jlists.length==1&&S.jlists[0].mid==S.m[0].id&&S.jlists[0].entries.length==4"),E("JSON.stringify(S.jlists.map(l=>[l.name,l.mid,l.entries.length]))"));
+  // share round trip
+  const lid2=E("S.jlists[0].id");E(`JML='${lid2}'`);const fileTxt=E(`JSON.stringify(jmFile(jmGet('${lid2}')))`);
+  log('share file is a .mbjob list without machine names',/"kind":"joblist"/.test(fileTxt)&&!/Mill A/.test(fileTxt));
+  E("tab('recent')");E(`mbPreview(${JSON.stringify(fileTxt)})`);log('import preview lists jobs + compatible machines only',/Job list: Bracket op 1/.test(d.querySelector('#mbimp').textContent)&&![...d.querySelectorAll('#mbm option')].some(x=>/Lathe/.test(x.textContent)));
+  const nj=E("S.jobs.length");E("jmImpDo()");const imp=E("jmGet(JML)");
+  log('imported list added, Library jobs untouched',imp&&imp.imported&&imp.entries.length==4&&E("S.jobs.length")==nj&&imp.id!=lid2);
+  log('imported entries come in red (positions)',E("jmGet(JML).entries.every(e=>jmRender(e,S.cur).red)")&&d.querySelectorAll('.jme .chip.r:not(.jmfix)').length==4);
+  log('imported keeps the on/off + order',imp.entries.map(e=>e.job.op).join()=='bolt,bolt,face,cpock');
+  log('bad list file refused',/newer version/.test(E(`jmParse(JSON.stringify({app:MBJ.app,format:99,kind:'joblist',list:{entries:[{}]}})).err`)));
+  // lathe list
+  E("S.cur=2;save();jobMgr();jmNew('Lathe list')");const lo=[...d.querySelectorAll('#jmadd option')].map(o=>o.value);
+  log('lathe list offers lathe jobs, not mill jobs',lo.includes('op:lturn')&&!lo.includes('op:bolt'));
+  const la=E("[!!jmAdd(jmGet(JML),'op:lturn'),!!jmAdd(jmGet(JML),'op:lface'),S.cur,JML,S.m.map(m=>m.name).join()].join(' ')");E("jmOpen(JML)");o=E("jmBuildUI()");
+  log('lathe program builds (G18 safe start once, T calls kept, no G90 reset)',!o.err.length&&(o.lines.join('\n').match(/G18 G2[01] G40 G80 G99/g)||[]).length==1&&!/G40 G80 G90/.test(o.lines.join('\n')),o.err.join('|')+la+o.lines.slice(0,8).join('/'));
+  // perf: 20-job list
+  E("S.cur=0;save();jobMgr();jmNew('Twenty')");E("for(let i=0;i<20;i++)jmAdd(jmGet(JML),i%2?'op:bolt':'op:face')");
+  const t0=w.performance.now();E("JMC.clear();jmOpen(JML)");const t1=w.performance.now();o=E("jmBuildUI()");const t2=w.performance.now();E("jmMove(5,1)");const t3=w.performance.now();
+  log(`perf 20 jobs: open ${Math.round(t1-t0)} ms, build ${Math.round(t2-t1)} ms, reorder ${Math.round(t3-t2)} ms`,t1-t0<4000&&t2-t1<4000&&t3-t2<4000&&!o.err.length&&o.secs.length==20,E("jmGet(JML).entries.length")+' '+o.err.join('|'));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},1500)};
+</script></body>
