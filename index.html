@@ -1,0 +1,139 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Macro Catculator (prototype)</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#ffd21f">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#111;color:#eee;font-family:-apple-system,Helvetica,Arial,sans-serif;padding-bottom:70px}
+.h{background:#ffd21f;color:#111;padding:14px 16px;font-weight:800;font-size:19px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
+.h small{font-weight:600;font-size:12px;background:#111;color:#ffd21f;padding:3px 8px;border-radius:10px}
+.c{padding:14px}.card{background:#1c1c1c;border:1px solid #333;border-radius:16px;padding:14px;margin-bottom:12px}
+.t{font-weight:700;font-size:16px}.s{font-size:12px;color:#999;margin-top:3px}
+.bar{height:7px;background:#333;border-radius:4px;margin-top:10px}.bar i{display:block;height:7px;border-radius:4px;background:#ffd21f}
+.chip{display:inline-block;padding:6px 10px;border-radius:14px;font-size:13px;margin:3px 3px 0 0;font-weight:600;border:0;cursor:pointer}
+.g{background:#1f3d2a;color:#7be3a0}.y{background:#ffd21f;color:#111}.r{background:#5a1e1e;color:#ff8a8a}.gr{background:#333;color:#bbb}
+.btn{display:block;width:100%;border:0;background:#ffd21f;color:#111;text-align:center;font-weight:800;padding:13px;border-radius:14px;margin-top:8px;font-size:15px}
+.btn:disabled{opacity:.35}.btn.o{background:#222;color:#ffd21f;border:1px solid #ffd21f}
+textarea,input,select{width:100%;background:#0a0a0a;color:#eee;border:1px solid #444;border-radius:12px;padding:10px;font-size:15px;font-family:inherit}
+.ok{background:#1f3d2a;color:#7be3a0;border-radius:12px;padding:10px;font-size:13px;font-weight:700;margin:10px 0;cursor:pointer}
+.ok.bad{background:#5a1e1e;color:#ff8a8a}
+.code{background:#0a0a0a;border:1px solid #333;border-radius:12px;font:11.5px/1.55 ui-monospace,Menlo,monospace;max-height:340px;overflow:auto}
+.ln{white-space:pre;padding:0 8px;border-left:3px solid #ffd21f;outline:none}.ln.u{border-left-color:#ff5fa2;background:#2a1020}
+.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;background:#1c1c1c;border-top:1px solid #333}
+.tabs button{flex:1;background:none;border:0;color:#999;padding:14px;font-size:14px;font-weight:700}.tabs button.on{color:#ffd21f}
+.foot{font-size:12px;color:#ff8a8a;margin-top:8px}canvas{width:100%;height:300px;background:#0a0a0a;border-radius:12px;touch-action:none;display:block}
+.row{display:flex;gap:6px;flex-wrap:wrap}.row button{flex:1}.hid{display:none}label{font-size:14px}
+.set{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #2a2a2a;font-size:14px}
+</style></head><body>
+<div class="h"><span id="ttl">My Machines 😼</span><small>● Offline</small></div>
+<div class="c" id="v"></div>
+<div class="tabs"><button data-t="machines">Machines</button><button data-t="new">New</button><button data-t="recent">Recent</button></div>
+<script>
+const $=s=>document.querySelector(s),V=$('#v');
+const PRESETS={'Vertical mills':['Generic 3-axis VMC','Generic VMC w/ 4th axis','Small toolroom mill'],'Horizontal mills':['Generic HMC w/ pallet','Generic HMC 4-axis'],'Lathes':['Generic 2-axis lathe','Lathe w/ live tooling','Lathe w/ sub-spindle']};
+const SETS=[['Control','Fanuc-style'],['Units','Inch'],['Rapid rate (in/min)','400'],['Program memory (lines)','8000'],['Probe','none'],['Max RPM','8000']];
+function mk(name,type,user){return{id:Date.now()+Math.random(),name,type,s:SETS.map(([k,v],i)=>({k,v,st:i==0?'confirm':(user||[]).includes(k)?'user':'suggested'}))}}
+let S=JSON.parse(localStorage.getItem('mc')||'null')||{m:[mk('Mill A','demo VMC',['Units','Rapid rate (in/min)']),mk('Mill B','demo VMC 4th',['Units']),mk('Lathe 1','demo lathe',[])],jobs:[],cur:0};
+const save=()=>localStorage.setItem('mc',JSON.stringify(S));
+function tab(t){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));({machines,new:nw,recent})[t]();scrollTo(0,0)}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+const pct=m=>Math.round(100*m.s.filter(x=>x.st=='user').length/m.s.length);
+const cls={user:'g',suggested:'gr',confirm:'r'},ic={user:'✓',suggested:'~',confirm:'!'};
+function machines(){$('#ttl').textContent='My Machines 😼';
+V.innerHTML=S.m.map((m,i)=>`<div class="card" onclick="edit(${i})"><div class="t">${i==S.cur?'⭐ ':''}${m.name} <span style="color:#999;font-weight:400">· ${m.type}</span></div><div class="s">${m.s[0].v} · ${m.s[1].v}</div><div class="bar"><i style="width:${pct(m)}%"></i></div><div class="s">Setup ${pct(m)}% · ${m.s.filter(x=>x.st=='confirm').length} to confirm</div>${m.s.map(x=>`<span class="chip ${cls[x.st]}">${ic[x.st]} ${x.k}</span>`).join('')}</div>`).join('')+
+`<button class="btn" onclick="addM()">+ Add machine</button><div class="s" style="margin-top:10px">Demo machines only. Green = you set it · gray = suggested · red = confirm on the control.</div>`}
+function addM(){$('#ttl').textContent='Presets';V.innerHTML=Object.entries(PRESETS).map(([g,l])=>`<div class="card"><div class="t">${g}</div>${l.map(n=>`<button class="chip gr" onclick="pick('${n}','${g}')">${n}</button>`).join('')}</div>`).join('')+'<div class="s">Not affiliated with any machine maker. Generic presets only.</div>'}
+function pick(n,g){S.m.push(mk(n,g.replace(/s$/,'').toLowerCase()));save();edit(S.m.length-1)}
+function edit(i){const m=S.m[i];$('#ttl').textContent=m.name;
+V.innerHTML=`<div class="card"><input id="mn" value="${m.name}"><div class="bar"><i style="width:${pct(m)}%"></i></div><div class="s">Setup ${pct(m)}%</div>${m.s.map((x,j)=>`<div class="set"><span><span class="chip ${cls[x.st]}">${ic[x.st]}</span> ${x.k}</span><input style="width:45%" data-j="${j}" value="${x.v}"></div>`).join('')}<div class="s">Editing a value marks it green (you set it). Control stays red until you confirm it on the machine.</div></div><button class="btn" onclick="cur(${i})">Use this machine</button><button class="btn o" onclick="tab('machines')">Back</button>`;
+$('#mn').onchange=e=>{m.name=e.target.value;save()};V.querySelectorAll('input[data-j]').forEach(el=>el.onchange=()=>{const x=m.s[el.dataset.j];x.v=el.value;x.st='user';save();edit(i)})}
+function cur(i){S.cur=i;save();tab('new')}
+// ---------- parser
+const W={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,twelve:12};
+let J=null;
+function num(re,t){const m=t.match(re);return m?parseFloat(m[1]):null}
+function parse(t){t=t.toLowerCase().replace(/\b(one|two|three|four|five|six|seven|eight|nine|ten|twelve)\b/g,w=>W[w]);
+ const p={},G=(k,v,g)=>p[k]={v,g:!!g};let op;
+ if(/bolt ?circle|bc\b|holes? on a/.test(t))op='bolt';else if(/grid|array|rows?|x\s*\d+\s*(holes|grid)/.test(t))op='grid';else if(/face|facing/.test(t))op='face';else return null;
+ const d=num(/(-?[\d.]+)\s*(?:"|in)?\s*deep|depth\s*(?:of\s*)?(-?[\d.]+)/,t)??num(/depth\s*(?:of\s*)?([\d.]+)/,t);
+ if(op=='bolt'){G('Holes',num(/(\d+)\s*(?:-?\s*hole|x)/,t));G('Dia',num(/([\d.]+)\s*(?:"|in)?\s*(?:dia|diameter|bc|bolt)/,t)??num(/dia(?:meter)?\s*(?:of\s*)?([\d.]+)/,t));
+  const a=num(/(?:start(?:ing)?\s*(?:angle|at)?\s*)(-?[\d.]+)/,t);G('Start°',a??0,a==null);}
+ if(op=='grid'){const m=t.match(/(\d+)\s*(?:rows?\s*(?:by|x)\s*|x\s*)(\d+)/);G('Rows',m?+m[1]:null);G('Cols',m?+m[2]:null);
+  const sp=num(/([\d.]+)\s*(?:"|in)?\s*(?:spacing|apart|pitch)/,t)??num(/spac(?:ing|ed)\s*(?:of\s*)?([\d.]+)/,t);G('Pitch X',sp);G('Pitch Y',num(/([\d.]+)\s*(?:"|in)?\s*y\s*(?:spacing|pitch)/,t)??sp);}
+ if(op=='face'){const m=t.match(/([\d.]+)\s*(?:"|in)?\s*(?:x|by)\s*([\d.]+)/);G('Length',m?+m[1]:null);G('Width',m?+m[2]:null);
+  const c=num(/([\d.]+)\s*(?:"|in)?\s*(?:cutter|face mill|mill)/,t);G('Cutter',c??2,c==null);const st=num(/stepover\s*([\d.]+)/,t);G('Stepover %',st??70,st==null);}
+ if(op=='face'){const z=num(/(?:take|remove|depth)\s*(?:off\s*)?([\d.]+)/,t);G('Depth',z??0.02,z==null)}else G('Depth',d);
+ if(op!='face'){const pk=/peck|g83/.test(t);G('Cycle',pk?'Peck G83':'Drill G81',!/peck|drill|g8[13]/.test(t));if(pk){const q=num(/peck\s*(?:of\s*)?([\d.]+)/,t);G('Peck Q',q??0.05,q==null)}}
+ const f=num(/(?:feed|f)\s*([\d.]+)/,t);G('Feed',f??(op=='face'?30:8),f==null);const r=num(/(?:rpm|s)\s*(\d{3,5})/,t)??num(/(\d{3,5})\s*rpm/,t);G('RPM',r??(op=='face'?3000:2500),r==null);
+ const tl=num(/\bt(?:ool)?\s*(\d+)/,t);G('Tool',tl??1,tl==null);G('Clear Z',0.1,true);
+ return{op,p,text:t}}
+const OPN={bolt:'Bolt circle',grid:'Hole grid',face:'Face mill'};
+function nw(){$('#ttl').textContent='New job · '+(S.m[S.cur]||{name:'?'}).name;
+V.innerHTML=`<textarea id="q" rows="3" placeholder="e.g. 6 hole bolt circle 3.0 dia, start 15, 0.5 deep, peck">${J?J.text:''}</textarea><div class="row" style="margin-top:6px"><button class="chip gr" onclick="ex('6 hole bolt circle 3.0 dia start 15 0.5 deep peck 0.1')">Bolt circle</button><button class="chip gr" onclick="ex('3 x 4 grid 0.75 spacing 0.4 deep drill')">Grid</button><button class="chip gr" onclick="ex('face 4 x 3 with 2 cutter take off 0.02')">Face</button></div><button class="btn" onclick="go()">Make my macro</button><div id="out"></div>`}
+function ex(s){$('#q').value=s;go()}
+function go(){const j=parse($('#q').value);if(!j){$('#out').innerHTML='<div class="ok bad">Try “bolt circle”, “grid”, or “face mill”.</div>';return}J={...j,date:Date.now(),edits:{}};show()}
+function show(){const miss=Object.entries(J.p).filter(([k,x])=>x.v==null);
+ let h=`<div class="card"><div class="t">${OPN[J.op]}</div>${Object.entries(J.p).map(([k,x])=>`<button class="chip ${x.v==null?'r':x.g?'gr':'y'}" onclick="ed('${k}')">${k}: ${x.v??'?'}</button>`).join('')}<div class="s">Yellow = from your words · gray = suggested, tap to change.</div></div>`;
+ if(miss.length){h+=`<div class="card"><div class="t">Need ${miss.length} more</div>${miss.map(([k])=>`<div class="set">${k}<input style="width:45%" inputmode="decimal" data-k="${k}"></div>`).join('')}<button class="btn" onclick="fill()">Continue</button></div>`;$('#out').innerHTML=h;return}
+ const g=gen(J);J.code=g.code;J.moves=g.moves;
+ const ch=checks(J,g);J.edited=J.edited||{};
+ h+=`<div class="ok ${ch.every(c=>c[1])?'':'bad'}" onclick="$('#cl').classList.toggle('hid')">✓ ${ch.filter(c=>c[1]).length} of ${ch.length} checks passed ▾</div><div id="cl" class="hid card">${ch.map(c=>`<div class="s">${c[1]?'✅':'❌'} ${c[0]}</div>`).join('')}</div>
+ <div class="code" id="ed">${J.code.map((l,i)=>`<div class="ln ${J.edits[i]!=null?'u':''}" contenteditable data-i="${i}">${esc(J.edits[i]??l)}</div>`).join('')}</div>
+ <canvas id="cv"></canvas><div class="row" style="margin-top:6px"><button class="chip gr" onclick="vw('top')">Top</button><button class="chip gr" onclick="vw('front')">Front</button><button class="chip gr" onclick="vw('iso')">Iso</button><button class="chip gr" onclick="vw('fit')">Fit</button><button class="chip y" onclick="play()">▶ Play</button><button class="chip gr" onclick="step()">Step</button></div>
+ <div class="card" style="margin-top:8px" id="info"></div>
+ <label><input type="checkbox" id="vf" style="width:auto"> I'll verify on the control</label><button class="btn" id="cp" disabled onclick="copy()">Copy program</button><button class="btn o" onclick="saveJob()">Save to Recent</button>
+ <div class="foot">⚠ Dry-run and single-block on the machine before production. Generic Fanuc-style Macro B. Not for any specific machine.</div>`;
+ $('#out').innerHTML=h;$('#vf').onchange=e=>$('#cp').disabled=!e.target.checked;
+ V.querySelectorAll('.ln').forEach(el=>el.oninput=()=>{J.edits[el.dataset.i]=el.textContent;el.classList.add('u')});
+ view.n=J.moves.length;initCv();const m=S.m[S.cur],rr=m?+m.s[2].v:400;
+ $('#info').innerHTML=`<div class="t">Cycle time about ${fmt(time(J.moves,rr))}</div><div class="s">${J.moves.length} moves · rapid ${rr} in/min <span class="chip ${m&&m.s[2].st=='user'?'g':'gr'}">${m&&m.s[2].st=='user'?'set':'suggested'}</span></div><div class="s">Estimate only. Don't quote a job off it.</div>`+(g.out?`<div class="s" style="color:#ff8a8a">⚠ ${g.out} move(s) outside stock (red)</div>`:'')}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function ed(k){const x=J.p[k],v=prompt(k,x.v??'');if(v==null)return;x.v=isNaN(+v)?v:+v;x.g=false;show()}
+function fill(){V.querySelectorAll('input[data-k]').forEach(el=>{if(el.value!=='')J.p[el.dataset.k]={v:+el.value,g:false}});show()}
+// ---------- generator: Macro B main + subprogram, and simulated moves
+function f4(n){return(+n).toFixed(4).replace(/0+$/,'').replace(/\.$/,'.0')}
+function gen(j){const p=k=>j.p[k].v,c=[],mv=[];let pos=[0,0,2],out=0;
+ const L=s=>c.push(s);const R=(x,y,z)=>{mv.push({a:[...pos],b:[x??pos[0],y??pos[1],z??pos[2]],r:1});pos=mv.at(-1).b},F=(x,y,z,f)=>{mv.push({a:[...pos],b:[x??pos[0],y??pos[1],z??pos[2]],f});pos=mv.at(-1).b};
+ const T=p('Tool'),cz=p('Clear Z');
+ L('%');L('O1000 ('+OPN[j.op].toUpperCase()+' - MACRO CATCULATOR DEMO)');L('(GENERIC FANUC-STYLE MACRO B - VERIFY ON CONTROL)');
+ L('G17 G20 G40 G49 G80 G90 (SAFE START)');L(`T${T} M06`);L(`G54 G00 X0. Y0. S${p('RPM')} M03`);L(`G43 H${T} Z${f4(cz+1)} M08`);
+ const drill=(x,y)=>{const d=-p('Depth'),q=p('Peck Q');R(x,y,null);R(null,null,cz);if(j.p['Peck Q']){let z=0;while(z>d){const nz=Math.max(d,z-q);F(null,null,nz,p('Feed'));R(null,null,cz);if(nz>d)R(null,null,nz+0.01);z=nz}}else{F(null,null,d,p('Feed'));R(null,null,cz)}};
+ const cyc=j.p['Peck Q']?`G83 Z-#26 R#18 Q#17 F#9`:`G81 Z-#26 R#18 F#9`;
+ R(0,0,cz+1);
+ if(j.op=='bolt'){L(`G65 P9100 H${p('Holes')} D${f4(p('Dia'))} A${f4(p('Start°'))} Z${f4(p('Depth'))} R${f4(cz)} F${f4(p('Feed'))}${j.p['Peck Q']?' Q'+f4(p('Peck Q')):''}`);
+  for(let i=0;i<p('Holes');i++){const a=(p('Start°')+360*i/p('Holes'))*Math.PI/180;drill(p('Dia')/2*Math.cos(a),p('Dia')/2*Math.sin(a))}}
+ if(j.op=='grid'){L(`G65 P9101 I${p('Rows')} J${p('Cols')} U${f4(p('Pitch X'))} V${f4(p('Pitch Y'))} Z${f4(p('Depth'))} R${f4(cz)} F${f4(p('Feed'))}${j.p['Peck Q']?' Q'+f4(p('Peck Q')):''}`);
+  for(let r=0;r<p('Rows');r++)for(let k=0;k<p('Cols');k++)drill(k*p('Pitch X'),r*p('Pitch Y'))}
+ if(j.op=='face'){const Ln=p('Length'),Wd=p('Width'),d=p('Cutter'),so=d*p('Stepover %')/100;L(`G65 P9102 X${f4(Ln)} Y${f4(Wd)} D${f4(d)} K${f4(so)} Z${f4(p('Depth'))} F${f4(p('Feed'))}`);
+  let y=0,dir=1;R(-d/2-0.1,0,null);R(null,null,cz);F(null,null,-p('Depth'),p('Feed'));while(y<=Wd+1e-6){F(dir>0?Ln+d/2+0.1:-d/2-0.1,y,null,p('Feed'));y+=so;if(y<=Wd+1e-6)F(null,y,null,p('Feed'));dir=-dir}R(null,null,cz+1)}
+ R(null,null,cz+1);L('G80 M09');L('G91 G28 Z0. (SAFE END)');L('G90 M05');L('M30');L('');
+ // subprogram
+ const chk=(v,n)=>L(`IF[#${v}EQ#0]GOTO${n}`);
+ if(j.op=='bolt'){L('O9100 (BOLT CIRCLE)');[11,7,1,26,18,9].forEach(v=>chk(v,99));L('#100=0 (COUNT)');L('WHILE[#100LT#11]DO1');L('#101=#1+360*#100/#11');L('#102=#7/2*COS[#101]');L('#103=#7/2*SIN[#101]');L(`G90 G99 X#102 Y#103 ${cyc}`);L('#100=#100+1');L('END1');}
+ if(j.op=='grid'){L('O9101 (HOLE GRID)');[4,5,21,22,26,18,9].forEach(v=>chk(v,99));L('#100=0');L('WHILE[#100LT#4]DO1');L('#101=0');L('WHILE[#101LT#5]DO2');L(`G90 G99 X[#101*#21] Y[#100*#22] ${cyc}`);L('#101=#101+1');L('END2');L('#100=#100+1');L('END1');}
+ if(j.op=='face'){L('O9102 (FACE MILL)');[24,25,7,6,26,9].forEach(v=>chk(v,99));L('#100=0 (Y)');L('#101=1 (DIR)');L('G00 X[-#7/2-0.1] Y0');L('G01 Z-#26 F#9');L('WHILE[#100LE#25]DO1');L('IF[#101GT0]THEN #102=#24+#7/2+0.1');L('IF[#101LT0]THEN #102=-#7/2-0.1');L('G01 X#102 Y#100');L('#100=#100+#6');L('IF[#100LE#25]THEN G01 Y#100');L('#101=-#101');L('END1');L('G00 Z1.');}
+ L('G80');L('M99');L('N99 #3000=1 (MISSING ARGUMENT)');L('M99');L('%');
+ // stock bounds
+ let st;if(j.op=='bolt'){const r=p('Dia')/2+0.75;st=[-r,-r,-p('Depth')-0.25,r,r,0]}else if(j.op=='grid')st=[-0.5,-0.5,-p('Depth')-0.25,(p('Cols')-1)*p('Pitch X')+0.5,(p('Rows')-1)*p('Pitch Y')+0.5,0];else st=[0,0,-0.5,p('Length'),p('Width'),0];
+ mv.forEach(m=>{if(!m.r&&(m.b[2]<st[2]))m.out=1,out++});j.stock=st;return{code:c,moves:mv,out}}
+function checks(j,g){const t=g.code.join('\n');return[['Safe start line (G17 G20 G40 G49 G80 G90)',/G17 G20 G40 G49 G80 G90/.test(t)],['Tool length comp G43 with matching H',/G43 H\d/.test(t)],['Spindle on before cutting',/M03/.test(t)],['Missing-argument alarm #3000',/#3000/.test(t)],['WHILE / END pairs match',(t.match(/DO\d/g)||[]).length==(t.match(/END\d/g)||[]).length],['Canned cycle cancelled G80',/G80/.test(t)],['Feed is positive',j.p.Feed.v>0],['Depth is positive (Z- used)',j.p.Depth.v>0],['No cut moves below stock',!g.out],['Program ends M30 and sub ends M99',/M30/.test(t)&&/M99/.test(t)],['Line count under machine memory',g.code.length<(+((S.m[S.cur]||{s:[0,0,0,{v:8000}]}).s[3].v)||8000)]]}
+function time(m,rr){let s=0;m.forEach(x=>{const d=Math.hypot(x.b[0]-x.a[0],x.b[1]-x.a[1],x.b[2]-x.a[2]);s+=d/(x.r?rr:x.f)*60});return s}
+const fmt=s=>Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0');
+function copy(){const t=J.code.map((l,i)=>J.edits[i]??l).join('\n');navigator.clipboard?.writeText(t);$('#cp').textContent='Copied ✓'}
+function saveJob(){S.jobs.unshift({...J,date:Date.now(),machine:(S.m[S.cur]||{}).name});save();tab('recent')}
+function recent(){$('#ttl').textContent='Recent';V.innerHTML=S.jobs.length?S.jobs.map((j,i)=>`<div class="card" onclick="reopen(${i})"><div class="t">${OPN[j.op]} · ${j.machine||''}</div><div class="s">${new Date(j.date).toLocaleString()}</div><div class="s">${esc(j.text)}</div></div>`).join(''):'<div class="card s">No saved jobs yet.</div>'}
+function reopen(i){J=JSON.parse(JSON.stringify(S.jobs[i]));tab('new');show()}
+// ---------- 3D wireframe
+const view={rx:-0.9,rz:-0.6,s:1,n:0};let cv,ctx;
+function initCv(){cv=$('#cv');const d=devicePixelRatio||1;cv.width=cv.clientWidth*d;cv.height=300*d;ctx=cv.getContext('2d');ctx.scale(d,d);vw('fit');
+ let dr=null;cv.onpointerdown=e=>dr=[e.clientX,e.clientY];onpointerup=()=>dr=null;cv.onpointermove=e=>{if(!dr)return;view.rz+=(e.clientX-dr[0])/100;view.rx+=(e.clientY-dr[1])/100;dr=[e.clientX,e.clientY];draw()}}
+function vw(k){if(k=='top')view.rx=0,view.rz=0;if(k=='front')view.rx=-Math.PI/2,view.rz=0;if(k=='iso')view.rx=-0.9,view.rz=-0.6;if(k=='fit')view.n=J.moves.length;const st=J.stock;view.c=[(st[0]+st[3])/2,(st[1]+st[4])/2,(st[2]+st[5])/2];view.s=Math.min(cv.clientWidth,300)*0.75/Math.max(st[3]-st[0],st[4]-st[1],2.5);draw()}
+function P(p){let x=p[0]-view.c[0],y=p[1]-view.c[1],z=p[2]-view.c[2];const cz=Math.cos(view.rz),sz=Math.sin(view.rz);[x,y]=[x*cz-y*sz,x*sz+y*cz];const cx=Math.cos(view.rx),sx=Math.sin(view.rx);[y,z]=[y*cx-z*sx,y*sx+z*cx];return[cv.clientWidth/2+x*view.s,150-y*view.s]}
+function ln(a,b){const p=P(a),q=P(b);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke()}
+function draw(){ctx.clearRect(0,0,cv.width,cv.height);const s=J.stock,c=[];for(let i=0;i<8;i++)c.push([i&1?s[3]:s[0],i&2?s[4]:s[1],i&4?s[5]:s[2]]);
+ ctx.strokeStyle='#666';ctx.lineWidth=1;ctx.setLineDash([]);[[0,1],[1,3],[3,2],[2,0],[4,5],[5,7],[7,6],[6,4],[0,4],[1,5],[2,6],[3,7]].forEach(([a,b])=>ln(c[a],c[b]));
+ J.moves.slice(0,view.n).forEach(m=>{ctx.setLineDash(m.r?[4,4]:[]);ctx.strokeStyle=m.out?'#ff4d4d':m.r?'#ffd21f':'#14b8a6';ctx.lineWidth=m.r?1:2;ln(m.a,m.b)});
+ if(view.n>0){const t=P(J.moves[view.n-1].b);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(t[0],t[1],3,0,7);ctx.fill()}}
+let pl;function play(){clearInterval(pl);view.n=0;pl=setInterval(()=>{if(view.n>=J.moves.length)return clearInterval(pl);view.n++;draw()},40)}
+function step(){clearInterval(pl);view.n=view.n>=J.moves.length?1:view.n+1;draw()}
+if('serviceWorker'in navigator&&location.protocol!='file:')navigator.serviceWorker.register('sw.js');
+tab('machines');
+const H=decodeURIComponent(location.hash.slice(1));if(H=='presets')addM();else if(H=='recent'){tab('new');ex('6 hole bolt circle 3.0 dia 0.5 deep');saveJob()}else if(H){tab('new');ex(H);if(location.search=='?play'){view.n=Math.floor(J.moves.length*.6);draw()}}
+</script></body></html>
