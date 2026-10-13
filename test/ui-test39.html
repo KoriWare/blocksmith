@@ -1,0 +1,38 @@
+<!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=53" style="width:390px;height:844px"></iframe><script>
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+const P=c=>{const m=c.match(/[\d.]+/g).map(Number);return m.length>3?m:[...m,1]};
+const L=([r,g,b])=>{const f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(r)+.7152*f(g)+.0722*f(b)};
+const CR=(a,b)=>{const x=L(a),y=L(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
+f.onload=()=>{const w=f.contentWindow,d=w.document;
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_theme','light');w.location.reload();return}
+ if(step==1){step=2;
+  log('no flash: theme set in <head> before body',w.__themeAtHead=='light');
+  log('no flash: body background light at load',getComputedStyle(d.body).backgroundColor=='rgb(244, 244, 241)',getComputedStyle(d.body).backgroundColor);
+  w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");
+  const de=d.documentElement;log('default is Dark',de.dataset.theme=='dark'&&E('themePref()')=='dark');
+  w.tab('more');E('more()');const tc=d.querySelector('#theme'),ts=d.querySelector('#tsz');
+  log('Theme card under More next to text size',!!tc&&ts&&ts.nextElementSibling===tc);
+  log('three choices',tc&&tc.querySelectorAll('button').length==3&&/Match phone/.test(tc.textContent));
+  const top0=tc.getBoundingClientRect().top;
+  E("setTheme('light')");log('Light applies',de.dataset.theme=='light');log('persisted',w.localStorage.getItem('mc_theme')=='light');
+  log('no layout shift (theme card position)',Math.abs(d.querySelector('#theme').getBoundingClientRect().top-top0)<1);
+  E("setTheme('auto')");E("themeMQ({matches:true})");log('Match phone: phone light -> light',de.dataset.theme=='light');
+  E("themeMQ({matches:false})");log('Match phone: phone dark -> dark (live)',de.dataset.theme=='dark');
+  E("setTheme('dark')");E("themeMQ({matches:true})");log('Dark ignores phone change',de.dataset.theme=='dark');
+  log('theme-color meta present',d.querySelector('meta[name=theme-color]').content=='#ffd21f');
+  // contrast of key pairs
+  const box=d.createElement('div');box.className='card';box.innerHTML='<span class="chip g">set</span><span class="chip gr">sugg</span><span class="chip r">confirm</span><span class="chip y">y</span><div class="thin">amber <b>thin</b></div><div class="s">muted</div><div class="ok">ok</div><div class="ok bad">bad</div><span style="color:#ff8a8a">HIGH</span><span style="color:#ff9f1a">amber</span><span style="color:#14b8a6">teal</span><span style="color:#ffd21f">acc</span><div class="foot">foot</div><span class="hk">G1</span><span class="hc">(c)</span><span class="hv">#1</span><span class="hn">X1</span><span class="hg">M3</span>';
+  d.querySelector('#v').append(box);
+  const bgOf=el=>{let e=el,stack=[];while(e){const c=P(getComputedStyle(e).backgroundColor);if(c[3]>0){stack.push(c);if(c[3]>=1)break}e=e.parentElement}let b=e?stack.pop():[255,255,255,1];while(stack.length){const c=stack.pop();b=[0,1,2].map(i=>c[i]*c[3]+b[i]*(1-c[3]))}return b};
+  for(const th of ['dark','light']){E(`setTheme('${th}')`);const res=[];
+   box.querySelectorAll('*').forEach(el=>{if(!el.textContent.trim())return;const r=CR(P(getComputedStyle(el).color),bgOf(el));res.push([el.className||el.textContent,r])});
+   const bad=res.filter(x=>x[1]<4.5);w.parent.RES=(w.parent.RES||'')+th+': '+res.map(x=>x[0]+' '+x[1].toFixed(2)).join(', ')+'\n';
+   log('WCAG AA contrast key pairs ('+th+')',!bad.length,bad.map(x=>x[0]+' '+x[1].toFixed(2)).join('; '));
+   const bodyR=CR(P(getComputedStyle(d.body).color),bgOf(d.body));log('body text AA ('+th+')',bodyR>=4.5,bodyR)}
+  box.remove();E("setTheme('dark')");
+  log('help topic Theme',E("HELP.some(h=>h[0]=='theme')"));
+  log('no console errors',!errs.length,errs.join('|'));
+ }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')+'\n'+(window.RES||'')},1500)};
+</script></body>

@@ -37,7 +37,52 @@ textarea,input,select{width:100%;background:#0a0a0a;color:#eee;border:1px solid 
 #out[data-view=edit] .simonly{display:none!important}#out[data-view=sim] .edonly{display:none!important}
 #pbar{position:sticky;bottom:52px;z-index:4;background:#111;padding:6px 0;border-top:1px solid #333}#simcode pre div.cur{background:#3a3200}
 #qhelp{position:fixed;right:10px;bottom:66px;z-index:30;width:36px;height:36px;border-radius:50%;border:1px solid #444;background:#1c1c1c;color:#ffd21f;font-weight:800;font-size:16px;opacity:.85}
-</style></head><body>
+</style>
+<style id="themecss">
+:root{--bg:#111;--sf:#1c1c1c;--sf2:#0a0a0a;--tx:#eee;--tx2:#ddd;--mu:#999;--bd:#333;--bd2:#444;--ac:#ffd21f;--acx:#ffd21f;--okb:#1f3d2a;--okt:#7be3a0;--rb:#5a1e1e;--rt:#ff8a8a;--grb:#333;--grt:#bbb;--amb:rgba(255,176,32,.10);--amt:#ffcf70;--aml:#ffb020;--teal:#14b8a6;--hi:#ff4d4d;--warnb:#2a0d0d;--curb:#3a3200;color-scheme:dark}
+html[data-theme=light]{--bg:#f4f4f1;--sf:#fff;--sf2:#fff;--tx:#1a1a1a;--tx2:#262626;--mu:#555;--bd:#d4d4d0;--bd2:#b8b8b4;--ac:#ffd21f;--acx:#7a5a00;--okb:#dcf3e3;--okt:#0f5a2c;--rb:#fbe0e0;--rt:#9e1c1c;--grb:#e4e4e2;--grt:#3d3d3d;--amb:#fff1d6;--amt:#7a4a00;--aml:#c77800;--teal:#0f6e64;--hi:#b3261e;--warnb:#fde8e8;--curb:#fff3b0;color-scheme:light}
+html[data-theme=light] body{background:var(--bg);color:var(--tx)}
+html[data-theme=light] .card,html[data-theme=light] .tabs{background:var(--sf);border-color:var(--bd)}
+html[data-theme=light] .s,html[data-theme=light] .tabs button{color:var(--mu)}
+html[data-theme=light] .tabs button.on{color:var(--acx)}
+html[data-theme=light] .bar{background:var(--bd)}
+html[data-theme=light] .g,html[data-theme=light] .ok{background:var(--okb);color:var(--okt)}
+html[data-theme=light] .r,html[data-theme=light] .ok.bad{background:var(--rb);color:var(--rt)}
+html[data-theme=light] .gr{background:var(--grb);color:var(--grt)}
+html[data-theme=light] .btn.o{background:var(--sf);color:var(--acx);border-color:var(--acx)}
+html[data-theme=light] textarea,html[data-theme=light] input,html[data-theme=light] select{background:var(--sf2);color:var(--tx);border-color:var(--bd2)}
+html[data-theme=light] .code{background:var(--sf2);border-color:var(--bd)}
+html[data-theme=light] .ln{border-left-color:#c9a000}
+html[data-theme=light] .ln.cur,html[data-theme=light] #simcode pre div.cur{background:var(--curb)!important}
+html[data-theme=light] .ln.u{background:#fde7f1}
+html[data-theme=light] .set{border-bottom-color:var(--bd)}
+.hc{color:#8c8c8c}html[data-theme=light] .hc{color:#5f5f5f}html[data-theme=light] .hv{color:#a3236b}html[data-theme=light] .hk{color:#7a5a00}html[data-theme=light] .hg{color:var(--teal)}html[data-theme=light] .hn{color:#3b47b5}
+html[data-theme=light] #ed .ln::before{color:#767676}
+html[data-theme=light] #ed .ln.warn,html[data-theme=light] .warn{border-left-color:var(--hi);background:var(--warnb)}
+html[data-theme=light] #ed .ln.warn::after,html[data-theme=light] .foot{color:var(--rt)}
+html[data-theme=light] #ed .ln.hit{background:#d9f0ec}
+html[data-theme=light] .diff .dm{color:var(--rt);background:var(--warnb)}html[data-theme=light] .diff .dp{color:var(--okt);background:var(--okb)}
+html[data-theme=light] #pbar,html[data-theme=light] #usebar{background:var(--bg);border-color:var(--bd)}
+html[data-theme=light] .thin{background:var(--amb);color:var(--amt);border-left-color:var(--aml)}html[data-theme=light] .thin b,html[data-theme=light] .thin a,html[data-theme=light] details.srcf summary{color:var(--amt)}
+html[data-theme=light] canvas{border:1px solid var(--bd)}
+html[data-theme=light] summary{color:inherit}
+html[data-theme=light] [style*="color:#eee"],html[data-theme=light] [style*="color:#ddd"],html[data-theme=light] [style*="color:#ccc"],html[data-theme=light] [style*="color:#f2f2f2"]{color:var(--tx)!important}
+html[data-theme=light] [style*="color:#999"],html[data-theme=light] [style*="color:#bbb"],html[data-theme=light] [style*="color:#aaa"],html[data-theme=light] [style*="color:#7d7d7d"],html[data-theme=light] [style*="color:#555"],html[data-theme=light] [style*="color:#8aa"],html[data-theme=light] [style*="color:#9aa"]{color:var(--mu)!important}
+html[data-theme=light] [style*="color:#ffd21f"]{color:var(--acx)!important}
+html[data-theme=light] [style*="color:#14b8a6"]{color:var(--teal)!important}
+html[data-theme=light] [style*="color:#ff8a8a"],html[data-theme=light] [style*="color:#ff6b6b"],html[data-theme=light] [style*="color:#ff4d4d"]{color:var(--rt)!important}
+html[data-theme=light] [style*="color:#ff9f1a"],html[data-theme=light] [style*="color:#ffcf70"],html[data-theme=light] [style*="color:#ffb020"]{color:var(--amt)!important}
+html[data-theme=light] [style*="color:#7be3a0"],html[data-theme=light] [style*="color:#7fffb0"],html[data-theme=light] [style*="color:#7ee2b8"]{color:var(--okt)!important}
+html[data-theme=light] [style*="color:#9aa4ff"]{color:#3b47b5!important}html[data-theme=light] [style*="color:#ff9fd0"]{color:#a3236b!important}html[data-theme=light] [style*="color:#7cc4ff"]{color:#1d5f9e!important}
+html[data-theme=light] [style*="background:#111"],html[data-theme=light] [style*="background:#1c1c1c"],html[data-theme=light] [style*="background:#222"],html[data-theme=light] [style*="background:#0a0a0a"],html[data-theme=light] [style*="background:#0b1620"]{background:var(--sf)!important}
+html[data-theme=light] [style*="background:#333"]{background:var(--grb)!important}html[data-theme=light] [style*="background:#5a1e1e"],html[data-theme=light] [style*="background:#2a0d0d"]{background:var(--rb)!important}html[data-theme=light] [style*="background:#1f3d2a"],html[data-theme=light] [style*="background:#0d2a1f"]{background:var(--okb)!important}html[data-theme=light] [style*="background:#3a3200"]{background:var(--curb)!important}html[data-theme=light] [style*="background:#1d3a36"]{background:#d9f0ec!important}html[data-theme=light] [style*="background:#2a1020"]{background:#fde7f1!important}
+html[data-theme=light] [style*="border-color:#ff8a8a"]{border-color:var(--rt)!important}
+html[data-theme=light] .y [style*="color:#111"],html[data-theme=light] [style*="background:#ffd21f"]{color:#111!important}
+html[data-theme=light] #theme .chip.on{outline:2px solid #111}
+#theme .chip.on{outline:2px solid #ffd21f}
+</style>
+<script>/* §53 theme: applied before first paint */(function(){var t='dark';try{t=localStorage.getItem('mc_theme')||'dark'}catch(e){}var d=t=='light'||(t=='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches);document.documentElement.dataset.theme=d?'light':'dark';document.documentElement.dataset.themePref=t;window.__themeAtHead=document.documentElement.dataset.theme})();</script>
+</head><body>
 <div class="h"><span id="ttl">My Machines</span><span class="hr"><span class="units" role="group" aria-label="Length units"><button type="button" id="u-in" aria-pressed="true">in</button><span class="sep">|</span><button type="button" id="u-mm" aria-pressed="false">mm</button></span><small>● Offline</small></span></div>
 <div class="c" id="v"></div>
 <div class="tabs"><button data-t="machines">Machines</button><button data-t="new">New</button><button data-t="recent">Recent</button><button data-t="more">More</button></div>
@@ -3970,5 +4015,21 @@ if('launchQueue' in window)launchQueue.setConsumer(async p=>{if(!p.files||!p.fil
 HELP.push(['share','Sharing a job',()=>`<p><b>Share:</b> in <b>Library</b> (or on Build with a saved job open) tap <b>📤 Share job</b>. The app makes one small <b>.mbjob</b> file and opens your phone's share sheet (text, email, AirDrop). If sharing isn't available it downloads the file instead.</p><p>The file holds the job type, name, note, the values and the code, plus the machine type and control it came from — <b>info only</b>. It never holds your machine names, your PIN, other jobs or version history.</p><p><b>Import:</b> Library → <b>📥 Import job</b>, pick the file. You see the name, job type and where it came from, then pick which of <b>your</b> machines it goes on. Only machines that can run that job are offered; if none can (type, control or options), it's refused and nothing is added.</p><p><b>Safety:</b> every value that sets where the tool goes — depths, start points, spacing, stock, finish diameters, tool number, work offset and X0 Y0 Z0 — comes in <b>red</b> and you enter your own. Write / risk confirms come in red too, and your machine's own settings and confirms apply. Speeds, feeds and clearance come in <b>gray</b> as suggestions. The sender's code is never used — the app rebuilds it for your machine.</p><p>An import never overwrites: if the name is taken it becomes “name (2)”. Files that aren't Macro Builder jobs, are from a newer app version, are damaged or are over 64 KB are refused. Everything stays on your phone — no account, no server.</p>`]);
 LOG.unshift(['1.8 · Oct 13','Share one job (.mbjob) and Import job in Library: preview, only compatible machines offered, positions come in red, code rebuilt on your machine, never overwrites.']);
 </script>
+<script>
+// §53 theme: Dark (default) · Light · Match phone (live); stored in mc_theme so it applies before first paint
+const THEME_MQ=window.matchMedia?matchMedia('(prefers-color-scheme: light)'):null;
+function themePref(){try{return localStorage.getItem('mc_theme')||'dark'}catch(e){return'dark'}}
+function applyTheme(mq){const t=themePref(),m=mq||THEME_MQ,eff=t=='light'||(t=='auto'&&m&&m.matches)?'light':'dark',de=document.documentElement;de.dataset.theme=eff;de.dataset.themePref=t;
+ const mt=document.querySelector('meta[name=theme-color]');if(mt)mt.content='#ffd21f';return eff}
+function themeMQ(ev){if(themePref()=='auto')applyTheme(ev)}
+if(THEME_MQ){THEME_MQ.addEventListener?THEME_MQ.addEventListener('change',themeMQ):THEME_MQ.addListener&&THEME_MQ.addListener(themeMQ)}
+function setTheme(t){if(!['dark','light','auto'].includes(t))t='dark';try{localStorage.setItem('mc_theme',t)}catch(e){}applyTheme();const c=$('#theme');if(c)c.replaceWith(themeCard())}
+function themeCard(){const t=themePref(),c=document.createElement('div');c.className='card';c.id='theme';const b=(k,l)=>`<button class="chip gr${t==k?' on':''}" aria-pressed="${t==k}" onclick="setTheme('${k}')">${l}</button>`;
+ c.innerHTML=`<div class="t">Theme · ${t=='auto'?'Match phone ('+document.documentElement.dataset.theme+')':t=='light'?'Light':'Dark'}</div><div class="row">${b('dark','Dark')}${b('light','Light')}${b('auto','Match phone')}</div><div class="s">Green, gray, amber and red keep the same meaning in every theme.</div>`;return c}
+const _more53=more;more=function(){_more53();if($('#theme'))return;const ts=$('#tsz'),c=themeCard();if(ts)ts.after(c);else V.prepend(c)};
+applyTheme();
+HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='more')+1),0,['theme','Theme: Dark, Light, Match phone',()=>`<p>In <b>More → Theme</b> pick <b>Dark</b> (the default), <b>Light</b> (easier in a bright shop) or <b>Match phone</b>, which follows your phone's light/dark setting and switches as soon as the phone does. The choice is saved on this phone only.</p><p>Only the background, cards, text, borders and accent change. <span class="chip g">green = set</span> <span class="chip gr">gray = suggested</span> <span class="thin" style="display:inline-block">amber = thin source, verify</span> <span class="chip r">red = confirm / required</span> keep the same meaning in every theme, with shades adjusted so they stay readable. The simulator view keeps its dark backdrop in both themes so toolpaths stay easy to see.</p>`]);
+</script>
+
 
 </body></html>
