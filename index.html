@@ -6024,6 +6024,14 @@ function r97mig(){let ch=0;(S.m||[]).forEach(m=>{if(!m||m.r97mig||isLT(m.type||'
 try{r97mig()}catch(e){console.error(e)}
 {const _r=rotAx;rotAx=function(){const m=S.m[S.cur];if(m&&!isLT(m.type||'')){const r=(m.s||[]).find(x=>x.k=='Rotary axis');if(r&&r.st=='user'){const L=String(r.v||'').trim().toUpperCase()[0];if(/[ABC]/.test(L||''))return L}}return _r.apply(this,arguments)}}
 {const _p=pick;pick=function(){const r=_p.apply(this,arguments);try{S.m.at(-1).r97mig=1;save()}catch(e){}return r}}
+// mc-v97 (Casey): tool-setter and Fanuc offset rows follow one rule on setup page and Machines list.
+// Setter rows: only with the Tool setter option (X Y / clear Z only when the macro does not move there itself).
+// Fanuc offset rows: on every Fanuc-style (non-Haas) mill — G10 wear jobs read them even without a setter.
+const R97SET=['Tool setter type','Tool setter macro call','Setter writes length to','Setter moves to itself','Setter diameter call','Setter diameter result #'],R97POS=['Setter X Y (G53 machine)','Setter clear Z (G53 machine)'],R97FAN=['Tool offset memory (Fanuc)','Offset variables (Fanuc)','Param 6000 bit 3 V15 (Fanuc)'];
+{const k0=t=>String(t).replace(/^[!\s✓•]+/,'').trim(),hit=(t,L)=>L.some(k=>k0(t).startsWith(k));
+ const _d=r95dep;r95dep=function(t){return _d(t)||hit(t,R97SET)||hit(t,R97POS)||hit(t,R97FAN)};
+ const _h=r95hideKey;r95hideKey=function(m,t){if(m&&!isLT(m.type||'')){const ts=!!(m.opt&&m.opt.tset),own=!/^\s*n/i.test(((m.s||[]).find(x=>x.k=='Setter moves to itself')||{}).v||'');
+  if(hit(t,R97FAN))return mCtrl(m)=='haas';if(hit(t,R97POS))return !ts||own;if(hit(t,R97SET))return !ts}return _h.apply(this,arguments)}}
 
 /* R79-END */</script>
 </body></html>

@@ -69,6 +69,20 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  i=old('Plain old VMC','VMC',null,'');log('mig: plain 3-axis VMC not ticked',E(`!S.m[${i}].opt.ax4`));
  E(`S.m[${i}].opt.ax4=false;S.m[${i-1}].opt.ax4=false;r97mig()`);log('mig runs once (untick sticks)',E(`!S.m[${i-1}].opt.ax4`));
  E("S.m.splice(-5);save()");
+
+ // mc-v97 (Casey): Machines list matches setup page; setter/Fanuc rows follow one rule
+ const cmp=i=>E(`(()=>{const m=S.m[${i}];tab('machines');const d=[...document.querySelectorAll('details.mchips')].find(d=>d.closest('.card').textContent.includes(m.name));const L=[...d.querySelectorAll('.chip')].filter(c=>c.style.display!='none').map(c=>c.textContent.replace(/^[!\\s✓]+/,'').split(':')[0].trim());edit(${i});V.querySelectorAll('details').forEach(x=>x.open=true);const vis=[...V.querySelectorAll('.set')].filter(s=>s.style.display!='none').map(s=>(s.querySelector('span')||{}).textContent||'').join('\\n');return L.filter(k=>!vis.includes(k)).join('|')})()`);
+ const setK=(i,k,v)=>E(`(()=>{const x=S.m[${i}].s.find(x=>x.k==${JSON.stringify(k)});x.v=${JSON.stringify(v)};x.st='user';save()})()`);
+ const MA=E("S.m.findIndex(m=>m.name=='Mill A')");
+ setK(MA,'Control','Haas NGC-style');log('Haas, no setter: list = setup',cmp(MA)==='',cmp(MA));
+ log('Haas: Fanuc offset rows hidden',!/Tool offset memory/.test(E(`(()=>{edit(${MA});return [...V.querySelectorAll('.set')].filter(s=>s.style.display!='none').map(s=>s.textContent).join('|')})()`)));
+ setK(MA,'Tool offset memory (Fanuc)','C');log('Haas: generator ignores Fanuc rows',E(`(()=>{S.cur=${MA};return tlVars(1).name})()`)=='Haas');
+ setK(MA,'Control','Fanuc 0i-style');log('Fanuc, no setter: list = setup',cmp(MA)==='',cmp(MA));
+ log('Fanuc, no setter: offset memory editable on setup (G10 wear jobs read it)',E(`(()=>{edit(${MA});const r=[...V.querySelectorAll('.set')].find(s=>/Tool offset memory/.test(s.textContent));return !!r&&r.style.display!='none'&&!!r.querySelector('input,select')})()`));
+ log('no setter: setter rows hidden',!/Tool setter macro call/.test(E(`(()=>{edit(${MA});return [...V.querySelectorAll('.set')].filter(s=>s.style.display!='none').map(s=>s.textContent).join('|')})()`)));
+ E(`S.m[${MA}].opt.tset=1;save()`);setK(MA,'Setter moves to itself','no');log('Fanuc + setter, moves=no: list = setup',cmp(MA)==='',cmp(MA));
+ log('moves=no shows Setter X Y',/Setter X Y/.test(E(`(()=>{edit(${MA});return [...V.querySelectorAll('.set')].filter(s=>s.style.display!='none').map(s=>s.textContent).join('|')})()`)));
+ E(`delete S.m[${MA}].opt.tset;S.m[${MA}].s.forEach(x=>{if(x.k=='Setter moves to itself'||x.k=='Tool offset memory (Fanuc)'){x.v='';x.st='confirm'}});save()`);setK(MA,'Control','Haas NGC-style');
  E("J=null;drClear()");log('no console errors',!errs.length,errs.join('|'));
  o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
 </script></body></html>
