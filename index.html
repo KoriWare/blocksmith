@@ -1528,9 +1528,9 @@ const ICON_APP='<svg width="56" height="56" aria-label="BlockSmith" viewBox="0 0
 const DISC_LINE='Verify on the machine in dry-run / single-block before production use. This app is an aid, not a substitute for proven programs or machine documentation.';
 function home(){VIEW21='all';document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('on'));$('#ttl').textContent='Home';const m=S.m[S.cur]||S.m[0];
  V.innerHTML=`<div id="home"><div class="card" style="display:flex;align-items:center;gap:12px">${ICON_APP}<div><div class="t" style="font-size:22px">BlockSmith</div><div class="s" style="color:#ffd21f">with Macro B</div><div class="s">Pick a job, check the code. Works offline.</div></div></div>
- <button class="btn" id="hBuild" style="font-size:20px;padding:20px" onclick="tab('new')">Start a program</button>
+ <button class="btn" id="hBuild" style="font-size:20px;padding:20px" onclick="tab('new')">Start Building</button>
  <div class="card"><div class="t">${m?(isLT(m.type)?ICON.lathe:ICON.mill)+esc(m.name):'No machine yet'}</div>${m?`<div class="s">${esc(m.type)} · ${esc(String(m.s[0].v))} · ${UN()=='mm'?'mm':'inch'}</div><div class="bar"><i style="width:${pct(m)}%"></i></div><div class="s" id="hPct">Setup ${pct(m)}% · ${m.s.filter(x=>x.st=='confirm').length} to confirm</div>`:''}<button class="chip gr" onclick="tab('machines')">Switch machine</button></div>
- <div class="card"><div class="t">Library</div>${S.jobs.slice(0,3).map((j,i)=>`<div class="set" onclick="reopen(${i})" style="cursor:pointer"><span>${esc(j.name||OPN[j.op]||'Job')}<br><span class="s">${esc(j.machine||'')} · ${new Date(j.date).toLocaleDateString()}</span></span><span class="chip gr">Open</span></div>`).join('')||'<div class="s">Nothing saved yet. Start a program, then tap 💾 Save….</div>'}</div>
+ <div class="card"><div class="t">Library</div>${S.jobs.slice(0,3).map((j,i)=>`<div class="set" onclick="reopen(${i})" style="cursor:pointer"><span>${esc(j.name||OPN[j.op]||'Job')}<br><span class="s">${esc(j.machine||'')} · ${new Date(j.date).toLocaleDateString()}</span></span><span class="chip gr">Open</span></div>`).join('')||'<div class="s">Nothing saved yet. Start Building, then tap 💾 Save….</div>'}</div>
  <div class="row"><button class="chip y" onclick="tab('machines')">Machines</button><button class="chip y" onclick="tab('sim')">Simulate</button><button class="chip y" onclick="reference()">Reference</button><button class="chip gr" onclick="help()">Help</button></div>
  <div class="foot">⚠ ${DISC_LINE}</div></div>`;helpBtn();updMode()}
 // header title tap = Home (no new tab: the 6-button bar is already full)
@@ -4042,7 +4042,7 @@ const _mach42=machines;machines=function(){const r=_mach42.apply(this,arguments)
 // ---- Home: first-run tip, same setup line as Machines, no chips that repeat the tab bar
 const _home42=home;home=function(){const r=_home42.apply(this,arguments);const m=S.m[S.cur]||S.m[0];const p=$('#hPct');if(m&&p)p.textContent=setupLine(m);
  $('#home').querySelectorAll('.row .chip').forEach(c=>{if(/tab\('(machines|sim)'\)/.test(c.getAttribute('onclick')||''))c.remove()});
- if(!S.tip42){const c=document.createElement('div');c.className='card';c.id='hTip';c.innerHTML=`<div class="t">First time here?</div><div class="s">1. <b>Machines</b>: pick your machine or add one from a preset, then <b>Use this machine</b>.<br>2. <b>Build</b>: pick a job from the category tabs or Search jobs. Red values need you; nothing that moves the tool is guessed.<br>3. <b>Editor</b> and <b>Simulate</b> check the code. <b>💾 Save…</b> keeps it in your <b>Library</b>.<br>Your phone's Back button goes back one screen; ⌂ in the header comes home; ? opens help for the screen you're on.</div><button class="chip y" type="button" onclick="S.tip42=1;save();home()">Got it</button>`;const f=$('#home .card');f?f.after(c):$('#home').prepend(c)}return r};
+ /* R90: the old 'First time here?' card is gone — the 🎓 tour card replaces it; navigation tips live in Help → Getting around */return r};
 // ---- Help: Back to where you were, stemmed multi-word search, folded source links
 function hStem(w){w=w.toLowerCase();if(w.length>4){const x=w.replace(/(ations?|ators?|ings?|ions?|ers?|ors?|ed|es|s|e|y)$/,'');if(x.length>=3)w=x}return w.length>3&&/(.)\1$/.test(w)?w.slice(0,-1):w}
 function hMatch(q,text){const ws=q.toLowerCase().split(/[^a-z0-9#.]+/).filter(Boolean);if(!ws.length)return true;const T=text.toLowerCase();return ws.every(w=>T.includes(hStem(w))||T.includes(w))}
@@ -5751,6 +5751,8 @@ document.head.insertAdjacentHTML('beforeend',`<style id="r89css">
 .r89welcome{border:2px solid #ffd21f}.r89wb{display:flex;gap:8px;flex-wrap:wrap}.r89wb .btn{flex:1 1 120px;min-height:44px;margin:6px 0 0}.r89wskip{min-height:44px;margin-top:8px}
 html[data-theme=light] #r89 .r89c{background:#fff;color:#111}
 </style>`);
+// R90 the first Home render happens before the tour wrapper exists — add the welcome card there too
+setTimeout(()=>{try{const h=$('#home');if(h&&!r89seen()&&!R89&&!$('#r89w')){const f=h.querySelector('.card');if(f)f.insertAdjacentHTML('afterend',r89card())}}catch(e){}},0);
 
 /* R79-END */</script>
 </body></html>

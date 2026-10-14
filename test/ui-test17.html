@@ -4,9 +4,9 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
  const errs=[];w.addEventListener('error',e=>errs.push(e.message));
  setTimeout(()=>{const E=x=>w.eval(x);try{
   if(step==1){log('opens to Home on launch',d.querySelector('#ttl').textContent=='Home'&&!!d.querySelector('#home'));
-   log('Home: name + own icon + Build button',/BlockSmith/.test(d.querySelector('#home').textContent)&&!!d.querySelector('#home svg[aria-label="BlockSmith"]')&&/Start a program/.test(d.querySelector('#hBuild').textContent));
+   log('Home: name + own icon + Build button',/BlockSmith/.test(d.querySelector('#home').textContent)&&!!d.querySelector('#home svg[aria-label="BlockSmith"]')&&/Start Building/.test(d.querySelector('#hBuild').textContent));
    log('Home: current machine, switch link, setup %',/Mill A/.test(d.body.textContent)&&/Switch machine/.test(d.body.textContent)&&/Setup \d+%/.test(d.querySelector('#hPct').textContent));
-   log('Home: quick links + disclaimer, no catculator/X/Ruger',/Reference[\s\S]*Help/.test(d.querySelector('#home .row').textContent)&&!/Machines|Simulate/.test(d.querySelector('#home .row').textContent)&&/not a substitute for proven programs/.test(d.querySelector('#home .foot').textContent)&&!/catculator|ruger|\bX\.com/i.test(d.querySelector('#home').textContent));
+   log('Home: quick links + disclaimer, no catculator/X/Ruger',/Reference[\s\S]*Help/.test(d.querySelector('#home > .row').textContent)&&!/Machines|Simulate/.test(d.querySelector('#home > .row').textContent)&&/not a substitute for proven programs/.test(d.querySelector('#home .foot').textContent)&&!/catculator|ruger|\bX\.com/i.test(d.querySelector('#home').textContent));
    log('Home: no network refs',!/https?:/.test(d.querySelector('#home').innerHTML));
    E("NOASK=1");w.cur(0);w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');d.querySelector('#jn').value='Home test job';w.saveJob();
    d.querySelector('#ttl').click();log('header title tap returns Home + shows recent job',d.querySelector('#ttl').textContent=='Home'&&/Home test job/.test(d.querySelector('#home').textContent));

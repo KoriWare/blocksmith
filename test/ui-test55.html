@@ -117,7 +117,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   log('Help has no Sample jobs / tap a sample references',!/Sample jobs|tap a sample/i.test(E("HELP.map(h=>{try{return h[2]()}catch(e){return ''}}).join(' ')")));
   // 18 home: new mark, button, copy
   E("home()");const hsv=d.querySelector('#home svg[aria-label="BlockSmith"]');log('home card shows the new BlockSmith anvil mark (#f7c613), no M',!!hsv&&/#f7c613/i.test(hsv.innerHTML)&&!/M14 34V14/.test(hsv.innerHTML));
-  log('big button says Start a program',d.querySelector('#hBuild').textContent.trim()=='Start a program');
+  log('big button says Start Building',d.querySelector('#hBuild').textContent.trim()=='Start Building');
   const ht=d.querySelector('#home').textContent;log('home subtitle updated, no plain-words copy',/Pick a job, check the code\. Works offline\./.test(ht)&&!/Plain words in|type it in plain words/.test(d.body.textContent));
   log('apple-touch-icon + svg icon linked',!!d.querySelector('link[rel=apple-touch-icon][href="icons/apple-touch-icon.png"]')&&!!d.querySelector('link[rel=icon][href="icons/a.svg"]'));
   // 3 delete machine

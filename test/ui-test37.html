@@ -8,11 +8,11 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
  setTimeout(async()=>{const E=x=>w.eval(x);try{E("NOASK=1");
   // Home
   log('starts on Home',T()=='Home');
-  log('first-run tip on Home',vis(d.querySelector('#hTip')));
+  log('old first-run tip card removed (tour card replaces it)',!d.querySelector('#hTip')&&!!d.querySelector('#r89w'));
   const chips=[...d.querySelectorAll('#home .row .chip')].map(c=>c.textContent);
   log('Home chips that repeat tabs are gone',!chips.includes('Machines')&&!chips.includes('Simulate')&&chips.includes('Help'),chips.join(','));
   log('Home setup line matches Machines card',(()=>{const h=d.querySelector('#hPct').textContent;w.tab('machines');const c=[...d.querySelectorAll('.card[onclick^="edit("]')].find(c=>c.getAttribute('onclick')=='edit('+E('S.cur')+')');return c&&c.textContent.includes(h)})());
-  w.tab('home');d.querySelector('#hTip button').click();log('tip dismiss sticks',!d.querySelector('#hTip')&&E('S.tip42')==1);
+  w.tab('home');log('navigation tips still reachable in Help',E("(()=>{const h=HELP.find(h=>h[0]=='nav');const t=h&&String(typeof h[2]=='function'?h[2]():h[2]);return !!t&&/Back/.test(t)&&/comes home/.test(t)})()"));
   // header
   log('? sits in the header',!!d.querySelector('.h #qhelp'));log('home icon in header',!!d.querySelector('.h #hhome'));
   w.tab('machines');d.querySelector('#hhome').click();log('home icon goes Home',T()=='Home');
