@@ -1,0 +1,28 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 84 Build chip edits are part of the draft on every keystroke: zero steps, macro step guards, engrave samples, back bore, tap pitch, tool library validation, kept lines, export gate/labels, share names, origin, draft --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
+  const DR=()=>w.localStorage.getItem(E("DRK"))||'';E("drClear();J=null;tab('new');pickJob('bolt')");await sl(50);
+ log('fresh job with nothing typed: no draft',!DR());
+ E("ed('Dia')");await sl(50);const i=d.querySelector('#dlgin');i.value='5.5';i.dispatchEvent(new Event('input',{bubbles:true}));
+ log('typing in a chip box saves the draft at once (before OK)',/"r84pend":\{"k":"Dia","v":"5.5"\}/.test(DR()),DR().slice(0,120));
+ log('value not applied until OK (no guessing)',E("J.p.Dia.v")==null);log('typed-only chip work counts as unsaved',E("hasUser(J)")===true);
+ i.value='';i.dispatchEvent(new Event('input',{bubbles:true}));log('clearing the box drops the draft again',!DR());
+ i.value='6';i.dispatchEvent(new Event('input',{bubbles:true}));
+ const d2=JSON.parse(DR());E("J=null;tab('new');nw()");await sl(50);log('restore banner offered',!!d.querySelector('#r79dr'));
+ E("drRestore()");await sl(80);log('restore reopens the box with 6, Dia still unset',(d.querySelector('#dlgin')||{}).value=='6'&&E("J.p.Dia.v")==null);
+ const ok=[...d.querySelectorAll('button')].find(b=>/^\s*OK\s*$/i.test(b.textContent)&&b.offsetParent);ok&&ok.click();await sl(80);
+ log('OK applies it and the draft keeps it',E("J.p.Dia.v")==6&&/"Dia":\{"v":6/.test(DR())&&!/r84pend/.test(DR()),!!ok);
+ E("ed('Holes')");await sl(50);const j=d.querySelector('#dlgin');j.value='9';j.dispatchEvent(new Event('input',{bubbles:true}));const cn=[...d.querySelectorAll('button')].find(b=>/Cancel/i.test(b.textContent)&&b.offsetParent);cn&&cn.click();await sl(80);
+ log('Cancel drops the pending value',!/r84pend/.test(DR())&&E("J.p.Holes.v")!=9,!!cn);
+ E("drClear();J=null");
+ E("tlCurM().tools[0].dia=-0.5;save()");const ep=()=>[...d.querySelectorAll('#v button, #v .card[onclick^="tools("]')].filter(b=>/🔧\s*Tool Library/.test(b.textContent));
+ E("more()");await sl(60);let x=ep();log('More: Tool Library & life card red with ⚠ 1 to fix',x.length==1&&x[0].classList.contains('r83badbtn')&&/to fix/.test(getComputedStyle(x[0],'::after').content));
+ E("tab('machines')");await sl(60);x=ep();log('Machines: only the card of the machine with the bad tool is red',x.length==3&&x[0].classList.contains('r83badbtn')&&!x[1].classList.contains('r83badbtn')&&!x[2].classList.contains('r83badbtn'));
+ E("tab('new')");await sl(60);x=ep();log('Build header Tool Library red',x.length>=1&&x.every(b=>b.classList.contains('r83badbtn')));
+ E("tlCurM().tools[0].dia=0.5;save();more()");await sl(60);log('fixing the tool clears the mark',!ep()[0].classList.contains('r83badbtn'));
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

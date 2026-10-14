@@ -5635,13 +5635,25 @@ function r83toolBad(m,t){const n=String(t.n??'').trim(),out=[];if(!/^\d+$/.test(
 function r83badCount(m){return m&&Array.isArray(m.tools)?m.tools.filter(t=>r83toolBad(m,t).length).length:0}
 function r83markTools(){try{if(!/^Tool/.test(($('#ttl')||{}).textContent||''))return;const m=tlCurM();if(!m)return;let n=0;(m.tools||[]).forEach((t,i)=>{const bad=r83toolBad(m,t);if(bad.length)n++;const card=V.querySelector(`input[data-f="n"][data-i="${i}"]`)?.closest('.card');if(card)card.classList.toggle('r83badtool',!!bad.length);bad.forEach(([f,msg])=>{const el=V.querySelector(`input[data-f="${f}"][data-i="${i}"]`);if(el){el.style.outline='2px solid var(--hi,#ff4d4d)';el.setAttribute('aria-invalid','true');r83warn(el,msg)}})});
  const h=$('#tlhead');let b=$('#r83tlbad');if(n&&h){if(!b){b=document.createElement('div');b.id='r83tlbad';b.className='r83err';b.setAttribute('role','alert');h.appendChild(b)}b.textContent=`⚠ ${n} tool${n>1?'s have':' has'} bad saved data (marked red) — jobs can't use ${n>1?'them':'it'} until fixed.`}else if(b)b.remove()}catch(e){}}
-function r83markBtns(){try{const m=S.m[S.cur],n=r83badCount(m);V.querySelectorAll('button').forEach(b=>{if(/^\s*🔧\s*Tool Library/.test(b.textContent)){b.classList.toggle('r83badbtn',!!n);b.dataset.r83bad=n||'';b.title=n?`${n} tool(s) with bad saved data`:''}})}catch(e){}}
+function r83markBtns(){try{const V0=document.getElementById('v')||V;V0.querySelectorAll('button, .card[onclick^="tools("]').forEach(b=>{if(!/🔧\s*Tool Library/.test(b.textContent))return;let m=S.m[S.cur];const card=b.closest('.card[onclick^="edit("]');if(card){const i=+(card.getAttribute('onclick').match(/\d+/)||[])[0];if(S.m[i])m=S.m[i]}const n=r83badCount(m);b.classList.toggle('r83badbtn',!!n);if(n)b.dataset.r83bad=n;else delete b.dataset.r83bad;b.title=n?`${n} tool(s) on ${m.name} with bad saved data`:'';b.setAttribute('aria-label',b.textContent.trim()+(n?` — ${n} to fix`:''))})}catch(e){}}
+{const _mo=more;more=function(){const r=_mo.apply(this,arguments);r83markBtns();return r}}
+{const _ml=typeof machines=='function'?machines:null;if(_ml)machines=function(){const r=_ml.apply(this,arguments);r83markBtns();return r}}
 {const _t=tools;tools=function(){const r=_t.apply(this,arguments);r83markTools();return r}}
 {const _rl=r82look;r82look=function(){const r=_rl.apply(this,arguments);r83markBtns();return r}}
 document.head.insertAdjacentHTML('beforeend','<style>.card.r83badtool{border:2px solid #ff4d4d!important}.r83badbtn{box-shadow:inset 0 0 0 2px #ff4d4d!important}.r83badbtn::after{content:" ⚠ " attr(data-r83bad) " to fix";color:#ff8a8a;font-weight:700}</style>');
 setTimeout(()=>{try{r83markBtns();r83markTools()}catch(e){}},0);
 // R83-C4 share file names are unique even when made in the same second
 {const _fn2=mbFname;const seen={};mbFname=function(){let f=_fn2.apply(this,arguments);const sec=Math.floor(Date.now()/1000);Object.keys(seen).forEach(k=>{if(seen[k].s!==sec)delete seen[k]});const base=f.replace(/\.mbjob$/,'');let out=f,k=2;while(seen[out])out=`${base}-${k++}.mbjob`;seen[out]={s:sec};return out}}
+// R84 Build chip edits: what you type in a chip's value box is part of the draft on every keystroke; restore reopens the box with it (you still tap OK)
+{const _e84=ed;ed=function(k){window.R84K=k;return _e84.apply(this,arguments)}}
+{const _hu84=hasUser;hasUser=function(j){return _hu84.apply(this,arguments)||!!(j&&j.r84pend&&String(j.r84pend.v).trim()!=='')}}
+function r84open(){return !!document.getElementById('dlgin')}
+document.addEventListener('input',e=>{const el=e.target;if(!el||el.id!='dlgin'||!window.R84K)return;if(typeof J=='undefined'||!J||!J.op||!J.p||!(window.R84K in J.p))return;if(el.value.trim()==='')delete J.r84pend;else J.r84pend={k:window.R84K,v:el.value};J.r79saved=0;clearTimeout(window.R82T);if(hasUser(J))drSave();else drClear()},true);
+function r84settle(){setTimeout(()=>{if(r84open()||typeof J=='undefined'||!J||!J.r84pend)return;delete J.r84pend;window.R84K=null;if(hasUser(J))drSave();else drClear()},0)}
+document.addEventListener('click',e=>{if(J&&J.r84pend&&e.target&&e.target.closest&&e.target.closest('button'))r84settle()},true);
+document.addEventListener('keydown',e=>{if(e.key=='Enter'||e.key=='Escape')r84settle()},true);
+{const _sh84=show;show=function(){const r=_sh84.apply(this,arguments);try{if(J&&J.r84pend&&!r84open()){delete J.r84pend;drSave()}}catch(x){}return r}}
+{const _dr84=drRestore;drRestore=function(){const d=drGet(),pend=d&&d.J&&d.J.r84pend;const r=_dr84.apply(this,arguments);try{if(pend&&J&&J.p&&pend.k in J.p){delete J.r84pend;ed(pend.k);setTimeout(()=>{const i=document.getElementById('dlgin');if(i){i.value=pend.v;J.r84pend=pend;i.focus()}},0)}}catch(x){}return r}}
 
 /* R79-END */</script>
 </body></html>
