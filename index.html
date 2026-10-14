@@ -5327,6 +5327,40 @@ function bareJB(J0){if(!J0||!J0.p)return;for(const [k,x] of Object.entries(J0.p)
  const r=_pj.apply(this,arguments);if(J&&J.p&&Object.entries(J.p).some(([k,x])=>x&&x.g&&x.v!=null&&POSG.test(k))){noGuess(J.p);J.code=null;show()}return r}}
 // J2 job specs: angles that place features were gray "suggestions" — they are positions, so they become needed
 {const SUGPOS=/^(First angle|First flat angle|Angle|Start angle)$/;Object.values(J2).forEach(s=>{if(!s||!s.sug)return;Object.keys(s.sug).forEach(k=>{if(SUGPOS.test(k)){delete s.sug[k];s.req=s.req||[];if(!s.req.includes(k))s.req.push(k);const re=k=='Angle'?/(?:\bat|angle)\s*(-?[\d.]+)\s*(?:deg|°)/:/(?:first(?:\s*flat)?|start(?:ing)?)\s*(?:angle\s*)?(?:at\s*)?(-?[\d.]+)\s*(?:deg|°)/;const op0=s.parse;if(op0)s.parse=function(l,G,n){const r=op0.apply(this,arguments);const m=String(l).match(re);if(m)G(k,+m[1]);return r}}})})}
+// §79-3 checks run on the FINAL code text (hand edits included)
+function ckStrip(l){return String(l||'').replace(/\([^)]*\)?/g,'').replace(/;.*/,'').toUpperCase()}
+function ckCode(lines,j){const out=[];if(!j||!lines)return out;const L=lines.map(ckStrip);
+ if(!j.lathe){let mode=-1,can=0,abs=1,bad=-1,x=null,y=null;const deep={},num=(l,a)=>{const m=l.match(new RegExp('\\b'+a+'\\s*(-?\\d*\\.?\\d+)(?![\\d.])'));return m?+m[1]:null};
+  const PLAIN=/^G(0?[0-3]|1[789]|2[01]|4[0-4]|49|5[4-9](\.1)?|9[0145]|9[6-9]|80|52|53|28|30)$/;
+  for(let i=0;i<L.length&&bad<0;i++){const l=L[i];if(!l.trim())continue;
+   if(/\bG9[01]\b/.test(l))abs=/\bG90\b/.test(l)?1:0;if(/\bG80\b/.test(l))can=0;if(/\bG(7[3-9]|8[1-9])\b/.test(l))can=1;
+   if(/\bG0?0(?!\d|\.)/.test(l))mode=0;else if(/\bG0?[123](?!\d|\.)/.test(l))mode=1;
+   const gs=l.match(/\bG\d+(?:\.\d+)?/g)||[];const odd=gs.some(g=>!PLAIN.test(g));
+   if(odd||/\bG(28|30|53|10|65|66|52|92|31)\b|\bIF\b|\bWHILE\b|^\s*#|\bM98\b|\[/.test(l)){continue}
+   const nx=num(l,'X'),ny=num(l,'Y'),z=num(l,'Z');if(abs){if(nx!=null)x=nx;if(ny!=null)y=ny}const key=x+','+y;
+   if(z!=null&&abs&&!can){if(mode==0&&z<-1e-6&&!(deep[key]!=null&&z>=deep[key]-1e-6))bad=i;if(mode>=1)deep[key]=Math.min(deep[key]??0,z)}}
+  out.push(['No rapid (G00) plunge below Z0 into the stock'+(bad>=0?` — line ${bad+1}: ${lines[bad].trim()}`:''),bad<0,bad])}
+ const wo=j.p&&j.p['Work offset']&&j.p['Work offset'].v;if(wo&&j.op!='import'){let bad=-1,any=0;const n=(()=>{try{return extN()}catch(e){return 48}})();
+  L.forEach((l,i)=>{if(bad>=0)return;if(/\bG65\b|\bG10\b/.test(l))return;const ms=l.match(/\bG\d+(?:\.\d+)?(?:\s*P\d+)?/g)||[];ms.forEach(g=>{const m=g.match(/^G(\d+)(?:\.(\d+))?(?:\s*P(\d+))?$/);if(!m)return;const a=+m[1],b=m[2],p=m[3];
+   if(a>=54&&a<=59){if(b==null&&!(a==54&&p)){any=1;return}if(a==54&&(b=='1'||b==null)&&p){if(+p>=1&&+p<=n)any=1;else bad=i;return}bad=i}
+   else if(a>=110&&a<=129&&!b){any=1}else if(a==60||(a>=50&&a<=53&&b)){/* G60 alone is not an offset */}})});
+  const ok=bad<0&&any;out.push(['Work offset in the code is valid on this machine'+(bad>=0?` — line ${bad+1}: ${lines[bad].trim()}`:!any?' — no G54–G59 / extended offset found in the code':''),ok,bad>=0?bad:-1])}
+ return out}
+var CKFAIL=[];
+{const _ck=checks;checks=function(j){const c=_ck.apply(this,arguments);try{if(j&&j.code){const lines=txt();ckCode(lines,j).forEach(x=>c.push([x[0],x[1]]))}}catch(e){}return c}}
+{const _iv=interp;interp=function(lines,o){const r=_iv.apply(this,arguments);try{if(r&&typeof J!='undefined'&&J&&lines===undefined){} if(r&&typeof J!='undefined'&&J&&!J.lathe&&!(o&&o.lathe)){const k=ckCode(lines,{lathe:0,p:{}})[0];if(k&&!k[1]&&!r.alarms.some(a=>a.rapid))r.alarms.push({n:'RAPID',msg:'G00 rapid plunges below Z0 — line '+(k[2]+1),l:k[2],rapid:1})}}catch(e){}return r}}
+// §79-4 Copy / download / share blocked while any check fails; §79-29 failing hand-edited lines turn red
+document.head.insertAdjacentHTML('beforeend','<style id="r79css">#cp.fixn{background:#5a5a5a!important;color:#eee!important;border-color:#5a5a5a!important}.ln.ckbad{border-left:4px solid #ff4d4d!important;background:rgba(255,77,77,.14)!important}.ln.u{border-left-width:4px}</style>');
+var CK79={n:0,line:-1};
+function gate79(){const cp=$('#cp');if(!cp||typeof J=='undefined'||!J)return;const vf=$('#vf'),n=CK79.n;
+ if(n){cp.textContent=`Fix ${n} issue${n>1?'s':''} first`;cp.classList.add('fixn');cp.disabled=false;cp.setAttribute('aria-disabled','true');cp.title='Tap to jump to the first problem';V.querySelectorAll('.gate').forEach(b=>{if(b!==cp)b.disabled=true})}
+ else{const was=cp.classList.contains('fixn');cp.classList.remove('fixn');cp.removeAttribute('aria-disabled');cp.title='';if(was||/^Fix \d/.test(cp.textContent))cp.textContent='Copy program';V.querySelectorAll('.gate').forEach(b=>b.disabled=!(vf&&vf.checked))}}
+function ckJump(){const l=CK79.line;if(l>=0){const el=V.querySelector(`.ln[data-i="${l}"]`);if(el){V.querySelectorAll('.ln.cur').forEach(e=>e.classList.remove('cur'));el.classList.add('cur');el.scrollIntoView({block:'center'});try{el.focus()}catch(e){}return 'line'}}
+ const cl=$('#cl');if(cl){cl.classList.remove('hid');const f=[...cl.children].find(x=>/❌/.test(x.textContent));(f||cl).scrollIntoView({block:'center'})}return 'list'}
+{const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);try{const cl=$('#cl');if(cl&&J&&J.code){const fails=[...cl.children].filter(x=>/❌/.test(x.textContent));const cc=ckCode(txt(),J).filter(x=>!x[1]&&x[2]>=0);const bad=new Set(cc.map(x=>x[2]));
+  CK79={n:fails.length,line:cc.length?cc[0][2]:-1};V.querySelectorAll('.ln').forEach(el=>el.classList.toggle('ckbad',bad.has(+el.dataset.i)));gate79()}}catch(e){}return r}}
+{const _sh=show;show=function(){const r=_sh.apply(this,arguments);const vf=$('#vf');if(vf&&!vf.dataset.g79){vf.dataset.g79=1;vf.addEventListener('change',gate79)}gate79();return r}}
+{const blk=f=>function(){if(typeof J!='undefined'&&J&&J.code&&CK79.n&&$('#cp')){ckJump();return}return f.apply(this,arguments)};copy=blk(copy);dl=blk(dl);share=blk(share)}
 
 /* R79-END */</script>
 </body></html>
