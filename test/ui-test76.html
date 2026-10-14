@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 85 More card shows the tool count: zero steps, macro step guards, engrave samples, back bore, tap pitch, tool library validation, kept lines, export gate/labels, share names, origin, draft --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
+  const card=()=>d.querySelector('#v .card[onclick^="tools("]');const n=E("tlCurM().tools.length");
+ E("more()");await sl(60);log('More card shows (N) like the other Tool Library buttons',card().querySelector('.t').textContent=='🔧 Tool Library & life ('+n+')',card().textContent);
+ log('no ⚠ when nothing is bad',!card().classList.contains('r83badbtn'));
+ log('same count as the Build button',(E("tab('new')"),[...d.querySelectorAll('#v button')].find(b=>/🔧\s*Tool Library/.test(b.textContent)).textContent.includes('('+n+')')));
+ E("tlCurM().tools.push(Object.assign({},tlCurM().tools[0],{id:'x85',n:99,dia:-1}));save();more()");await sl(60);
+ log('count updates and ⚠ added when a tool is bad',card().querySelector('.t').textContent.endsWith('('+(n+1)+')')&&card().classList.contains('r83badbtn')&&/⚠/.test(getComputedStyle(card().querySelector('.t'),'::after').content));
+ const pts=()=>[...d.querySelectorAll('#v button, #v .card[onclick^="tools("]')].filter(b=>/🔧\s*Tool Library/.test(b.textContent));const badge=b=>getComputedStyle(b.matches('.card')?b.querySelector('.t'):b,'::after').content.replace(/"\s*"/g,'').replace(/^"|"$/g,'');
+ for(const [nm,go] of [['More','more()'],['Build',"tab('new')"],['Machines',"tab('machines')"]]){E(go);await sl(60);const b=pts()[0];const t=b.textContent.trim();
+  log(nm+': label keeps plain (N) total, badge is separate “⚠ 1”',/\((\d+)\)$/.test(t)&&+t.match(/\((\d+)\)$/)[1]==n+1&&!/⚠|to fix/.test(t)&&badge(b)=='⚠ 1'&&getComputedStyle(b.matches('.card')?b.querySelector('.t'):b,'::after').backgroundColor=='rgb(211, 47, 47)',t+' | '+badge(b))}
+ E("tlCurM().tools=tlCurM().tools.filter(t=>t.id!='x85');save();more()");await sl(60);log('badge gone when fixed, (N) back to total',!pts()[0].classList.contains('r83badbtn')&&badge(pts()[0])=='none'&&pts()[0].textContent.trim().endsWith('('+n+')'));
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

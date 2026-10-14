@@ -19,7 +19,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('Cancel drops the pending value',!/r84pend/.test(DR())&&E("J.p.Holes.v")!=9,!!cn);
  E("drClear();J=null");
  E("tlCurM().tools[0].dia=-0.5;save()");const ep=()=>[...d.querySelectorAll('#v button, #v .card[onclick^="tools("]')].filter(b=>/🔧\s*Tool Library/.test(b.textContent));
- E("more()");await sl(60);let x=ep();log('More: Tool Library & life card red with ⚠ 1 to fix',x.length==1&&x[0].classList.contains('r83badbtn')&&/to fix/.test(getComputedStyle(x[0],'::after').content));
+ E("more()");await sl(60);let x=ep();log('More: Tool Library & life card red with ⚠ 1 badge',x.length==1&&x[0].classList.contains('r83badbtn')&&/⚠ \D*1/.test(getComputedStyle(x[0].querySelector('.t'),'::after').content));
  E("tab('machines')");await sl(60);x=ep();log('Machines: only the card of the machine with the bad tool is red',x.length==3&&x[0].classList.contains('r83badbtn')&&!x[1].classList.contains('r83badbtn')&&!x[2].classList.contains('r83badbtn'));
  E("tab('new')");await sl(60);x=ep();log('Build header Tool Library red',x.length>=1&&x.every(b=>b.classList.contains('r83badbtn')));
  E("tlCurM().tools[0].dia=0.5;save();more()");await sl(60);log('fixing the tool clears the mark',!ep()[0].classList.contains('r83badbtn'));
