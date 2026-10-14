@@ -1,0 +1,30 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 86 More card counts bad tools on all machines: zero steps, macro step guards, engrave samples, back bore, tap pitch, tool library validation, kept lines, export gate/labels, share names, origin, draft --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
+  const card=()=>d.querySelector('#v .card[onclick^="tools("]');const bt=()=>card().querySelector('.t');const badge=el=>getComputedStyle(el,'::after').content.replace(/"\s*"/g,'').replace(/^"|"$/g,'');
+ const ensure=i=>E(`(()=>{const m=S.m[${i}];m.tools=m.tools&&m.tools.length?m.tools:[{id:'t86a${i}',n:1,type:'Drill',dia:0.25},{id:'t86b${i}',n:2,type:'Drill',dia:0.25}];save()})()`);[0,1,2].forEach(ensure);
+ const nm=i=>E(`S.m[${i}].name`);E("S.cur=0;save();more()");await sl(60);const h0=card().offsetHeight;log('no badge when nothing is bad',badge(bt())=='none');
+ E("S.m[1].tools[0].dia=-0.5;save();more()");await sl(60);log('bad tool on another machine shows on More: ⚠ 1 · '+nm(1),badge(bt())=='⚠ 1 · '+nm(1),badge(bt()));
+ log('label keeps plain (N) for the selected machine',bt().textContent=='🔧 Tool Library & life ('+E("S.m[0].tools.length")+')');
+ E("tab('new')");await sl(60);const bb=[...d.querySelectorAll('#v button')].find(b=>/🔧\s*Tool Library/.test(b.textContent));log('Build header stays selected-machine only (no badge)',!bb.classList.contains('r83badbtn'));
+ E("tab('machines')");await sl(60);const mc=[...d.querySelectorAll('#v button.mtl')];log('machine cards stay per machine',mc.length==3&&!mc[0].classList.contains('r83badbtn')&&mc[1].classList.contains('r83badbtn')&&badge(mc[1])=='⚠ 1'&&!mc[2].classList.contains('r83badbtn'));
+ E("S.m[1].tools[1].dia=0;S.m[2].tools[0].dia=-1;save();more()");await sl(60);log('3 bad on 2 machines: ⚠ 3 · 2 machines',badge(bt())=='⚠ 3 · 2 machines',badge(bt()));
+ log('badge on the label line, card size unchanged',card().offsetHeight==h0&&bt().offsetHeight<40,card().offsetHeight+' vs '+h0);
+ E("S.m[1].tools[0].dia=0.5;S.m[1].tools[1].dia=0.5;S.m[2].tools[0].dia=0.5;save();more()");await sl(60);log('badge gone when all fixed',badge(bt())=='none'&&!card().classList.contains('r83badbtn'));
+ // R86 tap paths
+ const tap=()=>card().dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+ E("S.m[1].tools[0].dia=-0.5;save();more()");await sl(60);tap();await sl(80);
+ log('one bad machine (not selected): tap opens its library directly, selected unchanged',E("TLV")==1&&E("S.cur")==0&&/^Tools · /.test(d.querySelector('#ttl').textContent)&&d.querySelector('#ttl').textContent.includes(nm(1)),d.querySelector('#ttl').textContent);
+ log('its bad tool is marked there',!!d.querySelector('.r83err[data-for="dia0"]'));
+ E("S.m[1].tools[0].dia=0.5;S.m[0].tools[0].dia=-0.5;save();TLV=null;more()");await sl(60);tap();await sl(80);log('bad on the selected machine: opens its own library',E("TLV")==null&&E("S.cur")==0&&/^Tool/.test(d.querySelector('#ttl').textContent));
+ E("S.m[2].tools[0].dia=-1;save();TLV=null;more()");await sl(60);tap();await sl(80);const pk=d.querySelector('#r86pick');const opts=pk?[...pk.querySelectorAll('.r86m')]:[];
+ log('several machines: short pick list',!!pk&&opts.length==2&&opts[0].textContent.includes(nm(0))&&opts[1].textContent.includes(nm(2))&&E("S.cur")==0,pk&&pk.textContent);
+ pk.querySelector('#r86x').click();await sl(30);log('Cancel closes, nothing changes',!d.querySelector('#r86pick')&&E("S.cur")==0&&d.querySelector('#ttl').textContent=='More');
+ tap();await sl(80);d.querySelector('#r86pick .r86m[data-i="2"]').click();await sl(80);log('picking a machine opens its library, selected machine unchanged',E("TLV")==2&&E("S.cur")==0&&d.querySelector('#ttl').textContent.includes(nm(2)));
+ E("S.m[0].tools[0].dia=0.5;S.m[2].tools[0].dia=0.5;save();TLV=null;more()");await sl(60);tap();await sl(80);log('no bad tools: card opens the normal library',!d.querySelector('#r86pick')&&/^Tool/.test(d.querySelector('#ttl').textContent)&&E("S.cur")==0);E("TLV=null");
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>
