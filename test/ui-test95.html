@@ -1,0 +1,55 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 105: Stacey v104 fails + Maria polish --><iframe id="f" src="../index.html?v=105" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListener('error',e=>errs.push(e.message));const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const sl=t=>new Promise(r=>setTimeout(r,t));
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(async()=>{try{
+
+  // 1: Control pill → set Haas NGC → auto Back to job: the job goes to a draft with a Restore card (untouched job too)
+  E("NOASK=1;localStorage.removeItem(DRK);cur(1);J=null;tab('new');pickJob('ctr')");await sl(60);
+  E("$('.r104ctl').click()");await sl(80);
+  log('1: pill opens Setup at Control',E("document.querySelector('.tabs button.on').dataset.t")=='machines'&&!!E("r103rt"));
+  E("(()=>{const s=document.querySelector('.r99f[data-r99k=\"Control\"] select');const o=[...s.options].find(o=>/Haas NGC/.test(o.text));s.value=o.value;s.dispatchEvent(new Event('change',{bubbles:true}))})()");await sl(300);
+  E("$('#r103back')&&$('#r103back').click()");await sl(150);
+  log('1: after the Control change the job is a draft and Build shows the Restore card',E("(drGet()||{J:{}}).J.op")=='ctr'&&!!E("$('#r79dr')")&&E("document.querySelector('.tabs button.on').dataset.t")=='new',E("JSON.stringify({d:!!drGet(),c:!!$('#r79dr'),J:J&&J.op})"));
+  E("(()=>{const b=$('#r79dr button');b&&b.click()})()");await sl(100);
+  log('1: Restore brings the job back',E("J&&J.op")=='ctr');
+  // 2: focus + Tab/blur/change without typing never confirms — 10 runs × typed number / typed text / select
+  const keys=E("(()=>{const m=S.m[1];const f=k=>m.s.find(x=>x.k.startsWith(k));return [f('Rapid rate'),f('Program memory'),f('Skip code'),f('Units')].filter(Boolean).map(x=>x.k)})()");
+  let bad=[];for(let run=0;run<10;run++)for(const k of keys){E(`(()=>{const x=S.m[1].s.find(y=>y.k==${JSON.stringify(k)});x.st='suggested';if(!x.v)x.v='1';save();cur(1);tab('machines');edit(1)})()`);await sl(5);
+   const st=E(`(()=>{const f=document.querySelector('.r99f[data-r99k=${JSON.stringify(JSON.stringify(k)).slice(1,-1)}]');const i=f&&f.querySelector('input,select');if(!i)return 'noinput';i.focus();i.dispatchEvent(new FocusEvent('focus'));i.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true}));if(${'run'}%2)i.dispatchEvent(new Event('change',{bubbles:true}));i.dispatchEvent(new FocusEvent('blur'));i.blur();i.dispatchEvent(new KeyboardEvent('keyup',{key:'Tab',bubbles:true}));return 'ok'})()`.replace("${'run'}",String(run)));
+   await sl(run%3*15);const s2=E(`S.m[1].s.find(y=>y.k==${JSON.stringify(k)}).st`);if(s2=='user')bad.push(run+':'+k)}
+  log('2: 10 runs × 4 input types: focus/Tab/blur/change never confirm a gray value',!bad.length&&keys.length>=3,bad.join(',')+' keys='+keys);
+  E("(()=>{const x=S.m[1].s.find(y=>y.k.startsWith('Rapid rate'));x.st='suggested';x.v='400';save();edit(1);const i=document.querySelector('.r99f[data-r99k^=\"Rapid rate\"] input');i.value='500';i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('change',{bubbles:true}))})()");await sl(30);
+  log('2: real typing of a valid value still confirms',E("(x=>x.st+':'+x.v)(S.m[1].s.find(y=>y.k.startsWith('Rapid rate')))")=='user:500');
+  // 3: Clear (not set) → red Needs, not gray Pick
+  E("edit(1);document.querySelector('.r99f[data-r99k=\"Probe\"] .r99w').click()");await sl(40);E("$('#r99sheet .r104clr').click()");await sl(60);
+  log('3: cleared box is red with Needs (no gray dot)',E("(()=>{const f=document.querySelector('.r99f[data-r99k=\"Probe\"]');return f.dataset.s=='bad'&&[...f.querySelectorAll('.r99lb .r99st,.r99lb .r99chip')].every(e=>getComputedStyle(e).backgroundColor=='rgb(255, 90, 90)')&&f.querySelector('.r99w').classList.contains('bad')&&/^Needs:/.test(f.querySelector('.r99err.on').textContent)})()"),E("(()=>{const f=document.querySelector('.r99f[data-r99k=\"Probe\"]');return f.dataset.s+' '+f.innerHTML.slice(0,300)})()"));
+  E("(()=>{const x=S.m[1].s.find(y=>y.k=='Probe');x.v='none';x.st='user';save();edit(1)})()");
+  log('3: picking again clears the red',E("document.querySelector('.r99f[data-r99k=\"Probe\"]').dataset.s")!='bad');
+  // 4: Stacey's step — tlen, Update offset sheet, type 'maybe' in Other
+  E("(()=>{S.m[0].opt=Object.assign(S.m[0].opt||{},{tset:1,probe:1,macro:1});save();cur(0);J=null;tab('new');pickJob('tlen');J.p['Update offset'].v=null;show();document.querySelector('#out .r99f[data-r99k=\"Update offset\"] .r99w').click()})()");await sl(40);
+  E("(()=>{const o=$('#r99othi');o.value='maybe';o.dispatchEvent(new Event('input',{bubbles:true}))})()");await sl(20);
+  log("4: Update offset 'maybe' → Example: YES or NO",/Example: YES or NO/.test(E("$('#r99othe').textContent")),E("$('#r99othe').textContent"));
+  E("document.querySelectorAll('#r99dim,#r99sheet').forEach(x=>x.remove())");
+  // 4 global: every Build/Setup field on every machine, junk typed → no visible empty Example line
+  const empt=await w.eval(`(async()=>{const sl=t=>new Promise(r=>setTimeout(r,t));const bad=[];let n=0;const emp=()=>[...document.querySelectorAll('i,div,span,p,small,em')].filter(e=>e.offsetParent!==null&&!e.children.length&&/^\\s*Example:\\s*$/.test(e.textContent)).length;
+   const poke=async(fe,tag)=>{const inp=fe.querySelector('input');if(!inp)return;n++;if(!inp.readOnly){inp.value='maybe';inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}))}else{fe.querySelector('.r99w').click();await sl(2);const o=$('#r99othi');if(o){o.value='maybe';o.dispatchEvent(new Event('input',{bubbles:true}))}}await sl(2);if(emp())bad.push(tag+'/'+fe.dataset.r99k);document.querySelectorAll('#r99dim,#r99sheet').forEach(x=>x.remove())};
+   for(let mi=0;mi<S.m.length;mi++){cur(mi);for(const op of Object.keys(OPN)){try{J=null;tab('new');pickJob(op)}catch(e){continue}if(!J||!J.p)continue;Object.keys(J.p).forEach(k=>{if(J.p[k])J.p[k].v=null});try{show()}catch(e){continue}for(const fe of [...document.querySelectorAll('#out .r99f')])await poke(fe,S.m[mi].name+'/'+op)}
+    tab('machines');edit(mi);for(const fe of [...document.querySelectorAll('.r99f')])await poke(fe,'setup '+S.m[mi].name)}
+   const t=document.createElement('div');t.className='r99err on';t.innerHTML='Needs: x<br><i>Example: </i>';document.body.appendChild(t);await sl(5);const gone=!/Example/.test(t.innerHTML);t.remove();return JSON.stringify({bad,n,gone})})()`);
+  const ej=JSON.parse(empt);log('4: global — no visible Example line is ever empty ('+ej.n+' fields probed with junk), and an empty one is dropped at render',!ej.bad.length&&ej.n>50&&ej.gone,empt);
+  // 5: 5-axis 3+2, pair unconfirmed → '⛔ Not written: …'
+  const tp=(ctl,pv)=>E(`(()=>{NOASK=1;pick('Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills');cur(S.m.length-1);const m=S.m[S.cur];const sv_=(k,v)=>{let x=m.s.find(x=>x.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};sv_('Control',${JSON.stringify(ctl)});m.s.forEach(x=>{if(x.st!='user'&&x.v)x.st='user'});R101K5().forEach(k=>{const x=m.s.find(y=>y.k==k);if(x&&!x.v){x.v=/limit/i.test(k)?'-30 / 110':/clamp/i.test(k)?'M10 / M11':'1';x.st='user'}});sv_(K5.tw,/haas/i.test(${JSON.stringify(ctl)})?'G268 / G269':'G68.2 / G69');sv_(K5.tc,/haas/i.test(${JSON.stringify(ctl)})?'G234 / G49':'G43.4 / G49');sv_('Rotary pair',${JSON.stringify(pv)});const p=r100pairOf(m);if(p)p.forEach(L=>sv_(L+' direction','Clockwise (+)'));m.opt.probe=true;save();
+   J=parseJ2('','tp32');J.text='';J.edits={};J.code=[];tab('new');show();const V0={'Tilt angle':30,'Rotary angle':90,'Euler I':0,'Euler J':30,'Euler K':0,'Plane X':0,'Plane Y':0,'Plane Z':0,'Feature program':1234,'Work offset':'G54','Tool':3,'Safe Z':1,'I accept the risk (HIGH)':'YES'};const ch=J2.tp32.choices||{};Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k in V0?V0[k]:ch[k]?ch[k][0]:1,g:false}});show();return (J.code||[]).join('\\n')})()`);
+  tp('Haas NGC','A + C');E("(()=>{const m=S.m[S.cur];const p=m.s.find(x=>x.k=='Rotary pair');p.st='confirm';[K5.ta,K5.ra].forEach(k=>{const x=m.s.find(y=>y.k==k);if(x)x.st='confirm'});save();show()})()");
+  log("5: 5-axis 3+2 with the pair unconfirmed shows '⛔ Not written: …' and no code",/⛔ Not written:/.test(E("($('#r104hold')||{}).textContent||''"))&&!E("J.code&&J.code.length"),E("($('#out')||{}).innerText.slice(-300)"));
+  // 6/7/8
+  E("(()=>{const m=S.m[1];m.mtype='vmc4';m.opt.ax4=1;save();cur(1);tab('machines');edit(1)})()");await sl(40);
+  log('6: side tiles read Left / Right with no ◧ ◨',E("(()=>{const f=document.querySelector('.r104side');return !!f&&!/[◧◨]/.test(f.textContent)&&/Left/.test(f.textContent)&&/Right/.test(f.textContent)})()"));
+  log('7: every setup menu arrow is ▾ (native chevron hidden, no ⌄)',E("(()=>{const ss=[...document.querySelectorAll('.r99f .r99w select')];return ss.length>0&&ss.every(s=>getComputedStyle(s).appearance=='none'&&/[▾✓!]/.test(s.closest('.r99w').querySelector('.r99end').textContent))&&!/⌄/.test(document.body.innerText)})()"),E("[...document.querySelectorAll('.r99f .r99w select')].map(s=>s.closest('.r99f').dataset.r99k+':'+s.closest('.r99w').querySelector('.r99end').textContent).join()"));
+  log('8: at 320 the sticky Use-this-machine bar has 8px below it',E("[...document.styleSheets].some(ss=>{try{return [...ss.cssRules].some(r=>r.media&&/max-width: ?340px/.test(r.media.mediaText)&&/#usebar/.test(r.cssText)&&/margin-bottom: 8px/.test(r.cssText))}catch(e){return false}})"));
+
+ log('no console errors',!errs.length,errs.join('|'));
+  o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL';step=9
+ }catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1300)};
+</script></body></html>

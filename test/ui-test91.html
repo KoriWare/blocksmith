@@ -26,7 +26,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log("tomb with 'G54.1 P7' writes the same offsets as P7",E("(()=>{const run=v=>{J=parseJ2('','tomb');J.p['First new offset']={v,g:false};J.p['Base offset']={v:'G54',g:false};Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k==CW?'YES':2,g:false}});const c=genJ2(J).code.join('\\n');const keep=J.p['First new offset'].v;return [c,keep]};const a=run('P7'),b=run('G54.1 P7');J=null;return a[0]==b[0]&&!/NaN/.test(b[0])&&b[1]=='G54.1 P7'})()"));
  log('lathe probe Write to Other keeps the typed case',E("(()=>{J={op:'lprobe',p:{}};const s=r100bch('Write to');J=null;return !s.save})()"));
  // 5 real examples
- log('Update offset has a real example',E("(()=>{J={op:'tlen',p:{}};const s=r100bch('Update offset');J=null;return s.ex=='YES'})()"));
+ log('Update offset has a real example',E("(()=>{J={op:'tlen',p:{}};const s=r100bch('Update offset');J=null;return s.ex=='YES or NO'})()"));
  E("tools()");await sl(60);
  const tph=E("[...V.querySelectorAll('input[data-x=\"H\"],input[data-x=\"D\"],input[data-x=\"rpm\"],input[data-x=\"feed\"]')].map(i=>i.dataset.x+'='+i.placeholder).join('|')");
  log('Tools H#/D#/RPM/feed placeholders are real examples (no "optional", no "e.g. 1")',!!tph&&!/optional|=e\.g\. 1(\||$)/i.test(tph),tph);

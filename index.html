@@ -6204,13 +6204,14 @@ function r99wrap(setEl,key,getV,setV,extra,conf){conf=conf||(()=>true);if(!setEl
   f.dataset.s=S_;if(chipE)chipE.dataset.s=S_;
   if(empty&&inp.tagName=='INPUT'&&!String(inp.value).trim())inp.value=''};
  paint();
- const commit=()=>{const v=String(inp.value||'').trim();touched=true;
+ let dirty=false;const commit=()=>{if(!dirty&&String(inp.value||'').trim()===String(getV()||'').trim())return;dirty=false;const v=String(inp.value||'').trim();touched=true; // v105: blur/Tab/change with no real typing never confirms
+
   if(!v||r99ph(v)||r99blankChoice(v)){setV('');paint();return}
   if(!r99ok(key,v,sp)){paint();return} // bad values never save — leave the typed text visible with Needs/Example
   setV(v);paint()};
  if(inp.tagName=='SELECT'){inp.addEventListener('change',()=>{touched=true;setTimeout(paint,0)});f._r99={paint,key,getV,setV,commit,touched:()=>touched,mark:()=>{touched=true;paint()}};return f}
  if(!isPick){inp.onchange=commit;inp.addEventListener('blur',commit)} // a picker only saves from the sheet's Done
- inp.addEventListener('input',()=>{const v=inp.value;if(w.classList.contains('bad')&&r99ok(key,v,sp))setV(String(v).trim());live=true;paint();live=false});
+ inp.addEventListener('input',()=>{dirty=true;const v=inp.value;if(w.classList.contains('bad')&&r99ok(key,v,sp))setV(String(v).trim());live=true;paint();live=false});
  if(isPick){const open=e=>{e.preventDefault();e.stopPropagation();r99sheet(key,sp,getV,v=>{setV(v);touched=true;inp.value=v;paint()})};
   w.style.cursor='pointer';w.addEventListener('click',open);inp.addEventListener('focus',e=>{e.preventDefault();inp.blur();open(e)});inp.readOnly=true}
  f._r99={paint,key,getV,setV,commit,touched:()=>touched,mark:()=>{touched=true;paint()}};return f}
@@ -6579,7 +6580,7 @@ function r101lprobeFix(){return;if(!J||J.op!='lprobe'||!Array.isArray(J.code))re
  if(k=='Write to'&&J.op=='lprobe'){const ch=['Wear','Geometry','Work'];return{st:'picker+Other',ch,fmt:'wear / geometry / work',ex:'Wear',err:'Write to: Wear, Geometry or Work.',hint:'what the probe result changes — each writes what it says.',ok:v=>/^(wear|geometry|geo|work)$/i.test(String(v).trim())}}
  if(k=='Write to'){const ch=b.ch;return{...b,st:'picker+Other',ex:'G54',hint:'pick G54–G59 or External shift, or type G55 / P0.',ok:v=>{const t=String(v).trim();return ch.some(c=>c.toLowerCase()==t.toLowerCase())||/^G5[4-9]$/i.test(t)||/^(P0|external(\s*shift)?)$/i.test(t)},save:v=>{const t=String(v).trim();const c=ch.find(c=>c.toLowerCase()==t.toLowerCase());if(c)return c;if(/^G5[4-9]$/i.test(t))return t.toUpperCase();return'External shift (P0)'}}}
  if(k=='Axis'){const ch=b.ch;return{...b,st:'picker+Other',hint:'pick '+ch.join(' / ')+', or type one of them.',ok:v=>{const t=String(v).trim().toLowerCase();return ch.some(c=>c.toLowerCase()==t||c.toLowerCase().split(' ')[0]==t)},save:v=>{const t=String(v).trim().toLowerCase();return ch.find(c=>c.toLowerCase()==t||c.toLowerCase().split(' ')[0]==t)}}}
- if(k=='Update offset'){const ch=b.ch;return{...b,st:'picker+Other',ex:'YES',fmt:'YES or NO',hint:'pick YES only after you confirm the write, or NO.',ok:v=>/^(yes|no)\b/i.test(String(v).trim()),save:v=>/^yes/i.test(String(v).trim())?'YES':ch[0]}}
+ if(k=='Update offset'){const ch=b.ch;return{...b,st:'picker+Other',ex:'YES or NO',fmt:'YES or NO',hint:'pick YES only after you confirm the write, or NO.',ok:v=>/^(yes|no)\b/i.test(String(v).trim()),save:v=>/^yes/i.test(String(v).trim())?'YES':ch[0]}}
  if(k=='Base offset'||k=='Source offset')return{...b,ex:'G54',hint:'pick an offset, or type G55 / G54.1 P1.'};
  return b}}
 // generic standard for any other silent Build text box (wrapped with a hint; format check where we know one)
@@ -6905,14 +6906,14 @@ document.addEventListener('change',e=>{if(r104foc&&e.target===r104foc.el&&!r104f
 // 15: every picker sheet has 'Clear (not set)': back to blank + red (not the gray suggestion), counted again
 {const _s=r99sheet;r99sheet=function(key,sp,getV,onDone){const od=onDone;const r=_s.call(this,key,sp,getV,function(){if(r104foc){r104foc.picked=true;r104foc.typed=true}return od.apply(this,arguments)});try{const sh=$('#r99sheet');const box=sh&&sh.querySelector('.opts');if(box&&!box.querySelector('.r104clr')){const b=document.createElement('button');b.type='button';b.className='opt r104clr';b.innerHTML='<span class="rad"></span>Clear (not set)';
   b.onclick=()=>{const onSetup=!!$('#mn');const mi=onSetup?Math.max(0,S.m.findIndex(z=>z.name==$('#mn').value)):S.cur;const m=S.m[mi];let done=false;
-   if(onSetup&&m){const x=(m.s||[]).find(y=>y.k==key);if(x){x.v='';x.st='confirm';delete x.r100preset;save();done=true}}
-   if(!done&&typeof J!='undefined'&&J&&J.p&&key in J.p){J.p[key]={v:null,g:false};J.code=null}
+   if(onSetup&&m){const x=(m.s||[]).find(y=>y.k==key);if(x){x.v='';x.st='confirm';x.r105clr=1;delete x.r100preset;save();done=true}}
+   if(!done&&typeof J!='undefined'&&J&&J.p&&key in J.p){J.p[key]={v:null,g:false};J.code=null;(J.r105clr=J.r105clr||{})[key]=1}
    const dm=$('#r99dim');dm&&dm.remove();sh.remove();
    if(done){edit(mi)}else if(typeof J!='undefined'&&J&&J.op)show()};box.appendChild(b)}}catch(e){console.error(e)}return r}}
 // 13: Rotary head side as two tiles behind .r104side (approved look); both start unpicked with the gray dot
 const R104TILE=(side,on)=>{const c=on?'#000':'#aaa';return side=='Left'?`<svg width="70" height="34" viewBox="0 0 70 34" aria-hidden="true"><rect x="2" y="8" width="66" height="18" rx="2" fill="none" stroke="${c}" stroke-width="2"/><rect x="4" y="4" width="12" height="26" fill="${c}"/><rect x="16" y="13" width="18" height="8" fill="${c}" opacity=".5"/></svg>`:`<svg width="70" height="34" viewBox="0 0 70 34" aria-hidden="true"><rect x="2" y="8" width="66" height="18" rx="2" fill="none" stroke="${c}" stroke-width="2"/><rect x="54" y="4" width="12" height="26" fill="${c}"/><rect x="36" y="13" width="18" height="8" fill="${c}" opacity=".5"/></svg>`};
 function r104tiles(f,mi){const m=S.m[mi];if(!f||!m)return;const cur=r104side(m);let t=f.querySelector('.r104tiles');if(!t){t=document.createElement('div');t.className='r104tiles';const slot=f.querySelector('.r99w,.r99slot');if(slot)slot.style.display='none';f.appendChild(t)}
- t.innerHTML=['Left','Right'].map(sd=>`<button type="button" class="r104t${cur==sd?' sel':''}" data-side="${sd}" aria-pressed="${cur==sd}">${R104TILE(sd,cur==sd)}<span>${sd=='Left'?'◧ Left':'Right ◨'}</span></button>`).join('');
+ t.innerHTML=['Left','Right'].map(sd=>`<button type="button" class="r104t${cur==sd?' sel':''}" data-side="${sd}" aria-pressed="${cur==sd}">${R104TILE(sd,cur==sd)}<span>${sd}</span></button>`).join('');
  t.querySelectorAll('.r104t').forEach(b=>b.onclick=()=>{const x=(m.s||[]).find(y=>y.k==R104SIDE);if(!x)return;x.v=b.dataset.side;x.st='user';save();edit(mi)})}
 {const _e=edit;edit=function(i){const r=_e.apply(this,arguments);try{const f=V.querySelector('.r99f[data-r99k="'+R104SIDE+'"]');if(f)r104tiles(f,i)}catch(e){}return r}}
 // 14: 'Control: <name> ›' pill in the Build job header — name only once confirmed; otherwise 'Control: not set ›' (gray outline, red dot), counted in Need N
@@ -6930,6 +6931,35 @@ let r104pickTs=0;
 document.addEventListener('input',e=>{const el=e.target;if(el)el._r104typed=1},true);
 document.addEventListener('change',e=>{const el=e.target;if(!el||!/^(INPUT|TEXTAREA)$/.test(el.tagName)||!$('#mn'))return;const f=el.closest('.r99f[data-r99k]');if(!f)return;const mi=Math.max(0,S.m.findIndex(z=>z.name==$('#mn').value));const m=S.m[mi];const k=f.dataset.r99k;const x=m&&(m.s||[]).find(y=>y.k==k);if(!x)return;const st=x.st,v=x.v,typed=!!el._r104typed;el._r104typed=0;
  setTimeout(()=>{if(typed||Date.now()-r104pickTs<800||st=='user')return;if(x.st=='user'){x.st=st;x.v=v;save();try{f._r99&&f._r99.paint()}catch(e){}try{r103bars()}catch(e){}}},0)},true);
+// v105 #1: a Control/type change from the round trip (pill or chip) always parks the job as a Restore draft
+{const _b=r103back;r103back=function(){const rt=r103rt;try{if(rt&&rt.J&&rt.J.op&&r103sig(S.m[rt.cur])!=rt.sig){localStorage.setItem(DRK,JSON.stringify({J:jClone(rt.J),cur:rt.cur,t:Date.now()}));const r=_b.apply(this,arguments);setTimeout(()=>{try{toast79((OPN[rt.J.op]||'Job').replace(/^⚠\s*/,'')+' moved to a draft — Restore in Build.')}catch(e){}},50);return r}}catch(e){}return _b.apply(this,arguments)}}
+
+// ===== mc-v105 =====
+// 3: a cleared box is red with the Needs styling (never the gray dot / plain 'Pick:')
+function r105red(){try{const onSetup=!!$('#mn');const m=S.m[S.cur];document.querySelectorAll('.r99f[data-r99k]').forEach(f=>{const k=f.dataset.r99k;let flag=false;
+  if(onSetup&&f.closest('#v,body')&&!f.closest('#out')){const mi=Math.max(0,S.m.findIndex(z=>z.name==($('#mn')||{}).value));const x=(S.m[mi]&&S.m[mi].s||[]).find(y=>y.k==k);if(x){if(String(x.v||'').trim()){delete x.r105clr}else flag=!!x.r105clr}}
+  else if(typeof J!='undefined'&&J&&J.r105clr&&J.r105clr[k]){if(J.p&&J.p[k]&&J.p[k].v!=null&&String(J.p[k].v).trim()!==''){delete J.r105clr[k]}else flag=true}
+  if(!flag)return;const w=f.querySelector('.r99w'),st=f.querySelector('.r99st'),er=f.querySelector('.r99err'),end=f.querySelector('.r99end');
+  f.dataset.s='bad';f.classList.add('r105clr');f.querySelectorAll('.r99chip').forEach(c=>c.dataset.s='bad');w&&w.classList.add('bad');st&&st.classList.add('bad');if(end){end.textContent='!';end.style.color='#ff5a5a'}
+  if(er){const sp=(f.closest('#out')&&typeof r100bch=='function'&&r100bch(k))||r99spec(k);const mm=r99msg(k,'',sp);er.innerHTML='Needs: '+esc(mm.need||'a real answer')+(mm.ex&&r103eg(mm.ex)?'<br><i>Example: '+r103eg(mm.ex)+'</i>':'');er.classList.add('on')}})}catch(e){console.error(e)}}
+{const _e=edit;edit=function(){const r=_e.apply(this,arguments);r105red();return r}}
+{const _s=show;show=function(){const r=_s.apply(this,arguments);r105red();return r}}
+document.addEventListener('input',()=>setTimeout(r105red,0),true);
+// 4: no visible 'Example:' line is ever empty — wherever it is rendered, an empty one is removed at the source of display
+function r105eg(root){try{(root||document.body).querySelectorAll('i,div,span,p,small,em').forEach(e=>{if(e.children.length)return;const t=e.textContent;if(/^\s*Example:\s*$/.test(t)){const pv=e.previousSibling;if(pv&&pv.nodeName=='BR')pv.remove();e.remove()}});
+ (root||document.body).querySelectorAll('.r99err,.r83err,.r101terr,.r102terr').forEach(e=>{const h=e.innerHTML,n=h.replace(/(<br>)?\s*<i>\s*Example:\s*<\/i>/g,'').replace(/(<br>)?\s*Example:\s*$/,'');if(n!==h)e.innerHTML=n})}catch(e){}}
+let r105q=0;new MutationObserver(()=>{if(r105q)return;r105q=1;queueMicrotask(()=>{r105eg();r105q=0})}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+// 5: 5-axis 3+2 with the pair unconfirmed says '⛔ Not written: …' (like flat jobs), not only the lock chip
+{const _sh=show;show=function(){const r=_sh.apply(this,arguments);try{const m=S.m[S.cur];if(typeof J!='undefined'&&J&&J.op&&m&&r98t(m)=='vmc5'&&!r104flat(J)&&!(Array.isArray(J.code)&&J.code.length)&&!$('#r104hold')){const p=r100pairOf(m);const why=!p?'this 5-axis program needs the confirmed rotary pair (Machines → Rotary pair).':(typeof r100blockReason=='function'&&r100blockReason(J))?'this 5-axis program needs '+esc(String(r100blockReason(J)).replace(/<[^>]+>/g,'').replace(/^[^a-z]*/i,'').replace(/\.$/,''))+'.':'';
+  if(why){const o=$('#out');if(o)o.insertAdjacentHTML('beforeend','<div class="ok bad" id="r104hold">⛔ Not written: '+why+'</div>')}}}catch(e){console.error(e)}return r}}
+// 7: every menu arrow is ▾ (native select chevrons hidden)
+{const st=document.createElement('style');st.textContent=`.r99w select{-webkit-appearance:none!important;appearance:none!important;background-image:none!important}
+select:not(.r99w select){-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0h10L5 6z' fill='%23888'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important;padding-right:26px!important}
+@media (max-width:340px){#usebar{margin-bottom:8px!important}}`;document.head.appendChild(st)}
+function r105arrows(){document.querySelectorAll('.r99f').forEach(f=>{const s=f.querySelector('.r99w select'),e=f.querySelector('.r99end');if(s&&e&&!e.textContent.trim()){e.textContent='▾';e.style.color='#888';e.classList.add('r105a')}})}
+{const _e=edit;edit=function(){const r=_e.apply(this,arguments);r105arrows();return r}}
+{const _s=show;show=function(){const r=_s.apply(this,arguments);r105arrows();return r}}
+document.addEventListener('change',()=>setTimeout(r105arrows,0),true);
 
 /* R79-END */</script>
 </body></html>
