@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><style>body{margin:0}iframe{width:412px;height:900px;border:0}</style><body><iframe id="f" src="../index.html?v=72"></iframe><script>
+// Round 75 shots: ?s=shaft | circle
+const S=new URLSearchParams(location.search).get('s')||'shaft';let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+setTimeout(()=>{w.eval('NOASK=1;S.cur=0;tab("new")');[...d.querySelectorAll('#jcbar [data-cat]')].find(b=>/Engrav/.test(b.textContent)).click();
+d.querySelector('#jcjobs [data-op="engrave"]').click();d.querySelector(`#jcjobs [data-op="${S=='shaft'?'~en0':'~en1'}"]`).click();w.scrollTo(0,0)},2000)}
+</script>

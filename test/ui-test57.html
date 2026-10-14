@@ -1,0 +1,44 @@
+<!doctype html><body data-w="412"><pre id="o"></pre><iframe id="f" src="../index.html?v=72" style="width:412px;height:740px;border:0"></iframe><script>
+// Round 75: every job button in every Build category tab opens a job (highlighted) on every machine type; no console errors
+const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
+f.onload=()=>{const w=f.contentWindow,d=w.document;
+ if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+ const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
+ w.alert=w.confirm=w.prompt=()=>null;
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");
+  const types=[['Mill A (demo)',null,0],['VMC','vmc'],['VMC 4th','vmc 4th axis'],['HMC','hmc 4-axis'],['5-axis','5-axis vmc'],['Lathe','lathe'],['Live lathe','lathe live tooling'],['Swiss','swiss lathe'],['Multitask','multitask lathe']];
+  let total=0;const dead=[];
+  types.forEach(([lab,t,idx])=>{
+   if(t){E(`S.m.push(mk(${JSON.stringify(lab)},${JSON.stringify(t)}));S.cur=S.m.length-1;save()`)}else E(`S.cur=${idx}`);
+   E('J=null;tab("new")');
+   const cats=[...d.querySelectorAll('#jcbar [data-cat]')].map(b=>b.dataset.cat);
+   let n=0;
+   cats.forEach(c=>{
+    d.querySelector(`#jcbar [data-cat="${c}"]`).click();
+    const ops=[...d.querySelectorAll('#jcjobs [data-op]')].map(b=>[b.dataset.op,b.textContent]);
+    ops.forEach(([op,txt])=>{
+     E('J=null');const o0=(d.querySelector('#out')||{}).innerHTML;
+     const b=d.querySelector(`#jcjobs [data-op="${CSS.escape(op)}"]`);if(!b){dead.push(lab+'/'+c+'/'+txt+' (vanished)');return}
+     try{b.click()}catch(e){dead.push(lab+'/'+txt+' threw '+e.message);return}
+     const nb=d.querySelector(`#jcjobs [data-op="${CSS.escape(op)}"]`);
+     const lit=nb&&nb.classList.contains('y');const o1=(d.querySelector('#out')||{}).innerHTML;
+     const opened=E('!!J')||o1!=o0;
+     n++;if(!(opened&&lit))dead.push(lab+'/'+c+'/'+txt+(opened?' (not highlighted)':' (nothing)'));
+     d.querySelector(`#jcbar [data-cat="${c}"]`)&&d.querySelector(`#jcbar [data-cat="${c}"]`).click();
+    });
+   });
+   total+=n;log(lab+': '+cats.length+' tabs, '+n+' job buttons all open',n>0&&!dead.some(x=>x.startsWith(lab+'/')),dead.filter(x=>x.startsWith(lab+'/')).join('; '));
+  });
+  E('S.cur=0;J=null;tab("new")');const eb=[...d.querySelectorAll('#jcbar [data-cat]')].find(b=>/Engrav/.test(b.textContent));eb.click();
+  [...d.querySelectorAll('#jcjobs [data-op]')].find(b=>b.dataset.op=='engrave').click();
+  [...d.querySelectorAll('#jcjobs [data-op]')].find(b=>b.dataset.op=='~en0').click();
+  log('Mill A: Engrave shaft after Engrave text lights shaft, not text',d.querySelector('#jcjobs [data-op="~en0"]').classList.contains('y')&&!d.querySelector('#jcjobs [data-op="engrave"]').classList.contains('y'));
+  log('card title says Engrave shaft',/Engrave shaft/.test((d.querySelector('#out .card .t')||{}).textContent||''),(d.querySelector('#out .card .t')||{}).textContent);
+  [...d.querySelectorAll('#jcjobs [data-op]')].find(b=>b.dataset.op=='~en1').click();
+  log('Text in a circle lights and titles',d.querySelector('#jcjobs [data-op="~en1"]').classList.contains('y')&&/circle/i.test(d.querySelector('#out .card .t').textContent));
+  [...d.querySelectorAll('#jcjobs [data-op]')].find(b=>b.dataset.op=='engrave').click();
+  log('Engrave text lights again after shortcut',d.querySelector('#jcjobs [data-op="engrave"]').classList.contains('y')&&!d.querySelector('#jcjobs [data-op="~en1"]').classList.contains('y'));
+  log('total buttons tested '+total,total>100);
+  log('no console errors',!errs.length,errs.join(' | '));
+ }catch(e){log('crash',false,e.stack)}o.textContent=out.join('\n')},2500)}
+</script>

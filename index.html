@@ -117,9 +117,10 @@ let DLG_SKIP=0;
 addEventListener('popstate',e=>{if(DLG_SKIP){DLG_SKIP=0;e.stopImmediatePropagation();return}if(DLG){e.stopImmediatePropagation();dlgClose(DLG.cancel,1)}});
 addEventListener('keydown',e=>{if(!DLG)return;if(e.key=='Escape'){e.preventDefault();e.stopImmediatePropagation();dlgClose(DLG.cancel)}else if(e.key=='Enter'&&DLG.kind=='prompt'&&e.target.id=='dlgin'){e.preventDefault();dlgClose(e.target.value)}},true);
 function dlgOpen(kind,msg,def,cb,o){o=o||{};if(DLG)dlgClose(DLG.cancel);const el=document.createElement('div');el.id='dlg';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');
+ if(kind=='prompt'&&!o.num&&EDK&&typeof chipNum=='function'){const nm=chipNum(EDK);if(nm)o.num=nm}
  if(kind=='prompt'&&!o.num&&/PIN|Tool number|tool number|\(mm\)|\(in\)/.test(msg))o.num=/PIN|Tool number|tool number/.test(msg)?'numeric':'decimal';
  const cancel=kind=='prompt'||kind=='pick'?null:kind=='confirm'?false:undefined;
- el.innerHTML=`<div class="dlgb"><div class="dlgm">${dlgEsc(msg).replace(/\n/g,'<br>')}</div>${kind=='pick'?`<div id="dlgpk">${o.opts.map(([v,l],q)=>`<button type="button" class="btn ${String(v)==String(def)?'':'o'}" data-q="${q}">${dlgEsc(l)}</button>`).join('')}</div>`:''}${kind=='prompt'?`<input id="dlgin" value="${dlgEsc(def??'')}" autocomplete="off"${o.num||(def!==''&&def!=null&&NUMRE.test(String(def)))?` inputmode="${o.num||'decimal'}" pattern="${(o.num=='numeric')?'[0-9]*':'-?[0-9]*[.,]?[0-9]*'}"`:''}>`:''}<div class="dlgr">${kind=='alert'?'':`<button type="button" class="btn o" id="dlgno">${dlgEsc(o.no||'Cancel')}</button>`}<button type="button" class="btn${o.danger?' dlgd':''}" id="dlgok">${dlgEsc(o.yes||'OK')}</button></div></div>`;
+ el.innerHTML=`<div class="dlgb"><div class="dlgm">${dlgEsc(msg).replace(/\n/g,'<br>')}</div>${kind=='pick'?`<div id="dlgpk">${o.opts.map(([v,l],q)=>`<button type="button" class="btn ${String(v)==String(def)?'':'o'}" data-q="${q}">${dlgEsc(l)}</button>`).join('')}</div>`:''}${kind=='prompt'?`<input id="dlgin" value="${dlgEsc(def??'')}" autocomplete="off"${o.num||(!o.txt&&!/name/i.test(msg)&&def!==''&&def!=null&&NUMRE.test(String(def)))?` inputmode="${o.num||'decimal'}" pattern="${(o.num=='numeric')?'[0-9]*':'-?[0-9]*[.,]?[0-9]*'}"`:''}>`:''}<div class="dlgr">${kind=='alert'?'':`<button type="button" class="btn o" id="dlgno">${dlgEsc(o.no||'Cancel')}</button>`}<button type="button" class="btn${o.danger?' dlgd':''}" id="dlgok">${dlgEsc(o.yes||'OK')}</button></div></div>`;
  document.body.appendChild(el);let pushed=0;try{history.pushState(Object.assign({},history.state||{},{dlg:1}),'');pushed=1}catch(e){}
  DLG={el,cb,cancel,kind,pushed};el.querySelectorAll('#dlgpk [data-q]').forEach(b=>b.onclick=()=>dlgClose(o.opts[+b.dataset.q][0]));if(kind=='pick'){const okb=el.querySelector('#dlgok');okb.remove()}const ok=el.querySelector('#dlgok'),no=el.querySelector('#dlgno'),inp=el.querySelector('#dlgin');
  if(ok)ok.onclick=()=>dlgClose(kind=='prompt'?inp.value:kind=='confirm'?true:undefined);if(no)no.onclick=()=>dlgClose(cancel);el.onclick=e=>{if(e.target==el)dlgClose(cancel)};
@@ -131,10 +132,21 @@ function askP(msg,o){return new Promise(r=>{ask(msg,()=>(r(true),true),()=>(r(fa
 /* §71 fix 7: number fields open the numeric keypad; a floating ± key adds the minus the iOS decimal pad lacks */
 const NUMRE=/^\s*[-+]?(\d+[.,]?\d*|[.,]\d+)\s*$/;
 const NUMTXT=/^(mn|cmn|sn|jn|jno|jl|fq|hq|lq|rq|jmname|jmnew|tn_name|pcyc|dlgin)$/;
-function numTag(root){(root||document).querySelectorAll('input:not([inputmode])').forEach(el=>{const t=(el.getAttribute('type')||'text').toLowerCase();if(t=='number'){el.setAttribute('inputmode','decimal');return}if(t!='text'||NUMTXT.test(el.id||'')||el.dataset.om!=null||el.dataset.f)return;const v=el.value;if(v!==''&&NUMRE.test(v)){el.setAttribute('inputmode','decimal');el.setAttribute('pattern','-?[0-9]*[.,]?[0-9]*')}})}
+var EDK=null;
+// Round 75: machine settings that hold a number (others are M-codes / words and keep the full keyboard)
+const NUMSET=/^(Rapid rate|Program memory|Max RPM|Tool change time|Tool nose radius|Orient parameter number|Orient parameter value now|Orient parameter spindle|Spindle encoder counts|Param 6000 bit 3|Setter clear Z|Setter X position|Setter Z position)/;
+const NUMSETI=/^(Program memory|Orient parameter number|Orient parameter spindle|Spindle encoder counts|Param 6000 bit 3)/;
+function numSet(el,m){el.setAttribute('inputmode',m);el.setAttribute('pattern',m=='numeric'?'[0-9]*':'-?[0-9]*[.,]?[0-9]*')}
+function numTag(root){(root||document).querySelectorAll('input:not([inputmode])').forEach(el=>{const t=(el.getAttribute('type')||'text').toLowerCase();if(t=='number'){el.setAttribute('inputmode','decimal');return}if(t!='text'||NUMTXT.test(el.id||'')||el.dataset.om!=null)return;
+ if(el.dataset.j!=null){const l=((el.closest('label')||el.closest('.set')||{}).textContent||'').replace(/^[\s!✓~]+/,'').trim();if(NUMSET.test(l))numSet(el,NUMSETI.test(l)?'numeric':'decimal');return}
+ if(el.dataset.f=='n'){numSet(el,'numeric');return}if(el.dataset.f)return;const v=el.value;if(v!==''&&NUMRE.test(v)){el.setAttribute('inputmode','decimal');el.setAttribute('pattern','-?[0-9]*[.,]?[0-9]*')}})}
 let PMK=null;function pmShow(el){if(!PMK){PMK=document.createElement('button');PMK.type='button';PMK.id='pmkey';PMK.textContent='±';PMK.setAttribute('aria-label','Make negative or positive');PMK.addEventListener('pointerdown',e=>e.preventDefault());PMK.onclick=()=>{const f=document.activeElement;if(!f||f.tagName!='INPUT')return;const v=f.value.trim();f.value=v.startsWith('-')?v.slice(1):'-'+v;f.dispatchEvent(new Event('input',{bubbles:true}))};document.body.appendChild(PMK)}PMK.hidden=false}
 document.addEventListener('focusin',e=>{const el=e.target;if(el.tagName=='INPUT'&&el.getAttribute('inputmode')=='decimal')pmShow(el);else if(PMK)PMK.hidden=true});
 document.addEventListener('focusout',e=>{const el=e.target;if(PMK&&el.tagName=='INPUT'&&el.getAttribute('inputmode')=='decimal'){setTimeout(()=>{const a=document.activeElement;if(!a||a.getAttribute('inputmode')!='decimal')PMK.hidden=true},0)}});
+// Round 75: number fields refuse letters (keeps digits, one . or , and a leading minus on decimal fields)
+document.addEventListener('input',e=>{const el=e.target;if(!el||el.tagName!='INPUT')return;const m=el.getAttribute('inputmode');if(m!='decimal'&&m!='numeric')return;if((el.getAttribute('type')||'text')=='number')return;const v=el.value;let c;
+ if(m=='numeric')c=v.replace(/[^0-9]/g,'');else{const neg=/^\s*-/.test(v);let b=v.replace(/[^0-9.,]/g,'');const i=b.search(/[.,]/);if(i>=0)b=b.slice(0,i+1)+b.slice(i+1).replace(/[.,]/g,'');c=(neg?'-':'')+b}
+ if(c!==v){const p=el.selectionStart;el.value=c;try{const q=Math.max(0,(p||c.length)-(v.length-c.length));el.setSelectionRange(q,q)}catch(_){}}},true);
 new MutationObserver(()=>numTag()).observe(document.documentElement,{childList:true,subtree:true});
 function askPick(msg,opts,cur,cb){if(typeof UIA.pick=='function')return cb(UIA.pick(msg,opts));if(typeof UIA.prompt=='function'){const v=UIA.prompt(msg,cur);return cb(v==null?null:(opts.find(([a,l])=>String(a)==String(v)||l==v)||[v])[0])}dlgOpen('pick',msg,cur,cb,{opts})}
 function note(msg,cb){if(typeof UIA.alert=='function'){UIA.alert(msg);return cb&&cb()}dlgOpen('alert',msg,null,()=>cb&&cb())}
@@ -678,7 +690,7 @@ const _clearAll=clearAll;clearAll=function(){ask('Delete ALL machines, tools, jo
 // ---------- round 6
 // per-machine tool libraries
 (function(){const base=S.tools||[];let raw=null;try{raw=JSON.parse(localStorage.getItem('mc')||'null')}catch(e){}/* §61: a saved older global list goes to the current machine only (or Unassigned) — never copied to every machine, never lost */if(raw&&Array.isArray(raw.tools)){const c=S.m[S.cur]||S.m[0];S.utools=Array.isArray(S.utools)?S.utools:[];if(c&&!(c.tools&&c.tools.length))c.tools=JSON.parse(JSON.stringify(raw.tools));else if(raw.tools.length)S.utools.push(...raw.tools.map(t=>Object.assign({},t,{from:'older list (no machine)'})));S.m.forEach(m=>{if(!m.tools)m.tools=[]})}else S.m.forEach(m=>{if(!m.tools)m.tools=JSON.parse(JSON.stringify(base))});delete S.tools})();
-function bindTools(){S.m.forEach(m=>{if(!m.tools)m.tools=[]});Object.defineProperty(S,'tools',{configurable:true,enumerable:false,get(){const m=S.m[S.cur]||S.m[0];return m?m.tools:[]},set(v){const m=S.m[S.cur];if(m)m.tools=v}})}
+function bindTools(){S.m.forEach(m=>{if(!m.tools)m.tools=[]});Object.defineProperty(S,'tools',{configurable:true,enumerable:false,get(){const m=S.m[S.cur]||S.m[0];return m?(m.tools||(m.tools=[])):[]},set(v){const m=S.m[S.cur];if(m)m.tools=v}})}
 bindTools();
 const _tools6=tools;tools=function(){_tools6();$('#ttl').textContent='Tools · '+((S.m[S.cur]||{}).name||'');const s=document.createElement('div');s.className='s';s.style.margin='0 0 8px';s.innerHTML=`Each machine has its own tools. Showing <b>${(S.m[S.cur]||{}).name}</b> — pick another in Machines.`;V.prepend(s)};
 // transfer: filenames, % wrappers, line endings
@@ -5245,20 +5257,29 @@ function tlCopyFrom(si,k){const src=S.m[si];if(!src)return;TLSEL={};src.tools.fo
 
 // §71 fix 12: Build — swipeable category tabs (only categories with jobs for this machine/control, + My jobs) and a search box; replaces the big text box and the dropdown
 function jcGroups(){const sel=$('#jpick');if(!sel)return[];return [...sel.querySelectorAll('optgroup')].map(g=>[g.label,[...g.querySelectorAll('option')].filter(o=>o.value).map(o=>[o.value,o.textContent]).sort((a,b)=>a[1].replace(/^⚠\s*/,'').localeCompare(b[1].replace(/^⚠\s*/,''),undefined,{sensitivity:'base'}))]).filter(g=>g[1].length)}
-function jcBtns(list){return `<div class="jgrid jobs" id="jcjobs">${list.map(([v,l])=>`<button type="button" class="chip ${J&&(J.op==v)?'y':'gr'}" data-op="${esc(v)}">${l.length>34?'':''}<b>${esc(l)}</b></button>`).join('')||'<div class="s">No jobs match.</div>'}</div>`}
+function jcBtns(list){return `<div class="jgrid jobs" id="jcjobs">${list.map(([v,l])=>`<button type="button" class="chip ${jcOn(v)?'y':'gr'}" data-op="${esc(v)}">${l.length>34?'':''}<b>${esc(l)}</b></button>`).join('')||'<div class="s">No jobs match.</div>'}</div>`}
 function jcRender(){const w=$('#jcwrap');if(!w)return;const gs=jcGroups();if(!gs.length){w.innerHTML='';return}let t=S.jtab;if(!gs.some(g=>g[0]==t))t=gs[0][0];const q=(($('#jcq')||{}).value||'').trim().toLowerCase();
  const list=q?gs.flatMap(g=>g[1]).filter(([v,l],k,a)=>l.toLowerCase().includes(q)&&a.findIndex(x=>x[0]==v)==k):(gs.find(g=>g[0]==t)||gs[0])[1];
  $('#jcbar').innerHTML=gs.map(g=>`<button type="button" class="chip ${!q&&g[0]==t?'y':'gr'}" data-cat="${esc(g[0])}">${esc(g[0])} <span class="s">${g[1].length}</span></button>`).join('');
  $('#jcbody').innerHTML=jcBtns(list);
  $('#jcbar').querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{S.jtab=b.dataset.cat;save();const qq=$('#jcq');if(qq)qq.value='';jcRender()});
- $('#jcbody').querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>{const sel=$('#jpick');if(sel)sel.value=b.dataset.op;pickJob(b.dataset.op)});
+ $('#jcbody').querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>{const op=b.dataset.op,sel=$('#jpick');if(sel)sel.value=op;JXSRC=JX[op]?op:null;try{pickJob(op)}finally{JXSRC=null}});
  const on=$('#jcbar .chip.y');if(on&&on.scrollIntoView&&!jcRender.noScroll){const bar=$('#jcbar');bar.scrollLeft=Math.max(0,on.offsetLeft-bar.offsetLeft-20)}}
 function jcMount(){const sel=$('#jpick');if(!sel)return;const lab=document.querySelector('label[for="jpick"]');if(!$('#jcwrap')){const w=document.createElement('div');w.id='jcwrap';w.innerHTML=`<input id="jcq" type="search" placeholder="Search jobs…" aria-label="Search jobs" autocomplete="off"><div id="jcbar" role="tablist" aria-label="Job categories"></div><div id="jcbody"></div>`;(lab||sel).before(w);$('#jcq').oninput=()=>jcRender()}
  sel.id='jpick';sel.classList.add('bq-h');sel.style.display='none';const q=$('#q');if(q)q.style.display='none';V.querySelectorAll('button[onclick="go()"]').forEach(b=>{b.onclick=e=>{e.preventDefault();if(J&&J.p)show();else go()};b.removeAttribute('onclick');b.dataset.pc='1'});jcRender()}
 const _nw72=nw;nw=function(){const r=_nw72.apply(this,arguments);try{jcMount()}catch(e){console.warn(e)}return r};
 // §71 fix 13: tidy 2-column grid for the job's setting chips (label small on top, value below; long ones full width)
 function chipGrid(){const o=$('#out');if(!o)return;o.querySelectorAll('.card').forEach(c=>{const bs=[...c.children].filter(b=>b.tagName=='BUTTON'&&/^ed\(/.test(b.getAttribute('onclick')||''));if(bs.length<2||c.querySelector('.jgrid'))return;const g=document.createElement('div');g.className='jgrid';bs[0].before(g);bs.forEach(b=>{const t=b.textContent,k=t.indexOf(': ');if(k>0){const lab=t.slice(0,k),val=t.slice(k+2);b.innerHTML=`<small>${esc(lab)}</small><span class="cs">: </span><b>${esc(val)}</b>`;if(val.length>34)b.classList.add('wide')}else{b.innerHTML=`<b>${esc(t)}</b>`}g.appendChild(b)})})}
-const _show72=show;show=function(){const r=_show72.apply(this,arguments);try{chipGrid();jcRender.noScroll=1;jcRender();jcRender.noScroll=0}catch(e){console.warn(e)}return r};
+// Round 75: preset shortcuts (~en0 Engrave shaft, ~en1 Text in a circle, ~nt*, ~sw*) open a real job whose op is shared (e.g. engrave),
+// so the tab highlight used to land on "Engrave text" and the tapped button looked dead. Remember which shortcut opened the job.
+let JXSRC=null;function jcOn(v){if(!J)return false;return J.jx?J.jx==v:J.op==v}
+const _show72=show;show=function(){if(J&&JXSRC&&J.jx!==JXSRC&&!J.jxSeen){J.jx=JXSRC}const r=_show72.apply(this,arguments);try{if(J&&J.jx&&JX[J.jx]){const t=$('#out .card .t');if(t&&!t.dataset.jx){t.dataset.jx=1;t.textContent=JX[J.jx][1]}}chipGrid();jcRender.noScroll=1;jcRender();jcRender.noScroll=0}catch(e){console.warn(e)}return r};
+
+// Round 75: tapping a job chip that holds a number opens the number pad (184 chip prompts used to open the full keyboard when empty)
+const TXTK=/^(Text|Message|Door open \/ close code|Clamp \/ unclamp code|What it drives|What it means|What the values are|Profile|Offsets|Offset table|Table|Target offsets|Source offset|Fanuc offset memory|Shift direction|Axis|Axes|Cycle|Drill cycle|Probe mode|Write to|Result offset|Work offset|Zero point|Thread|Angles \(tilt list\)|Date format|Program end|Finish with|Coolant|Mode|Hand|Side|Feature|Type|Set|By|Output|End at|Code type|Stop type|Direction|Placement|Reading|Mirror|Angle is|At target|After last part|Update offset|Offset page value|Haas infeed|Haas smoothness|X0 Y0 Z0 at|X0 Z0 at)$/;
+const INTK=/(#|^Count$|Digits|Teeth|Holes|Hole count|Passes|Segments|Steps|Samples|Points|Touches|Features|Quantity|Every N|Max parts|Target count|Parts per bar|Life \(uses\)|Cycles|[Pp]rogram|HHMMSS|Code number|D number)/;
+function chipNum(k){const x=J&&J.p&&J.p[k];if(!x||TXTK.test(k))return null;if(x.v!=null&&typeof x.v!='number'&&!NUMRE.test(String(x.v)))return null;return INTK.test(k)?'numeric':'decimal'}
+{const _ed75=ed;ed=function(k){const o=EDK;EDK=k;try{return _ed75.apply(this,arguments)}finally{EDK=o}}}
 </script>
 
 </body></html>
