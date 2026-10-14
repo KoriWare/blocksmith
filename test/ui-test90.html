@@ -26,7 +26,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log("'Confirm rotary letter' clears once the pair is set",!E("(S.m[S.cur].r99need||[]).includes('Rotary axis')")&&!/Confirm rotary letter/.test(E("($('#r99notice')||{textContent:''}).textContent")));
  log('valid default Tilt axis name A stays neutral until confirmed',E("S.m[S.cur].s.find(y=>y.k==K5.ta).st")!='user');
  E("(()=>{J=parseJ2('','tp32');J.text='';J.edits={};J.code=[];tab('new');show()})()");await sl(40);
- log('…and stays in Build Need N (5-axis card) until confirmed',E("(()=>{const c=$('#r101five');return !!c&&c.textContent.includes('Confirm '+K5.ta)})()"),E("($('#r101five')||{textContent:'none'}).textContent.slice(0,300)"));
+ log('…and stays in the Build Machine row until confirmed (v103 single count)',E("r103block().some(k=>k=='Rotary pair'||/^[ABC] direction$/.test(k))&&!!$('#out .r102mach')"),E("r103block().join(',')"));
  E(`S.cur=${iB};edit(${iB})`);await sl(40);
  // Casey 2: 5 -> 4 parks the 5-axis rows
  E(`document.querySelector('#r98type button[data-t=vmc4]').click()`);await sl(80);

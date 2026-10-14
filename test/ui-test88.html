@@ -73,7 +73,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  E("(()=>{const i=$('#r99othi');i.value='asdf';i.dispatchEvent(new Event('input',{bubbles:true}))})()");
  log('Source offset Other junk: Needs shown, Done locked',/Needs:/.test(E("$('#r99othe').textContent"))&&E("$('#r99sheet .done').disabled"));
  E("(()=>{const i=$('#r99othi');i.value='G54.1 P3';i.dispatchEvent(new Event('input',{bubbles:true}));$('#r99sheet .done').click()})()");await sl(30);
- log('Source offset Other G54.1 P3 saved normalized for the job',E("J.p['Source offset'].v")=='P3');
+ log('Source offset Other G54.1 P3 saved exactly as typed (v103; parsed at use)',E("J.p['Source offset'].v")=='G54.1 P3'&&E("normOff(J.p['Source offset'].v)")=='P3');
  E(`S.m[${iA}].type='4-axis VMC'`);
  // lathe pickers
  const iL=E("S.m.findIndex(m=>isLT(m.type||''))");

@@ -30,7 +30,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  // fill boxes
  E("tab('new')");E("pickJob('bolt')");await sl(60);{const i2=d.querySelector('#out input[data-k="Depth"]');i2.value='0,5';E("fill()");log('B7 comma decimal in a box read as 0.5',E("J.p.Depth.v")==0.5,E("JSON.stringify(J.p.Depth)"))}const inp=d.querySelector('#out input[data-k="Dia"]');inp.value='1e2';E("fill()");log('B7 typed 1e2 in a box rejected',E("J.p.Dia.v==null")&&/Not a plain number/.test(d.querySelector('#out').innerText));
  // B13 need count matches rows
- E("pickJob('rpock')");await sl(60);{const c=[...d.querySelectorAll('#out .card')].find(c=>/^Need \d+ more/.test((c.querySelector('.t')||{}).textContent||''));log('B13 "Need N more" equals rows listed',c&&+c.querySelector('.t').textContent.match(/\d+/)[0]==c.querySelectorAll('.set').length)}
+ E("pickJob('rpock')");await sl(60);{const c=[...d.querySelectorAll('#out .card')].find(c=>/^Need \d+ more/.test((c.querySelector('.t')||{}).textContent||''));log('B13 "Need N more" equals rows listed + machine settings (v103 single count)',c&&+c.querySelector('.t').textContent.match(/\d+/)[0]==c.querySelectorAll('.set').length+(c.querySelector('.r102mach')?E('r103block().length'):0))}
  // B11 calculators
  E("calc()");await sl(100);log('B11 bolt calc starts empty (no prefilled holes / Ø)',d.querySelector('#b1').value===''&&d.querySelector('#b2').value===''&&!d.querySelector('#bo table'));
  const setc=(id,v)=>{const el=d.querySelector('#'+id);el.value=v;el.dispatchEvent(new Event('input'))};

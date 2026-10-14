@@ -15,9 +15,9 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('C18 Build work autosaved as a draft',E("!!drGet()&&drGet().J.op=='cpock'"));
  E("J=null;tab('new')");await sl(60);log('C18 Build offers to restore unsaved work',!!d.querySelector('#r79dr'));E("drRestore()");log('C18 restore brings it back',E("J&&J.op=='cpock'&&J.p.Depth.v==0.3"));
  // C16 control
- E("J=null;tab('new')");E("pickJob('rpock')");await sl(60);const red=[...d.querySelectorAll('#out .card')].find(c=>/^Machine setup still red/.test((c.querySelector('.t')||{}).textContent||''));
- if(red){const ch=[...red.querySelectorAll('.set')].find(r=>/^Control/.test(r.textContent));ch.querySelector('.chip.r').click();await sl(30);log('C16 tapping red Control explains and offers a pick list',!!d.querySelector('#r79ctl')&&/control name shown on your machine/.test(d.querySelector('#r79ctlbox').textContent));
-  d.querySelector('#r79ctl').value='Fanuc 0i-MF';E("ctlConfirm()");log('C16 Confirm sets Control and clears the red item',E("sv('Control').v=='Fanuc 0i-MF'&&sv('Control').st=='user'"))}else{log('C16 control red item present',false,'none')}
+ E("J=null;tab('new')");E("pickJob('rpock')");await sl(60);const mb=d.querySelector('#out .r102mach');
+ if(mb){mb.click();await sl(30);log('C16 (v103) Machine row opens Setup with Control highlighted',E("document.querySelector('.tabs button.on').dataset.t")=='machines'&&/Control/.test((d.querySelector('.r103hl')||{}).textContent||''));
+  E("(()=>{const c=sv('Control');c.v='Fanuc 0i-MF';c.st='user';save();edit(S.cur);r103tick()})()");log('C16 Confirm sets Control and clears the red item',E("sv('Control').v=='Fanuc 0i-MF'&&sv('Control').st=='user'&&!r103block().includes('Control')"))}else{log('C16 control red item present',false,'none')}
  // C20
  E("tab('new')");d.querySelector('#q').value=E("JB.bolt[1]");E("go()");const zi=E("J.code.findIndex(l=>/^G43/.test(l))");E(`J.edits[${zi}]='G43 H2 Z1.5 M08'`);d.querySelector('#q').value=E("JB.bolt[1]").replace('0.5 deep','0.6 deep');E("go()");await sl(60);
  log('C20 Generate Code after a hand edit says new values applied and edits dropped',/New values applied/.test((d.querySelector('#r79pc')||{}).textContent||'')&&/hand edits were dropped/.test(d.querySelector('#r79pc').textContent),(d.querySelector('#r79pc')||{}).textContent);

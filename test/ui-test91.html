@@ -31,8 +31,8 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  const tph=E("[...V.querySelectorAll('input[data-x=\"H\"],input[data-x=\"D\"],input[data-x=\"rpm\"],input[data-x=\"feed\"]')].map(i=>i.dataset.x+'='+i.placeholder).join('|')");
  log('Tools H#/D#/RPM/feed placeholders are real examples (no "optional", no "e.g. 1")',!!tph&&!/optional|=e\.g\. 1(\||$)/i.test(tph),tph);
  // 6 Tools: Name with ( ) refused with Needs/Example, box keeps it; Ø abc keeps abc
- const tn=E("(()=>{const i=V.querySelector('input[data-x=\"name\"]');if(!i)return 'none';const t0=tlCurM().tools[+i.dataset.i]||{};const was=t0.name;i.value='EM (BAD';i.dispatchEvent(new Event('change',{bubbles:true}));const e=i.parentNode.querySelector('.r102terr');return JSON.stringify({kept:i.value,msg:e&&e.textContent,saved:(tlCurM().tools[+i.dataset.i]||{}).name,was})})()");
- {let x={};try{x=JSON.parse(tn)}catch(e){}log('Tools Name with ( ): Needs + Example, not saved, box keeps text',x.kept=='EM (BAD'&&/Needs:/.test(x.msg||'')&&/Example/.test(x.msg||'')&&x.saved!=='EM (BAD',tn)}
+ const tn=E("(()=>{const i=V.querySelector('input[data-x=\"name\"]');if(!i)return 'none';const t0=tlCurM().tools[+i.dataset.i]||{};const was=t0.name;i.value='E'.repeat(61);i.dispatchEvent(new Event('change',{bubbles:true}));const e=i.parentNode.querySelector('.r102terr');return JSON.stringify({kept:i.value,msg:e&&e.textContent,saved:(tlCurM().tools[+i.dataset.i]||{}).name,was})})()");
+ {let x={};try{x=JSON.parse(tn)}catch(e){}log('Tools Name over 60 chars (v103: length only): Needs + Example, not saved, box keeps text',x.kept=='E'.repeat(61)&&/Needs:/.test(x.msg||'')&&/Example/.test(x.msg||'')&&x.saved!=='E'.repeat(61),tn)}
  E("tools()");await sl(40);
  const td=E("(()=>{const i=V.querySelector('input[data-f=\"dia\"]');i.value='abc';i.dispatchEvent(new Event('change',{bubbles:true}));return JSON.stringify({kept:i.value,msg:(document.querySelector('.r83err')||{}).textContent})})()");
  {const x=JSON.parse(td);log('Tools Ø abc: message shown and the box keeps abc (no silent revert)',x.kept=='abc'&&/Needs:/.test(x.msg||''),td)}
@@ -40,8 +40,8 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  const tl=E("(()=>{const i=V.querySelector('input[data-f=\"len\"]');if(!i)return '{}';i.value='zz';i.dispatchEvent(new Event('change',{bubbles:true}));return JSON.stringify({kept:i.value,msg:(i.parentNode.querySelector('.r101terr')||{}).textContent})})()");
  {const x=JSON.parse(tl);log('Tools stick-out zz: message shown and the box keeps zz',x.kept=='zz'&&/Needs:/.test(x.msg||''),tl)}
  // 6 Build text specs
- const sp6=E("(()=>{const o=[];[['Text','@@@','PART 12-A'],['Message','(OOPS)','CHECK CLAMP'],['RPM steps','asdf','2000 4000 6000'],['Expected fixture ID','x1','3'],['Report title','two words','BORE1'],['Group ID','abc','1']].forEach(([k,bad,ex])=>{J={op:'x',p:{[k]:{v:null}}};const s=r99spec(k);if(!s||!s.strict||s.ex!=ex||r99ok(k,bad,s)||!r99ok(k,ex,s))o.push(k)});J=null;return o.join(',')})()");
- log('Text / Message / RPM steps / fixture ID / Report title / Group ID: junk refused, example passes',sp6==='',sp6);
+ const sp6=E("(()=>{const o=[];[['Text','A(B)','PART 12-A'],['Message','(OOPS)','CHECK CLAMP'],['RPM steps','asdf','2000 4000 6000'],['Expected fixture ID','x1','3'],['Report title','X'.repeat(41),'BORE1'],['Group ID','abc','1']].forEach(([k,bad,ex])=>{J={op:'x',p:{[k]:{v:null}}};const s=r99spec(k);if(!s||!s.strict||s.ex!=ex||r99ok(k,bad,s)||!r99ok(k,ex,s))o.push(k)});J=null;return o.join(',')})()");
+ log('Text / Message / RPM steps / fixture ID / Report title / Group ID: bad input refused (v103: Text/Message no ( ), Report title length), example passes',sp6==='',sp6);
  const rop=E("Object.keys(J2).find(k=>(J2[k].req||[]).includes('RPM steps'))");
  E(`J=parseJ2('','${rop}');J.text='';J.edits={};J.code=[];tab('new');show()`);await sl(40);
  E("(()=>{const i=document.querySelector('#out .r99f[data-r99k=\"RPM steps\"] input');if(i){i.value='asdf';fill()}})()");await sl(40);

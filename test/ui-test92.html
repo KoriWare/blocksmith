@@ -18,7 +18,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListe
   log('placeholder sweep catches Units=check: reset to blank, needs a real answer',E("(()=>{const m=S.m.find(m=>m.name=='Mill A');const u=m.s.find(x=>x.k=='Units');return u.v===''&&u.st=='confirm'&&(m.r99need||[]).includes('Units')})()"));
   E("cur(S.m.findIndex(m=>m.name=='Mill A'))");E("J=null;tab('new');pickJob('bolt')");await sl(60);
   log('…and Build is blocked for that machine (Units)',!E("!!(J&&J.code&&J.code.length)")&&/Units/.test(E("($('#out .r102mach')||{title:''}).title")),E("JSON.stringify(S.m[S.cur].s.find(x=>x.k=='Units'))+' code:'+!!(J&&J.code&&J.code.length)+' '+$('#out').textContent.slice(0,200)"));
-  log("Build Need N starts with 'Machine: N to confirm ›' (one class .r102mach)",E("(()=>{const b=$('#out .r102mach');return !!b&&/^Machine: \\d+ to confirm ›$/.test(b.textContent)})()"),E("($('#out .r102mach')||{textContent:'none'}).textContent"));
+  log("Build Need N starts with 'Machine: N to confirm ›' (one class .r102mach)",E("(()=>{const b=$('#out .r102mach');return !!b&&/^Machine: \\d+ to confirm\\s*›$/.test(b.textContent)})()"),E("($('#out .r102mach')||{textContent:'none'}).textContent"));
   E("$('#out .r102mach').click()");await sl(60);log('…tapping it opens Setup',!!E("$('#r98type')"));
   E(`edit(${keep.iB})`);await sl(80);const p2=E("((V.innerText||'').match(/Setup \\d+% · \\d+ to confirm/)||[''])[0]");
   log('(a) Setup % identical before and after a hard reload',!!keep.pct&&p2==keep.pct,keep.pct+' → '+p2);
@@ -29,7 +29,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListe
   E("edit(S.cur)");await sl(60);
   log('preset pair row shows its value with a neutral dot (green only from the user)',E("(()=>{const f=document.querySelector('#r100rot .r99f[data-r99k=\"Rotary pair\"]');return !!f&&f.dataset.s!='ok'&&!!f.querySelector('input').value})()"));
   E("J=parseJ2('','tp32');J.text='';J.edits={};J.code=[];tab('new');show()");await sl(40);
-  log('…and Rotary pair is in Build Need N until confirmed',/Rotary pair/.test(E("($('#r101five')||{textContent:''}).textContent"))&&!!E("$('#out .r102mach')"));
+  log('…and Rotary pair is in the Build Machine row until confirmed',E("r103block().includes('Rotary pair')")&&!!E("$('#out .r102mach')"));
   log('Build shows one machine-setup card (merged)',E("[...document.querySelectorAll('#out .card')].filter(c=>/^Machine setup still red/.test((c.querySelector('.t')||{}).textContent||'')).length")<=1);
   log('Build Need hints start with a capital',E("[...document.querySelectorAll('#out .card .s')].filter(h=>/^\\s*[a-z]/.test(h.textContent)).length")==0);
   // Maria 3/4: per-control examples

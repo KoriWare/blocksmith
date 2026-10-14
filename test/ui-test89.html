@@ -34,7 +34,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('5-axis setup: exactly one Rotary pair row, no 4-axis rotary rows',rows.replace(/\|Rotary axis (limits|clamp)[^|]*/g,'')=='Rotary pair',rows);
  log('switch to 5-axis adds the 11 five-axis settings it lacked',E(`R101K5().every(k=>!!S.m[${iB}].s.find(x=>x.k==k))`));
  E(`J=null;tab('new');$('#q').value='3+2 tilt 30 rotary 0 plane x0 y0 z0 program O1234 safe z 1 T1 G54';go()`);await sl(40);
- log('Build Need N lists the 5-axis items (pair + 11)',E("(()=>{const c=$('#r101five');return !!c&&c.querySelectorAll('[data-k101]').length>=12})()"),E("($('#r101five')||{textContent:'none'}).textContent.slice(0,200)"));
+ log('Build Need N Machine row counts the 5-axis items (pair + 11) (v103 single count)',E("(()=>{const b=$('#out .r102mach');const n=r103block().length;return !!b&&n>=12&&new RegExp('Machine: '+n+' to confirm').test(b.textContent)})()"),E("r103block().join(',')"));
  // after pair picked, A/C direction rows appear and exactly one pair row
  E(`edit(${iB})`);await sl(30);E("document.querySelector('.r99f[data-r99k=\"Rotary pair\"] .r99w').click()");await sl(30);E("document.querySelectorAll('#r99sheet .opt')[0].click();$('#r99sheet .done').click()");await sl(80);
  const rows2=E("[...V.querySelectorAll('.r99f,.set')].filter(f=>f.offsetParent!==null&&f.style.display!='none').map(f=>f.dataset.r99k||((f.querySelector('span')||{}).textContent||'').replace(/^[!\\s✓•~]+/,'').trim()).filter(k=>/^Rotary|direction|Tilt axis name|Rotary axis name/.test(k)).join('|')");

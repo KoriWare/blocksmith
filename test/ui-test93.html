@@ -1,0 +1,91 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 103: Stacey v102 retest + Maria / Casey steering --><iframe id="f" src="../index.html?v=103" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListener('error',e=>errs.push(e.message));const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const sl=t=>new Promise(r=>setTimeout(r,t));
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ if(step==1){step=2;setTimeout(()=>{E("(()=>{S.m[1].mtype='vmc4';S.m[1].opt.ax4=1;S.m[1].s.push({k:'Option: M19 orient to any angle (Haas)',v:'',st:'confirm'});save()})()");w.location.reload()},600);return}
+ if(step==2&&!w.__cold){const grab=()=>[...d.querySelectorAll('.s,#hPct')].map(e=>e.textContent.trim()).filter(t=>/^Setup \d+%/.test(t)).join('|');w.__cold=1;const c0=grab();window.__c0=c0;window.__c0m=E("S.m.map(m=>setupLine(m)).join('|')");}
+ setTimeout(async()=>{try{
+ {const grab=()=>[...d.querySelectorAll('.s,#hPct')].map(e=>e.textContent.trim()).filter(t=>/^Setup \d+%/.test(t)).join('|');const c0=window.__c0;E("tab('machines')");E("home()");const c1=grab();E("tab('machines')");const lines=E("[...V.querySelectorAll('.card')].map(c=>{const s=[...c.querySelectorAll('.s')].find(s=>/^Setup \\d+%/.test(s.textContent.trim()));return s?s.textContent.trim():''}).filter(Boolean).join('|')");
+  log('14: Home Setup line is the same on cold load and after navigating',!!c0&&c0==c1,c0+' vs '+c1);
+  log('14: Machines list shows the same single count as the model',lines==window.__c0m,lines+' vs '+window.__c0m);
+  const rects=E("(()=>{toast79('x');const t=$('#r79toast');t.classList.add('r99pin');const r=t.getBoundingClientRect(),b=document.body.getBoundingClientRect();const cs=getComputedStyle(t);return JSON.stringify({l:Math.round(r.left-b.left),rr:Math.round(b.right-r.right),rad:cs.borderTopLeftRadius})})()");
+  {let x={};try{x=JSON.parse(rects)}catch(e){}log('15: notice bar inside the app column, 12px insets, card radius',x.l==12&&x.rr==12&&x.rad=='16px',rects)}}
+ E("NOASK=1;var _t=$('#r79toast');_t&&_t.remove()");
+ // ---- 1/2 offsets: typed text kept, both forms accepted at use
+ log('2: offset pickers keep exactly what was typed (no save rewrite)',E("['Base offset','Source offset','First new offset'].every(k=>{const s=r99spec(k);return !s.save||s.save('G54.1 P7')=='G54.1 P7'})"));
+ const off=E(`(()=>{const m=S.m[S.cur];m.s.forEach(x=>{if(x.v&&x.st!='user')x.st='user'});['g10','ext','probe'].forEach(k=>m.opt[k]=true);save();const o=[];const run=(op,set)=>{tab('new');J=parseJ2('',op);J.text='';J.edits={};J.code=[];Object.entries(set).forEach(([k,v])=>J.p[k]={v,g:false});Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k==CW?'YES':2,g:false}});show();const t=$('#out').innerText;o.push([!!(J.code&&J.code.length),!/Not written/.test(t),JSON.stringify(Object.fromEntries(Object.keys(set).map(k=>[k,J.p[k].v]))),(J.code||[]).join(' ')])};
+  run('tomb',{'Base offset':'G54','First new offset':'G54.1 P5'});run('tomb',{'Base offset':'G54','First new offset':'P5'});run('tomb',{'Base offset':'G54.1 P7','First new offset':'P5'});run('tomb',{'Base offset':'P7','First new offset':'G54.1 P5'});
+  run('wocopy',{'Source offset':'G54.1 P7','Target offsets':'G55','Mode':(J2.wocopy.choices||{}).Mode?J2.wocopy.choices.Mode[0]:2});run('wocopy',{'Source offset':'P7','Target offsets':'G55','Mode':(J2.wocopy.choices||{}).Mode?J2.wocopy.choices.Mode[0]:2});return JSON.stringify(o)})()`);
+ {let o=[];try{o=JSON.parse(off)}catch(e){}
+  log('1: Tombstone First new offset G54.1 P5 and P5 both write code',o[0]&&o[0][0]&&o[0][1]&&o[1]&&o[1][0],off.slice(0,400));
+  log('1: same code for G54.1 P5 and P5',o[0]&&o[1]&&o[0][3]==o[1][3]);
+  log('1: Tombstone Base offset G54.1 P7 and P7 both write code',o[2]&&o[2][0]&&o[3]&&o[3][0],off.slice(0,400));
+  log('2: typed text kept on the job after code is written',o[0]&&/G54\.1 P5/.test(o[0][2])&&o[2]&&/G54\.1 P7/.test(o[2][2]));
+  log('1: Work-offset copy Source G54.1 P7 and P7 both write code',o[4]&&o[4][0]&&o[5]&&o[5][0]&&o[4][3]==o[5][3],off.slice(-400))}
+ E("J=null;tab('machines')");
+ // ---- 3 hidden rows never count
+ const h3=E(`(()=>{const m=S.m[S.cur];const c=m.s.find(x=>x.k=='Control');c.v='Fanuc 0i-style';c.st='user';m.s.forEach(x=>{if(!x.v)x.v='1';x.st=/M19 orient/.test(x.k)?'confirm':'user'});if(!m.s.some(x=>/M19 orient/.test(x.k)))m.s.push({k:'Option: M19 orient to any angle (Haas)',v:'',st:'confirm'});save();edit(S.cur);return JSON.stringify({line:setupLine(m),bar:V.querySelector('.bar i').style.width,txt:[...V.querySelectorAll('.s')].map(s=>s.textContent).find(t=>/^Setup \\d+%/.test(t)),hid:r103hid(m,'Option: M19 orient to any angle (Haas)'),shown:[...V.querySelectorAll('.r99f[data-r99k]')].some(f=>/M19 orient/.test(f.dataset.r99k)&&f.style.display!='none')})})()`);
+ {let x={};try{x=JSON.parse(h3)}catch(e){}log('3: Fanuc + unconfirmed (Haas) M19 row: Setup 100% · 0 to confirm, bar 100%',x.line=='Setup 100% · 0 to confirm'&&x.bar=='100%'&&x.txt==x.line&&x.hid&&!x.shown,h3)}
+ log('3: Machines list card uses the same visible-only line',E("machines();[...V.querySelectorAll('.card .s')].some(s=>s.textContent.trim()==setupLine(S.m[S.cur]))"));
+ log('3: hidden rows drop out of the machine blocking list',E("r103block().every(k=>!r103hid(S.m[S.cur],k))"));
+ // ---- 8 Fanuc 0i: DWO row hidden, hints
+ log('8: Fanuc hides the Haas DWO row (G254/G255)',E("(()=>{const m=S.m[S.cur];m.mtype='vmc5';return r103hid(m,K5.dw)&&!r103hid(Object.assign({},m,{s:m.s.map(x=>x.k=='Control'?{...x,v:'Haas NGC'}:x)}),K5.dw)})()"));
+ log('8: Offset syntax hint on Fanuc: Pick G54.1 Pn or G54 Pn (no Haas form)',E("(()=>{const s=r99spec('Offset syntax');return s.hint=='Pick G54.1 Pn or G54 Pn'&&!s.ch.some(c=>/haas/i.test(c))})()"));
+ log('8: Param 6000 hint: Pick 0 or 1',E("r99spec('Param 6000 bit 3 V15 (Fanuc)').hint")=='Pick 0 or 1');
+ // ---- 7 whole-word examples
+ log('7: Kinematics example Pick: Table / Head-head / Head-table',E("r99spec(K5.kin).ph")=='Table / Head-head / Head-table');
+ log('7: direction example lists both whole choices',E("r99spec('A direction').ph")=='Clockwise (+) / Counterclockwise (−)');
+ E("(()=>{const m=S.m[S.cur];m.mtype='';save()})()");
+ // ---- 4 examples
+ log('4: no doubled e.g. in Example lines',E("r103eg('e.g. 12')")=='12'&&E("r103eg('12')")=='12');
+ log('4: Update offset says what to answer (example YES / NO)',/example: YES/.test(E("UNIT['Update offset']"))&&E("r99spec('Update offset').ph")=='YES or NO');
+ // ---- 5 tools number rule
+ E("tools()");await sl(60);
+ const t5=E(`(()=>{const o={};const tryI=(sel,name)=>{const i=V.querySelector(sel);if(!i){o[name]='none';return}const before=JSON.stringify(S.tools[0]);i.value='asdf';i.dispatchEvent(new Event('change',{bubbles:true}));const e=i.parentNode.querySelector('.r101terr')||document.querySelector('.r83err');o[name]={msg:e&&e.textContent,same:JSON.stringify(S.tools[0])==before}};tryI('input[data-f="n"]','n');tools();const li=[...V.querySelectorAll('input')].find(i=>/\\.life=/.test(i.getAttribute('onchange')||''));if(li){li.setAttribute('data-t93','1')}tryI('input[data-t93]','life');return JSON.stringify(o)})()`);
+ {let x={};try{x=JSON.parse(t5)}catch(e){}
+  log('5: first numeric Tools box (T number) refuses asdf with Needs + Example, not saved',x.n&&/Needs:/.test(x.n.msg||'')&&/Example/.test(x.n.msg||'')&&x.n.same,t5);
+  log('5: Life limit refuses asdf with Needs + Example, not saved',x.life&&/Needs:/.test(x.life.msg||'')&&/Example: 500/.test(x.life.msg||'')&&x.life.same,t5);
+  log('4: Tools Example line has no "e.g."',!/e\.g\./.test((x.n&&x.n.msg)||'')&&!/e\.g\./.test((x.life&&x.life.msg)||''))}
+ // ---- 6 free text
+ log('6: Text, Message, Report title accept asdf',E("(()=>{const o=[];['Text','Message','Report title'].forEach(k=>{J={op:'x',p:{[k]:{v:null}}};const s=r99spec(k);if(!r99ok(k,'asdf',s))o.push(k)});J=null;return o.join(',')})()")==='');
+ log('6: Text and Message still refuse ( ) and control characters',E("(()=>{const o=[];['Text','Message'].forEach(k=>{J={op:'x',p:{[k]:{v:null}}};const s=r99spec(k);if(r99ok(k,'A(B)',s)||r99ok(k,'A\\u0007B',s))o.push(k)});J=null;return o.join(',')})()")==='');
+ log('6: Report title has only a length limit',E("(()=>{J={op:'x',p:{'Report title':{v:null}}};const s=r99spec('Report title');const a=r99ok('Report title','two words (x)',s),b=!r99ok('Report title','X'.repeat(41),s);J=null;return a&&b})()"));
+ log('6: Tools Name / Material / Notes take asdf (length only)',E("r102tok('asdf')&&r102tok('A (B)')&&!r102tok('x'.repeat(61))"));
+ // ---- 10 one count everywhere: Haas / Fanuc × 3 / 4 / 5 axis
+ const c10=E(`(()=>{const o=[];['Haas NGC','Fanuc 0i-style'].forEach(ctl=>['vmc3','vmc4','vmc5'].forEach(ty=>{const m=S.m[S.cur];m.mtype=ty;m.opt.ax4=ty=='vmc4';m.opt.tset=false;m.s.forEach(x=>{x.st='user';if(!x.v)x.v='1'});const c=m.s.find(x=>x.k=='Control');c.v=ctl;c.st='confirm';save();r103rt=null;
+  tab('new');d0=document;$('#q').value='tool length check T1';go();J.p['Expected length']={v:5,g:false};show();const o2=$('#out');const ch=o2.querySelector('.r102mach');const n=r103block().length;const cn=ch?+(ch.textContent.match(/(\\d+) to confirm/)||[])[1]:0;
+  const nc=[...o2.querySelectorAll('.card')].find(c=>/^Need \\d+ more/.test((c.querySelector('.t')||{}).textContent||''));const nn=nc?+nc.querySelector('.t').textContent.match(/Need (\\d+)/)[1]:0;const rows=nc?nc.querySelectorAll('.set').length:0;
+  const red=/Machine setup still red/.test(o2.innerText);const notes=[...document.querySelectorAll('.r79sm')].map(c=>+((c.textContent.match(/(\\d+) machine setting/)||[])[1]||n));
+  let bn=-1;if(ch){ch.click();bn=+(($('#r103back')||{}).textContent||'').match(/(\\d+) left/)[1];r103rt=null;$('#r103back')&&$('#r103back').remove()}
+  o.push({ctl,ty,n,cn,nn,rows,bn,red,notes:notes.join(',')})}));J=null;return JSON.stringify(o)})()`);
+ {let o=[];try{o=JSON.parse(c10)}catch(e){}
+  log('10: Machine row = blocking list = back bar on Haas/Fanuc × 3/4/5-axis',o.length==6&&o.every(x=>x.n>0&&x.cn==x.n&&x.bn==x.n),c10);
+  log('10: Need N = job rows + the same machine count',o.length==6&&o.every(x=>x.nn==x.rows+x.n),c10);
+  log('10: notice reads the same count; no separate red Machine setup card',o.length==6&&o.every(x=>!x.red&&(!x.notes||x.notes.split(',').every(v=>+v==x.n))),c10)}
+ // ---- 11/12 round trip
+ const rt=E(`(()=>{const m=S.m[S.cur];m.mtype='vmc3';m.opt.ax4=false;m.opt.tset=true;m.s.forEach(x=>{x.st='user';if(!x.v)x.v='1'});[['Setter writes length to','geometry'],['Setter moves to itself','yes'],['Tool setter macro call','G65 P9853 B1. T<T>'],['Tool setter type','contact']].forEach(([k,v])=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'});const c=m.s.find(x=>x.k=='Control');c.v='Haas NGC';c.st='confirm';save();
+  tab('new');$('#q').value='tool length check T7';go();J.p['Expected length']={v:4.5,g:false};show();const op=J.op;const J0=J;scrollTo(0,120);const y0=scrollY;const ch=$('#out .r102mach');const n0=r103block().length;ch.click();
+  const tabOn=document.querySelector('.tabs button.on').dataset.t;const hl=V.querySelector('.r103hl');const hk=hl&&(hl.dataset.r99k||'');const bar=$('#r103back');const bt=bar&&bar.textContent;const cls=bar&&bar.className;
+  // confirm the last blocking row -> back by itself
+  c.st='user';save();edit(S.cur);r103tick();const back=document.querySelector('.tabs button.on').dataset.t;
+  return JSON.stringify({n0,tabOn,hk,bt,cls,back,same:J===J0,op:J&&J.op,el:J&&J.p['Expected length'].v,tool:J&&J.p.Tool.v,y:scrollY,y0,mach:!!$('#out .r102mach'),barGone:!$('#r103back'),hasRow:!!document.querySelector('.r103back')})})()`);
+ {let x={};try{x=JSON.parse(rt)}catch(e){}
+  log('11: Machine row switches to the Machines tab and highlights the first blocking setting',x.tabOn=='machines'&&x.hk=='Control',rt);
+  log("12: '‹ Back to job · N left' bar (class r103back), N from the blocking list",/‹ Back to job/.test(x.bt||'')&&new RegExp(x.n0+' left').test(x.bt||'')&&/\br103back\b/.test(x.cls||''),rt);
+  log('12: confirming the last setting returns to the same job, values kept, same scroll',x.back=='new'&&x.op=='tlen'&&x.el==4.5&&x.tool==7&&Math.abs(x.y-x.y0)<=2&&x.barGone,rt);
+  log('12: Need N drops the Machine row after the round trip',!x.mach,rt)}
+ const rt2=E(`(()=>{const m=S.m[S.cur];const c=m.s.find(x=>x.k=='Control');c.st='confirm';save();J.p['Expected length']={v:3.25,g:false};show();$('#out .r102mach').click();const btn=$('#r103back');
+  // tap the bar with nothing changed -> same job
+  btn.click();const a={op:J&&J.op,el:J&&J.p['Expected length'].v,tab:document.querySelector('.tabs button.on').dataset.t};
+  // now change the type while in Setup -> type-switch rules (job parked as a draft, Restore card)
+  $('#out .r102mach').click();m.mtype='vmc5';save();edit(S.cur);$('#r103back').click();const b={J:typeof J!='undefined'&&J&&J.op||null,dr:!!$('#r79dr'),tab:document.querySelector('.tabs button.on').dataset.t,draft:(drGet()||{J:{}}).J.op};m.mtype='vmc3';save();return JSON.stringify({a,b})})()`);
+ {let x={a:{},b:{}};try{x=JSON.parse(rt2)}catch(e){}
+  log('12: tapping the back bar returns to the same job with values kept',x.a.op=='tlen'&&x.a.el==3.25&&x.a.tab=='new',rt2);
+  log('12: type changed in Setup: return runs the type-switch rules (draft + Restore card, not the old job)',!x.b.J&&x.b.dr&&x.b.draft=='tlen'&&x.b.tab=='new',rt2)}
+ // ---- 9 sim
+ log('9: Fanuc sim draws a top-right "Rotary: set by G68.2" line and labels under each dial',/Rotary: set by G68\.2/.test(d.documentElement.innerHTML)&&/'set by G68\.2',x,ly\+13/.test(d.documentElement.innerHTML));
+ log('Machine chip has the machine icon and › arrow',/R103ICO\+'<span>Machine: /.test(d.documentElement.innerHTML));
+ log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL';step=9
+ }catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1200)};
+</script></body></html>

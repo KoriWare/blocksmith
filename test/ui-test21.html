@@ -14,7 +14,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   log('Broken phrase → broken mode',E('parse("broken tool check T5")').p.Mode.v=='Broken-tool check');
   log('Picks up length and tolerance from words',(()=>{const p=E('parse("tool length check T8 expected length 4.125 tolerance 0.002")').p;return p['Expected length'].v==4.125&&p.Tolerance.v==0.002})());
   let c=run(RQ);log('No code before setup: missing list asks length + tolerance with units',!c&&/Expected length \(in, the tool length/.test(d.querySelector('#out').textContent)&&/Tolerance \(in, ±/.test(d.querySelector('#out').textContent));
-  c=run(RQ,'4.125','0.002');log('Still no code while setter setup is red',!c&&/Machine setup still red/.test(d.querySelector('#out').textContent)&&/Tool offset memory \(Fanuc\)/.test(d.querySelector('#out').textContent));
+  c=run(RQ,'4.125','0.002');log('Still no code while setter setup is red',!c&&/Machine setup to confirm first/.test(d.querySelector('#out').textContent)&&!!d.querySelector('#out .r102mach')&&/Option: Tool setter/.test(d.querySelector('#out').textContent));
   setv('Control',null);E("S.m[S.cur].opt.tset=1;save()");setv('Tool setter type','contact TEST');setv('Tool setter macro call','G65 P9853 B1. T<T>');setv('Setter writes length to','geometry');setv('Setter moves to itself','yes');setv('Tool offset memory (Fanuc)','C');setv('Offset variables (Fanuc)','5-digit #10001+');setv('Param 6000 bit 3 V15 (Fanuc)','0');
   c=run(RQ,'4.125','0.002');log('Memory C 5-digit: geometry #11008 wear #10008',/#10=#11008\+#10008/.test(c));
   log('Compare logic ABS > tol → #3000',/IF\[ABS\[#10-4\.125\]GT0\.002\]GOTO91/.test(c)&&/IF\[ABS\[#12-4\.125\]GT0\.002\]GOTO92/.test(c)&&/N91 #3000=11/.test(c)&&/#3000=12/.test(c));
