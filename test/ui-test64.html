@@ -11,7 +11,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  x=await run(BC('0.5 deep','1e9 deep'));log('B7 1e9 rejected (not read as 9)',!x.code&&/1e9/.test(x.out)&&/e-notation/.test(x.out));
  x=await run(BC('3 dia','2,5 dia'));log('B7 2,5 rejected (not read as 5)',!x.code&&/use a dot/.test(x.out));
  x=await run(BC('G54','G59.9'));log('B8 G59.9 rejected, not turned into G59',!x.code&&/G59\.9 isn't a work offset/.test(x.out));
- x=await run(BC('G54','G54.1 P999'));log('B8 G54.1 P999 beyond machine rejected',!x.code&&/G54\.1 P999/.test(x.out));
+ x=await run(BC('G54','G54.1 P999'));log('B8 normOff no longer turns G59.9 into G59',E("normOff('G59.9')")===null&&E("normOff('G59')")=='G59');log('B8 G54.1 P999 beyond machine rejected',!x.code&&/G54\.1 P999/.test(x.out));
  x=await run(BC('T2','T0'));log('B9 T0 blocks code',!x.code&&/T0 isn't a tool number/.test(x.out));
  x=await run(BC('T2','T999'));log('B9 T999 blocks code',!x.code&&/T999/.test(x.out));
  x=await run(BC('6 hole','1 hole'));log('B9 1-hole bolt circle blocks code',!x.code&&/at least 2 holes/.test(x.out));

@@ -1,0 +1,37 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 79 C15-C20: flows between screens --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.UIA.confirm=()=>true;
+ E("S.cur=0;tab('new')");E("pickJob('rpock')");await sl(60);
+ E("Object.assign(J.p,{'Center X':{v:0,g:false},'Center Y':{v:0,g:false},'Pocket L':{v:2,g:false},'Pocket W':{v:1,g:false},'Corner R':{v:0.1,g:false},Depth:{v:0.3,g:false},Z0:{v:0,g:false},Cutter:{v:0.375,g:false},Stepdown:{v:0.1,g:false},Tool:{v:4,g:false},'Work offset':{v:'G55',g:false}});show()");
+ E("pickJob('cpock')");await sl(60);
+ log('C15 shared values are not filled into the new job',E("J.p.Depth.v==null&&J.p.Tool.v==null"));
+ const sg=[...d.querySelectorAll('.r79sug')].map(b=>b.textContent);log('C15 gray dashed "from Rectangular pocket · tap to use" chips',sg.length>=3&&sg.some(t=>/0\.3 in · from Rectangular pocket · tap to use/.test(t))&&sg.some(t=>/^T4 · from/.test(t)),sg.join('|'));
+ E("useSug('Depth')");log('C15 tapping the chip uses it (yellow, user value)',E("J.p.Depth.v==0.3&&J.p.Depth.g===false"));
+ E("pickJob('rpock')");log('C15 going back restores that job\'s own values',E("J.op=='rpock'&&J.p['Pocket L'].v==2&&J.p['Work offset'].v=='G55'"));
+ E("pickJob('cpock')");log('C15 and the other job kept its tapped value',E("J.op=='cpock'&&J.p.Depth.v==0.3"));
+ // C18 draft
+ log('C18 Build work autosaved as a draft',E("!!drGet()&&drGet().J.op=='cpock'"));
+ E("J=null;tab('new')");await sl(60);log('C18 Build offers to restore unsaved work',!!d.querySelector('#r79dr'));E("drRestore()");log('C18 restore brings it back',E("J&&J.op=='cpock'&&J.p.Depth.v==0.3"));
+ // C16 control
+ E("J=null;tab('new')");E("pickJob('rpock')");await sl(60);const red=[...d.querySelectorAll('#out .card')].find(c=>/^Machine setup still red/.test((c.querySelector('.t')||{}).textContent||''));
+ if(red){const ch=[...red.querySelectorAll('.set')].find(r=>/^Control/.test(r.textContent));ch.querySelector('.chip.r').click();await sl(30);log('C16 tapping red Control explains and offers a pick list',!!d.querySelector('#r79ctl')&&/control name shown on your machine/.test(d.querySelector('#r79ctlbox').textContent));
+  d.querySelector('#r79ctl').value='Fanuc 0i-MF';E("ctlConfirm()");log('C16 Confirm sets Control and clears the red item',E("sv('Control').v=='Fanuc 0i-MF'&&sv('Control').st=='user'"))}else{log('C16 control red item present',false,'none')}
+ // C20
+ E("tab('new')");d.querySelector('#q').value=E("JB.bolt[1]");E("go()");const zi=E("J.code.findIndex(l=>/^G43/.test(l))");E(`J.edits[${zi}]='G43 H2 Z1.5 M08'`);d.querySelector('#q').value=E("JB.bolt[1]").replace('0.5 deep','0.6 deep');E("go()");await sl(60);
+ log('C20 Process Code after a hand edit says new values applied and edits dropped',/New values applied/.test((d.querySelector('#r79pc')||{}).textContent||'')&&/hand edits were dropped/.test(d.querySelector('#r79pc').textContent),(d.querySelector('#r79pc')||{}).textContent);
+ d.querySelector('#r79putback').click();log('C20 "Put my edits back" re-applies them on the new code',E(`J.edits[${zi}]=='G43 H2 Z1.5 M08'`)&&/0\.6|Z0\.6/.test(E("txt().join(' ')")));
+ // C19
+ E("S.jobs.push({name:'Orphan',op:'bolt',p:JSON.parse(JSON.stringify(J.p)),edits:{},code:J.code,machine:'Gone Mill',mid:12345,date:1,versions:[]});save()");E("reopen(S.jobs.length-1)");await sl(60);log('C19 job whose machine was deleted shows a notice',/Its machine was deleted/.test(d.querySelector('#out').innerText));
+ E("tab('recent')");await sl(150);const db=d.querySelector('#lo .r79del');log('C19 saved jobs have a Delete button',!!db);const n0=E("S.jobs.length");db.click();await sl(50);log('C19 delete (after confirm) removes the job',E("S.jobs.length")==n0-1);
+ let am='';w.UIA.confirm=m=>{am+=m+'\n';return false};E("delM(S.cur)");log('C19 deleting the machine in use says so',/is the machine in use/.test(am),am);w.UIA.confirm=()=>true;
+ E("edit(1)");await sl(50);const mn=d.querySelector('#mn');mn.value=E("S.m[0].name");mn.dispatchEvent(new Event('change'));log('C19 duplicate machine name warned + made unique',E("S.m[1].name")!=E("S.m[0].name")&&/already called/.test((d.querySelector('#r79toast')||{}).textContent||''));
+ E("tab('new')");d.querySelector('#q').value=E("JB.bolt[1]");E("go()");E("dl('txt')");log('C19 export shows a confirmation',/Downloaded .*\.txt/.test(d.querySelector('#r79toast').textContent));
+ // C17
+ const f={app:'koriware-blocksmith',format:1,job:{type:'bolt',name:'Shared',values:{},code:['%','O1000','G54 G00 X0 Y0','(MY EDIT)','M30','%']},from:{machineType:'demo VMC'}};
+ E("tab('recent')");await sl(100);E("mbPreview("+JSON.stringify(JSON.stringify(f))+")");await sl(50);log('C17 import offers keep-edits vs rebuild',!!d.querySelector('#mbkeep')&&!!d.querySelector('#mbreb'));
+ d.querySelector('#mbkeep').checked=true;E("mbDo()");await sl(100);log('C17 keep: the file\'s edited program opens',E("J&&J.op=='import'&&txt().includes('(MY EDIT)')")&&E("S.jobs[0].kept&&S.jobs[0].kept.includes('(MY EDIT)')"));
+ log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message+e.stack}},1500)};
+</script></body></html>
