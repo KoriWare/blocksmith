@@ -1,0 +1,30 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 77: file inputs have no accept= (iOS greys unknown UTIs); validated after pick --><iframe id="f" src="../index.html?v=74" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+const notes=[];w.alert=w.confirm=w.prompt=()=>null;const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");
+ const src=await (await fetch('../index.html')).text();
+ log('no accept= on any file input in source',!/type="file"[^>]*accept=/.test(src));
+ log('8 file inputs tagged data-ft',(src.match(/type="file"[^>]*data-ft=/g)||[]).length==8,(src.match(/type="file"[^>]*data-ft=/g)||[]).length);
+ for(const [k,n,ok] of [['nc','O1234',1],['nc','part.nc',1],['nc','a.TAP',1],['nc','x.gcode',1],['nc','x.ngc',1],['nc','x.min',1],['nc','x.eia',1],['nc','x.mpf',1],['nc','x.ptp',1],['nc','x.h',1],['nc','x.prg',1],['nc','x.iso',1],['nc','prog',1],['nc','pic.jpg',0],['nc','b.pdf',0],['json','bk.json',1],['json','x.png',0],['mbjob','j.mbjob',1],['mbjob','j.json',1],['mbjob','Job (1)',1],['mbjob','job.mbjob.txt',1],['dxf','d.dxf',1],['dxf','d.DXF',1],['dxf','d.jpg',0]])
+  log(`ftOk ${k} ${n} -> ${ok}`,E(`ftOk('${k}','${n}')`)==!!ok);
+ const mk=(name)=>{const i=d.createElement('input');i.type='file';i.dataset.ft='nc';d.body.appendChild(i);let hit=0;i.onchange=()=>hit++;const dt=new w.DataTransfer();dt.items.add(new w.File(['G0 X0'],name));i.files=dt.files;i.dispatchEvent(new w.Event('change',{bubbles:true}));return [hit,i]};
+ const [h1]=mk('O1234');log('good file reaches handler',h1==1);
+ const [h2]=mk('photo.jpg');await sl(100);log('bad file blocked + in-app message',h2==0&&!!d.querySelector('#dlg')&&/doesn't look like/.test(d.querySelector('#dlg').innerText),d.querySelector('#dlg')&&d.querySelector('#dlg').innerText);
+ E("tab('recent')");await sl(300);const mf=d.querySelector('#mbf');log('mbjob input present, no accept',!!mf&&!mf.hasAttribute('accept'),mf&&mf.outerHTML);
+ const feed=async(name,txt)=>{const dt=new w.DataTransfer();dt.items.add(new w.File([txt],name));const i=d.querySelector('#mbf');d.querySelector('#mbimp').innerHTML='';i.files=dt.files;i.dispatchEvent(new w.Event('change',{bubbles:true}));for(let k=0;k<40&&!d.querySelector('#mbimp').innerText.trim();k++)await sl(50);await sl(50);return d.querySelector('#mbimp').innerText};
+ const good=E("mbExport?1:0");const t1=await feed('photo.mbjob','not json at all');log('mbjob garbage content rejected in-app',/⛔|not|invalid|couldn/i.test(t1),t1);
+ const t2=await feed('Job (1)',JSON.stringify({app:'koriware-blocksmith',format:1,job:{type:'bolt',name:'Shared bolt',values:{}}}));log('valid job with iOS-renamed name (no ext) opens preview',!/⛔/.test(t2)&&/Shared bolt|bolt/i.test(t2),t2);
+ const t3=await feed('x.mbjob',JSON.stringify({app:'someone-else',job:{}}));log('JSON without BlockSmith tag rejected',/⛔|not/i.test(t3),t3);
+ log('existing machine defaults to .nc',E("S.m[S.cur].ext")===undefined&&E("pext()")=='.nc');
+ E("edit(S.cur)");await sl(300);const ps=d.querySelector('#pexs');log('machine page has Program file extension pick list',!!ps&&ps.options.length==11,ps&&ps.options.length);
+ ps.value='.EIA';ps.dispatchEvent(new Event('change'));log('pick .EIA saved (uppercase kept)',E("pext()")=='.EIA'&&E("JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k=>/mb|macro|block/i.test(k))||'{}')).m||1")!=null);
+ log('.EIA file accepted on import',E("ftOk('nc','O1234.EIA')")&&E("ftOk('nc','x.eia')"));
+ log('jmFiles uses machine ext',E("jmFiles({hk:0,lines:['%','O1000','M98 P2000','M30','O2000','G0 X0','M99','%']}).map(f=>f.name).join()")=='O1000.EIA,O2000.EIA',E("jmFiles({hk:0,lines:['%','O1000','M98 P2000','M30','O2000','G0 X0','M99','%']}).map(f=>f.name).join()"));
+ ps.value='';ps.dispatchEvent(new Event('change'));log('none -> no extension',E("pext()")===''&&E("jmFiles({hk:0,lines:['O1000','M30']}).map(f=>f.name).join()")=='O1000');
+ ps.value='custom';ps.dispatchEvent(new Event('change'));const ci=d.querySelector('#pexc');ci.value='PRG';ci.dispatchEvent(new Event('change'));log('custom ext normalised to .PRG and accepted on import',E("pext()")=='.PRG'&&E("ftOk('nc','a.prg')"));
+ E("edit(S.cur)");await sl(200);log('custom shown on reopen',d.querySelector('#pexs').value=='custom'&&d.querySelector('#pexc').value=='.PRG');
+ E("S.m[S.cur].ext='.nc';save()");log('help mentions Program file extension',/Program file extension/.test(E("HELP.find(h=>h[0]=='machines')[2]()")));
+ log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>
