@@ -1,0 +1,47 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 79 B6-B14: bad input — duplicates, number forms, offsets, ranges, units, calculators, wrong machine, second job, rounding --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");
+ const BC=(a,b)=>`G54 T2 6 hole bolt circle 3 dia center x0 y0 z0 0 start 15 0.5 deep`.replace(a,b);
+ const run=async t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()");await sl(60);return {code:E("!!(J&&J.code)"),out:d.querySelector('#out').innerText}};
+ let x=await run(BC('0.5 deep','depth 1 depth 2'));log('B6 depth given twice: conflict named, no code',!x.code&&/Depth is given 2 times \(1 and 2\)/.test(x.out),x.out.slice(0,200));
+ x=await run(BC('0.5 deep','0.5 deep depth 0.7'));log('B6 "0.5 deep" + "depth 0.7": conflict',!x.code&&/Depth is given twice/.test(x.out));
+ x=await run(BC('6 hole','6 hole 8 holes'));log('B6 hole count twice: conflict',!x.code&&/Hole count is given/.test(x.out));
+ x=await run(BC('0.5 deep','1e9 deep'));log('B7 1e9 rejected (not read as 9)',!x.code&&/1e9/.test(x.out)&&/e-notation/.test(x.out));
+ x=await run(BC('3 dia','2,5 dia'));log('B7 2,5 rejected (not read as 5)',!x.code&&/use a dot/.test(x.out));
+ x=await run(BC('G54','G59.9'));log('B8 G59.9 rejected, not turned into G59',!x.code&&/G59\.9 isn't a work offset/.test(x.out));
+ x=await run(BC('G54','G54.1 P999'));log('B8 G54.1 P999 beyond machine rejected',!x.code&&/G54\.1 P999/.test(x.out));
+ x=await run(BC('T2','T0'));log('B9 T0 blocks code',!x.code&&/T0 isn't a tool number/.test(x.out));
+ x=await run(BC('T2','T999'));log('B9 T999 blocks code',!x.code&&/T999/.test(x.out));
+ x=await run(BC('6 hole','1 hole'));log('B9 1-hole bolt circle blocks code',!x.code&&/at least 2 holes/.test(x.out));
+ x=await run(BC('6 hole','0 hole'));log('B9 0 holes blocks code',!x.code);
+ x=await run(BC('6 hole','5000 hole'));log('B9 huge hole count blocks code',!x.code&&/max 360/.test(x.out));
+ x=await run(BC('0.5 deep','0.5 deep peck 0.8'));log('B9 peck deeper than hole blocks code',!x.code&&/Peck 0\.8 is deeper/.test(x.out));
+ log('B9 range error links to the box',!!d.querySelector('.r79msg a[onclick^="ed("]'));
+ log('B9 bar smaller than finish Ø blocks code',E("rangeErr({op:'lturn',lathe:1,p:{'Bar Ø':{v:1},'Finish Ø':{v:1.5}}}).some(e=>/smaller than the finish/.test(e[1]))"));
+ log('B9 dia 0 blocks code',E("rangeErr({op:'bolt',p:{Dia:{v:0}}}).length")==1);
+ x=await run('G54 T2 6 hole bolt circle 75 dia center x0 y0 z0 0 start 15 12 deep');log('B10 75 in dia / 12 in deep on inch machine warned',/Check the units/.test(x.out)&&/did you mean 75 mm/.test(x.out),x.out.slice(0,300));
+ E("document.querySelector('#u-mm')&&document.querySelector('#u-mm').click()");await sl(100);x=await run(BC('x',''));log('B10 3 mm bolt circle on mm machine warned',/did you mean 3 in/.test(x.out),x.out.slice(0,300));
+ E("document.querySelector('#u-in')&&document.querySelector('#u-in').click()");await sl(100);
+ x=await run(BC('3 dia','3.12345 dia'));log('B14 rounding note shown',/3\.12345 is written as 3\.1235/.test(x.out));
+ x=await run(BC('0.5 deep','0.5 deep then face mill 0.02 deep'));log('B12 second job: only first built, user told',x.code&&/Only the first job \(Bolt circle\) was built/.test(x.out));
+ E("S.cur=2");x=await run(BC('x',''));log('B12 mill job on lathe: message, no silent swap',!x.code&&/mill job, and .* is a lathe/.test(x.out),x.out.slice(0,200));E("S.cur=0");
+ // fill boxes
+ E("tab('new')");E("pickJob('bolt')");await sl(60);{const i2=d.querySelector('#out input[data-k="Depth"]');i2.value='0,5';E("fill()");log('B7 comma decimal in a box read as 0.5',E("J.p.Depth.v")==0.5,E("JSON.stringify(J.p.Depth)"))}const inp=d.querySelector('#out input[data-k="Dia"]');inp.value='1e2';E("fill()");log('B7 typed 1e2 in a box rejected',E("J.p.Dia.v==null")&&/Not a plain number/.test(d.querySelector('#out').innerText));
+ // B13 need count matches rows
+ E("pickJob('rpock')");await sl(60);{const c=[...d.querySelectorAll('#out .card')].find(c=>/^Need \d+ more/.test((c.querySelector('.t')||{}).textContent||''));log('B13 "Need N more" equals rows listed',c&&+c.querySelector('.t').textContent.match(/\d+/)[0]==c.querySelectorAll('.set').length)}
+ // B11 calculators
+ E("calc()");await sl(100);log('B11 bolt calc starts empty (no prefilled holes / Ø)',d.querySelector('#b1').value===''&&d.querySelector('#b2').value===''&&!d.querySelector('#bo table'));
+ const setc=(id,v)=>{const el=d.querySelector('#'+id);el.value=v;el.dispatchEvent(new Event('input'))};
+ const t0=w.performance.now();setc('b1','1e8');setc('b2','3');setc('b3','0');setc('b4','0');setc('b5','0');log('B11 1e8 holes: kept as typed, error, no freeze',d.querySelector('#b1').value=='1e8'&&/whole number/.test(d.querySelector('#bo').textContent)&&w.performance.now()-t0<500);
+ setc('b1','100000000');log('B11 100000000 holes capped',/1 to 360/.test(d.querySelector('#bo').textContent));
+ setc('b1','2.5');log('B11 2.5 holes: error, not 3 rows',/whole number/.test(d.querySelector('#bo').textContent)&&!d.querySelector('#bo table'));
+ setc('b1','6');log('B11 valid input lists 6 holes',d.querySelectorAll('#bo tr').length==7);
+ setc('c2','0');log('B11 tool Ø 0: error, not Infinity',/above 0/.test(d.querySelector('#co').textContent)&&!/Infinity/.test(d.querySelector('#co').textContent));
+ setc('c2','-1');log('B11 tool Ø -1: error, not negative RPM',/above 0/.test(d.querySelector('#co').textContent));setc('c2','0.5');
+ setc('t2','0');log('B11 TPI 0: error, not -Infinity',/above 0/.test(d.querySelector('#to').textContent)&&!/Infinity/.test(d.querySelector('#to').textContent));
+ E("J=null");let nt='';w.UIA.alert=m=>{nt=m};d.querySelector('#cvw').value='tap';d.querySelector('#cAsV').click();log('B11 calculator error is not sent to the editor',/Fix the calculator/.test(nt),nt);
+ log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message+e.stack}},1500)};
+</script></body></html>

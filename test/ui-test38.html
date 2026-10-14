@@ -41,7 +41,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   E('mbAdd(mbParse('+JSON.stringify(tf)+'),'+mill+')');log('second import -> " (3)"',E('S.jobs.some(j=>j.name=="Bolts (3)")'));
   // reopen: red required, then regenerate on target
   w.cur(rd);E('reopen(S.jobs.findIndex(j=>j.name=="Bolts (2)"))');log('reopen shows red required inputs',d.querySelectorAll('#out input[data-k],#out select[data-k]').length>2&&E('S.cur')==rd);
-  d.querySelectorAll('#out input[data-k]').forEach(i=>i.value='1');const os=d.querySelector('#out select[data-k]');if(os)os.selectedIndex=1;w.fill();
+  d.querySelectorAll('#out input[data-k]').forEach(i=>i.value='2');const os=d.querySelector('#out select[data-k]');if(os)os.selectedIndex=1;w.fill();
   log('code regenerated on target after filling',Array.isArray(E('J.code'))&&E('J.code.length')>3&&!E('J.code.join()').includes('EVIL'));
   // refusal: lathe job when user has no lathe
   const lf=E('JSON.stringify(mbFile(S.jobs.find(j=>j.name=="Shaft")))');E('S.m=S.m.filter(m=>!isLT(m.type));S.cur=0;save()');w.tab('recent');E('mbPreview('+JSON.stringify(lf)+')');

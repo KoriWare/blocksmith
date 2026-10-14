@@ -3,9 +3,6 @@ let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;
 w.alert=w.confirm=w.prompt=()=>null;const errs=[];w.addEventListener('error',e=>errs.push(e.message));
 const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];
 setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");
-r.push(String(await (async()=>{ E("tab('new')");d.querySelector("#q").value=E("JB.bolt[1]");E("go()");await sl(200);E("tab('edit')");await sl(200);const a=d.querySelector("#ck").innerText;const i=E("J.code.findIndex(l=>/^G54/.test(l))");const zi=E("J.code.findIndex(l=>/Z/.test(l)&&/^G0?0|^G43/.test(l))");
-const F=()=>d.querySelector("#ck").innerText+" "+[...d.querySelectorAll("#cl .s")].filter(x=>/❌/.test(x.textContent)).map(x=>x.textContent).join("|");
-E("J.edits["+zi+"]='G00 Z-5.0';refresh()");const b=F()+" ALM "+E("J.run.alarms.map(a=>a.msg).join()");E("J.edits={};J.edits["+i+"]=J.code["+i+"].replace('G54','G60');refresh()");const c=F();E("J.edits={};J.edits["+i+"]=J.code["+i+"].replace('G54','G59.9');refresh()");
-return a+"\n"+b+"\n"+c+"\n"+F()+"\nline "+E("J.code["+i+"]")+" | "+E("J.code["+zi+"]") })()));
+r.push(String(await (async()=>{ E("calc()");await sl(100);const el=d.querySelector("#b1");el.value="1e8";el.dispatchEvent(new Event("input"));return el.value+" | "+el.outerHTML+" | n="+d.querySelectorAll("#b1").length })()));
 r.push('errs '+errs.join('|'));o.textContent=r.join('\n')}catch(e){o.textContent=r.join('\n')+'\nEXC '+e.message}},1500)};
 </script></body></html>
