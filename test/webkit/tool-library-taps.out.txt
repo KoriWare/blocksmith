@@ -1,0 +1,27 @@
+cnt 6 Tool Library
+try duplicate T2 Tool Library 6
+try T “0” Tool Library 6
+try T “999” Tool Library 6
+try T “1.5” Tool Library 6
+try T “-3” Tool Library 6
+try T “1e9” Tool Library 6
+try T “” Tool Library 6
+try dia “-0.5” Tool Library 6
+try dia “0” Tool Library 6
+try dia “” Tool Library 6
+try valid T6 Tool Library 6
+try valid dia 0.375 Tool Library 6
+notsaved | warn: ⚠ T2 is already used on Mill A — pick a free number. Not saved — kept T1. | duplicate T2
+notsaved | warn: ⚠ “0” isn't a tool number — use a whole number from 1. Not saved — kept T1. | T “0”
+notsaved | warn: ⚠ T999 is beyond Mill A's 200 pockets. Not saved — kept T1. | T “999”
+notsaved | warn: ⚠ “1.5” isn't a tool number — use a whole number from 1. Not saved — kept T1. | T “1.5”
+notsaved | warn: ⚠ “-3” isn't a tool number — use a whole number from 1. Not saved — kept T1. | T “-3”
+notsaved | warn: ⚠ “1e9” isn't a tool number — use a whole number from 1. Not saved — kept T1. | T “1e9”
+notsaved | warn: ⚠ “” isn't a tool number — use a whole number from 1. Not saved — kept T1. | T “”
+notsaved | warn: ⚠ Tool Ø must be a number above 0 (got “-0.5”). Not saved — kept 2. | dia “-0.5”
+notsaved | warn: ⚠ Tool Ø must be a number above 0 (got “0”). Not saved — kept 2. | dia “0”
+notsaved | warn: ⚠ Tool Ø must be a number above 0 (got “blank”). Not saved — kept 2. | dia “”
+SAVED | NO WARNING | valid T6
+SAVED | NO WARNING | valid dia 0.375
+final [["tmv7z5h0y08dic",6,0.375],["tmv7z5h0y9o0zj",2,0.25],["tmv7z5h0y7w44p",3,0.125],["tmv7z5h0yijp7r",4,0.5],["tmv7z5h0yeeqz2",5,0.25],["tmv7z5h0y4kuxg",7,0.125]]
+errors 

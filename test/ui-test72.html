@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 83 lathe step guards + Tool Library inline warnings: zero steps, macro step guards, engrave samples, back bore, tap pitch, tool library validation, kept lines, export gate/labels, share names, origin, draft --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
+  E("S.cur=2");const has=c=>Array.isArray(c)&&c.some(l=>/IF\[#\d+LE0\]GOTO97/.test(l))&&c.some(l=>/^N97 #3000=2 \(STEP MUST BE ABOVE 0\)/.test(l));
+ q(E("JB.ldrill[1]"));log('1 O9203 lathe peck: step guard + N97 alarm',has(E("J.code"))&&E("J.code").some(l=>l=='IF[#17LE0]GOTO97'),E("J.code&&J.code.join('|')"));
+ q(E("JB.lface[1]"));log('1 O9201 lathe face: step guard',has(E("J.code"))&&E("J.code").includes('IF[#7LE0]GOTO97'));E("S.cur=0");
+ log('1 O9202 groove pattern guarded',E("r82guard(['O9202 (OD GROOVE)','IF[#4EQ#0]GOTO99','#100=0','WHILE[#100LT#26]DO1','#100=#100+#4','END1','M99','N99 #3000=1 (X)','M99']).includes('IF[#4LE0]GOTO97')"));
+ log('1 O9500 swiss pattern guarded',E("r82guard(['O9500 (TURN)','#100=0','WHILE[#100LT#26]DO1','#100=#100+#6','END1','M99']).join('|')").includes('IF[#6LE0]GOTO97'));
+ log('1 every generator wrapped (genL/genS)',/r82guard/.test(E("genL.toString()"))&&/r82guard/.test(E("genS.toString()")));
+ log('1 guard idempotent',E("(()=>{const a=r82guard(['O9203 (P)','WHILE[#1LT#2]DO1','#1=#1+#17','END1','M99']);return r82guard(a).filter(l=>/GOTO97/.test(l)).length})()")==1);
+ E("tools()");await sl(100);const n0=()=>d.querySelector('input[data-f="n"][data-i="0"]');const was=E("tlCurM().tools[0].n");const W=()=>{const x=d.querySelector('.r83err[data-for="n0"]');return x&&x.offsetParent?x.textContent:''};
+ for(const v of [String(E("tlCurM().tools[1].n")),'0','999','1.5','-3','1e9','']){const el=n0();el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));await sl(20);const live=W();el.dispatchEvent(new Event('change',{bubbles:true}));await sl(20);log('2 T “'+v+'”: inline warning while typing and after, not saved',!!live&&!!W()&&E("tlCurM().tools[0].n")==was,live+' / '+W())}
+ const di=d.querySelector('input[data-f="dia"][data-i="0"]');const dw=E("tlCurM().tools[0].dia");for(const v of ['-0.5','0','']){di.value=v;di.dispatchEvent(new Event('input',{bubbles:true}));await sl(20);di.dispatchEvent(new Event('change',{bubbles:true}));await sl(20);const x=d.querySelector('.r83err[data-for="dia0"]');log('2 dia “'+v+'”: inline warning, not saved',x&&x.offsetParent&&/above 0/.test(x.textContent)&&E("tlCurM().tools[0].dia")==dw)}
+ log('2 warning is an alert linked to the field',d.querySelector('.r83err').getAttribute('role')=='alert'&&n0().getAttribute('aria-invalid')=='true');
+ const free=E("(()=>{const m=tlCurM();let n=1;while(m.tools.some(t=>+t.n==n))n++;return n})()");const id0=E("tlCurM().tools[0].id");const el=n0();el.value=String(free);el.dispatchEvent(new Event('input',{bubbles:true}));await sl(20);el.dispatchEvent(new Event('change',{bubbles:true}));await sl(150);
+ log('2 valid T saves and clears the warning',E("tlCurM().tools.find(t=>t.id=='"+id0+"').n")==free&&!d.querySelector('.r83err[data-for="n0"]')?.offsetParent);
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>
