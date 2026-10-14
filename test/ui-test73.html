@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 83 end-to-end: O9202 groove + O9500 swiss step guards from real generation: zero steps, macro step guards, engrave samples, back bore, tap pitch, tool library validation, kept lines, export gate/labels, share names, origin, draft --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
+  const blk=o=>{const c=E("J&&J.code")||[];const i=c.findIndex(l=>l.startsWith(o));if(i<0)return null;let e=i+1;while(e<c.length&&!/^O\d|^%/.test(c[e]))e++;return c.slice(i,e)};
+ const guarded=(b,v)=>!!b&&b.includes('IF[#'+v+'LE0]GOTO97')&&b.some(l=>/^N97 #3000=2 \(STEP MUST BE ABOVE 0\)$/.test(l))&&b.indexOf('IF[#'+v+'LE0]GOTO97')<b.findIndex(l=>/^WHILE\[/.test(l));
+ const mBefore=E("S.m.length"),defs=w.localStorage.getItem('mc');
+ E("S.cur=S.m.findIndex(m=>/lathe/i.test(m.name+' '+(m.type||'')));tab('new');pickJob('lgroove')");await sl(100);
+ for(const [k,v] of Object.entries({'Bar Ø':'2.0','Width':'0.25','Depth':'0.1','At Z':'1.0','Insert W':'0.125','Tool':'3','Z0':'0'})){const el=d.querySelector('#out input[data-k="'+k+'"]');el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}))}
+ const so=d.querySelector('#out select[data-k="Work offset"]');so.value=[...so.options].find(o=>o.text=='G54').value;so.dispatchEvent(new Event('change',{bubbles:true}));
+ [...d.querySelectorAll('#out button')].find(b=>/Continue/.test(b.textContent)).click();await sl(300);
+ const g=blk('O9202');log('O9202 generated from filled groove values',!!g,E("J&&J.op"));log('O9202 guard IF[#4LE0]GOTO97 before the loop + N97 alarm',guarded(g,4),g&&g.join('|'));
+ E("pick('Generic Swiss-type','Swiss-type');S.cur=S.m.length-1;tab('new');ex('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 part off 0.062')");await sl(300);
+ const s=blk('O9500');log('O9500 generated on a temporary swiss machine',!!s&&E("S.m.length")==mBefore+1);log('O9500 guard IF[#6LE0]GOTO97 before the loop + N97 alarm',guarded(s,6),s&&s.join('|'));
+ E("S.m.splice(S.m.length-1,1);S.cur=0;save()");log('temporary swiss machine removed',E("S.m.length")==mBefore&&!E("S.m.some(m=>/Swiss/.test(m.name))"));
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>
