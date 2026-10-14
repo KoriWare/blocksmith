@@ -6117,7 +6117,7 @@ function r99ph(v){const t=String(v==null?'':v).trim().toLowerCase();if(!t)return
 function r99blankChoice(t){const lc=String(t||'').trim().toLowerCase();return /^not checked yet\b/.test(lc)||/^not sure\b/.test(lc)}
 function r99spec(k){return (typeof R99SPEC!='undefined'&&R99SPEC[k])||null}
 function r99hint(sp){if(!sp)return'';const h=sp.hint||sp.err||'';return h.replace(/^[^.]*?:\s*/,'').replace(/\s*like\s+".*$/,'').slice(0,110)||sp.fmt}
-function r99ok(k,v,sp){sp=sp||r99spec(k);const t=String(v==null?'':v).trim();if(!t||r99ph(t))return false;if(!sp)return!!t;
+function r99ok(k,v,sp){sp=sp||r99spec(k);const t=String(v==null?'':v).trim();if(!t||r99ph(t))return false;if(!sp)return!!t;if(sp.ok)return !!sp.ok(t);
  const st=sp.st;if(st=='picker')return sp.ch.some(c=>c.toLowerCase()===t.toLowerCase()||c.toLowerCase().startsWith(t.toLowerCase()+' ')||t.toLowerCase().startsWith(c.toLowerCase()));
  if(st=='picker+Other'){const lc=t.toLowerCase();if(r99blankChoice(t))return false;if(sp.ch.some(c=>c.toLowerCase()===lc))return true;if(r99ph(t)||t.length<2)return false;const yn=sp.ch.some(c=>/^yes\b/i.test(c))&&sp.ch.some(c=>/^no\b/i.test(c));if(yn)return /^(yes|no)\b/i.test(t);const words=new Set(sp.ch.join(' ').toLowerCase().match(/[a-z]{3,}/g)||[]);return (lc.match(/[a-z]{3,}/g)||[]).some(x=>words.has(x))||/[gm]\d|\d/i.test(t)}
  if(st=='typed number')return r99num(t,sp.fmt).ok;if(st=='typed code')return R99CODE.test(t);if(st=='typed code pair'||st=='typed pair')return R99PAIR.test(t)||/^\s*[GM]\d+.*\/.*[GM]\d+/i.test(t);
@@ -6151,7 +6151,7 @@ document.head.insertAdjacentHTML('beforeend',`<style id="r99css">
 .r99end{margin-left:8px;font-size:13px;font-weight:800;color:#888;flex:none}
 .r99w.ok .r99end{color:#3fbf6f}.r99w.bad .r99end{color:#ff5a5a}
 .r99err{color:#ff8a8a;font-size:12px;margin:5px 0 0 2px;line-height:1.35;display:none}.r99err.on{display:block}.r99err i{color:#bbb;font-style:normal}
-.r99ph{color:#6b6b6b;font-style:italic}
+.r99ph::placeholder{color:#6b6b6b;font-style:italic;opacity:1}.r99chip{width:9px!important;height:9px!important;max-height:9px!important;border-radius:50%!important;font-size:0!important;color:transparent!important;background:#666!important;border:0!important;padding:0!important;overflow:hidden}.r99chip[data-s=ok]{background:#3fbf6f!important}.r99chip[data-s=bad]{background:#ff5a5a!important}#r99sheet .r99w input,.r99w input{outline:none!important;border:0!important;box-shadow:none!important;background:transparent}.r99w:focus-within{border-color:#ffd21f}
 .r99tag{font-size:10px;font-weight:800;background:#333;color:#bbb;border-radius:8px;padding:2px 7px;margin-left:6px}
 #r98ts .set,#r98fan .set,#r93trv .set,.r98card .set{flex-wrap:wrap;align-items:flex-start}
 #r98ts .set > span:first-child,#r98fan .set > span:first-child,#r93trv .set > span:first-child{flex:0 0 100%;margin-bottom:4px}
@@ -6167,13 +6167,13 @@ document.head.insertAdjacentHTML('beforeend',`<style id="r99css">
 #r99sheet .opt .rad{width:22px;height:22px;border-radius:50%;border:2px solid #777;flex:none}
 #r99sheet .opt.sel{border-color:#ffd21f}#r99sheet .opt.sel .rad{border-color:#ffd21f;box-shadow:inset 0 0 0 4px var(--bg,#151515);background:#ffd21f}
 #r99sheet .oth{font-size:13px;font-weight:700;margin:10px 0 5px;color:#ddd}
-#r99sheet .done{margin-top:14px;background:#555;color:#aaa;font-weight:800;text-align:center;padding:14px;border-radius:14px;font-size:16px;border:0;width:100%}
+#r99sheet .r99acts{display:flex;gap:8px;margin-top:12px}#r99sheet .cancel,#r99sheet .done{flex:1;margin-top:0!important;height:44px;border-radius:12px;font-weight:800;font-size:15px;border:0}#r99sheet .cancel{background:#333;color:#aaa}#r99sheet .done{margin-top:14px;background:#555;color:#aaa;font-weight:800;text-align:center;padding:14px;border-radius:14px;font-size:16px;border:0;width:100%}
 #r99sheet .done.on{background:#ffd21f;color:#111}
 #r99notice .r99nl{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}#r99notice{margin:8px 13px;background:#3a2a10;border:1px solid #ffd21f;border-radius:12px;padding:10px 12px;font-size:13px}
 html[data-theme=light] .r99w{background:#fff;border-color:#bbb}html[data-theme=light] .r99hint{color:#666}
 </style>`);
 
-function r99wrap(setEl,key,getV,setV,extra){if(!setEl||setEl.dataset.r99)return;const sp=extra||r99spec(key)||null;if(!sp)return;
+function r99wrap(setEl,key,getV,setV,extra,conf){conf=conf||(()=>true);if(!setEl||setEl.dataset.r99)return;const sp=extra||r99spec(key)||null;if(!sp)return;
  const inp=setEl.querySelector('input,select');if(!inp)return;setEl.dataset.r99=key;
  const f=document.createElement('div');f.className='set r99f';f.dataset.r99k=key;f.style.display=setEl.style.display;
  const hint=r99hint(sp)||(extra&&extra.hint)||'';const isPick=sp&&(sp.st=='picker'||sp.st=='picker+Other')&&inp.tagName=='INPUT'&&sp.ch&&sp.ch.length>0;
@@ -6184,16 +6184,23 @@ function r99wrap(setEl,key,getV,setV,extra){if(!setEl||setEl.dataset.r99)return;
  [...setEl.children].forEach(c=>{if(c!==inp&&!c.contains(inp))f.appendChild(c)});
  const slot=f.querySelector('.r99slot'),w=f.querySelector('.r99w'),er=f.querySelector('.r99err'),st=f.querySelector('.r99st')||document.createElement('span'),end=f.querySelector('.r99end');
  setEl.replaceWith(f);slot.appendChild(inp);inp.removeAttribute('style');inp.style.width='100%';
- const u0=(inp.closest&&inp.closest('#out')&&typeof UNIT!='undefined'&&UNIT[key]?String(UNIT[key]).split(/[ ,(]/)[0]:String(inp.placeholder||'')).trim(),un=/^(in|mm|rpm|in\/min|mm\/min|deg|°|s|sec|%)$/i.test(u0)?u0:'';const ph=sp&&sp.ex?(isPick?'Pick: '+(sp.ch.slice(0,3).join(' / ')||sp.ex):'e.g. '+sp.ex+(un&&!new RegExp('\\b'+un.replace('/','\\/')+'$','i').test(sp.ex)?' '+un:'')):(inp.placeholder||'');
+ const shortCh=()=>{const seen=[],o=[];(sp.ch||[]).forEach(c=>{if(r99blankChoice(c))return;let t=String(c).split(/\s+[—(–-]\s*|\s*\(/)[0].trim();if(t.length>14)t=t.slice(0,13)+'…';if(!seen.includes(t.toLowerCase())){seen.push(t.toLowerCase());o.push(t)}});let r='';for(const t of o){const n=r?r+' / '+t:t;if(n.length>(sp.st=='picker+Other'?14:22)){r=r?r+' / …':t;break}r=n}return r+(sp.st=='picker+Other'?' / Other':'')};
+ const shortEx=e=>{let t=String(e||'');if(t.length>23)t=t.split(/,\s*|\s+\(|;\s*/)[0];if(t.length>23)t=t.slice(0,22)+'…';return t};
+ const u0=(inp.closest&&inp.closest('#out')&&typeof UNIT!='undefined'&&UNIT[key]?String(UNIT[key]).split(/[ ,(]/)[0]:String(inp.placeholder||'')).trim(),un=/^(in|mm|rpm|in\/min|mm\/min|deg|°|s|sec|%)$/i.test(u0)?u0:'';const ph=sp&&sp.ex?(isPick?'Pick: '+(shortCh()||shortEx(sp.ex)):'e.g. '+shortEx(sp.ex)+(un&&!new RegExp('\\b'+un.replace('/','\\/')+'$','i').test(sp.ex)?' '+un:'')):(inp.placeholder||'');
  if(inp.tagName=='INPUT'){inp.placeholder=ph;inp.classList.add('r99ph')}
  if(sp&&sp.st=='typed number'){inp.setAttribute('inputmode','decimal');inp.setAttribute('enterkeyhint','next')}
  let touched=!!String(getV()||'').trim()&&!r99ph(getV());
  const cv=()=>inp.tagName=='INPUT'&&!inp.readOnly&&String(inp.value).trim()!==''&&String(inp.value).trim()!==String(getV()||'').trim()?inp.value:getV();
- const paint=()=>{const v=cv(),ok=r99ok(key,v,sp),empty=!String(v||'').trim()||r99ph(v);
-  w.classList.remove('ok','bad');st.classList.remove('ok','bad');er.classList.remove('on');
-  if(ok){w.classList.add('ok');st.classList.add('ok');end.textContent='✓';end.style.color='#3fbf6f'}
-  else if(touched&&!empty){w.classList.add('bad');st.classList.add('bad');end.textContent='!';end.style.color='#ff5a5a';const m=r99msg(key,v,sp);er.innerHTML=`Needs: ${esc(m.need)}${m.ex?`<br><i>Example: ${esc(m.ex)}</i>`:''}`;er.classList.add('on')}
-  else{end.textContent=isPick?'▾':'';end.style.color='#888';if(empty&&inp.tagName=='INPUT'&&!document.activeElement||document.activeElement!==inp){/*placeholder shows*/}}
+ const chipE=lab.querySelector('.r99chip');
+ let live=false;
+ const paint=()=>{const v=cv(),typed=v!==getV(),ok=r99ok(key,v,sp)&&(typed||conf()),empty=!String(v||'').trim()||r99ph(v)||r99blankChoice(v);
+  const wasBad=w.classList.contains('bad');
+  w.classList.remove('ok','bad');st.classList.remove('ok','bad');er.classList.remove('on');let S_='n';
+  if(ok)S_='ok';else if(!empty&&!r99ok(key,v,sp)&&(live?wasBad:touched))S_='bad';
+  if(S_=='ok'){w.classList.add('ok');st.classList.add('ok');end.textContent='✓';end.style.color='#3fbf6f'}
+  else if(S_=='bad'){w.classList.add('bad');st.classList.add('bad');end.textContent='!';end.style.color='#ff5a5a';const m=r99msg(key,v,sp);er.innerHTML=`Needs: ${esc(m.need)}${m.ex?`<br><i>Example: ${esc(m.ex)}</i>`:''}`;er.classList.add('on')}
+  else{end.textContent=isPick?'▾':'';end.style.color='#888'}
+  f.dataset.s=S_;if(chipE)chipE.dataset.s=S_;
   if(empty&&inp.tagName=='INPUT'&&!String(inp.value).trim())inp.value=''};
  paint();
  const commit=()=>{const v=String(inp.value||'').trim();touched=true;
@@ -6202,7 +6209,7 @@ function r99wrap(setEl,key,getV,setV,extra){if(!setEl||setEl.dataset.r99)return;
   setV(v);paint()};
  if(inp.tagName=='SELECT'){inp.addEventListener('change',()=>{touched=true;setTimeout(paint,0)});f._r99={paint,key,getV,setV,commit,touched:()=>touched,mark:()=>{touched=true;paint()}};return f}
  inp.onchange=commit;inp.addEventListener('blur',commit);
- inp.addEventListener('input',()=>{if(w.classList.contains('bad')){/*clear red as soon as fixed*/const v=inp.value;if(r99ok(key,v,sp)||!String(v).trim()){touched=!!String(v).trim();if(r99ok(key,v,sp))setV(String(v).trim());paint()}}});
+ inp.addEventListener('input',()=>{const v=inp.value;if(w.classList.contains('bad')&&r99ok(key,v,sp))setV(String(v).trim());live=true;paint();live=false});
  if(isPick){const open=e=>{e.preventDefault();e.stopPropagation();r99sheet(key,sp,getV,v=>{setV(v);touched=true;inp.value=v;paint()})};
   w.style.cursor='pointer';w.addEventListener('click',open);inp.addEventListener('focus',e=>{e.preventDefault();inp.blur();open(e)});inp.readOnly=true}
  f._r99={paint,key,getV,setV,commit,touched:()=>touched,mark:()=>{touched=true;paint()}};return f}
@@ -6211,16 +6218,19 @@ function r99sheet(key,sp,getV,onDone){document.getElementById('r99dim')&&documen
  const dim=document.createElement('div');dim.id='r99dim';const sh=document.createElement('div');sh.id='r99sheet';
  const otherOK=sp.st=='picker+Other';let pick=null,oth='';const cur=String(getV()||'').trim();
  if(sp.ch.some(c=>c===cur))pick=cur;else if(cur&&!r99ph(cur)){oth=cur;pick='__other__'}
- sh.innerHTML=`<div class="grab"></div><div class="sh-t">${esc(key)}</div><div class="sh-h">${esc(r99hint(sp)||sp.fmt||'')}</div><div class="opts"></div>${otherOK?`<div class="oth">Other…</div><div class="r99w" id="r99oth"><input id="r99othi" placeholder="e.g. ${esc(sp.ex||'')}" value="${esc(oth)}"><span class="r99end"></span></div><div class="r99err" id="r99othe"></div>`:''}<button class="done" type="button">Done</button>`;
+ sh.innerHTML=`<div class="grab"></div><div class="sh-t">${esc(key)}</div><div class="sh-h">${esc(r99hint(sp)||sp.fmt||'')}</div><div class="opts"></div>${otherOK?`<div class="oth">Other…</div><div class="r99w" id="r99oth"><input id="r99othi" placeholder="e.g. ${esc(sp.ex||'')}" value="${esc(oth)}"><span class="r99end"></span></div><div class="r99err" id="r99othe"></div>`:''}<div class="r99acts"><button class="cancel" type="button">Cancel</button><button class="done" type="button">Done</button></div>`;
  const box=sh.querySelector('.opts');sp.ch.forEach(c=>{const b=document.createElement('button');b.type='button';b.className='opt'+(pick===c?' sel':'');b.innerHTML=`<span class="rad"></span>${esc(c)}`;b.onclick=()=>{pick=c;oth='';sh.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');const oi=$('#r99othi');if(oi)oi.value='';ready()};box.appendChild(b)});
- const ready=()=>{const d=sh.querySelector('.done');let ok=false,val='';if(pick&&pick!='__other__'){if(r99blankChoice(pick)){ok=true;val=''}else{ok=true;val=pick}}
+ const ready=()=>{const d=sh.querySelector('.done');let ok=false,val='';if(pick&&pick!='__other__'){if(r99blankChoice(pick)){ok=false}else{ok=true;val=pick}}
  else if(otherOK){const v=($('#r99othi')||{}).value||'';const good=!!String(v).trim()&&!r99ph(v)&&r99ok(key,v,{...sp,st:'picker+Other'});
   const w=$('#r99oth'),e=$('#r99othe'),en=w&&w.querySelector('.r99end');
   if(w){w.classList.remove('ok','bad');if(String(v).trim()&&!good){w.classList.add('bad');const m=r99msg(key,v,sp);e.innerHTML=`Needs: ${esc(m.need)}${m.ex?`<br><i>Example: ${esc(m.ex)}</i>`:''}`;e.classList.add('on');if(en)en.textContent='!'}
   else if(good){w.classList.add('ok');e.classList.remove('on');if(en)en.textContent='✓';ok=true;val=String(v).trim();pick='__other__'}
   else{e.classList.remove('on');if(en)en.textContent=''}}}
   if(ok){d.classList.add('on');d.disabled=false;d.onclick=()=>{onDone(val);close()}}else{d.classList.remove('on');d.disabled=true;d.onclick=null}};
- const close=()=>{dim.remove();sh.remove()};dim.onclick=close;
+ const close=()=>{dim.remove();sh.remove();document.removeEventListener('keydown',onEsc)};dim.onclick=e=>{if(e.target===dim)close()};
+ sh.querySelector('.cancel').onclick=()=>close();
+ const onEsc=e=>{if(e.key=='Escape'){e.preventDefault();close()}};document.addEventListener('keydown',onEsc);
+
  if(otherOK){const oi=()=>{$('#r99othi');pick='__other__';sh.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));ready()};
   sh.querySelector('#r99othi').addEventListener('input',oi);sh.querySelector('#r99othi').addEventListener('blur',oi)}
  document.body.appendChild(dim);document.body.appendChild(sh);ready()}
@@ -6230,8 +6240,8 @@ function r99sheet(key,sp,getV,onDone){document.getElementById('r99dim')&&documen
 function r99setup(i){const m=S.m[i];if(!m)return;
  // Swiss/lathe tile truly disabled on mills
  const seg=$('#r98type');if(seg){const sw=seg.querySelector('button[data-t=swiss]'),mill=!isLT(m.type||'');
-  if(sw&&mill){sw.classList.add('off');sw.setAttribute('aria-disabled','true');sw.onclick=e=>{e.preventDefault();e.stopPropagation()};if(!seg.querySelector('.r98offhint'))seg.insertAdjacentHTML('beforeend','<div class="r98offhint">Lathe types need a lathe machine.</div>')}
-  const mi=seg.querySelector('button[data-t=vmc3]');if(mi&&isLT(m.type||'')){['vmc3','vmc4','hmc'].forEach(t=>{const b=seg.querySelector('button[data-t="'+t+'"]');if(b){b.classList.add('off');b.onclick=e=>{e.preventDefault();e.stopPropagation()}}});if(!seg.querySelector('.r98offhint'))seg.insertAdjacentHTML('beforeend','<div class="r98offhint">Mill types need a mill machine.</div>')}}
+  if(sw&&mill){sw.classList.add('off');sw.disabled=true;sw.setAttribute('aria-disabled','true');sw.onclick=e=>{e.preventDefault();e.stopPropagation()};if(!seg.querySelector('.r98offhint'))seg.insertAdjacentHTML('beforeend','<div class="r98offhint">Lathe types need a lathe machine.</div>')}
+  const mi=seg.querySelector('button[data-t=vmc3]');if(mi&&isLT(m.type||'')){['vmc3','vmc4','vmc5','hmc'].forEach(t=>{const b=seg.querySelector('button[data-t="'+t+'"]');if(b){b.classList.add('off');b.disabled=true;b.onclick=e=>{e.preventDefault();e.stopPropagation()}}});if(!seg.querySelector('.r98offhint'))seg.insertAdjacentHTML('beforeend','<div class="r98offhint">Mill types need a mill machine.</div>')}}
  // wrap every .set that has a setting input
  V.querySelectorAll('.set').forEach(st=>{const inp=st.querySelector('input[data-j],select[data-j],input[data-r93t]');if(!inp)return;
   let key='',getV,setV;
@@ -6241,10 +6251,11 @@ function r99setup(i){const m=S.m[i];if(!m)return;
   const sp=r99spec(key)||(key.match(/travel$/i)?{st:'typed number',fmt:'number, > 0',ex:'30',err:key+': type a positive travel distance.',hint:'From your machine’s manual. Blank = travel not checked.'}:null);
   if(!sp){ // still wrap unknown typed boxes with a generic check
    const gen={st:/\/ /.test(key)?'typed code pair':/#/.test(key)?'typed variable':'typed text',fmt:'a real value',ex:'',err:key+': type a real value.',hint:'Confirm on the control. Never guessed.',ch:[]};
-   r99wrap(st,key,getV,setV,gen);return}
-  r99wrap(st,key,getV,setV,sp)});
+   const cf=()=>{const x=inp.dataset.j!=null?m.s[+inp.dataset.j]:m.s[+inp.dataset.r93t];return !!x&&x.st=='user'};
+   r99wrap(st,key,getV,setV,gen,cf);return}
+  const cf=()=>{const x=inp.dataset.j!=null?m.s[+inp.dataset.j]:m.s[+inp.dataset.r93t];return !!x&&x.st=='user'};r99wrap(st,key,getV,setV,sp,cf)});
  // migration notice
- if(m.r99need&&m.r99need.length){const n=document.createElement('div');n.id='r99notice';n.innerHTML=`<b>${esc(m.name)}</b>: ${m.r99need.length} setting${m.r99need.length>1?'s':''} need a real answer. <button class="chip y" type="button">Open the first</button><div class="r99nl">${m.r99need.map(k=>`<button class="chip r" type="button" data-nk="${esc(k)}">${k=='Rotary axis'?'Confirm rotary letter':esc(k)}</button>`).join(' ')}</div>`;
+ if(m.r99need&&m.r99need.length){const n=document.createElement('div');n.id='r99notice';n.innerHTML=`<b>${esc(m.name)}</b>: ${m.r99need.length} setting${m.r99need.length==1?'':'s'} ${m.r99need.length==1?'needs':'need'} a real answer. <button class="chip y" type="button">Open the first</button><div class="r99nl">${m.r99need.map(k=>`<button class="chip r" type="button" data-nk="${esc(k)}">${k=='Rotary axis'?'Confirm rotary letter':esc(k)}</button>`).join(' ')}</div>`;
   n.querySelectorAll('[data-nk]').forEach(b=>b.onclick=()=>{const el=V.querySelector('.r99f[data-r99k="'+CSS.escape(b.dataset.nk)+'"]');if(el){el.scrollIntoView({block:'center'});el._r99&&el._r99.mark();const inp=el.querySelector('input,select');if(inp)inp.focus()}});
   n.querySelector('button').onclick=()=>{const k=m.r99need[0],el=V.querySelector('.r99f[data-r99k="'+CSS.escape(k)+'"]');if(el){el.scrollIntoView({block:'center'});const f=el._r99;if(f)f.mark();const inp=el.querySelector('input,select');if(inp)inp.focus()}};
   const first=V.querySelector('.card');if(first)first.insertAdjacentElement('beforebegin',n)}}
@@ -6253,24 +6264,26 @@ function r99setup(i){const m=S.m[i];if(!m)return;
 {const _f=r92form;r92form=function(){const r=_f.apply(this,arguments);try{r99build()}catch(e){console.error(e)}return r}}
 {const _s=show;show=function(){const r=_s.apply(this,arguments);try{r99build();r99needTap()}catch(e){console.error(e)}return r}}
 function r99build(){const o=$('#out');if(!o||!J)return;
- o.querySelectorAll('.set').forEach(st=>{if(st.dataset.r99||st.closest('.r99f'))return;const inp=st.querySelector('[data-k]');if(!inp)return;const k=inp.dataset.k;
+ o.querySelectorAll('.set').forEach(st=>{if(st.dataset.r99||st.closest('.r99f'))return;let inp=st.querySelector('[data-k]');if(!inp)return;const k=inp.dataset.k;
+  if(inp.tagName=='SELECT'&&typeof r100bch=='function'&&r100bch(k)){const ni=document.createElement('input');ni.dataset.k=k;ni.value=inp.value||'';inp.replaceWith(ni);inp=ni}
   const getV=()=>(J.p[k]&&J.p[k].v!=null)?J.p[k].v:(inp.value||'');
   const setV=v=>{if(!String(v).trim()){if(J.p[k])J.p[k].v=null;inp.value='';return}J.p[k]={v:isNaN(+v)?v:+v,g:false};inp.value=v};
-  let sp=r99spec(k);if(!sp){const u=UNIT[k]||'',kd=typeof kindOf=='function'?kindOf(k):null;
+  const dch=typeof r100bch=='function'&&r100bch(k);
+  let sp=dch||r99spec(k);if(!sp){const u=UNIT[k]||'',kd=typeof kindOf=='function'?kindOf(k):null;
    if(kd=='len'||kd=='feed'||/rpm|count|faces|holes|tool|tpi|pitch|deg|%|offset #/i.test(k))sp={st:'typed number',fmt:/>|above/.test(k)?'number, > 0':'number',ex:'1',err:k+': type a number.',hint:(UNIT[k]?UNIT[k]+'. ':'')+'Numbers only — letters are dropped.',ch:[]};
    else if(k=='Work offset'||/offset$/i.test(k)&&/G\d/.test(String((J.p[k]||{}).v||'')))sp=r99spec('Work offset')||{st:'picker+Other',ch:['G54','G55','G56','G57','G58','G59'],fmt:'work offset',ex:'G54',err:'Work offset: pick G54–G59 or type G54.1 P1.',hint:'Work offset on the control.',};
    else return}
   if(sp&&sp.st=='typed number'){const f=String(sp.fmt||''),rg=f.match(/(\d+)\s*[–-]\s*([\d,]+)/);sp={...sp,hint:(/whole/.test(f)?'Whole number':'Number')+(rg?' '+rg[1]+'–'+rg[2]:/>\s*0/.test(f)?' above 0':/signed/.test(f)?', can be negative':'')+' — digits only, letters are dropped.',err:''}}
-  r99wrap(st,k,getV,v=>{if(!String(v).trim()){setV('');r95drop&&J&&(J.code=null);return}if(!r99ok(k,v,sp))return;setV(v)},sp)});
+  r99wrap(st,k,getV,v=>{if(!String(v).trim()){setV('');r95drop&&J&&(J.code=null);return}if(!r99ok(k,v,sp))return;setV(sp&&sp.save?sp.save(v):v)},sp,()=>!!(J&&J.p[k]&&J.p[k].v!=null&&!J.p[k].g))});
  // Need N items tappable
  r99needTap()}
-function r99needTap(){const o=$('#out');if(!o)return;o.querySelectorAll('.r99f').forEach(f=>{});
- // rewrite Need N list entries to be tappable
- o.querySelectorAll('a[onclick*="ed("],.chip[onclick*="ed("],button[onclick*="ed("]').forEach(a=>{const m=(a.getAttribute('onclick')||'').match(/ed\('([^']+)'\)/);if(!m)return;
-  a.addEventListener('click',()=>setTimeout(()=>{const f=o.querySelector('.r99f[data-r99k="'+CSS.escape(m[1])+'"]');if(f&&f._r99){f._r99.mark();f.scrollIntoView({block:'center'})}},0))});
- // also the "Need N more" card's red chips
- o.querySelectorAll('.chip.r').forEach(c=>{const k=(c.textContent||'').replace(/:.*/,'').replace(/^\s*/,'').trim();if(!k)return;
-  c.style.cursor='pointer';if(c.onclick||c.getAttribute('onclick'))return;c.onclick=e=>{const f=o.querySelector('.r99f[data-r99k="'+CSS.escape(k)+'"]');if(f){if(f._r99)f._r99.mark();f.scrollIntoView({block:'center'});const inp=f.querySelector('input,select');if(inp)inp.focus()}else if(typeof ed=='function')ed(k)}})}
+function r99focusBox(k){const o=$('#out')||V;const f=(o||document).querySelector('.r99f[data-r99k="'+CSS.escape(k)+'"]');if(!f)return false;f.scrollIntoView({block:'center'});if(f._r99)f._r99.mark();const inp=f.querySelector('input:not([readonly]),select');if(inp){try{inp.focus()}catch(e){}}else{const w=f.querySelector('.r99w');if(w)w.click()}return true}
+function r99needTap(){const o=$('#out');if(!o)return;
+ const wire=(el,k)=>{if(!k||el.dataset.r99tap)return;el.dataset.r99tap=1;el.style.cursor='pointer';
+  el.addEventListener('click',e=>{if(r99focusBox(k)){e.stopImmediatePropagation();e.preventDefault()}},true)};
+ // Need N more rows (.set with span label) and chips / links that used to call ed()
+ o.querySelectorAll('.chip[onclick*="ed("],button[onclick*="ed("],a[onclick*="ed("]').forEach(c=>{const m=(c.getAttribute('onclick')||'').match(/ed\('([^']+)'\)/);if(!m)return;const k=m[1];if(!o.querySelector('.r99f[data-r99k="'+CSS.escape(k)+'"]'))return;wire(c,k)});o.querySelectorAll('.chip.r').forEach(c=>{if(c.dataset.r99tap||c.getAttribute('onclick'))return;const k=(c.textContent||'').replace(/^[!\s✓•?]+/,'').replace(/:.*/,'').trim();if(o.querySelector('.r99f[data-r99k="'+CSS.escape(k)+'"]'))wire(c,k)})}
+
 
 // Continue / Generate refuses mid-typing reds: mark all empty-required and bad as touched
 {const _fill=fill;fill=function(){document.querySelectorAll('#out .r99f').forEach(f=>{if(f._r99)f._r99.mark()});
@@ -6302,11 +6315,17 @@ try{r99rotNeed()}catch(e){console.error(e)}
 // a saved value that only contains a placeholder word is kept but flagged: jobs see it as missing and block with the reason
 function r99flagged(x){return !!x&&!!x.r99flag&&!!String(x.v||'').trim()}
 // Need N on setup: after fixing one, go to the next
-{const _ed=edit;edit=function(i){const r=_ed.apply(this,arguments);try{const m=S.m[i];if(m&&m.r99need){m.r99need=m.r99need.filter(k=>{const x=m.s.find(y=>y.k==k);return x&&!(x.st=='user'&&r99ok(k,x.v))});if(!m.r99need.length){delete m.r99need;save();const n=$('#r99notice');if(n)n.remove()}else{const nb=$('#r99notice');if(nb){nb.querySelector('b').nextSibling.textContent=': '+m.r99need.length+' setting'+(m.r99need.length>1?'s':'')+' need a real answer. '}}}
+{const _ed=edit;edit=function(i){const r=_ed.apply(this,arguments);try{const m=S.m[i];if(m&&m.r99need){m.r99need=m.r99need.filter(k=>{const x=m.s.find(y=>y.k==k);return x&&!(x.st=='user'&&r99ok(k,x.v))});if(!m.r99need.length){delete m.r99need;save();const n=$('#r99notice');if(n)n.remove()}else{const nb=$('#r99notice');if(nb){nb.querySelector('b').nextSibling.textContent=': '+m.r99need.length+' setting'+(m.r99need.length==1?'':'s')+' '+(m.r99need.length==1?'needs':'need')+' a real answer. '}}}
   (m&&m.s||[]).forEach(x=>{if(r99flagged(x)){const f=V.querySelector('.r99f[data-r99k="'+CSS.escape(x.k)+'"]');if(f&&f._r99){f._r99.mark();const er=f.querySelector('.r99err');er.innerHTML='Needs: a real answer — “'+esc(x.v)+'” still says to check. Kept, not used until you replace it.'+(r99spec(x.k)&&r99spec(x.k).ex?`<br><i>Example: ${esc(r99spec(x.k).ex)}</i>`:'');er.classList.add('on');f.querySelector('.r99w').classList.add('bad')}}})}catch(e){}return r}}
 // one-time notice per machine (opens the first item)
+{const _t79=toast79;toast79=function(){const x=document.getElementById('r79toast');if(x){x.classList.remove('r99pin');x.onclick=null;x.style.cursor=''}return _t79.apply(this,arguments)}}
 function r99notices(){const q=(S.m||[]).map((m,i)=>[m,i]).filter(([m])=>m&&m.r99need&&m.r99need.length&&!m.r99told);if(!q.length)return;const [m,i]=q[0];m.r99told=1;save();
- toast79(m.name+': '+m.r99need.length+' setting'+(m.r99need.length>1?'s':'')+' need a real answer — tap to open.');const t=$('#r79toast');if(t){t.style.cursor='pointer';t.onclick=()=>{t.onclick=null;edit(i);setTimeout(()=>{const b=$('#r99notice button');if(b)b.click()},0)}}}
+ const msg=m.name+': '+m.r99need.length+' setting'+(m.r99need.length==1?'':'s')+' '+(m.r99need.length==1?'needs':'need')+' a real answer — tap to open';
+ toast79(msg);const t=$('#r79toast');if(t){t.classList.add('r99pin');t.style.cursor='pointer';t.style.animation='none';t.style.opacity='1';t.style.transition='none';
+  // defeat any fade timer by keeping it alive
+  const pin=setInterval(()=>{const x=$('#r79toast');if(!x||!x.classList.contains('r99pin')){clearInterval(pin);return}clearTimeout(x._h);x.hidden=false;x.style.opacity='1'},200);clearTimeout(t._h);t.hidden=false;
+  const go=()=>{clearInterval(pin);t.classList.remove('r99pin');t.onclick=null;t.hidden=true;edit(i);setTimeout(()=>{const b=$('#r99notice button');if(b)b.click()},0)};
+  t.onclick=go;t.insertAdjacentHTML('beforeend',' <button type="button" class="chip y" id="r99tdismiss" style="margin-left:8px">Open</button>');const d=$('#r99tdismiss');if(d)d.onclick=e=>{e.stopPropagation();go()}}}
 setTimeout(()=>{try{r99notices()}catch(e){}},300);
 // other screens (Tools, Calculators, Snippets…): typed numbers say what's needed on leaving the box
 document.addEventListener('blur',e=>{const el=e.target;if(!el||el.tagName!='INPUT'||el.closest('.r99f')||el.closest('#r99sheet'))return;const num=el.getAttribute('inputmode')=='decimal'||el.type=='number';if(!num)return;
@@ -6314,6 +6333,168 @@ document.addEventListener('blur',e=>{const el=e.target;if(!el||el.tagName!='INPU
  if(v&&!/^-?\d*\.?\d+$/.test(v)){const lab=(el.closest('label')||{}).textContent||el.getAttribute('aria-label')||'';const sp=r99spec(lab.replace(/\s+/g,' ').trim())||{};er.innerHTML=`Needs: a plain number (no letters or units)<br><i>Example: ${esc(sp.ex||el.placeholder||'1.5')}</i>`;er.classList.add('on');el.style.borderColor='#ff5a5a'}
  else{er.classList.remove('on');el.style.borderColor=''}},true);
 document.addEventListener('input',e=>{const el=e.target;if(!el||el.tagName!='INPUT'||el.closest('.r99f'))return;const er=el.parentNode&&el.parentNode.querySelector(':scope > .r99err.on');if(er&&/^-?\d*\.?\d+$/.test(String(el.value).trim())){er.classList.remove('on');el.style.borderColor=''}},true);
+
+// ===== mc-v100: 5-axis VMC type, rotary pair + directions, Build picker finish for the 6 leftover boxes =====
+{const h=R98T.hmc,w=R98T.swiss;delete R98T.hmc;delete R98T.swiss;R98T.vmc5='5-axis VMC';R98T.hmc=h;R98T.swiss=w}
+R98HID.vmc5=['ax4'];                 // 4th-only option parked; 5-axis uses its own rotary pair
+R98IMP.vmc5=['ax5'];
+R98TXT.vmc5='5-axis mill';
+// grid tiles (3+2 wrap), all same size — match five-axis mock
+(function(){const st=document.getElementById('r98css');if(!st)return;
+ st.textContent+=`
+.r98seg{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:5px!important;padding:0!important;border:0!important;background:transparent!important;border-radius:0!important}
+.r98seg button{background:#0a0a0a!important;border:1.5px solid #444!important;border-radius:10px!important;padding:8px 2px!important;font-size:12px!important;color:#bbb!important;overflow:hidden;text-overflow:ellipsis}
+.r98seg button.on{background:#ffd21f!important;border-color:#ffd21f!important;color:#111!important}
+.r98seg button.off{opacity:.4!important;pointer-events:none!important}
+.r100lock{display:flex;gap:8px;align-items:center;background:#1a1a1a;border:1px dashed #555;border-radius:12px;padding:8px 10px;color:#bbb;font-size:12px;line-height:1.3;margin:8px 13px}
+.r100lock b{background:#333;color:#888;border-radius:8px;padding:6px 9px;font-size:12px;flex:none}
+@media (max-width:340px){.r98seg button{font-size:11px;padding:8px 1px!important}}
+`})();
+
+const R100PAIR=['A + C','B + C'];
+const R100DIR=['Clockwise (+)','Counterclockwise (−)'];
+const R100DIRHINT={A:'Positive A when viewed from +X',B:'Positive B when viewed from +Y',C:'Positive C when viewed from +Z'};
+
+function r100sv(m,k){return (m.s||[]).find(x=>x.k==k)}
+function r100ensure(m,k,v,st){let x=r100sv(m,k);if(!x){x={k,v:v||'',st:st||'confirm'};m.s.push(x)}return x}
+function r100pairOf(m){const x=r100sv(m,'Rotary pair');const t=x&&x.st=='user'?String(x.v||'').trim():'';
+ if(/^A\s*\+\s*C$/i.test(t))return['A','C'];if(/^B\s*\+\s*C$/i.test(t))return['B','C'];
+ const m2=t.match(/\b([ABC])\b.*\b([ABC])\b/i);if(m2&&m2[1].toUpperCase()!=m2[2].toUpperCase())return[m2[1].toUpperCase(),m2[2].toUpperCase()];
+ // fall back to saved tilt/rotary letters if both present and distinct
+ const U=k=>{const y=r100sv(m,k);return y&&y.st=='user'?String(y.v||'').toUpperCase().replace(/[^ABC]/g,'').slice(0,1):''};const ta=U(K5.ta),ra=U(K5.ra);
+ if(!t&&ta&&ra&&ta!=ra)return[ta,ra];return null}
+function r100dirOf(m,letter){const x=r100sv(m,letter+' direction');const t=x&&x.st=='user'?String(x.v||'').trim():'';if(!t){const U=k=>{const y=r100sv(m,k);return y&&y.st=='user'?String(y.v||'').toUpperCase().replace(/[^ABC]/g,'').slice(0,1):''};const D=k=>{const y=r100sv(m,k);const v=y&&y.st=='user'?String(y.v||'').trim():'';return v&&!r99ph(v)&&!/^\(?check/i.test(v)?v:''};if(U(K5.ta)==letter&&D(K5.td))return D(K5.td);if(U(K5.ra)==letter&&D(K5.rd))return D(K5.rd)}if(!t||r99ph(t)||r99blankChoice(t))return'';return t}
+function r100ready(m){if(!m||r98t(m)!='vmc5')return true;const p=r100pairOf(m);if(!p)return false;return !!(r100dirOf(m,p[0])&&r100dirOf(m,p[1]))}
+function r100sync(m){ // push pair + dirs into the K5 keys gen already reads — never invent letters
+ const p=r100pairOf(m);if(!p)return;
+ const ta=r100ensure(m,K5.ta,'','confirm'),ra=r100ensure(m,K5.ra,'','confirm');
+ if(!(ta.st=='user'&&String(ta.v||'').trim())||ta.r100){ta.v=p[0];ta.st='user';ta.r100=1} // only fill blank/unconfirmed (or our own) — saved letters never rewritten
+ if(!(ra.st=='user'&&String(ra.v||'').trim())||ra.r100){ra.v=p[1];ra.st='user';ra.r100=1}
+ const d0=r100dirOf(m,p[0]),d1=r100dirOf(m,p[1]);
+ if(d0){const td=r100ensure(m,K5.td,'','confirm');if(!(td.st=='user'&&String(td.v||'').trim())||td.r100){td.v=d0;td.st='user';td.r100=1}}
+ if(d1){const rd=r100ensure(m,K5.rd,'','confirm');if(!(rd.st=='user'&&String(rd.v||'').trim())||rd.r100){rd.v=d1;rd.st='user';rd.r100=1}}
+}
+
+// is5 / r94has4 / rotAx / mHas — 5-axis is its own path
+{const _h4=r94has4;r94has4=function(m){const t=r98t(m);if(t=='vmc5')return false;return _h4.apply(this,arguments)}}
+{const _i3=r93is3;r93is3=function(m){if(r98t(m)=='vmc5')return false;return _i3.apply(this,arguments)}}
+{const _ra=rotAx;rotAx=function(){const m=S.m[S.cur];if(m&&r98t(m)=='vmc5')return null; // never write a one-rotary program from a 5-axis type
+ return _ra.apply(this,arguments)}}
+{const _mh=mHas;mHas=function(k){const m=S.m[S.cur]||{};if(k=='ax4'&&r98t(m)=='vmc5')return true; // 4th-axis jobs stay available only once both rotaries are set — still blocked at gen by rotAx null + reason
+ return _mh.apply(this,arguments)}}
+
+// migration: 5-axis only when saved data clearly shows two rotaries
+function r100mig(){
+  (S.m||[]).forEach(m=>{if(!m||m.r100mig)return;m.r100mig=1;
+   if(m.mtype=='vmc5'){r98opts(m,'vmc5');return}
+   if(m.mtype)return; // already typed by r98mig
+   const tt=String(m.type||''),o=m.opt||{},sv_=k=>r100sv(m,k)||{},user=k=>{const x=sv_(k);return x.st=='user'&&String(x.v||'').trim()!==''};
+   const ta=String((sv_(K5.ta).v||'')).toUpperCase().replace(/[^ABC]/g,'').slice(0,1);
+   const ra=String((sv_(K5.ra).v||'')).toUpperCase().replace(/[^ABC]/g,'').slice(0,1);
+   const two=!!(user(K5.ta)&&user(K5.ra)&&ta&&ra&&ta!=ra)||!!(user('Rotary pair')&&r100pairOf(m));
+   const five=!!o.ax5||/5-axis|trunnion/i.test(tt);
+   if(five&&two){m.mtype='vmc5';r98opts(m,'vmc5');
+    // seed Rotary pair from letters without rewriting saved letters
+    const pair=r100ensure(m,'Rotary pair','','confirm');
+    if(!(pair.st=='user'&&String(pair.v||'').trim())){pair.v=ta+' + '+ra;pair.st='user'}
+    // seed direction rows from K5 dirs if present
+    const td=String((sv_(K5.td).v||'')||'').trim(),rd=String((sv_(K5.rd).v||'')||'').trim();
+    if(td&&user(K5.td)){const d=r100ensure(m,ta+' direction','','confirm');if(!(d.st=='user'&&d.v)){d.v=/ccw|counter/i.test(td)?R100DIR[1]:(/cw|clock/i.test(td)?R100DIR[0]:td);d.st='user'}}
+    if(rd&&user(K5.rd)){const d=r100ensure(m,ra+' direction','','confirm');if(!(d.st=='user'&&d.v)){d.v=/ccw|counter/i.test(rd)?R100DIR[1]:(/cw|clock/i.test(rd)?R100DIR[0]:rd);d.st='user'}}
+   }
+   // else: leave blank ('Pick a type') — never guess 5-axis
+  });try{save()}catch(e){}}
+try{r100mig()}catch(e){console.error(e)}
+
+// 5-axis presets: leave mtype blank ('Pick a type') unless two rotary letters are already confirmed — never guess the type from the preset name alone
+{const _p=pick;pick=function(n,g){const r=_p.apply(this,arguments);try{if(g=='5-axis mills'){const m=S.m.at(-1);m.r98mig=1;m.r100mig=1;m.mtype=null; /* is5() still true from type text until a type is picked */ save();edit(S.m.length-1)}}catch(e){console.error(e)}return r}}
+// setup page: rotary pair + direction rows under the type picker when 5-axis is selected
+{const _pg=r98page;r98page=function(i){const r=_pg.apply(this,arguments);try{r100page(i)}catch(e){console.error(e)}return r}}
+function r100page(i){const m=S.m[i];if(!m)return;const box=$('#r98type');if(!box)return;
+ // hide 4th-axis-only rotary rows on 5-axis (kept in data)
+ if(r98t(m)=='vmc5'){V.querySelectorAll('.set,.r99f').forEach(st=>{const t=((st.querySelector('.r99lb,span')||{}).textContent||'').replace(/^[!\s✓•]+/,'').trim();
+  if(/^(Rotary axis|Rotary direction|4th-axis brake)/.test(t))st.style.display='none'})}
+ document.getElementById('r100rot')&&document.getElementById('r100rot').remove();
+ document.getElementById('r100lock')&&document.getElementById('r100lock').remove();
+ if(r98t(m)!='vmc5')return;
+ r100sync(m);
+ const wrap=document.createElement('div');wrap.id='r100rot';
+ const pair=r100ensure(m,'Rotary pair','','confirm');
+ const mkSet=(key,sp)=>{ // build a .set row then wrap with r99
+  const st=document.createElement('div');st.className='set';const xv=(r100sv(m,key)||{});st.innerHTML=`<span>${esc(key)}</span><input data-r100k="${esc(key)}" value="${esc(xv.st=='user'?xv.v||'':'')}">`;
+  wrap.appendChild(st);
+  const getV=()=>{const x=r100sv(m,key);return x&&x.st=='user'?x.v:''};
+  const setV=v=>{const x=r100ensure(m,key,'','confirm');
+   if(!v||r99ph(v)||(typeof r99blankChoice=='function'&&r99blankChoice(v))){x.v='';x.st='confirm'}
+   else{x.v=v;x.st='user'}
+   // when pair changes, ensure direction rows for the new letters exist; don't wipe other letters' dirs
+   if(key=='Rotary pair'){const p=r100pairOf(m);if(p){r100ensure(m,p[0]+' direction','','confirm');r100ensure(m,p[1]+' direction','','confirm')}}
+   r100sync(m);save();
+   // re-render so direction labels follow the pair
+   setTimeout(()=>{const y=scrollY;edit(i);scrollTo(0,y)},0)};
+  r99wrap(st,key,getV,setV,sp);
+ };
+ mkSet('Rotary pair',{st:'picker+Other',ch:R100PAIR.slice(),fmt:'A + C or B + C',ex:'A + C',err:'Rotary pair: pick A + C or B + C, or type two letters like A + B.',hint:'Which two rotary axes the machine has',
+  ok:v=>{const t=String(v||'').trim();if(R100PAIR.some(c=>c.toLowerCase()===t.toLowerCase()))return true;const m2=t.match(/\b([ABC])\b.*\+\s*\b([ABC])\b/i);return !!(m2&&m2[1].toUpperCase()!=m2[2].toUpperCase())}});
+ const p=r100pairOf(m);
+ (p||[]).forEach(L=>{r100ensure(m,L+' direction','','confirm');
+  mkSet(L+' direction',{st:'picker',ch:R100DIR.slice(),fmt:'pick a direction',ex:'Clockwise (+)',err:L+' direction: pick a direction.',hint:R100DIRHINT[L]||('Positive '+L+' when viewed from its + end')})});
+ box.insertAdjacentElement('afterend',wrap);
+ // lock chip under the card
+ if(!r100ready(m)){const lock=document.createElement('div');lock.id='r100lock';lock.className='r100lock';lock.innerHTML=`<b>🔒 Build</b>Build locks until both rotaries and directions are set.`;box.parentNode.insertBefore(lock,wrap.nextSibling)}
+}
+
+// Build: gray locked chip + block every rotary / 5-axis job until ready (Stacey)
+function r100blockReason(j){const m=S.m[S.cur];if(!m||r98t(m)!='vmc5')return null;
+ if(r100ready(m)){
+  // ready, but one-rotary jobs must not write a 4-axis program from a 5-axis machine
+  const k=j&&j.op?jKind(j.op):null;
+  if(k=='five'||(typeof R35!='undefined'&&R35.includes(j.op)))return null; // 5-axis jobs OK
+  if(JNEED[j.op]=='ax4'||/^(index|a4p|rotcl|g47w)$/.test(j.op||''))return '5-axis: this job only drives one rotary — use a 5-axis job, or pick 4-axis VMC. A one-rotary program was not written.';
+  return null}
+ const need=[];const p=r100pairOf(m);if(!p)need.push('Rotary pair');else{if(!r100dirOf(m,p[0]))need.push(p[0]+' direction');if(!r100dirOf(m,p[1]))need.push(p[1]+' direction')}
+ return '5-axis: Build locks until both rotaries and directions are set'+(need.length?' — still need: '+need.join(', '):'.')}
+{const _sh=show;show=function(){const a=arguments,m0=S.m[S.cur];const r=(m0&&r98t(m0)=='vmc5')?r98as(m0,()=>_sh.apply(this,a)):_sh.apply(this,a);try{
+  const m=S.m[S.cur];if(!m||r98t(m)!='vmc5'||!J)return r;
+  const o=$('#out');if(!o)return r;
+  // gray locked chip always visible on Build for incomplete 5-axis
+  if(!r100ready(m)&&!o.querySelector('#r100bchip')){const d=document.createElement('div');d.id='r100bchip';d.className='r100lock';d.innerHTML=`<b>🔒 Build</b>Build locks until both rotaries and directions are set.`;o.insertAdjacentElement('afterbegin',d)}
+  const why=r100blockReason(J);if(why){J.code=null;
+   if(!o.querySelector('#r100blk')){const b=document.createElement('div');b.id='r100blk';b.className='ok bad';b.textContent=why;o.insertAdjacentElement('afterbegin',b)}
+   else o.querySelector('#r100blk').textContent=why}
+ }catch(e){}return r}}
+{const _go=go;go=function(){const a=arguments,m0=S.m[S.cur];const r=(m0&&r98t(m0)=='vmc5')?r98as(m0,()=>_go.apply(this,a)):_go.apply(this,a);try{if(J&&r100blockReason(J)){J.code=null;show()}}catch(e){}return r}}
+
+// ----- finish the 6 Build pickers left from v99 -----
+function r100bch(k){if(!J)return null;
+ if(k=='Axis'){const ch=(J2[J.op]&&J2[J.op].choices&&J2[J.op].choices.Axis)||(J.op=='psurf'?['X+','X-','Y+','Y-']:J.op=='pbore'?['XY']:['X','Y']);
+  // surface probe uses signed axis; web/pocket X/Y; lathe feedback X/Z
+  const list=J.op=='lfb'?['X (diameter)','Z']:J.op=='lbrk'?['X','Z']:ch;
+  return{st:'picker',ch:list.slice(),fmt:'one of the choices',ex:list[0],err:'Axis: pick '+list.join(' / ')+'.',hint:'pick '+list.join(' / ')+'.'}}
+ if(k=='Base offset'||k=='Source offset'||k=='First new offset'){const ch=(typeof offOpts=='function'?offOpts():['G54','G55','G56','G57','G58','G59']).map(o=>typeof offLbl=='function'?offLbl(o):o);
+  return{st:'picker+Other',ch:ch,fmt:'work offset',ex:'G54',err:k+': pick G54–G59 or an extended offset.',hint:'pick G54–G59, or type an extended offset like G54.1 P1.',
+   save:v=>{const n=typeof normOff=='function'?normOff(v):v;return n||v},
+   ok:v=>{const t=String(v||'').trim();if(!t)return false;if(typeof normOff=='function'&&normOff(t))return true;return /^G5[4-9]$/i.test(t)||/^P\d+$/i.test(t)||/^G54\.1\s*P\s*\d+/i.test(t)}}}
+ if(k=='Update offset'){ // tool-length confirm write — not a G54 picker (CSV was wrong; follow the code)
+  const ch=['NO — put the old value back','YES'];
+  return{st:'picker',ch:ch,fmt:'YES or NO',ex:'NO — put the old value back',err:'Update offset: pick YES only after you confirm the write, or NO to put the old value back.',hint:'tap to confirm a write — YES keeps the measured length.'}}
+ if(k=='Write to'){const ch=(J2[J.op]&&J2[J.op].choices&&J2[J.op].choices['Write to'])||['G54','G55','G56','G57','G58','G59','External shift (P0)'];
+  return{st:'picker',ch:ch.slice(),fmt:'one of the choices',ex:ch[0],err:'Write to: pick '+ch.slice(0,3).join(', ')+(ch.length>3?'…':''),hint:'pick where the probe write goes.'}}
+ return null}
+
+// ax5() already reads K5.ta / K5.ra — r100sync keeps them in step. set5() already lists missing letters.
+{const _s5=set5;set5=function(j,need){const m=S.m[S.cur];if(m&&r98t(m)=='vmc5'&&!r100ready(m)){const p=r100pairOf(m),miss=[];if(!p)miss.push(['Rotary pair','pick A + C or B + C']);else{if(!r100dirOf(m,p[0]))miss.push([p[0]+' direction','pick a direction']);if(!r100dirOf(m,p[1]))miss.push([p[1]+' direction','pick a direction'])}return miss}return _s5.apply(this,arguments)}}
+// Build tab with no job yet: show the gray locked chip on an incomplete 5-axis machine
+{const _nw=nw;nw=function(){const r=_nw.apply(this,arguments);try{const m=S.m[S.cur];if(m&&r98t(m)=='vmc5'&&!r100ready(m)&&!$('#r100bchip')){const d=document.createElement('div');d.id='r100bchip';d.className='r100lock';d.innerHTML=`<b>🔒 Build</b>Build locks until both rotaries and directions are set.`;d.style.cursor='pointer';d.onclick=()=>edit(S.cur);const o=$('#out');if(o)o.insertAdjacentElement('beforebegin',d);else V.prepend(d)}}catch(e){console.error(e)}return r}}
+// ----- Maria v99 retest fixes -----
+// Fanuc card examples were copied from other boxes
+Object.assign(R99SPEC,{
+ 'Offset variables (Fanuc)':{st:'typed variable',ch:[],fmt:'#<n> tool-offset system variable (memory C: length geometry #11001+, wear #10001+)',ex:'#11001',err:'Offset variables (Fanuc): type the first length-geometry variable from the manual, like #11001 (memory C) or #2001 (memory A).',hint:'first tool-length offset variable, like #11001 (memory C).'},
+ 'Param 6000 bit 3 V15 (Fanuc)':{st:'picker',ch:['0','1'],fmt:'0 or 1',ex:'0',err:'Param 6000 bit 3 V15 (Fanuc): pick 0 or 1 as shown on the parameter screen.',hint:'the bit as shown on the parameter screen: 0 or 1.'}});
+// travel rows live only in the Travel card — hide the duplicate in the main list (data kept)
+{const _ed=edit;edit=function(i){const r=_ed.apply(this,arguments);try{V.querySelectorAll('.set,.r99f').forEach(f=>{if(f.closest('#r93trv'))return;const t=((f.querySelector('.r99lb,span')||{}).textContent||'').replace(/^[!\s✓•~]+/,'').trim();if(/^[XYZ] travel\b/.test(t)&&$('#r93trv'))f.style.display='none'})}catch(e){}
+ try{const ub=$('#usebar'),hd=document.querySelector('header,.hdr,#hdr,.top');if(ub){const h=hd?hd.getBoundingClientRect().height:0;if(h)ub.style.top=Math.round(h)+'px'}}catch(e){}return r}}
+document.head.insertAdjacentHTML('beforeend',`<style id="r100css">#usebar{background:var(--bg,#111)!important;z-index:20!important;box-shadow:0 -12px 0 var(--bg,#111);padding-top:6px;padding-bottom:6px}#r99dim{z-index:120!important}#r99sheet{z-index:121!important}</style>`);
 
 /* R79-END */</script>
 </body></html>

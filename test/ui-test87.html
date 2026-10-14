@@ -31,14 +31,28 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  // Not checked yet = blank
  E(`(()=>{const f=document.querySelector('.r99f[data-r99k="DPRNT support"]');f.querySelector('.r99w').click()})()`);await sl(40);
  E(`(()=>{const opts=[...document.querySelectorAll('#r99sheet .opt')];const n=opts.find(b=>/Not checked/i.test(b.textContent));n.click()})()`);await sl(20);
- log('picker: Not checked yet unlocks Done to clear',E("$('#r99sheet .done').classList.contains('on')"));
- E("$('#r99sheet .done').click()");await sl(20);
- log('picker: Not checked yet leaves value blank (not confirmed)',E("S.m[S.cur].s.find(x=>x.k=='DPRNT support').v")==='');
+ log('picker: Not checked yet keeps Done gray (non-answer)',E("$('#r99sheet .done').disabled===true&&!$('#r99sheet .done').classList.contains('on')"));
+ E("document.getElementById('r99dim').click()");await sl(20);
+ log('picker: Not checked yet never saved as a value',E("S.m[S.cur].s.find(x=>x.k=='DPRNT support').v")!='Not checked yet');
  // placeholders
  E(`(()=>{const m=S.m[${iA}];m.r99ph=0;m.s.find(x=>x.k=='O9000 protection').v='check parameter';m.s.find(x=>x.k=='O9000 protection').st='user';const y=m.s.find(x=>x.k=='#100–#199 cleared at');y.v='Reset (check) on ours';y.st='user';r99migPH()})()`);
  log('mig: exact placeholder wiped to blank',E(`S.m[${iA}].s.find(x=>x.k=='O9000 protection').v`)==='');
  log('mig: value containing placeholder word kept and flagged',E(`S.m[${iA}].s.find(x=>x.k=='#100–#199 cleared at').v`)=='Reset (check) on ours'&&E(`!!S.m[${iA}].s.find(x=>x.k=='#100–#199 cleared at').r99flag`));
  log('mig: notice lists the settings that need a real answer',E(`(S.m[${iA}].r99need||[]).length`)>0);
+ // Maria: answer state, gray untouched, short Pick, sticky bar, travel once, Fanuc examples, Swiss disabled
+ E(`(()=>{const x=S.m[${iA}].s.find(x=>x.k=='Max RPM');x.v='';x.st='confirm';save();edit(${iA})})()`);await sl(30);
+ log('Maria: untouched Max RPM is gray (not red)',E("(()=>{const f=document.querySelector('.r99f[data-r99k=\"Max RPM\"]');return f.dataset.s=='n'&&!f.querySelector('.r99w').classList.contains('bad')&&!f.querySelector('.r99w').classList.contains('ok')})()"));
+ E(`(()=>{const f=document.querySelector('.r99f[data-r99k="Max RPM"]');const i=f.querySelector('input');i.value='12000';i.dispatchEvent(new Event('blur',{bubbles:true}))})()`);await sl(20);
+ log('Maria: confirmed Max RPM is green ring+badge together',E("(()=>{const f=document.querySelector('.r99f[data-r99k=\"Max RPM\"]');return f.dataset.s=='ok'&&f.querySelector('.r99w').classList.contains('ok')})()"));
+ E(`(()=>{const f=document.querySelector('.r99f[data-r99k="Max RPM"]');const i=f.querySelector('input');i.value='x';i.dispatchEvent(new Event('input',{bubbles:true}))})()`);await sl(20);
+ log('Maria: invalid typed value drops green to neutral live',E("(()=>{const f=document.querySelector('.r99f[data-r99k=\"Max RPM\"]');return !f.querySelector('.r99w').classList.contains('ok')})()"));
+ log('Maria: Pick text short (≤28 chars)',E("(()=>{const f=document.querySelector('.r99f[data-r99k=\"DPRNT support\"]');const p=f.querySelector('input').placeholder;return p.length<=28&&/^Pick:/.test(p)})()"),E("document.querySelector('.r99f[data-r99k=\"DPRNT support\"] input').placeholder"));
+ log('Maria: sticky In use bar solid + z below sheet',E("(()=>{const u=$('#usebar'),c=getComputedStyle(u);return +c.zIndex<120&&!/rgba\(0, 0, 0, 0\)|transparent/.test(c.backgroundColor)})()"));
+ log('Maria: X travel only in Travel card (no duplicate)',E("[...document.querySelectorAll('.r99f,.set')].filter(f=>f.style.display!='none'&&/^\\W*X travel/.test(((f.querySelector('.r99lb,span')||{}).textContent||'').trim())).length")==1||E("[...document.querySelectorAll('#r93trv .r99f,#r93trv .set')].filter(f=>/X travel/.test(f.textContent)).length")==1&&E("[...document.querySelectorAll('.r99f,.set')].filter(f=>f.style.display!='none'&&f.closest&&!f.closest('#r93trv')&&/^[\\s\\W]*X travel/.test(((f.querySelector('.r99lb,span')||{}).textContent||'').trim())).length")==0);
+ E(`(()=>{const m=S.m[${iA}];m.opt.tset=1;const x=m.s.find(x=>x.k=='Control');x.v='Fanuc 0i-style';x.st='user';save();edit(${iA})})()`);await sl(40);
+ log('Maria: Fanuc Offset variables example is #11001 (not #1098)',/11001/.test(E("($('.r99f[data-r99k^=\"Offset variables\"] input')||{placeholder:''}).placeholder")));
+ log('Maria: Param 6000 bit 3 example is 0 or 1',E("(()=>{const f=document.querySelector('.r99f[data-r99k^=\"Param 6000\"]');const p=(f.querySelector('input')||{}).placeholder||'';return /Pick: 0/.test(p)||/e\.g\. 0/.test(p)})()"));
+ log('Maria: Swiss tile has disabled attribute on a mill',E("!!$('#r98type button[data-t=swiss]').disabled"));
  // Stacey: 4-axis from tick only -> Confirm rotary letter in Need list, jumps to box
  E(`(()=>{const m=S.m[${iB}];m.mtype='vmc4';delete m.r99rot;delete m.r99need;const r=m.s.find(x=>x.k=='Rotary axis');if(r)r.st='suggested';r99rotNeed();edit(${iB})})()`);await sl(30);
  log('Stacey: Need list has Confirm rotary letter',/Confirm rotary letter/.test(E("($('#r99notice')||{textContent:''}).textContent")));

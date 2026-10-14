@@ -71,7 +71,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  E("S.m.splice(-5);save()");
 
  // mc-v97 (Casey): Machines list matches setup page; setter/Fanuc rows follow one rule
- const cmp=i=>E(`(()=>{const m=S.m[${i}];tab('machines');const d=[...document.querySelectorAll('details.mchips')].find(d=>d.closest('.card').textContent.includes(m.name));const L=[...d.querySelectorAll('.chip')].filter(c=>c.style.display!='none').map(c=>c.textContent.replace(/^[!\\s✓]+/,'').split(':')[0].trim());edit(${i});V.querySelectorAll('details').forEach(x=>x.open=true);const vis=[...V.querySelectorAll('.set')].filter(s=>s.style.display!='none').map(s=>(s.querySelector('span')||{}).textContent||'').join('\\n');return L.filter(k=>!vis.includes(k)).join('|')})()`);
+ const cmp=i=>E(`(()=>{const m=S.m[${i}];tab('machines');const d=[...document.querySelectorAll('details.mchips')].find(d=>d.closest('.card').textContent.includes(m.name));const L=[...d.querySelectorAll('.chip')].filter(c=>c.style.display!='none').map(c=>c.textContent.replace(/^[!\\s✓~]+/,'').split(':')[0].trim());edit(${i});V.querySelectorAll('details').forEach(x=>x.open=true);const vis=[...V.querySelectorAll('.set')].filter(s=>s.style.display!='none').map(s=>(s.querySelector('span')||{}).textContent||'').join('\\n');return L.filter(k=>!vis.includes(k)).join('|')})()`);
  const setK=(i,k,v)=>E(`(()=>{const x=S.m[${i}].s.find(x=>x.k==${JSON.stringify(k)});x.v=${JSON.stringify(v)};x.st='user';save()})()`);
  const MA=E("S.m.findIndex(m=>m.name=='Mill A')");
  setK(MA,'Control','Haas NGC-style');log('Haas, no setter: list = setup',cmp(MA)==='',cmp(MA));

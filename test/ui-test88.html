@@ -1,0 +1,106 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 100: 5-axis VMC type, rotary pair + directions, Build lock, migration, 6 Build pickers, Casey flow (Need N focus, sticky notice, sheet Cancel) --><iframe id="f" src="../index.html?v=100" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const iA=E("S.m.findIndex(m=>m.name=='Mill A')"),iB=E("S.m.findIndex(m=>m.name=='Mill B')");
+ const pickSheet=async(key,idx)=>{E(`document.querySelector('.r99f[data-r99k="${key}"] .r99w').click()`);await sl(40);E(`document.querySelectorAll('#r99sheet .opt')[${idx}].click()`);await sl(10);E("$('#r99sheet .done').click()");await sl(60)};
+ // 1 tiles
+ E(`S.cur=${iA};edit(${iA})`);await sl(40);
+ const tl=E("JSON.stringify([...document.querySelectorAll('#r98type button')].map(b=>[b.textContent,Math.round(b.getBoundingClientRect().width),Math.round(b.getBoundingClientRect().top)]))");const T=JSON.parse(tl);
+ log('tiles: 3-axis, 4-axis, 5-axis, HMC, Swiss/lathe in order',T.map(x=>x[0]).join('|')=='3-axis VMC|4-axis VMC|5-axis VMC|HMC|Swiss/lathe',tl);
+ log('tiles: all same size, wrap 3+2',new Set(T.map(x=>x[1])).size==1&&T[0][2]==T[2][2]&&T[3][2]>T[0][2]&&T[3][2]==T[4][2],tl);
+ E(`(()=>{const m=S.m[${iA}];m.mtype=null;save();edit(${iA})})()`);await sl(30);
+ log('Pick a type still the blank default',/Pick a type/.test(E("$('#r98type').textContent"))&&!E("!!$('#r98type button.on')"));
+ // 2 select 5-axis
+ E("document.querySelector('#r98type button[data-t=vmc5]').click()");await sl(40);
+ log('5-axis: type saved, Rotary pair row via picker',E(`S.m[${iA}].mtype`)=='vmc5'&&E("!!document.querySelector('#r100rot .r99f[data-r99k=\"Rotary pair\"]')"));
+ log('5-axis: 4th-axis rows hidden (no borrowed 4-axis path)',E("[...document.querySelectorAll('.r99f,.set')].filter(f=>f.style.display!='none'&&/^\\W*Rotary axis\\b/.test(((f.querySelector('.r99lb,span')||{}).textContent||'').trim())).length")==0);
+ log('5-axis: lock chip on setup',/Build locks until both rotaries and directions are set/.test(E("($('#r100lock')||{textContent:''}).textContent")));
+ E("document.querySelector('.r99f[data-r99k=\"Rotary pair\"] .r99w').click()");await sl(40);
+ log('pair sheet: A + C / B + C / Other…',E("[...document.querySelectorAll('#r99sheet .opt')].map(b=>b.textContent).join('|')")=='A + C|B + C'&&E("!!$('#r99othi')"));
+ E("(()=>{const i=$('#r99othi');i.value='A + A';i.dispatchEvent(new Event('input',{bubbles:true}))})()");await sl(10);
+ log('pair Other: A + A refused with Needs, Done gray',/Needs:/.test(E("$('#r99othe').textContent"))&&E("$('#r99sheet .done').disabled"));
+ E("$('#r99sheet .cancel').click()");await sl(20);
+ log('Cancel closes sheet without saving',!E("!!$('#r99sheet')")&&E(`(S.m[${iA}].s.find(x=>x.k=='Rotary pair')||{}).st`)!='user');
+ await pickSheet('Rotary pair',0);
+ log('pair A + C saved and 2 direction rows appear',E(`S.m[${iA}].s.find(x=>x.k=='Rotary pair').v`)=='A + C'&&E("[...document.querySelectorAll('#r100rot .r99f')].map(f=>f.dataset.r99k).join('|')")=='Rotary pair|A direction|C direction');
+ log('direction hints: +X for A, +Z for C',/\+X/.test(E("document.querySelector('.r99f[data-r99k=\"A direction\"] .r99hint').textContent"))&&/\+Z/.test(E("document.querySelector('.r99f[data-r99k=\"C direction\"] .r99hint').textContent")));
+ await pickSheet('A direction',0);
+ log('one direction set: still locked',!E(`r100ready(S.m[${iA}])`)&&E("!!$('#r100lock')"));
+ // Build blocked with reason
+ E(`S.cur=${iA};J=null;tab('new')`);await sl(30);
+ log('Build: gray lock chip shown',E("!!$('#r100bchip')"));
+ E("$('#q').value='3+2 tilt 30 rotary 0 plane x0 y0 z0 program O1234 safe z 1 T1 G54';go()");await sl(40);
+ log('Build: rotary job blocked until both directions set, no code',/Build locks until both rotaries and directions are set/.test(E("($('#r100blk')||{textContent:''}).textContent"))&&!E("!!(J&&J.code)"));
+ E(`edit(${iA})`);await sl(30);await pickSheet('C direction',1);
+ log('both set: ready, lock chip gone, K5 letters filled',E(`r100ready(S.m[${iA}])`)&&!E("!!$('#r100lock')")&&E("sv(K5.ta).v")=='A'&&E("sv(K5.ra).v")=='C');
+ E(`S.cur=${iA};J=null;tab('new');$('#q').value='index 90 degrees on the 4th axis';go()`);await sl(40);
+ log('one-rotary (4th) job on 5-axis blocked with reason, no code',E("!J||!J.op||!J.code")&&(E("!J||!J.op")||/one rotary/.test(E("($('#r100blk')||{textContent:''}).textContent"))));
+ E("log=1;J=null");
+ // saved letters never rewritten
+ E(`(()=>{const m=S.m[${iA}];const t=m.s.find(x=>x.k==K5.ta);t.v='B';t.st='user';delete t.r100;const p=m.s.find(x=>x.k=='Rotary pair');p.v='A + C';r100sync(m)})()`);
+ log('saved tilt letter (user) never rewritten by pair',E(`S.m[${iA}].s.find(x=>x.k==K5.ta).v`)=='B');
+ // type switch hide-not-delete
+ E(`S.cur=${iA};edit(${iA});document.querySelector('#r98type button[data-t=vmc3]').click()`);await sl(30);
+ log('switch to 3-axis keeps rotary pair data',E(`S.m[${iA}].s.find(x=>x.k=='Rotary pair').v`)=='A + C'&&!E("!!$('#r100rot')"));
+ E("document.querySelector('#r98type button[data-t=vmc5]').click()");await sl(30);
+ log('back to 5-axis shows pair again',E("!!document.querySelector('#r100rot .r99f[data-r99k=\"Rotary pair\"]')"));
+ // mid-job draft same as other types
+ E(`(()=>{const m=S.m[${iA}];m.s.find(x=>x.k==K5.ta).v='A';})()`);
+ E(`S.cur=${iB};J=null;tab('new');$('#q').value='G54 T1 drill 4 holes on a 2.0 bolt circle 0.5 deep center x0 y0 z0 0';go()`);await sl(40);
+ E(`edit(${iB});document.querySelector('#r98type button[data-t=vmc5]').click()`);await sl(40);
+ log('type switch to 5-axis mid-job: draft toast',/draft/.test(E("($('#r79toast')||{textContent:''}).textContent")));
+ E(`document.querySelector('#r98type button[data-t=vmc4]').click()`);await sl(40);
+ log('switch back restores the job',E("J&&J.op")=='bc'||/restored/.test(E("($('#r79toast')||{textContent:''}).textContent")));
+ // migration
+ E(`(()=>{const m={name:'Old5',type:'5-axis mill',opt:{macroB:1,ax5:1},s:[{k:K5.ta,v:'B',st:'user'},{k:K5.ra,v:'C',st:'user'}],tools:[]};S.m.push(m);const n={name:'Old5b',type:'5-axis trunnion',opt:{macroB:1,ax5:1},s:[{k:K5.ta,v:'A',st:'confirm'}],tools:[]};S.m.push(n);r98mig();r100mig()})()`);
+ log('mig: two saved rotaries → 5-axis, letters untouched',E("S.m.find(m=>m.name=='Old5').mtype")=='vmc5'&&E("S.m.find(m=>m.name=='Old5').s.find(x=>x.k==K5.ta).v")=='B'&&E("S.m.find(m=>m.name=='Old5').s.find(x=>x.k=='Rotary pair').v")=='B + C');
+ log('mig: unclear 5-axis stays Pick a type',!E("S.m.find(m=>m.name=='Old5b').mtype"));
+ log('mig: unclear 5-axis letter not rewritten',E("S.m.find(m=>m.name=='Old5b').s.find(x=>x.k==K5.ta).v")=='A');
+ // 3 Build pickers
+ E(`S.cur=${iA};S.m[${iA}].mtype='vmc3';save()`);
+ const bp=async(op,k)=>{E(`J=null;tab('new');pickJob('${op}')`);await sl(50);return E(`(()=>{const f=document.querySelector('#out .r99f[data-r99k="${k}"]');if(!f)return 'none';f.querySelector('.r99w').click();const n=[...document.querySelectorAll('#r99sheet .opt')].map(b=>b.textContent);const c=$('#r99sheet .cancel');if(c)c.click();return n.join('|')})()`)};
+ const so=await bp('wocopy','Source offset');log('Source offset on picker sheet with machine offsets',/^G54\|G55\|G56\|G57\|G58\|G59/.test(so),so);
+ E(`J=null;tab('new');pickJob('wocopy')`);await sl(40);E(`document.querySelector('#out .r99f[data-r99k="Source offset"] .r99w').click()`);await sl(30);
+ E("(()=>{const i=$('#r99othi');i.value='asdf';i.dispatchEvent(new Event('input',{bubbles:true}))})()");
+ log('Source offset Other junk: Needs shown, Done locked',/Needs:/.test(E("$('#r99othe').textContent"))&&E("$('#r99sheet .done').disabled"));
+ E("(()=>{const i=$('#r99othi');i.value='G54.1 P3';i.dispatchEvent(new Event('input',{bubbles:true}));$('#r99sheet .done').click()})()");await sl(30);
+ log('Source offset Other G54.1 P3 saved normalized for the job',E("J.p['Source offset'].v")=='P3');
+ E(`S.m[${iA}].type='4-axis VMC'`);
+ // lathe pickers
+ const iL=E("S.m.findIndex(m=>isLT(m.type||''))");
+ if(iL>=0){E(`S.cur=${iL}`);
+  const ax=await bp('lfb','Axis');log('Axis (lathe feedback) on sheet: X (diameter) | Z',ax=='X (diameter)|Z'||ax=='none','got '+ax);
+  const wt=await bp('lzset','Write to');log('Write to on sheet from job choices',/G54\|G55/.test(wt)&&/External shift/.test(wt)||wt=='none',wt);}
+ else log('lathe machine present for Axis/Write to',false);
+ log('r100bch covers all 6 keys',E("['Axis','Base offset','First new offset','Source offset','Update offset','Write to'].every(k=>{J={op:'tomb',p:{}};return !!r100bch(k)})"));
+ log('Update offset follows the code: YES / NO (not G54 list)',E("(()=>{J={op:'tlen',p:{}};return r100bch('Update offset').ch.join('|')})()")=='NO — put the old value back|YES');
+ E("J=null");
+ // Casey: Need N item focuses its box
+ E(`S.cur=${iA};J=null;tab('new');$('#q').value='G54 T1 drill 4 holes on a 2.0 bolt circle center x0 y0 z0 0';go()`);await sl(40);
+ E("J.p.Depth={v:null};show()");await sl(30);
+ const hasDepth=E("!!document.querySelector('#out .r99f[data-r99k=\"Depth\"]')");
+ E("(()=>{const c=[...document.querySelectorAll('#out .chip')].find(c=>/^\\W*Depth/.test(c.textContent));if(c)c.click()})()");await sl(30);
+ log('Need item Depth focuses the Depth box (no dialog)',hasDepth&&E("!!document.activeElement&&!!document.activeElement.closest&&!!document.activeElement.closest('.r99f[data-r99k=\"Depth\"]')")&&!E("!!document.getElementById('dlg')&&getComputedStyle(document.getElementById('dlg')).display!='none'"));
+ // sticky notice + grammar
+ E(`(()=>{const m=S.m[${iB}];m.r99need=['Max RPM'];delete m.r99told;r99notices()})()`);await sl(30);
+ log('notice grammar: 1 setting needs',/1 setting needs a real answer/.test(E("($('#r79toast')||{textContent:''}).textContent")));
+ await sl(4500);
+ log('notice stays until dismissed (no fade)',/needs a real answer/.test(E("($('#r79toast')||{textContent:''}).textContent"))&&E("getComputedStyle($('#r79toast')).opacity")=='1'&&E("getComputedStyle($('#r79toast')).display")!='none');
+ E(`S.m[${iB}].r99need=['Max RPM','Spindle orient M-code'];edit(${iB})`);await sl(20);
+ log('notice grammar: 2 settings need',/2 settings need a real answer/.test(E("($('#r99notice')||{textContent:''}).textContent")));
+ E("$('#r79toast').click()");await sl(30);
+ // sheet: Escape / backdrop do not save, half-typed Other discarded
+ E(`edit(${iA})`);await sl(30);
+ const before=E("(S.m[S.cur].s.find(x=>x.k=='DPRNT support')||{}).v");
+ E(`document.querySelector('.r99f[data-r99k="DPRNT support"] .r99w').click()`);await sl(30);
+ log('sheet has gray Cancel left of Done, same height',E("(()=>{const c=$('#r99sheet .cancel'),d=$('#r99sheet .done');const a=c.getBoundingClientRect(),b=d.getBoundingClientRect();return a.left<b.left&&Math.abs(a.height-b.height)<1})()"));
+ E("(()=>{const i=$('#r99othi');i.value='Yes, half';i.dispatchEvent(new Event('input',{bubbles:true}))})()");
+ E("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}))");await sl(20);
+ log('Escape closes with no save (half-typed Other dropped)',!E("!!$('#r99sheet')")&&E("(S.m[S.cur].s.find(x=>x.k=='DPRNT support')||{}).v")===before);
+ E(`document.querySelector('.r99f[data-r99k="DPRNT support"] .r99w').click()`);await sl(30);E("document.querySelectorAll('#r99sheet .opt')[2].click()");E("$('#r99dim').click()");await sl(20);
+ log('backdrop tap closes with no save',!E("!!$('#r99sheet')")&&E("(S.m[S.cur].s.find(x=>x.k=='DPRNT support')||{}).v")===before);
+ log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>
