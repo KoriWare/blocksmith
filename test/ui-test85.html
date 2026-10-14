@@ -2,12 +2,22 @@
 let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
 w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
 const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
-setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const FIRST=E("[...document.querySelectorAll('details.mchips .chip')].filter(c=>c.style.display!='none'&&/Pallet change/.test(c.textContent)).length");E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
  const add=(n,g)=>{E(`pick(${JSON.stringify(n)},${JSON.stringify(g)})`);return E('S.cur=S.m.length-1')};
  const set=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(x){x.v=${JSON.stringify(v)};x.st='user'}else S.m[S.cur].s.push({k:${JSON.stringify(k)},v:${JSON.stringify(v)},st:'user'});save()})()`);
  const job=(op,vals)=>{E(`J=null;tab('new');pickJob('${op}')`);for(const [k,v] of Object.entries(vals||{})){const el=d.querySelector(`#out [data-k="${k}"]`);if(el)el.value=v}E('fill()')};
  const code=()=>E("J&&J.code?txt().join('\\n'):''");const bad=()=>(d.querySelector('#r92bad')||{}).textContent||'';
 
+
+ // mc-v97: first render + live toggle
+ d.querySelector('.tabs button[data-t="machines"]').click();await sl(30);
+ log('first render: Machines cards already hide dependent rows',E("(()=>{const r={};document.querySelectorAll('details.mchips').forEach(d=>{const n=(d.closest('.card').querySelector('.t')||{}).textContent||'';r[n]=[...d.querySelectorAll('.chip')].filter(c=>c.style.display!='none').map(c=>c.textContent).join('|')});const a=Object.entries(r).find(([n])=>/Mill A/.test(n)),b=Object.entries(r).find(([n])=>/Mill B/.test(n));return !!a&&!!b&&!/Rotary|brake|Pallet change/.test(a[1])&&!/Pallet change/.test(b[1])&&/Rotary axis/.test(b[1])})()"),'first='+FIRST+' title='+E("$('#ttl').textContent")+' n='+E("document.querySelectorAll('details.mchips').length"));
+ {const A=E("S.m.findIndex(m=>m.name=='Mill A')");E(`edit(${A})`);}const cb=n=>`[...V.querySelectorAll('label.set')].find(l=>l.textContent.includes('${n}')).querySelector('input')`;
+ const shown=re=>E(`[...V.querySelectorAll('.set')].some(s=>s.style.display!='none'&&s.offsetParent&&${re}.test((s.querySelector('span')||{}).textContent||''))`);
+ E(`(()=>{const c=${cb('4th axis')};c.click()})()`);await sl(40);log('live: ticking 4th axis shows rotary rows',shown('/Rotary axis/'));
+ E(`(()=>{const c=${cb('4th axis')};c.click()})()`);await sl(40);log('live: unticking 4th axis hides rotary rows',!shown('/Rotary axis/'));
+ E(`(()=>{const c=${cb('Pallet changer')};c.click()})()`);await sl(40);log('live: ticking Pallet changer shows pallet code',shown('/Pallet change code/'));
+ E(`(()=>{const c=${cb('Pallet changer')};c.click()})()`);await sl(40);log('live: unticking hides pallet code',!shown('/Pallet change code/'));
  add('Haas VF-style VMC (generic)','Vertical mills');set('Control','Haas NGC-style');
  E("J=null;tab('new');$('#q').value='G54 T1 peck drill at x0 y0 0.5 deep peck 0.1 z0 0';go()");
  log('E10 peck vs negative depth compares sizes',E("(()=>{const e=rangeErr({p:{'Peck Q':{v:0.1},Depth:{v:-0.5}}});return !e.some(x=>x[0]=='Peck Q')})()"));
@@ -48,6 +58,17 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  E("S.m.splice(-3);save()");
  E(`S.cur=${A};J=null;tab('new');$('#q').value='G54 T1 rectangular pocket 2 x 1 corner r 0 cutter 0.25 0.5 deep stepdown 0.1 center x0 y0 z0 0';go()`);
  log('(5) NaN message names only the bad field',E("(()=>{const j=Object.assign({},J,{p:Object.assign({},J.p,{Depth:{v:NaN},Mode:{v:'climb'},Text:{v:'AB'}})}),g={code:['G01 ZNaN'],r92bad:['Some address words have no valid number: line 1: “ZNaN”. Check the values you typed.']};r92code(j,g);const m=g.r92bad.find(x=>/no valid number/.test(x));return /field Depth/.test(m)&&!/Mode|Text/.test(m)})()"));
+
+ // mc-v97 migration (Stacey)
+ const old=(name,type,rot,st)=>E(`(()=>{const m=JSON.parse(JSON.stringify(S.m.find(m=>m.name=='Mill A')));m.name=${JSON.stringify(name)};m.type=${JSON.stringify(type)};m.opt={macroB:1};delete m.r97mig;const r=m.s.find(x=>x.k=='Rotary axis');if(${JSON.stringify(rot)}!==null){r.v=${JSON.stringify(rot)};r.st=${JSON.stringify(st)}}else{r.v='';r.st='suggested'}S.m.push(m);r97mig();return S.m.length-1})()`);
+ const ax=i=>E(`(()=>{const c=S.cur;S.cur=${i};const a=rotAx(),o=!!S.m[${i}].opt.ax4,j=jAvail('index');S.cur=c;return a+'/'+o+'/'+j})()`);
+ let i=old('Old VMC saved C','VMC','C','user');log('mig: saved rotary letter ticks 4th axis, index runs',ax(i)=='C/true/true',ax(i));
+ i=old('Old HMC','horizontal mill',null,'');log('mig: HMC type ticks 4th axis',/\/true\/true$/.test(ax(i)),ax(i));
+ i=old('Old HMC saved A','horizontal mill','A','user');log('mig: saved A on HMC stays A',ax(i).startsWith('A/')&&E(`S.m[${i}].s.find(x=>x.k=='Rotary axis').v`)=='A',ax(i));
+ i=old('Old VMC saved B','VMC','B','user');log('mig: saved B on VMC stays B',ax(i).startsWith('B/')&&E(`S.m[${i}].s.find(x=>x.k=='Rotary axis').v`)=='B',ax(i));
+ i=old('Plain old VMC','VMC',null,'');log('mig: plain 3-axis VMC not ticked',E(`!S.m[${i}].opt.ax4`));
+ E(`S.m[${i}].opt.ax4=false;S.m[${i-1}].opt.ax4=false;r97mig()`);log('mig runs once (untick sticks)',E(`!S.m[${i-1}].opt.ax4`));
+ E("S.m.splice(-5);save()");
  E("J=null;drClear()");log('no console errors',!errs.length,errs.join('|'));
  o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
 </script></body></html>

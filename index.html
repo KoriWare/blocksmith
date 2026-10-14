@@ -6009,11 +6009,21 @@ function r95hideKey(m,t){t=String(t).replace(/^[!\s✓•]+/,'').trim();if(!m||i
 let R95ed=null;{const _ed=edit;edit=function(i){R95ed=i;const r=_ed.apply(this,arguments);r95apply();return r}}
 {const _t=tab;tab=function(x){R95ed=null;const r=_t.apply(this,arguments);r95apply();return r}}
 function r95apply(){try{const v=document.getElementById('v');if(!v)return;
- if(R95ed!=null&&S.m[R95ed]){const m=S.m[R95ed];v.querySelectorAll('.set,.chip').forEach(el=>{const t=el.matches('.set')?((el.querySelector('span')||{}).textContent||''):el.textContent;if(r95hideKey(m,t))el.style.display='none'})}
- else v.querySelectorAll('details.mchips').forEach(d=>{const card=d.closest('.card');const m=S.m.find(m=>card&&(card.querySelector('.t')||card).textContent.includes(m.name))||null;if(!m)return;d.querySelectorAll('.chip').forEach(c=>{if(r95hideKey(m,c.textContent))c.style.display='none'});const sm=d.querySelector('summary');if(sm&&/Show all \d+/.test(sm.textContent)){const n=[...d.querySelectorAll('.chip')].filter(c=>c.style.display!='none').length;sm.textContent=sm.textContent.replace(/Show all \d+/,'Show all '+n)}})}catch(e){}}
+ if(R95ed!=null&&S.m[R95ed]){const m=S.m[R95ed];v.querySelectorAll('.set,.chip').forEach(el=>{const t=el.matches('.set')?((el.querySelector('span')||{}).textContent||''):el.textContent;if(r95dep(t))el.style.display=r95hideKey(m,t)?'none':''})}
+ else v.querySelectorAll('details.mchips').forEach(d=>{const card=d.closest('.card');const m=S.m.find(m=>card&&(card.querySelector('.t')||card).textContent.includes(m.name))||null;if(!m)return;d.querySelectorAll('.chip').forEach(c=>{if(r95dep(c.textContent))c.style.display=r95hideKey(m,c.textContent)?'none':''});const sm=d.querySelector('summary');if(sm&&/Show all \d+/.test(sm.textContent)){const n=[...d.querySelectorAll('.chip')].filter(c=>c.style.display!='none').length;sm.textContent=sm.textContent.replace(/Show all \d+/,'Show all '+n)}})}catch(e){}}
 {let q=0;new MutationObserver(()=>{if(q)return;q=1;requestAnimationFrame(()=>{q=0;r95apply()})}).observe(document.body,{childList:true,subtree:true})}
 // (4) axis detection from machine type + options only, never the machine name
 {const _r=rotAx;rotAx=function(){const m=S.m[S.cur];if(!m)return _r.apply(this,arguments);const n=m.name;m.name='';try{return _r.apply(this,arguments)}finally{m.name=n}}}
+
+// mc-v97: dependent rows also on first render, and live when an option is ticked
+function r95dep(t){return /^(Rotary axis|Rotary direction|4th-axis brake|Pallet change code)/.test(String(t).replace(/^[!\s✓•]+/,'').trim())}
+document.addEventListener('change',e=>{const el=e.target;if(el&&el.type=='checkbox'&&R95ed!=null)setTimeout(r95apply,0)},false);
+r95apply();document.addEventListener('DOMContentLoaded',r95apply);window.addEventListener('load',r95apply);
+// mc-v97 migration: old machines with a saved rotary letter or an HMC/4th type get the 4th axis option (once); saved letters never rewritten
+function r97mig(){let ch=0;(S.m||[]).forEach(m=>{if(!m||m.r97mig||isLT(m.type||''))return;m.r97mig=1;ch=1;m.opt=m.opt||{};const r=(m.s||[]).find(x=>x.k=='Rotary axis'),saved=r&&r.st=='user'&&/^[ABC]/i.test(String(r.v||'').trim());if(!m.opt.ax4&&!m.opt.ax5&&(saved||/horizontal|hmc|4th|4-axis/i.test(m.type||'')))m.opt.ax4=1});if(ch)try{save()}catch(e){}}
+try{r97mig()}catch(e){console.error(e)}
+{const _r=rotAx;rotAx=function(){const m=S.m[S.cur];if(m&&!isLT(m.type||'')){const r=(m.s||[]).find(x=>x.k=='Rotary axis');if(r&&r.st=='user'){const L=String(r.v||'').trim().toUpperCase()[0];if(/[ABC]/.test(L||''))return L}}return _r.apply(this,arguments)}}
+{const _p=pick;pick=function(){const r=_p.apply(this,arguments);try{S.m.at(-1).r97mig=1;save()}catch(e){}return r}}
 
 /* R79-END */</script>
 </body></html>
