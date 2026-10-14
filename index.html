@@ -7054,5 +7054,44 @@ function r109ro(){const C=(J&&J.code)||[],m=(J&&J.M||[])[(view.n||0)-1],end=m?m.
   if((g=w(/(?:^|[^A-Z#])T(\d+)/)))T=g.length>=4&&J.lathe?String(+g.slice(0,2)):String(+g);if((g=w(/(?:^|[^A-Z#])S(\d+\.?\d*)/)))S=g;if((g=w(/(?:^|[^A-Z#])F(\d*\.?\d*)/)))F=g}
  return 'T'+(T??'–')+' · S'+(S??'–')+(S!=null&&css?(met?' m/min':' SFM'):'')+' · F'+(F??'–')}
 
+// ===== mc-v110 =====
+// 2: every job type has its own reads list; a junk setting holds a job only if that job's code reads it (no live-probe fallback)
+const R110MEAS={"bolt":["Control","Rotary axis"],"cpock":["Control","Rotary axis"],"rpock":["Control","Rotary axis"],"mvise":["Control","Rotary axis"],"sload":["Control","Rotary axis"],"polyb":["Control","Rotary axis"],"plunge":["Control","Rotary axis"],"mdipat":["Control","Rotary axis"],"alias":["Control","Rotary axis"],"rpmg":["Control","Rotary axis"],"tomb":["Control","Rotary axis","Offset syntax"],"lpeck":["Control"],"pcatch":["Control"]};
+function r110lathe(op){try{const k=String(jKind(op)||'');return /lathe|sw/.test(k)||isLJ(op)}catch(e){return false}}
+const R110READS=(()=>{const R={};Object.keys(OPN).forEach(op=>{let L=(R107READS[op]||R110MEAS[op]||(r110lathe(op)?['Control']:['Control','Rotary axis'])).slice();
+ try{const d=J2[op];if(d)Object.values(d).filter(f=>typeof f=='function').forEach(f=>{[...f.toString().matchAll(/\b(?:sv|TV)\(\s*['"]([^'"]+)['"]/g)].forEach(x=>{if(!L.includes(x[1]))L.push(x[1])})})}catch(e){}
+ R[op]=L});R.warm=['Max RPM'];if(R.engrave&&!R.engrave.includes('Max RPM'))R.engrave.push('Max RPM');['lturn','lface','lgroove','ldrill'].forEach(o=>{if(R[o]&&!R[o].includes('Max RPM (G50)'))R[o].push('Max RPM (G50)')});return R})();
+function r110extWO(){const v=String(((J&&J.p&&J.p['Work offset'])||{}).v||'');return /G54\.1|^P\d|G110|G154|\bP\d/.test(v)}
+r107uses=function(m,x){if(typeof J=='undefined'||!J||!J.op)return true;const L=R110READS[J.op]||[];if(L.includes(x.k))return true;if((x.k=='Offset syntax'||x.k=='Extended offsets')&&r110extWO())return true;return false};
+
+// 3: one list of saved junk (red-ring junk + migrated '(check)' values) for notice, bracket and the popup outside Setup
+function r110junk(m){try{return r103vis(m).filter(x=>x.st!='user'&&((String(x.v||'').trim()&&(x.r106bad||x.r99flag))||x.r110mig)).map(x=>x.k)}catch(e){return[]}}
+// a saved placeholder the load sweep blanked (e.g. Units = check) is still saved junk until answered
+(function(){try{const raw=JSON.parse(window.R102RAW||'null');const RM=raw&&(raw.m||raw.machines)||[];let ch=0;(S.m||[]).forEach((m,mi)=>{const rm=RM.find(z=>z&&z.name==m.name)||RM[mi];(m.s||[]).forEach(x=>{if(x.r110mig&&x.st=='user'){delete x.r110mig;ch=1}});if(!rm||!rm.s)return;const CAPK=(typeof CAP20!='undefined'?CAP20:[]).map(c=>c[0]);rm.s.forEach(z=>{if(!z||!R102PH(z.v)||CAPK.includes(z.k))return;const x=(m.s||[]).find(y=>y.k==z.k);if(x&&x.st!='user'&&!String(x.v||'').trim()&&!x.r110mig){x.r110mig=1;ch=1}})});if(ch)save()}catch(e){console.error(e)}})();
+r107junk=r110junk;
+r99notices=function(){const q=(S.m||[]).map((m,i)=>[m,i]).filter(([m])=>m&&r110junk(m).length&&!m.r99told);if(!q.length)return;const [m,i]=q[0];m.r99told=1;save();const n=r110junk(m).length;
+ const msg=m.name+': '+n+' setting'+(n==1?'':'s')+' '+(n==1?'needs':'need')+' a real answer';toast79(msg);const t=$('#r79toast');if(!t)return;t.classList.add('r99pin');t.style.cursor='pointer';t.style.animation='none';t.style.opacity='1';t.style.transition='none';
+ const pin=setInterval(()=>{const x=$('#r79toast');if(!x||!x.classList.contains('r99pin')){clearInterval(pin);return}clearTimeout(x._h);x.hidden=false;x.style.opacity='1'},200);clearTimeout(t._h);t.hidden=false;
+ const go=()=>{clearInterval(pin);t.classList.remove('r99pin');t.onclick=null;t.hidden=true;edit(i);setTimeout(()=>{const b=$('#r107first')||$('#r99notice button');if(b)b.click()},0)};
+ t.onclick=go;t.insertAdjacentHTML('beforeend',' <button type="button" class="chip y" id="r99tdismiss" style="margin-left:8px">Open</button>');const d=$('#r99tdismiss');if(d)d.onclick=e=>{e.stopPropagation();go()}};
+
+// 3: Control Other…: a valid typed control confirms and shows; TBD-type words need a real answer; x / (check) / ? keep the Needs text
+const R110TBD=/^(tbd|tba|todo|to do|unknown|not sure|n\/?a|none|later|pending)\.?$/i;
+function r110ctlOK(v){const t=String(v||'').trim();return t.length>=2&&!r99ph(t)&&!R102PH(t)&&!R110TBD.test(t)&&/[a-z]/i.test(t)&&!/^\(.*\)$/.test(t)}
+{const _s=r99sheet;r99sheet=function(key,sp,get,done){if(key=='Control'&&sp){const d0=done;sp={...sp,ok:r110ctlOK};done=function(v){const r=d0.apply(this,arguments);try{const t=String(v||'').trim();const m=S.m[S.cur],x=m&&(m.s||[]).find(y=>y.k=='Control');if(x&&r110ctlOK(t)&&String(x.v)==t&&x.st!='user'){x.st='user';delete x.r99flag;delete x.r106bad;save();edit(S.cur)}}catch(e){console.error(e)}return r}}
+ const r=_s.call(this,key,sp,get,done);
+ if(key=='Control')try{const i=$('#r99othi'),e=$('#r99othe');const fx=()=>{const t=String(i.value||'').trim();if(t&&R110TBD.test(t)){e.innerHTML='“'+esc(t)+'” needs a real answer: type your control maker and series.<br><i>Example: Fanuc 0i-MF</i>';e.classList.add('on');const w=$('#r99oth');if(w){w.classList.remove('ok');w.classList.add('bad')}}};if(i){i.addEventListener('input',fx);i.addEventListener('blur',fx);fx()}}catch(e){}
+ return r}}
+{const _e=edit;edit=function(i){const r=_e.apply(this,arguments);try{const m=S.m[i],x=m&&(m.s||[]).find(y=>y.k=='Control'),l=V.querySelector('.r106ci');if(l&&x&&x.st=='user'&&String(x.v||'').trim()){l.value=String(x.v).trim();const end=V.querySelector('.r99f[data-r99k="Control"] .r99end');if(end&&end.textContent=='▾')end.textContent=''}}catch(e){}return r}}
+
+// 1: Max RPM: a valid (even gray) Max RPM caps S; blank/junk holds any mill job that writes S; over-max S is never written
+function r110S(code){const out=[];(code||[]).forEach(l=>{const s=String(l).toUpperCase().replace(/\(.*?\)/g,'').replace(/;.*/,'');let m;const re=/(?:^|[^A-Z#\w.])S(\d+(?:\.\d*)?)/g;while((m=re.exec(s)))out.push(+m[1]);const h=s.match(/#567\d\d\s*=\s*(\d+(?:\.\d*)?)/);if(h)out.push(+h[1])});return out}
+function r110mx(){const m=S.m[S.cur];const x=m&&(m.s||[]).find(y=>y.k=='Max RPM');if(!x)return null;const v=String(x.v==null?'':x.v).trim();if(!v||x.r106bad||x.r99flag||!r99ok('Max RPM',v))return null;return +v}
+function r110hold(msg){J.code=null;const o=$('#out');if(!o)return;const ck=o.querySelector('#ck');if(ck){let n=ck;while(n){const nx=n.nextSibling;n.remove();n=nx}}const h=$('#r104hold');if(h)h.remove();if(!$('#r110hold'))o.insertAdjacentHTML('beforeend','<div class="ok bad" id="r110hold">'+msg+'</div>')}
+{const _sh=show;show=function(){try{if(typeof J!='undefined'&&J&&J.op&&J.p&&!J.lathe&&!J.swiss&&!r110lathe(J.op)){const mx=r110mx();['RPM','Spindle RPM'].forEach(k=>{const q=J.p[k];if(q&&q.g&&mx!=null&&+q.v>mx)J.p[k]={...q,v:mx,r110cap:1}})}}catch(e){} // a gray suggestion never exceeds the machine max; a typed one is held below
+ const r=_sh.apply(this,arguments);try{if(typeof J!='undefined'&&J&&J.op&&!J.lathe&&!J.swiss&&!r110lathe(J.op)&&Array.isArray(J.code)&&J.code.length){const m=S.m[S.cur];if(m&&!isLT(m.type||'')){const ss=r110S(J.code);if(ss.length){const mx=r110mx();
+  if(mx==null)r110hold('⛔ Not written: Max RPM on this machine is not confirmed. Set it in Machines.');
+  else{const hi=ss.find(s=>s>mx);if(hi!=null)r110hold('⛔ Not written: spindle speed S'+hi+' is above this machine\'s Max RPM ('+mx+').')}}}}}catch(e){console.error(e)}return r}}
+
 /* R79-END */</script>
 </body></html>

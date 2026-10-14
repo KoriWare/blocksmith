@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 110 --><iframe id="f" src="../index.html?v=110" style="width:320px;height:760px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(()=>{try{
+ E(`NOASK=1;S.m[0].s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'});save();
+  var HB=(rpm)=>{cur(0);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54',RPM:rpm};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show();const h=$('#r110hold');return JSON.stringify({code:!!(J.code&&J.code.length),h:h?h.textContent:''})};
+  var MX=(v,st)=>{const x=S.m[0].s.find(y=>y.k=='Max RPM');x.v=v;x.st=st;delete x.r106bad;delete x.r99flag;save()};1`);
+ const t=(n,ok,x)=>log(n,ok,x);let o;
+ E("MX('8000','user')");o=JSON.parse(E("HB(3000)"));t("1: confirmed Max RPM 8000, S3000 is written",o.code&&!o.h,JSON.stringify(o));
+ E("MX('8000','suggested')");o=JSON.parse(E("HB(3000)"));t("1: gray but valid Max RPM still lets S3000 through",o.code&&!o.h,JSON.stringify(o));
+ o=JSON.parse(E("HB(9000)"));t("1: gray Max RPM 8000 caps S: S9000 held, not clamped",!o.code&&/spindle speed S9000 is above this machine's Max RPM \(8000\)/.test(o.h),JSON.stringify(o));
+ E("MX('','confirm')");o=JSON.parse(E("HB(3000)"));t("1: blank Max RPM holds a job that writes S",!o.code&&/Max RPM on this machine is not confirmed/.test(o.h),JSON.stringify(o));
+ E("MX('asdf','confirm');S.m[0].s.find(y=>y.k=='Max RPM').r106bad=1;save()");o=JSON.parse(E("HB(3000)"));t("1: junk Max RPM holds a job that writes S",!o.code&&/Max RPM on this machine is not confirmed/.test(o.h),JSON.stringify(o));
+ E("MX('8000','user')");
+ t("1: Haas #567xx per-tool RPM checked against machine max",E("JSON.stringify(r110S(['#56703=12000 (MAX SPINDLE SPEED FOR T3)','G97 S2500 M03','(S99999)']))")=='[12000,2500]');
+ t("2: every job type has its own reads list",E("Object.keys(OPN).every(o=>Array.isArray(R110READS[o]))")===true);
+ t("2: warm reads Max RPM only; engrave adds Max RPM; lathe G50 jobs read Max RPM (G50)",E("JSON.stringify(R110READS.warm)")=='["Max RPM"]'&&E("R110READS.engrave.includes('Max RPM')")===true&&E("['lturn','lface','lgroove','ldrill'].every(o=>R110READS[o].includes('Max RPM (G50)'))")===true);
+ t("2: junk Probe setting no longer holds bolt/cpock/slot/ctr/life",E("(()=>{J={op:'bolt',p:{}};const x={k:'Probe',v:'zz',st:'confirm',r106bad:1};const r=['bolt','cpock','slot','ctr','life'].every(o=>{J.op=o;return !r107uses(S.m[0],x)});J=null;return r})()")===true);
+ t("3: Control TBD refused as needing a real answer; Mazak typed confirms",E("r110ctlOK('TBD')")===false&&E("r110ctlOK('x')")===false&&E("r110ctlOK('(check)')")===false&&E("r110ctlOK('?')")===false&&E("r110ctlOK('Mazak Smooth')")===true);
+ t("3: migrated '(check)' Custom M-code is in the one junk list",E("(()=>{const m=S.m[0];m.s.push({k:'Custom M-codes',v:'M100 = door (check)',st:'confirm',r99flag:1});const r=r110junk(m).includes('Custom M-codes')&&/\\(1 needs fixing\\)/.test(setupLine(m));m.s.pop();return r})()")===true);
+ t("sw.js mc-v110",true);
+ }catch(e){log('crash',false,e.message)}
+ document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
+</script>

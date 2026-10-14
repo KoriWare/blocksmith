@@ -12,7 +12,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListe
   log('1: after reload Setup does not rise from 3% and the junk counts as to confirm + needs fixing',/^Setup 3% · \d+ to confirm \(3 needs fixing\)$/.test(line),line);
   log('1: all 3 are unconfirmed and flagged',E(`${JSON.stringify(K)}.every(k=>{const x=S.m[1].s.find(y=>y.k==k);return x.st!='user'&&x.r106bad})`));
   log('1: the top notice lists all 3',E(`(()=>{const t=($('#r99notice')||{}).textContent||'';return ${JSON.stringify(K)}.every(k=>t.includes(k))})()`),E("($('#r99notice')||{}).textContent"));
-  log('1: single blocking count + Need N include all 3',E(`(()=>{NOASK=1;J=null;tab('new');pickJob('ctr');const b=r103block();const t=($('#out .r102mach')||{}).textContent||'';return ${JSON.stringify(K)}.every(k=>b.includes(k))&&new RegExp('Machine: '+b.length+' to confirm').test(t)})()`),E("r103block().join()"));
+  log('1 (v110): ctr is not held by junk it never reads; single blocking count',E(`(()=>{NOASK=1;J=null;tab('new');pickJob('ctr');const b=r103block();const t=($('#out .r102mach')||{}).textContent||'';return ['Rapid rate (in/min)','Probe'].every(k=>!b.includes(k))&&new RegExp('Machine: '+b.length+' to confirm').test(t)})()`),E("r103block().join()"));
   E("cur(1);tab('machines');edit(1)");await sl(40);
   log('2: Setup shows ONE status line',E("[...V.querySelectorAll('.s')].filter(s=>/^Setup \\d+%/.test(s.textContent.trim())).length")==1);
   log("2: no floating 'needs a real answer · Open' bar on Setup",E("(()=>{const t=$('#r79toast');return !t||t.hidden||getComputedStyle(t).display=='none'||!/needs a real answer/.test(t.textContent)})()"));
