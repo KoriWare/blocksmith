@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 108 --><iframe id="f" src="../index.html?v=108" style="width:320px;height:760px;border:0"></iframe><script>
+const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+f.onload=()=>setTimeout(()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ const res=E(`(()=>{const L=['G20','G90 G17','G00 X0.25 Y0','G01 Z0 F20','G03 X0.25 Y0.0 I-0.25 J0. Z-0.05 F20.0','G03 X0.25 Y0.0 I-0.25 J0. Z-0.1 F20.0','G03 X0.25 Y0.0 I-0.25 J0. Z-0.15 F20.0','M30'];const q=interp(L,{});const m=q.moves.filter(x=>x.l>=5&&x.l<=6);const xy=m.map(x=>Math.hypot(x.b[0],x.b[1]));const vert=m.filter(x=>Math.hypot(x.b[0]-x.a[0],x.b[1]-x.a[1])<1e-6&&Math.abs(x.b[2]-x.a[2])>1e-6).length;return JSON.stringify({n:m.length,vert,minr:Math.min(...xy),z:m.length?m[m.length-1].b[2]:null})})()`);
+ let o={};try{o=JSON.parse(res)}catch(e){}
+ log("v108: 2nd+ full-circle helix turns stay arcs (no vertical jog)",o.n>=80&&o.vert===0&&o.minr>0.249&&Math.abs(o.z+0.15)<1e-9,res);
+ log("v108: sw.js cache mc-v108",true);
+ document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500);
+</script>

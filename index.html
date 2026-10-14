@@ -430,7 +430,7 @@ function interp(lines,o){o=o||{};const lathe=o.lathe,M=[],alarms=[],V={};const R
    if(P.R!=null){const r=U(val(P.R)),dx=b[0]-a[0],dy=b[1]-a[1],d=Math.hypot(dx,dy),h=Math.sqrt(Math.max(0,r*r-d*d/4)),sgn=(mode==2)==(r>0)?-1:1;c=[(a[0]+b[0])/2-sgn*h*dy/d,(a[1]+b[1])/2+sgn*h*dx/d]}
    else c=lathe?[a[0]+U(val(P.K||'0')),a[1]+U(val(P.I||'0'))/1]:[a[0]+U(val(P.I||'0')),a[1]+U(val(P.J||'0'))];
    let a0=Math.atan2(a[1]-c[1],a[0]-c[0]),a1=Math.atan2(b[1]-c[1],b[0]-c[0]),r=Math.hypot(a[0]-c[0],a[1]-c[1]);const cw=mode==2;
-   if(cw&&a1>=a0)a1-=2*Math.PI;if(!cw&&a1<=a0)a1+=2*Math.PI;const n=Math.max(4,Math.ceil(Math.abs(a1-a0)/0.15));
+   if(Math.hypot(b[0]-a[0],b[1]-a[1])<1e-6)a1=a0;/* v108: full-circle helix, float residue */if(cw&&a1>=a0)a1-=2*Math.PI;if(!cw&&a1<=a0)a1+=2*Math.PI;const n=Math.max(4,Math.ceil(Math.abs(a1-a0)/0.15));
    for(let k=1;k<=n;k++){const an=a0+(a1-a0)*k/n,x=c[0]+r*Math.cos(an),y=c[1]+r*Math.sin(an),z=pos[2]+(t[2]-pos[2])/(n-k+1);mv(lathe?[y,0,x]:[x,y,lathe?pos[2]:z],0,i)}return}
   if(g.includes(31)&&o.contact){const c=o.contact(pos,t);const mk_=met?25.4:1;V[5061]=(lathe?c[0]*2:c[0])*mk_;V[5062]=c[1]*mk_;V[5063]=c[2]*mk_;mv(c,0,i);return}
   mv(t,mode==0,i);if(modal&&mode!=0&&R.length<=modal.base){loc.push({...modal.args});(R.push(i),RD=Math.max(RD,R.length));return findO(modal.pr)}}
