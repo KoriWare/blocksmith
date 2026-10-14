@@ -55,9 +55,9 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('Maria: Swiss tile has disabled attribute on a mill',E("!!$('#r98type button[data-t=swiss]').disabled"));
  // Stacey: 4-axis from tick only -> Confirm rotary letter in Need list, jumps to box
  E(`(()=>{const m=S.m[${iB}];m.mtype='vmc4';delete m.r99rot;delete m.r99need;const r=m.s.find(x=>x.k=='Rotary axis');if(r)r.st='suggested';r99rotNeed();edit(${iB})})()`);await sl(30);
- log('Stacey: Need list has Confirm rotary letter',/Confirm rotary letter/.test(E("($('#r99notice')||{textContent:''}).textContent")));
- E(`[...document.querySelectorAll('#r99notice [data-nk]')].find(b=>/rotary/i.test(b.textContent)).click()`);await sl(20);
- log('Stacey: tapping it jumps to the rotary letter box',E("!!document.activeElement&&!!document.activeElement.closest&&!!document.activeElement.closest('.r99f[data-r99k=\"Rotary axis\"]')"));
+ log('Stacey (v107 #3): the unconfirmed rotary letter counts under to confirm, not in the junk notice',!/rotary/i.test(E("($('#r99notice')||{textContent:''}).textContent"))&&E(`S.m[${iB}].s.find(x=>x.k=='Rotary axis').st`)!='user');
+ E(`r103hl('Rotary axis')`);await sl(20);
+ log('Stacey: the rotary letter box can be jumped to and highlighted',!!E("document.querySelector('.r99f[data-r99k=\"Rotary axis\"].r103hl')"));
  // Swiss tile
  E(`edit(${iA})`);await sl(20);
  log('Swiss/lathe tile disabled on a mill (opacity + no tap)',E("(()=>{const b=document.querySelector('#r98type button[data-t=swiss]');return b.classList.contains('off')&&/Lathe types need a lathe/.test(document.querySelector('#r98type').textContent)})()"));

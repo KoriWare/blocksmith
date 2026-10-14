@@ -95,7 +95,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('notice grammar: 1 setting needs',/1 setting needs a real answer/.test(E("($('#r79toast')||{textContent:''}).textContent")));
  await sl(4500);
  log('notice stays until dismissed (no fade)',/needs a real answer/.test(E("($('#r79toast')||{textContent:''}).textContent"))&&E("getComputedStyle($('#r79toast')).opacity")=='1'&&E("getComputedStyle($('#r79toast')).display")!='none');
- E(`S.m[${iB}].r99need=['Max RPM','Spindle orient M-code'];edit(${iB})`);await sl(20);
+ E(`(()=>{const m=S.m[${iB}];['Max RPM','Rapid rate (in/min)'].forEach(k=>{const x=m.s.find(y=>y.k==k);x.v='zz!';x.st='confirm';x.r99flag=1;x.r106bad=1});edit(${iB})})()`);await sl(20); /* v107: the notice lists saved junk only */
  log('notice grammar: 2 settings need',/2 settings need a real answer/.test(E("($('#r99notice')||{textContent:''}).textContent")));
  E("$('#r79toast').click()");await sl(30);
  // sheet: Escape / backdrop do not save, half-typed Other discarded

@@ -1,0 +1,50 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 107 --><iframe id="f" src="../index.html?v=107" style="width:320px;height:760px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListener('error',e=>errs.push(e.message));const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const sl=t=>new Promise(r=>setTimeout(r,t));
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(async()=>{try{
+ if(step==1){
+  E("(()=>{const m=S.m[1];const f=k=>m.s.find(x=>x.k.startsWith(k));[['Max RPM','asdf'],['Rapid','fast!!'],['Probe','TBD']].forEach(([k,v])=>{const x=f(k);x.v=v;x.st='user'});const d=m.s.find(x=>/DPRNT/.test(x.k));if(d){d.v='(check)';d.st='user'}save()})()");step=2;w.location.reload();return}
+ if(step==2){
+  const K=['Max RPM','Rapid rate (in/min)','Probe'];NOASK=1;E("NOASK=1;cur(1);tab('machines');edit(1)");await sl(60);
+  // 3: one list
+  const nt=E("($('#r99notice')||{}).textContent||''"),ln=E("setupLine(S.m[1])");
+  log("3: notice and bracket read the same junk-only list (3)",/3 settings need a real answer/.test(nt)&&/\(3 needs fixing\)/.test(ln)&&K.every(k=>nt.includes(k))&&!/Rotary axis|Confirm rotary letter|DPRNT/.test(nt),nt+' | '+ln);
+  log("3: blank rotary letter / reset placeholder count only under 'to confirm'",E("(()=>{const m=S.m[1];const ra=m.s.find(x=>x.k=='Rotary axis');return !ra||ra.st!='user'})()")&&!/Rotary/.test(nt));
+  // 2: per job
+  E("(()=>{const m=S.m[1];const c=m.s.find(x=>x.k=='Control');c.v='Haas NGC';c.st='user';const ra=m.s.find(x=>x.k=='Rotary axis');ra.v='A';ra.st='user';const sd=m.s.find(x=>x.k=='Rotary head on');if(sd){sd.v='Left';sd.st='user'}m.s.forEach(x=>{if(x.v&&x.st!='user'&&!x.r106bad)x.st='user'});save()})()");
+  const fillJ="Object.keys(J.p).forEach(k=>{if(J.p[k]&&J.p[k].v==null){const sp=(typeof r100bch=='function'&&r100bch(k))||r99spec(k)||{};const ch=J2[J.op]&&J2[J.op].choices&&J2[J.op].choices[k];let v=ch?ch[0]:sp.ch&&sp.ch.length?sp.ch.find(c=>!r99blankChoice(c)):sp.ex!=null&&sp.ex!==''?String(sp.ex).replace(/^e\\.g\\.\\s*/,''):(/offset/i.test(k)?'G54':1);if(/risk/i.test(k))v='YES';J.p[k]={v:isNaN(+v)?v:+v,g:false}}});show()";
+  for(const op of ['face','grid','index']){E(`J=null;tab('new');pickJob('${op}');${fillJ};${fillJ}`);const reads=E(`R107READS['${op}']`)||[];const blk=E("r103block()");const code=E("!!(J.code&&J.code.length)");
+   log(`2: ${op}: blocks only on junk its code reads (reads: ${reads.join(',')||'none'}); screen and code agree`,K.every(k=>blk.includes(k)==reads.includes(k))&&(code||!K.some(k=>(E("($('#r104hold')||{}).textContent||''")).includes(k)))&&!(code&&K.some(k=>reads.includes(k))),JSON.stringify({blk,code,hold:E("($('#r104hold')||{}).textContent")}))}
+  E("tab('machines');edit(1)");await sl(30);log('2: Setup still lists all junk',/\(3 needs fixing\)/.test(E("setupLine(S.m[1])")));
+  // 5
+  log('5: Needs and Example on separate lines everywhere',E("[...document.querySelectorAll('.r99err.on')].length>0&&[...document.querySelectorAll('.r99err.on')].every(e=>!/[^\\n]Example:/.test(e.innerText)||/\\nExample:/.test(e.innerText))&&[...document.querySelectorAll('.r99err.on')].every(e=>!/\\.Example/.test(e.textContent))"),E("[...document.querySelectorAll('.r99err.on')].map(e=>JSON.stringify(e.textContent)).join()"));
+  // 4: control sheet
+  E("document.querySelector('.r99f[data-r99k=\"Control\"] .r99w').click()");await sl(40);
+  log("4: Control sheet subtitle starts with 'Pick your control family'",/^Pick your control family/.test(E("$('#r99sheet .sh-h').textContent")),E("$('#r99sheet .sh-h').textContent"));
+  log("4: 'Clear (not set)' is a plain gray bottom line (no radio)",E("(()=>{const c=$('#r99sheet .r104clr');return !!c&&!c.querySelector('.rad')&&c.nextElementSibling&&c.nextElementSibling.classList.contains('r99acts')&&getComputedStyle(c).color=='rgb(138, 138, 138)'})()"));
+  log("4: Control sheet has an Other row to type a control",!!E("$('#r99othi')"));
+  E("(()=>{const o=$('#r99othi');o.value='Okuma OSP-P300';o.dispatchEvent(new Event('input',{bubbles:true}))})()");await sl(20);E("$('#r99sheet .done').click()");await sl(200);
+  log('4: typed control saves',E("(x=>x.v+'/'+x.st)(S.m[1].s.find(y=>y.k=='Control'))")=='Okuma OSP-P300/user',E("(x=>x.v+'/'+x.st)(S.m[1].s.find(y=>y.k=='Control'))"));
+  // 1: Control Done without the pill
+  E("localStorage.removeItem(DRK);r103rt=null;J=null;tab('new');pickJob('ctr');tab('machines');edit(1)");await sl(40);log('1 (setup): job still open before the change',E("J&&J.op")=='ctr');
+  E("document.querySelector('.r99f[data-r99k=\"Control\"] .r99w').click()");await sl(40);E("[...document.querySelectorAll('#r99sheet .opt')].find(b=>/Haas NGC/.test(b.textContent)).click()");await sl(20);E("$('#r99sheet .done').click()");await sl(200);
+  const tt=E("($('#r79toast')||{}).textContent||''");E("tab('new')");await sl(60);
+  log('1: Control Done from Setup (no pill) → draft + toast + Restore card',E("(drGet()||{J:{}}).J.op")=='ctr'&&/moved to a draft/.test(tt)&&!!E("$('#r79dr')")&&!E("J&&J.op"),tt);
+  // 6: Machine row → actual blocker; side tiles
+  E("(()=>{const m=S.m[1];const sd=m.s.find(x=>x.k=='Rotary head on');sd.v='';sd.st='confirm';save();J=null;tab('new');pickJob('grid')})()");E(fillJ);E(fillJ);await sl(30);
+  const bl=E("r103block()");E("$('#out .r102mach')&&$('#out .r102mach').click()");await sl(80);
+  log('6: Machine row jumps to the blocking setting (rotary side tiles highlighted)',bl[0]=='Rotary head on'&&E("(()=>{const h=document.querySelector('.r103hl');return !!h&&h.classList.contains('r104side')&&!!h.querySelector('.r104tiles')&&h.getBoundingClientRect().top>=0&&h.getBoundingClientRect().top<400})()"),JSON.stringify(bl));
+  E("r103rt=null");
+  // 8: side clear line
+  E("(()=>{const m=S.m[1];const sd=m.s.find(x=>x.k=='Rotary head on');sd.v='Right';sd.st='user';save();tab('machines');edit(1)})()");await sl(30);
+  log("8: picked side shows a plain gray 'Clear (not set)' under the tiles",E("(()=>{const c=document.querySelector('.r104side .r107sclr');return !!c&&c.previousElementSibling.classList.contains('r104tiles')&&getComputedStyle(c).color=='rgb(138, 138, 138)'&&c.offsetParent!==null})()"));
+  E("document.querySelector('.r104side .r107sclr').click()");await sl(40);
+  log('8: tapping it unpicks both tiles and shows the red dot',E("(()=>{const f=document.querySelector('.r104side');return !f.querySelector('.r104t.sel')&&[...f.querySelectorAll('.r99lb .r99st,.r99lb .r99chip')].some(e=>getComputedStyle(e).backgroundColor=='rgb(255, 90, 90)')&&S.m[1].s.find(x=>x.k=='Rotary head on').v===''&&!f.querySelector('.r107sclr')})()"));
+  // 7
+  E("(()=>{localStorage.removeItem(DRK);R92.moved=null;J=null;r98set(1,'vmc5');save();J=parseJ2('','tp32');J.text='';J.edits={};J.p[Object.keys(J.p)[0]]={v:5,g:false};tab('new');show();tab('machines');edit(1);r98set(1,'vmc4');save();tab('new')})()");await sl(200);
+  log("7: 5-axis-only draft on 4-axis: gray 'Switch back to 5-axis to restore', no Restore button",E("(()=>{const c=$('#r93mv')||$('#r79dr');return !!c&&!/Restore it/.test(c.textContent)&&/Switch back to 5-axis to restore/.test(c.textContent)&&![...c.querySelectorAll('button')].some(b=>/Restore/.test(b.textContent))})()"),E("JSON.stringify({sw:(r107sw(),($('#r93mv')||{}).innerHTML),d:drGet()&&drGet().J.op,t:r98t(S.m[1]),J:J&&J.op,mv:R92.moved,k:jKind('tp32'),out:$('#v')&&document.querySelector('.card .t')&&[...document.querySelectorAll('.card .t')].map(x=>x.textContent).slice(0,3)})"));
+ log('no console errors',!errs.length,errs.join('|'));
+  o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL';step=9}
+ }catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1300)};
+</script></body></html>
