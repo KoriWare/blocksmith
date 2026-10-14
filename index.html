@@ -6368,11 +6368,11 @@ function r100ready(m){if(!m||r98t(m)!='vmc5')return true;const p=r100pairOf(m);i
 function r100sync(m){ // push pair + dirs into the K5 keys gen already reads — never invent letters
  const p=r100pairOf(m);if(!p)return;
  const ta=r100ensure(m,K5.ta,'','confirm'),ra=r100ensure(m,K5.ra,'','confirm');
- if(!(ta.st=='user'&&String(ta.v||'').trim())||ta.r100){ta.v=p[0];ta.st='user';ta.r100=1} // only fill blank/unconfirmed (or our own) — saved letters never rewritten
- if(!(ra.st=='user'&&String(ra.v||'').trim())||ra.r100){ra.v=p[1];ra.st='user';ra.r100=1}
+ if(!String(ta.v||'').trim()||ta.r100){ta.v=p[0];ta.st='user';ta.r100=1} // only fill blank/unconfirmed (or our own) — saved letters never rewritten
+ if(!String(ra.v||'').trim()||ra.r100){ra.v=p[1];ra.st='user';ra.r100=1}
  const d0=r100dirOf(m,p[0]),d1=r100dirOf(m,p[1]);
- if(d0){const td=r100ensure(m,K5.td,'','confirm');if(!(td.st=='user'&&String(td.v||'').trim())||td.r100){td.v=d0;td.st='user';td.r100=1}}
- if(d1){const rd=r100ensure(m,K5.rd,'','confirm');if(!(rd.st=='user'&&String(rd.v||'').trim())||rd.r100){rd.v=d1;rd.st='user';rd.r100=1}}
+ if(d0){const td=r100ensure(m,K5.td,'','confirm');if(!String(td.v||'').trim()||td.r100){td.v=d0;td.st='user';td.r100=1}}
+ if(d1){const rd=r100ensure(m,K5.rd,'','confirm');if(!String(rd.v||'').trim()||rd.r100){rd.v=d1;rd.st='user';rd.r100=1}}
 }
 
 // is5 / r94has4 / rotAx / mHas — 5-axis is its own path
@@ -6406,8 +6406,14 @@ function r100mig(){
   });try{save()}catch(e){}}
 try{r100mig()}catch(e){console.error(e)}
 
-// 5-axis presets: leave mtype blank ('Pick a type') unless two rotary letters are already confirmed — never guess the type from the preset name alone
-{const _p=pick;pick=function(n,g){const r=_p.apply(this,arguments);try{if(g=='5-axis mills'){const m=S.m.at(-1);m.r98mig=1;m.r100mig=1;m.mtype=null; /* is5() still true from type text until a type is picked */ save();edit(S.m.length-1)}}catch(e){console.error(e)}return r}}
+// 5-axis sample presets start as 5-axis VMC (Kori, v100b). Pair comes from the preset's own letters; directions are
+// filled for the demo so Build isn't locked. Preset letters themselves stay as the preset left them (never rewritten).
+{const _p=pick;pick=function(n,g){const r=_p.apply(this,arguments);try{if(g=='5-axis mills'){const m=S.m.at(-1);m.r98mig=1;m.r100mig=1;m.mtype='vmc5';r98opts(m,'vmc5');
+  const L=k=>String(((r100sv(m,k)||{}).v)||'').toUpperCase().replace(/[^ABC]/g,'').slice(0,1),ta=L(K5.ta),ra=L(K5.ra);
+  const pair=r100ensure(m,'Rotary pair','','confirm');
+  if(ta&&ra&&ta!=ra){pair.v=ta+' + '+ra;pair.st='user';pair.r100preset=1;
+   [ta,ra].forEach(x=>{const d=r100ensure(m,x+' direction','','confirm');if(!(d.st=='user'&&String(d.v||'').trim())){d.v=R100DIR[0];d.st='user';d.r100preset=1}})}
+  save();edit(S.m.length-1)}}catch(e){console.error(e)}return r}}
 // setup page: rotary pair + direction rows under the type picker when 5-axis is selected
 {const _pg=r98page;r98page=function(i){const r=_pg.apply(this,arguments);try{r100page(i)}catch(e){console.error(e)}return r}}
 function r100page(i){const m=S.m[i];if(!m)return;const box=$('#r98type');if(!box)return;
