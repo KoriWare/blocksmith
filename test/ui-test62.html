@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 79 A2: no prefilled or guessed position values on a clean job pick --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");
+ const POS=/^(Tool|Holes|Dia|Start°|Start [XY]|Depth|Z0|Work offset|Center [XY]|Bar Ø|Finish Ø|Width|Length|Pitch [XY]|Rows|Cols|Cutter|Stepdown|First angle|First flat angle|Start angle|Angle|PCD|Hole count)$/;
+ const ALLOW=/^(RPM|Feed|Feed\/rev|Plunge feed|SFM|Clear Z|Clearance|Retract)$/;let n=0;const bad=[],code=[],gbad=[];
+ for(const mi of [0,1,2]){E("S.cur="+mi+";tab('new')");await sl(80);const ops=[...E("jCats().flatMap(c=>c[1])")];
+  for(const op of ops){if(/^~|engrave/.test(op))continue;n++;E("J=null;try{pickJob("+JSON.stringify(op)+")}catch(e){}");
+   const p=E("J&&J.p?JSON.stringify(J.p):'{}'");let P={};try{P=JSON.parse(p)}catch(e){}
+   for(const [k,x] of Object.entries(P)){if(!x||x.v==null)continue;if(POS.test(k))bad.push(mi+':'+op+':'+k+'='+x.v);}
+   if(E("!!(J&&J.code&&J.code.length)"))code.push(mi+':'+op)}}
+ log(`no position value prefilled on clean pick (${n} job picks, 3 machines)`,!bad.length,bad.slice(0,12).join(', '));
+ log('no preset pick writes code before values are given',!code.length,code.join(','));
+ E("S.cur=0;tab('new')");E("pickJob('bolt')");await sl(100);
+ const o1=d.querySelector('#out').innerText;
+ log('Bolt circle pick: holes, Ø, start angle, depth, tool, centre, Z0, offset all red needed',['Holes','Dia','Start°','Depth','Tool','Center X','Center Y','Z0','Work offset'].every(k=>E(`J.p[${JSON.stringify(k)}].v==null`))&&/Need \d+ more/.test(o1),o1.slice(0,300));
+ log('Bolt circle pick: request box not filled with an example sentence',!/\d/.test(d.querySelector('#q').value),d.querySelector('#q').value);
+ log('only RPM / feed / clearance may be gray',E("Object.entries(J.p).filter(([k,x])=>x.g&&x.v!=null).map(([k])=>k)").every(k=>/^(RPM|Feed|Clear Z|Peck Q|Drill Ø)$/.test(k)),E("Object.entries(J.p).filter(([k,x])=>x.g&&x.v!=null).map(([k])=>k).join()"));
+ d.querySelector('#q').value='bolt circle 6 holes 3 dia 0.5 deep g54 center x0 y0 z0 0 start 0';E("go()");await sl(100);
+ log('typed request without a tool: tool not guessed, no code',E("J.p.Tool.v==null&&!J.code"),E("JSON.stringify(J.p.Tool)"));
+ E("S.cur=2;tab('new')");E("pickJob('lturn')");await sl(100);log('Lathe OD turn pick: bar Ø / finish Ø / length empty',['Bar Ø','Finish Ø','Length'].every(k=>E(`!J.p[${JSON.stringify(k)}]||J.p[${JSON.stringify(k)}].v==null`)),E("JSON.stringify(J.p)"));
+ E("S.cur=0;tab('new')");E("pickJob('ppcd')");log('probe PCD: first angle needed, not 0',E("J.p['First angle']&&J.p['First angle'].v==null"));
+ log('first angle typed is read',E("j2Op?1:1")&&E("(()=>{const j=req(parse('check bolt circle 6 holes 0.5 dia holes 3.0 pcd first 30 deg'));return j&&j.p['First angle']?j.p['First angle'].v:null})()")==30);
+ log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

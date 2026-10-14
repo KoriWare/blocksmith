@@ -1,7 +1,7 @@
 <!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=41" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let step=0;
 const MJ=[['ppos','protected probe move t20 g54 to x1.0 y0.5 z-0.2 safe z1.0 feed 120 alarm'],['ppos','protected probe move t20 g54 to x1.0 y0.5 z-0.2 safe z1.0 feed 120 flag #198',{'Flag #':198}],
-['ppcd','check bolt circle 6 holes 0.5 dia holes 3.0 pcd t20 g54 center x0 y0 start z0.1 measure z-0.25 safe z1.0 feed 120 size tol 0.002 pos tol 0.004'],
+['ppcd','check bolt circle 6 holes 0.5 dia holes 3.0 pcd t20 g54 center x0 y0 start z0.1 measure z-0.25 safe z1.0 feed 120 size tol 0.002 pos tol 0.004 first 0 deg'],
 ['ppcd','check bolt circle 4 boss 0.75 dia boss 4.0 pcd t20 g54 center x0 y0 start z0.3 measure z-0.2 safe z1.0 feed 120 size tol 0.002 pos tol 0.004 first 45 deg'],
 ['pstock','stock allowance check t20 g54 points 1,1; 3,1; 3,2 start z0.3 nominal z0.05 max stock 0.1 safe z1.0 feed 120'],
 ['pcal','calibrate probe t20 g54 all safe z2.0 feed 120',{'Ref X':-3,'Ref Y':0,'Ref start Z':0.3,'Ref surface Z':0,'Bore X':0,'Bore Y':0,'Bore Ø':1.9685,'Bore Z':-0.3,'Ring X':4,'Ring Y':0,'Ring Ø':1.9685,'Ring Z':-0.3,'Confirm write':'YES'}],
@@ -9,11 +9,11 @@ const MJ=[['ppos','protected probe move t20 g54 to x1.0 y0.5 z-0.2 safe z1.0 fee
 ['sstart','safe start header t1 g54 start x0 y0 clear z0.1'],
 ['troch','trochoidal slot from x0 y0 to x3 y0 0.5 wide 0.4 deep 0.375 end mill step 0.05 step down 0.4 t3 g54 z0 0'],
 ['troch','trochoidal slot from x0 y0 to x2 y2 0.6 wide 0.2 deep 0.375 end mill step 0.04 step down 0.1 t3 g54 z0 0 conventional'],
-['sphcap','spherical cap radius 1.0 0.5 high 0.25 ball step 0.05 t4 g54 center x0 y0 z0 0'],
-['ellip','4 x 2 ellipse outside 72 segments 0.25 deep 0.375 end mill step down 0.125 t2 g54 center x0 y0 z0 0'],
-['ellip','4 x 2 ellipse inside wall 90 segments 0.2 deep 0.25 end mill step down 0.1 t2 g54 center x0 y0 z0 0'],
-['polyb','hex boss 1.5 across flats 0.3 deep 0.375 end mill step down 0.15 t2 g54 center x0 y0 z0 0'],
-['polyb','octagon pocket 2.0 af 0.25 deep 0.375 end mill step down 0.125 t2 g54 center x0 y0 z0 0']];
+['sphcap','spherical cap radius 1.0 0.5 high 0.25 ball step 0.05 t4 g54 center x0 y0 z0 0 first flat 0 deg'],
+['ellip','4 x 2 ellipse outside 72 segments 0.25 deep 0.375 end mill step down 0.125 t2 g54 center x0 y0 z0 0 first flat 0 deg'],
+['ellip','4 x 2 ellipse inside wall 90 segments 0.2 deep 0.25 end mill step down 0.1 t2 g54 center x0 y0 z0 0 first flat 0 deg'],
+['polyb','hex boss 1.5 across flats 0.3 deep 0.375 end mill step down 0.15 t2 g54 center x0 y0 z0 0 first flat 0 deg'],
+['polyb','octagon pocket 2.0 af 0.25 deep 0.375 end mill step down 0.125 t2 g54 center x0 y0 z0 0 first flat 0 deg']];
 const LJ=[['lstart','safe start header t1 start x2.2 z0.1']];
 f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
  const errs=[];w.onerror=m=>errs.push(String(m));

@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>null;const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");
+r.push(String(await (async()=>{ PROBE })()));
+r.push('errs '+errs.join('|'));o.textContent=r.join('\n')}catch(e){o.textContent=r.join('\n')+'\nEXC '+e.message}},1500)};
+</script></body></html>

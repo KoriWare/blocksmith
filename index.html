@@ -5314,4 +5314,19 @@ document.addEventListener('click',e=>{const ck=e.target.closest&&e.target.closes
 var LIBRET=null;{let inRe=0;const _tb=tab;tab=function(t){if(!inRe&&t!='recent')LIBRET=null;return _tb.apply(this,arguments)};
 const wrap=f=>function(){inRe=1;let r;try{r=f.apply(this,arguments)}finally{inRe=0}const to=LIBRET;LIBRET=null;if(to&&(to=='edit'||to=='sim')){tab(to);setTimeout(()=>window.fitCv&&fitCv(),80)}return r};
 reopen=wrap(reopen);reopenV=wrap(reopenV)}</script>
+<script>/* R79-BEGIN Round 79: team review fixes */
+// §79-2 no prefilled / guessed position values
+const POSG=/^(Tool|Start [XY]|Start°|First angle|First flat angle|Depth|Holes|Dia|Z0|Work offset|Center [XY]|Bar Ø|Finish Ø|Width|Length|Stepdown|Pitch [XY]|Rows|Cols|Cutter|Hole [XY]|Faces|Insert W|At Z|Probe Z|Probe at Z|Touch at|Chamfer|Tip Ø|Offset #)$/;
+const GRAYOK=/^(RPM|Feed|Feed\/rev|Plunge feed|SFM|Clear Z|Clearance|Retract|Skip feed|Probe feed|Rough feed|Finish feed|Finish feed\/rev|Peck Q|Drill Ø|Stepover %|Tol|Size check ±)$/;
+function noGuess(p){if(!p)return;for(const [k,x] of Object.entries(p))if(x&&x.g&&x.v!=null&&POSG.test(k)){x.v=null;x.g=false;delete x.lib}}
+function bareJB(J0){if(!J0||!J0.p)return;for(const [k,x] of Object.entries(J0.p)){if(!x||x.v==null)continue;if(x.g){if(POSG.test(k)){x.v=null;x.g=false}continue}
+ if(GRAYOK.test(k)){x.g=true;continue}if(typeof x.v=='number'||k=='Work offset'||POSG.test(k)){x.v=null;x.g=false;delete x.lib}}J0.code=null;J0.edits={}}
+{const _sh=show;show=function(){if(typeof J!='undefined'&&J&&J.p)noGuess(J.p);return _sh.apply(this,arguments)}}
+{const _pj=pickJob;pickJob=function(op){if(op&&JB[op]&&op!='engrave'&&jAvail(op)){const _show=show;let r;show=function(){};try{r=_pj.apply(this,arguments)}finally{show=_show}
+  if(J&&J.p){bareJB(J);const nm=jName(op).replace(/^⚠\s*/,'').replace(/\s*\([^)]*\)/g,'').trim();J.text=nm;const q=$('#q');if(q)q.value=nm;show();const s=$('#jpick');if(s)s.value=op}return r}
+ const r=_pj.apply(this,arguments);if(J&&J.p&&Object.entries(J.p).some(([k,x])=>x&&x.g&&x.v!=null&&POSG.test(k))){noGuess(J.p);J.code=null;show()}return r}}
+// J2 job specs: angles that place features were gray "suggestions" — they are positions, so they become needed
+{const SUGPOS=/^(First angle|First flat angle|Angle|Start angle)$/;Object.values(J2).forEach(s=>{if(!s||!s.sug)return;Object.keys(s.sug).forEach(k=>{if(SUGPOS.test(k)){delete s.sug[k];s.req=s.req||[];if(!s.req.includes(k))s.req.push(k);const re=k=='Angle'?/(?:\bat|angle)\s*(-?[\d.]+)\s*(?:deg|°)/:/(?:first(?:\s*flat)?|start(?:ing)?)\s*(?:angle\s*)?(?:at\s*)?(-?[\d.]+)\s*(?:deg|°)/;const op0=s.parse;if(op0)s.parse=function(l,G,n){const r=op0.apply(this,arguments);const m=String(l).match(re);if(m)G(k,+m[1]);return r}}})})}
+
+/* R79-END */</script>
 </body></html>

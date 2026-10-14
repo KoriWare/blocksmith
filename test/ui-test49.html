@@ -4,7 +4,7 @@ const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x))
 f.onload=()=>{const w=f.contentWindow,d=w.document;
  if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
  const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
- setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.UIA.confirm=()=>true;w.UIA.alert=()=>{};w.UIA.prompt=()=>null;
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");E("window.__fx=e=>{const op=e.job.op;if(!JB[op])return;const q=req((e.job.lathe?parseL:parse)(JB[op][1]));if(q&&q.p)Object.keys(e.job.p).forEach(k=>{if(e.job.p[k].v==null&&q.p[k]&&q.p[k].v!=null)e.job.p[k]={v:q.p[k].v,g:false}})};{const _a=jmAdd;jmAdd=function(l,v){const e=_a.apply(this,arguments);if(e&&String(v).startsWith('op:'))__fx(e);return e}}");/* r79: preset picks start empty (no-guess); test fills them with the old example values */w.UIA.confirm=()=>true;w.UIA.alert=()=>{};w.UIA.prompt=()=>null;
   E("S.cur=0;{const c=S.m[0].s.find(x=>x.k=='Control');c.v='Fanuc 0i-MF';c.st='user'}save();jobMgr()");
   E(`(()=>{const l=jmNew('Bracket op 1');['op:face','op:bolt','op:bolt','op:cpock'].forEach(v=>jmAdd(l,v));l.entries[2].job.p['Work offset'].v='G55';const p=l.entries[3].job.p;Object.keys(p).forEach(k=>{if(p[k].v==null)p[k]={v:k=='Work offset'?'G56':k=='Tool'?1:k=='Z0'||k=='Center X'||k=='Center Y'?0:k=='Dia'?1.5:k=='Cutter'?0.5:k=='Depth'?0.25:k=='Stepdown'?0.05:1,g:false}});p.Tool.v=3;jmOpen(l.id)})()`);
   // 4) tool change time setting
@@ -23,7 +23,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   E("J.edits[J.code.findIndex(x=>/^G55\\b/.test(x)||/ G55 /.test(x))]='G00 X1. Y1. (OFFSET REMOVED)';refresh()");
   log('Simulate: an edit that drops a work offset fails the whole-program check',[...d.querySelectorAll('#cl .s')].some(x=>/❌ Every section moving the part states its work offset/.test(x.textContent)),d.querySelector('#cl').textContent.slice(0,400));
   // a normal single job still shows single-job checks
-  E("tab('new');pickJob('bolt');tab('sim')");log('single job in Simulate keeps its normal checks',!d.querySelector('#jmsimck')&&/checks passed/.test(d.querySelector('#ck').textContent));
+  E("tab('new');$('#q').value=JB.bolt[1];go();tab('sim')");log('single job in Simulate keeps its normal checks',!d.querySelector('#jmsimck')&&/checks passed/.test(d.querySelector('#ck').textContent));
   // set tool change time -> green, used everywhere
   E("{const x=S.m[0].s.find(y=>y.k==TCT);x.v='12';x.st='user'}save();JMC.clear();jmOpen(S.jlists[0].id)");o=E("jmBuildUI()");
   log('set 12 s: green chip, cycle time = moves + 3 × 12',o.tcs==12&&o.tcSet&&!!d.querySelector('#jmct .chip.g')&&Math.abs(o.ct-(ct5+21))<0.5,o.ct+' '+ct5);

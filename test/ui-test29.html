@@ -7,7 +7,7 @@ const MJ=[['tsman','manual tool setter length t8'],['tsman','jog tool setter len
 ['pnth','probe every 10 parts count #600 program o9100'],
 ['spcavg','spc offset update t20 g54 bore center x0 y0 1.0 dia start z0.1 measure z-0.25 size tol 0.002 update d12 spare 90 limit 0.0005 safe z1.0 feed 120',{'Confirm write':'YES'}],
 ['tlog','log tool in spindle count #610',{}]];
-const HJ=[['hlife','tool life monitor check t7 90%'],['g47w','g47 wrap engrave "ABC-12" 1.5 dia stock start x0.3 y0.1 0.15 high 0.004 deep return 0.05 t3 g54'],['g47w','g47 wrap engrave serial 4 digits 1.5 dia stock start x0.3 y0.1 0.15 high 0.004 deep return 0.05 t3 g54']];
+const HJ=[['hlife','tool life monitor check t7 90%'],['g47w','g47 wrap engrave "ABC-12" 1.5 dia stock start x0.3 y0.1 0.15 high 0.004 deep return 0.05 t3 g54 angle 0 deg'],['g47w','g47 wrap engrave serial 4 digits 1.5 dia stock start x0.3 y0.1 0.15 high 0.004 deep return 0.05 t3 g54 angle 0 deg']];
 const LJ=[['xcpock','face pocket 0.75 x 0.5 1.5 bar face z0 0.1 deep 0.25 cutter doc 0.05 t7']];
 f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
  const errs=[];w.onerror=m=>errs.push(String(m));
