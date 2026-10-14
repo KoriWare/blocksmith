@@ -19,7 +19,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('E2: macro call arguments not flagged',!/axis word/.test(E("lintLine('G65 P9100 A1. B2. C3.').join()")));
  log('E6: Engrave chip opens flat-face mode on a 3-axis mill (no shaft sample values)',(E("J=null;tab('new');pickJob('engrave');J.emode"))=='face'&&!/SN-1024/.test(E('J.text')),E('J.emode')+' '+E('J.text'));
  d.querySelector('#u-mm').click();E("J=null;tab('new');pickJob('bolt')");log('E4: mm peck Q gray suggestion is 2.5 mm',Math.abs(E("J.p['Peck Q'].v*25.4")-2.5)<1e-6,E("J.p['Peck Q'].v*25.4"));d.querySelector('#u-in').click();
- const v4=add('Generic VMC w/ 4th axis','Vertical mills');set('Control','Fanuc 0i-style');
+ const v4=add('Generic VMC w/ 4th axis','Vertical mills');set('Control','Fanuc 0i-style');set('Rotary head on','Left');/* v104: required side pick */
  log('E2: A word fine on an A machine, B flagged',!/axis word/.test(E("lintLine('G00 A90.').join()"))&&/not B/.test(E("lintLine('G00 B90.').join()")));
  E("S.m[S.cur].opt.cyl=0;S.m[S.cur].opt.look=0;save()");
  const idx={'Faces':'4','Depth':'0.5','Hole X':'1','Hole Y':'0.2','Z0':'1','Work offset':'G54','Tool':'5'};set('4th-axis brake on / off','M10 / M11');

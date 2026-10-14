@@ -1,0 +1,89 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 104: Stacey / Casey / Maria / Kori v104 --><iframe id="f" src="../index.html?v=104" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListener('error',e=>errs.push(e.message));const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const sl=t=>new Promise(r=>setTimeout(r,t));
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ if(step==1){step=2;setTimeout(()=>{/* plant a 4-axis machine saved before v104 (no side row, no r104v) */E("(()=>{const m=S.m[1];m.mtype='vmc4';m.opt.ax4=1;m.s=m.s.filter(x=>x.k!='Rotary head on');delete m.r104v;delete m.r104told;save();localStorage.setItem('mc',JSON.stringify(S))})()");w.location.reload()},700);return}
+ setTimeout(async()=>{try{
+ if(step==2){
+  const tt=E("($('#r79toast')||{}).textContent||''");
+  log('6: 4-axis machine saved before v104 shows the one-time side notice with › Pick',/New: which side is your rotary head on\?/.test(tt)&&/› Pick/.test(tt),tt);
+  E("$('#r104pick')&&$('#r104pick').click()");await sl(80);
+  log('6: › Pick opens Setup on that machine at the side pick',E("document.querySelector('.tabs button.on').dataset.t")=='machines'&&!!d.querySelector('.r104side')&&E("$('#mn').value")==E("S.m[1].name"));
+  log('6: the notice is one-time',E("S.m[1].r104told")==1);
+  log('5: side row sits right under Rotary axis, behind .r104side, two tiles, both unpicked',E("(()=>{const f=document.querySelector('.r104side');const p=f&&f.previousElementSibling;return !!f&&p&&p.dataset.r99k=='Rotary axis'&&f.querySelectorAll('.r104t').length==2&&!f.querySelector('.r104t.sel')&&/◧ Left/.test(f.textContent)&&/Right ◨/.test(f.textContent)})()"));
+  log('5: no default: the side starts blank and unconfirmed',E("(()=>{const x=S.m[1].s.find(y=>y.k=='Rotary head on');return !!x&&x.v===''&&x.st!='user'})()"));
+  E("NOASK=1;cur(1);(()=>{const m=S.m[1];m.s.forEach(x=>{if(x.v&&x.st!='user'&&x.k!='Rotary head on')x.st='user'});const c=m.s.find(x=>x.k=='Control');c.v='Haas NGC';c.st='user';const ra=m.s.find(x=>x.k=='Rotary axis');ra.v='A';ra.st='user';save()})()");
+  const grid="(()=>{tab('new');$('#q').value='hole grid';go();Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k=='Work offset'?'G54':1,g:false}});show();return (J.code||[]).join('\\n')})()";
+  const g0=E(grid);log('5: side not picked: counted in the single list and Build held',E("r103block().includes('Rotary head on')")&&!g0&&!!E("$('#out .r102mach')"),E("r103block().join()"));
+  E("(()=>{const x=S.m[1].s.find(y=>y.k=='Rotary head on');x.v='Left';x.st='user';save()})()");const gL=E(grid);
+  E("(()=>{const x=S.m[1].s.find(y=>y.k=='Rotary head on');x.v='Right';x.st='user';save()})()");const gR=E(grid);
+  log('5: sentinel — Left vs Right writes byte-identical code (X signs and A+ untouched)',!!gL&&gL===gR,gL.length+' vs '+gR.length);
+  log('8: 4-axis flat job: G00 A0. after the tool change, from the confirmed letter',/T\d+ M0?6\nG00 A0\. \(ROTARIES TO ZERO BEFORE THE FIRST CUT\)/.test(gL),gL.slice(0,300));
+  E("(()=>{const ra=S.m[1].s.find(x=>x.k=='Rotary axis');ra.st='confirm';save()})()");const gN=E(grid);
+  log('8: letter not confirmed → held, Machine row lists Rotary axis',!gN&&E("r103block().includes('Rotary axis')")&&/Not written/.test(E("$('#out').textContent")),E("r103block().join()"));
+  E("(()=>{const ra=S.m[1].s.find(x=>x.k=='Rotary axis');ra.st='user';ra.v='B';save()})()");log('8: never assumes A — B letter gives G00 B0.',/G00 B0\. \(ROTARIES/.test(E(grid)));
+  E("(()=>{const ra=S.m[1].s.find(x=>x.k=='Rotary axis');ra.v='A';save()})()");
+  // 6: park on switch to 5-axis, restore on switch back
+  E("J=null;r98set(1,'vmc5')");log('6: switch to 5-axis parks the side with the 4-axis settings',E("!S.m[1].s.some(x=>x.k=='Rotary head on')&&(S.m[1].s4park||[]).some(x=>x.k=='Rotary head on'&&x.v=='Right')"));
+  log('1: 5-axis VMC type is recognised by the 5-axis checks (no phantom Machine type)',E("is5()")&&!/Machine type/.test(E("JSON.stringify(set5(null,[]))")),E("S.m[1].type"));
+  // 8 on 5-axis
+  E("(()=>{const p=S.m[1].s.find(x=>x.k=='Rotary pair');if(p){p.v='';p.st='confirm'}save()})()");const g5n=E(grid);
+  log('8: 5-axis flat hole grid without the pair: Machine row has exactly Rotary pair',!g5n&&JSON.stringify(E("r103block()"))=='["Rotary pair"]'&&/Machine: 1 to confirm/.test(E("($('#out .r102mach')||{}).textContent")),JSON.stringify(E("r103block()")));
+  for(const [pv,ln] of [['A + C','G00 A0. C0.'],['B + C','G00 B0. C0.']]){E(`(()=>{const p=S.m[1].s.find(x=>x.k=='Rotary pair');p.v='${pv}';p.st='user';save()})()`);const g=E(grid);log('8: 5-axis '+pv+' flat job: '+ln+' before the first cut, no 5-axis lock',g.includes(ln+' (ROTARIES TO ZERO BEFORE THE FIRST CUT)')&&!E("$('#out #r100blk')"),g.slice(0,240))}
+  E("J=null;r98set(1,'vmc4')");log('6: switch back restores the side (value kept)',E("(S.m[1].s.find(x=>x.k=='Rotary head on')||{}).v")=='Right'&&!(E("S.m[1].s4park")||[]).length);
+  log('1: type label back to the saved name on the way back',!/5-axis/.test(E("S.m[1].type")),E("S.m[1].type"));
+  // 9: tp32 home line from the confirmed pair, Fanuc + Haas
+  const tp=(ctl,pv)=>E(`(()=>{NOASK=1;pick('Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills');cur(S.m.length-1);const m=S.m[S.cur];const sv_=(k,v)=>{let x=m.s.find(x=>x.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};sv_('Control',${JSON.stringify(ctl)});m.s.forEach(x=>{if(x.st!='user'&&x.v)x.st='user'});R101K5().forEach(k=>{const x=m.s.find(y=>y.k==k);if(x&&!x.v){x.v=/limit/i.test(k)?'-30 / 110':/clamp/i.test(k)?'M10 / M11':'1';x.st='user'}});sv_(K5.tw,/haas/i.test(${JSON.stringify(ctl)})?'G268 / G269':'G68.2 / G69');sv_(K5.tc,/haas/i.test(${JSON.stringify(ctl)})?'G234 / G49':'G43.4 / G49');sv_('Rotary pair',${JSON.stringify(pv)});const p=r100pairOf(m);if(p)p.forEach(L=>sv_(L+' direction','Clockwise (+)'));m.opt.probe=true;save();
+   J=parseJ2('','tp32');J.text='';J.edits={};J.code=[];tab('new');show();const V0={'Tilt angle':30,'Rotary angle':90,'Euler I':0,'Euler J':30,'Euler K':0,'Plane X':0,'Plane Y':0,'Plane Z':0,'Feature program':1234,'Work offset':'G54','Tool':3,'Safe Z':1,'I accept the risk (HIGH)':'YES'};const ch=J2.tp32.choices||{};Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k in V0?V0[k]:ch[k]?ch[k][0]:1,g:false}});show();return (J.code||[]).join('\\n')})()`);
+  for(const ctl of ['Haas NGC','Fanuc 0i-style'])for(const [pv,a,b] of [['A + C','A','C'],['B + C','B','C'],['A + B','A','B'],['C + A','C','A']]){const c=tp(ctl,pv);const hl=(c.match(/^.*ROTARIES HOME.*$/m)||[''])[0];log(`9: ${ctl.split(' ')[0]} ${pv}: home line uses ${a} then ${b}, no repeat, no B fallback`,new RegExp('\\b'+a+'0\\. '+b+'0\\.').test(hl)&&!new RegExp('\\b(\\w)0\\. \\10\\.').test(hl),hl||c.slice(0,200))}
+  log('9: pair not confirmed → tp32 locked (no code)',(()=>{E("(()=>{const m=S.m[S.cur];const p=m.s.find(x=>x.k=='Rotary pair');p.st='confirm';[K5.ta,K5.ra].forEach(k=>{const x=m.s.find(y=>y.k==k);if(x)x.st='confirm'});save();show()})()");return !E("J.code&&J.code.length")})());
+  // 2: parentheses stripped at write time
+  E("(()=>{cur(0);const m=S.m[0];m.mtype='vmc3';const c=m.s.find(x=>x.k=='Control');c.v='Fanuc 0i-style';c.st='user';save()})()");
+  const eng=t=>E(`(()=>{tab('new');pickJob('engrave');J.p.Text={v:${JSON.stringify(t)},g:false};Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k=='Work offset'?'G54':k=='Tool'?1:0.1,g:false}});J.code=null;show();return (J.code||[]).join('\\n')})()`);
+  const e1=eng('A(B)C');log('2: engrave Text A(B)C writes (TEXT: ABC)',/\(TEXT: ABC\)/.test(e1)&&!/A\(B/.test(e1),e1.slice(0,200));
+  const e2=eng('A)B(C');log('2: engrave Text A)B(C writes (TEXT: ABC), no line error',/\(TEXT: ABC\)/.test(e2)&&!/A\)B/.test(e2),e2.slice(0,200));
+  log('2: the typed text is kept on the job',E("J.p.Text.v")=='A)B(C');
+  log('2: every comment line has balanced, un-nested parentheses',e2.split('\n').every(l=>{let dpt=0;for(const ch of l){if(ch=='('){dpt++;if(dpt>1)return false}if(ch==')'){dpt--;if(dpt<0)return false}}return dpt==0}));
+  log('2: tool Name / Notes / Material lose ( ) at write time only',(()=>{const t=E("(()=>{const m=S.m[0];m.tools=m.tools||[];if(!m.tools.length)m.tools.push({n:1,type:'Drill',dia:0.25});const t=m.tools[0];t.name='DRILL (A)';t.notes='N(1)';t.mat='HSS(x)';save();return r104clean({p:{}},()=>[t.name,t.notes,t.mat].join('|'))+'#'+[t.name,t.notes,t.mat].join('|')})()");return t=='DRILL A|N1|HSSx#DRILL (A)|N(1)|HSS(x)'})());
+  // 3/10 examples
+  log('3: Update offset example: YES or NO',E("r99spec('Update offset').ex")=='YES or NO');
+  log("10: A direction example 'Clockwise (+)'",E("r99spec('A direction').ex")=='Clockwise (+)');
+  log("10: Faces example 'e.g. 4'",E("r99spec('Faces').ph")=='4');
+  // 4 tools T#
+  E("tools()");await sl(40);
+  log('4: T# label, italic e.g. 1 placeholder, 52px box',E("(()=>{const i=V.querySelector('input[data-f=\"n\"]');const l=i&&i.closest('.r104tn');return !!l&&l.querySelector('span').textContent=='T#'&&i.placeholder=='e.g. 1'&&Math.round(parseFloat(getComputedStyle(i).width))==52})()"));
+  const tn=E("(()=>{const i=V.querySelector('input[data-f=\"n\"]');const was=S.tools[0].n;i.value='asdf';i.dispatchEvent(new Event('change',{bubbles:true}));const e=document.querySelector('.r83err');return JSON.stringify({kept:i.value,msg:e&&e.textContent,saved:S.tools[0].n,was})})()");
+  {let x={};try{x=JSON.parse(tn)}catch(e){}log('4: asdf refused with Needs + Example, not saved (box keeps text, never silently 1)',x.kept=='asdf'&&/Needs/.test(x.msg||'')&&/Example/.test(x.msg||'')&&x.saved==x.was,tn)}
+  // 7 used settings
+  log('7: an unconfirmed rotary setting written into the program counts',E("(()=>{const m=S.m[1];cur(1);const b=m.s.find(x=>/^4th-axis brake/.test(x.k))||(m.s.push({k:'4th-axis brake on / off',v:'M10 / M11',st:'confirm'}),m.s.at(-1));b.v='M10 / M11';b.st='confirm';return r104used(['G00 X0.','M10 (BRAKE ON)']).includes(b.k)&&!r104used(['G00 X0.']).includes(b.k)})()"));
+  // 11/12/14 looks
+  E("(()=>{cur(0);const c=S.m[0].s.find(x=>x.k=='Control');c.st='confirm';save();tab('new');$('#q').value='hole grid';go();show()})()");
+  log('14: Control pill not set: gray outline, red dot, counted',E("(()=>{const b=$('#out .r104ctl');return !!b&&b.textContent.trim()=='Control: not set ›'&&!!b.querySelector('.r104dot')&&!b.classList.contains('on')&&r103block().includes('Control')})()"));
+  log('11: Machine chip bold with 1.5px outline',E("(()=>{const b=$('#out .r102mach');const cs=getComputedStyle(b);return parseFloat(cs.borderTopWidth)>1&&parseFloat(cs.borderTopWidth)<2&&+cs.fontWeight>=700})()"));
+  E("$('#out .r104ctl').click()");await sl(60);
+  log('14: pill jumps to Setup and highlights Control',E("document.querySelector('.tabs button.on').dataset.t")=='machines'&&/Control/.test((d.querySelector('.r103hl')||{}).textContent||''));
+  log('12: landing leaves scroll space above the outline',E("parseFloat(getComputedStyle(document.querySelector('.r103hl')).scrollMarginTop)")>=6);
+  E("(()=>{const c=S.m[0].s.find(x=>x.k=='Control');c.v='Fanuc 0i-style';c.st='user';save();r104hlClear()})()");
+  log('12: outline clears once the setting is confirmed',!d.querySelector('.r99f[data-r99k="Control"].r103hl'));
+  E("tab('new');show()");await sl(30);log('14: Control pill confirmed: yellow, shows the name',E("(()=>{const b=$('#out .r104ctl');return !!b&&b.classList.contains('on')&&b.textContent.trim()=='Control: Fanuc 0i-style ›'})()"));
+  // 15 Clear (not set)
+  E("r103rt=null;edit(0)");await sl(30);
+  E("(()=>{const x=S.m[0].s.find(y=>y.k=='Offset syntax');x.st='user';x.v=x.v||'G54.1 Pn';save();edit(0)})()");const before=E("(()=>{const m=S.m[0];return m.s.filter(x=>!r103hid(m,x.k)&&x.st=='confirm').length})()");
+  E("(()=>{const f=V.querySelector('.r99f[data-r99k=\"Offset syntax\"]');const i=f&&f.querySelector('input,.r99w');(i||f).click()})()");await sl(40);
+  log('15: picker sheet has a Clear (not set) line',!!d.querySelector('#r99sheet .r104clr')&&/Clear \(not set\)/.test(d.querySelector('#r99sheet .r104clr').textContent));
+  E("$('#r99sheet .r104clr').click()");await sl(40);
+  log('15: Clear puts the box back to blank + red and raises the count by one',E("(()=>{const m=S.m[0];const x=m.s.find(y=>y.k=='Offset syntax');return x.v===''&&x.st=='confirm'&&m.s.filter(x=>!r103hid(m,x.k)&&x.st=='confirm').length})()")==before+1,before+' → '+E("S.m[0].s.filter(x=>!r103hid(S.m[0],x.k)&&x.st=='confirm').length"));
+  // 16 focus never confirms
+  const keys=E("JSON.stringify(S.m[0].s.filter(x=>x.st!='user'&&x.v&&V.querySelector('.r99f[data-r99k=\"'+CSS.escape(x.k)+'\"] input')).map(x=>x.k).slice(0,8))");let K=[];try{K=JSON.parse(keys)}catch(e){}
+  const turned=[];for(const k of K){const el=d.querySelector('.r99f[data-r99k="'+k.replace(/"/g,'\\"')+'"] input');if(!el)continue;el.focus();el.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));el.blur();el.dispatchEvent(new Event('change',{bubbles:true}));d.body.click();await sl(30);if(E(`S.m[0].s.find(x=>x.k==${JSON.stringify(k)}).st`)=='user')turned.push(k)}
+  log('16: focus / Escape / blur / tap outside never confirm a gray suggestion ('+K.length+' boxes)',K.length>=3&&!turned.length,turned.join(','));
+  const tk=E("(()=>{const x=S.m[0].s.find(x=>x.k=='Tool change time (s)');if(x){x.st='confirm';x.v='5';save()}edit(0);return !!x})()");await sl(20);
+  if(tk){const el=d.querySelector('.r99f[data-r99k="Tool change time (s)"] input');el.focus();el.value='6';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));el.blur();await sl(40);log('16: typing a valid value still confirms (gray → green)',E("S.m[0].s.find(x=>x.k=='Tool change time (s)').st")=='user')}
+  {E("(()=>{const i=S.m.findIndex(z=>/5-axis/.test(z.type||''));cur(i);const m=S.m[i];r98set(i,'vmc5');const p=m.s.find(x=>x.k=='Rotary pair');p.v='A + C';p.st='confirm';[K5.ta,K5.ra].forEach(k=>{const x=m.s.find(y=>y.k==k);if(x)x.st='confirm'});save();J=parseJ2('','tp32');J.text='';J.edits={};J.code=[];const V0={'Tilt angle':30,'Rotary angle':90,'Euler I':0,'Euler J':30,'Euler K':0,'Plane X':0,'Plane Y':0,'Plane Z':0,'Feature program':1234,'Work offset':'G54','Tool':3,'Safe Z':1,'I accept the risk (HIGH)':'YES'};const ch=J2.tp32.choices||{};Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k in V0?V0[k]:ch[k]?ch[k][0]:1,g:false}});tab('new');show()})()");
+  const n0=E("r103block().join()");E("$('#out .r102mach')&&$('#out .r102mach').click()");await sl(40);const t1=E("($('#r103back')||{}).textContent||''");
+  E("(()=>{const m=S.m[S.cur];r103block().forEach(k=>{const x=m.s.find(y=>y.k==k);if(x){x.st='user';if(!x.v)x.v=k=='Rotary pair'?'A + C':'1'}});const p=m.s.find(x=>x.k=='Rotary pair');p.st='user';save();edit(S.cur);r103tick()})()");await sl(40);
+  const left=E("r103block().join()");log('1: 5-axis round trip completes (no phantom Machine type; back bar reaches 0 and returns)',!/Machine type/.test(n0)&&/Back to job/.test(t1)&&E("document.querySelector('.tabs button.on').dataset.t")=='new'&&!E("$('#r103back')"),n0+' | '+t1+' | left='+left)}
+ log('no console errors',!errs.length,errs.join('|'));
+  o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL';step=9}
+ }catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1300)};
+</script></body></html>

@@ -4,7 +4,7 @@ w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.
 const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
 setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
  const iA=E("S.m.findIndex(m=>m.name=='Mill A')"),iB=E("S.m.findIndex(m=>m.name=='Mill B')");
- const pickSheet=async(key,idx)=>{E(`document.querySelector('.r99f[data-r99k="${key}"] .r99w').click()`);await sl(40);E(`document.querySelectorAll('#r99sheet .opt')[${idx}].click()`);await sl(10);E("$('#r99sheet .done').click()");await sl(60)};
+ const pickSheet=async(key,idx)=>{E(`document.querySelector('.r99f[data-r99k="${key}"] .r99w').click()`);await sl(40);E(`document.querySelectorAll('#r99sheet .opt:not(.r104clr)')[${idx}].click()`);await sl(10);E("$('#r99sheet .done').click()");await sl(60)};
  // 1 tiles
  E(`S.cur=${iA};edit(${iA})`);await sl(40);
  const tl=E("JSON.stringify([...document.querySelectorAll('#r98type button')].map(b=>[b.textContent,Math.round(b.getBoundingClientRect().width),Math.round(b.getBoundingClientRect().top)]))");const T=JSON.parse(tl);
@@ -25,7 +25,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('5-axis: 4th-axis rows hidden (no borrowed 4-axis path)',E("[...document.querySelectorAll('.r99f,.set')].filter(f=>f.style.display!='none'&&/^\\W*Rotary axis(?! (limits|clamp))\\b/.test(((f.querySelector('.r99lb,span')||{}).textContent||'').trim())).length")==0);
  log('5-axis: lock chip on setup',/Build locks until both rotaries and directions are set/.test(E("($('#r100lock')||{textContent:''}).textContent")));
  E("document.querySelector('.r99f[data-r99k=\"Rotary pair\"] .r99w').click()");await sl(40);
- log('pair sheet: A + C / B + C / Other…',E("[...document.querySelectorAll('#r99sheet .opt')].map(b=>b.textContent).join('|')")=='A + C|B + C'&&E("!!$('#r99othi')"));
+ log('pair sheet: A + C / B + C / Other…',E("[...document.querySelectorAll('#r99sheet .opt:not(.r104clr)')].map(b=>b.textContent).join('|')")=='A + C|B + C'&&E("!!$('#r99othi')"));
  E("(()=>{const i=$('#r99othi');i.value='A + A';i.dispatchEvent(new Event('input',{bubbles:true}))})()");await sl(10);
  log('pair Other: A + A refused with Needs, Done gray',/Needs:/.test(E("$('#r99othe').textContent"))&&E("$('#r99sheet .done').disabled"));
  E("$('#r99sheet .cancel').click()");await sl(20);
@@ -67,7 +67,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('mig: unclear 5-axis letter not rewritten',E("S.m.find(m=>m.name=='Old5b').s.find(x=>x.k==K5.ta).v")=='A');
  // 3 Build pickers
  E(`S.cur=${iA};S.m[${iA}].mtype='vmc3';save()`);
- const bp=async(op,k)=>{E(`J=null;tab('new');pickJob('${op}')`);await sl(50);return E(`(()=>{const f=document.querySelector('#out .r99f[data-r99k="${k}"]');if(!f)return 'none';f.querySelector('.r99w').click();const n=[...document.querySelectorAll('#r99sheet .opt')].map(b=>b.textContent);const c=$('#r99sheet .cancel');if(c)c.click();return n.join('|')})()`)};
+ const bp=async(op,k)=>{E(`J=null;tab('new');pickJob('${op}')`);await sl(50);return E(`(()=>{const f=document.querySelector('#out .r99f[data-r99k="${k}"]');if(!f)return 'none';f.querySelector('.r99w').click();const n=[...document.querySelectorAll('#r99sheet .opt:not(.r104clr)')].map(b=>b.textContent);const c=$('#r99sheet .cancel');if(c)c.click();return n.join('|')})()`)};
  const so=await bp('wocopy','Source offset');log('Source offset on picker sheet with machine offsets',/^G54\|G55\|G56\|G57\|G58\|G59/.test(so),so);
  E(`J=null;tab('new');pickJob('wocopy')`);await sl(40);E(`document.querySelector('#out .r99f[data-r99k="Source offset"] .r99w').click()`);await sl(30);
  E("(()=>{const i=$('#r99othi');i.value='asdf';i.dispatchEvent(new Event('input',{bubbles:true}))})()");
@@ -106,7 +106,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  E("(()=>{const i=$('#r99othi');i.value='Yes, half';i.dispatchEvent(new Event('input',{bubbles:true}))})()");
  E("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}))");await sl(20);
  log('Escape closes with no save (half-typed Other dropped)',!E("!!$('#r99sheet')")&&E("(S.m[S.cur].s.find(x=>x.k=='DPRNT support')||{}).v")===before);
- E(`document.querySelector('.r99f[data-r99k="DPRNT support"] .r99w').click()`);await sl(30);E("document.querySelectorAll('#r99sheet .opt')[2].click()");E("$('#r99dim').click()");await sl(20);
+ E(`document.querySelector('.r99f[data-r99k="DPRNT support"] .r99w').click()`);await sl(30);E("document.querySelectorAll('#r99sheet .opt:not(.r104clr)')[2].click()");E("$('#r99dim').click()");await sl(20);
  log('backdrop tap closes with no save',!E("!!$('#r99sheet')")&&E("(S.m[S.cur].s.find(x=>x.k=='DPRNT support')||{}).v")===before);
  log('no console errors',!errs.length,errs.join('|'));
  o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};

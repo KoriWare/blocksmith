@@ -18,7 +18,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   log('3ax: live preview + up direction text',!!d.querySelector('#eprev svg')&&/Tops of the letters point toward/.test(d.querySelector('#eprev').textContent));
   log('3ax: flat tolerance check listed',/Flat on a curve/.test(d.querySelector('#cl').textContent));
   r=run('G54 T7 engrave "WIDE TEXT HERE" 0.25 tall 0.004 deep on 0.5 dia shaft start x0 centered on 0 deg around rotate 0 not mirrored zero on centerline tolerance 0.001');log('3ax: too wide around the curve is blocked',/Not written/.test(r.out)&&!d.querySelector('#ed'));
-  mach('Generic VMC w/ 4th axis','Vertical mills');log('4th-axis preset ticks its 4th-axis option',E('opt("ax4")'));
+  mach('Generic VMC w/ 4th axis','Vertical mills');log('4th-axis preset ticks its 4th-axis option',E('opt("ax4")'));setv('Rotary head on','Left');E("(()=>{const x=S.m[S.cur].s.find(x=>/^4th-axis brake/.test(x.k));if(x)x.st='user';const ra=S.m[S.cur].s.find(x=>x.k=='Rotary axis');if(ra)ra.st='user';save()})()");/* v104: required side pick; the brake codes are written into the program, so they count (item 7) */
   w.exEFull(0);r={code:E('J').code.join('\n'),out:d.querySelector('#out').textContent};log('4ax: wrapped around A, Z at R minus depth',/G01 X[\d.-]+ A-?[\d.]+ F/.test(r.code)&&/G01 Z0\.496/.test(r.code)&&/Wrapped around the 4th/.test(r.out));
   log('4ax: no G93 unless confirmed, combined-feed warning',!/G93/.test(r.code)&&/combined X\/A feed/.test(d.querySelector('#cl').textContent));
   setv('G93 inverse time','yes');w.exEFull(0);r={code:E('J').code.join('\n')};log('4ax: G93 used once confirmed, G94 after',/^G93$/m.test(r.code)&&/^G94$/m.test(r.code));
