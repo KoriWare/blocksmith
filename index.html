@@ -5685,6 +5685,72 @@ function r88bar(){try{const jb=$('#jpbox'),fb=$('#r79fold');if(!jb||!fb||typeof 
 {const _t88=tab;tab=function(){const r=_t88.apply(this,arguments);r88bar();return r}}
 {const _r88=refresh;refresh=function(){const r=_r88.apply(this,arguments);r88bar();return r}}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#jcbody [data-op]');if(!b)return;const q=(($('#jcq')||{}).value||'').trim();window.R88CAT=q?null:S.jtab;setTimeout(()=>{try{if(J&&J.op){if(window.R88CAT)J.r88cat=window.R88CAT;else delete J.r88cat;window.R88CAT=null;r88bar()}}catch(x){}},0)},true);
+// ===== R89 first-run tutorial: Mill or Lathe tour over the real screens; nothing saved, no draft left =====
+const R89K='mc_tour';var R89=null;
+function r89seen(){try{return !!localStorage.getItem(R89K)}catch(e){return true}}
+function r89mark(v){try{localStorage.setItem(R89K,v)}catch(e){}}
+const R89G=[['Macro (Macro B)','A small program that uses variables (#1, #100…) and IF / WHILE so one block of code can run with different numbers. BlockSmith writes the macro and a short main program that calls it.'],
+ ['O-number','The program number the control files it under, like O1000. Macros in BlockSmith use O9xxx numbers.'],
+ ['G54 / work offset','Tells the control where your part is. You touch off the part and store that spot in G54 (or G55–G59). Every position in the program is measured from it.'],
+ ['Z0','The height (mill: usually the top of the part; lathe: the finished face) that counts as zero. Depths are negative from here.'],
+ ['Chip','One value in a job, like Depth or Feed. Tap it to change it. Yellow = from your words, gray = suggested, green = from your tool list, red “?” = needed.'],
+ ['Need list','The values BlockSmith still needs from you. Anything that says where the tool goes is never guessed — you type it.'],
+ ['Override','Lets you export even though a check is not passing — only after you look at the code yourself and tick “I’ll verify”.'],
+ ['Ready','The badge that shows every check passed for this machine and job.'],
+ ['Post / export','Turning the job into the text file your control reads. Here that is ⬇ Download or Share, with the machine’s file extension (.nc, .EIA…).'],
+ ['.mbjob','A BlockSmith job file. Share it to another phone to open the same job — it carries the values, not your machine setup.']];
+function r89steps(kind){const L=kind=='lathe';return [
+ {t:'1 · Machines',go:()=>tab('machines'),spot:()=>V.querySelector(`.card[onclick="edit(${S.cur})"]`)||V.querySelector('.card[onclick^="edit("]'),
+  b:`Start like any CAM job: define the machine. BlockSmith ships demo machines — here <b>${esc(S.m[S.cur].name)}</b>. A machine setup holds the <b>control</b> (Fanuc-style, Haas…), units, and the <b>file extension</b> the control expects. Items still to confirm show in red; jobs warn you until they are checked.`},
+ {t:'2 · Tool Library',go:()=>tools(),spot:()=>V.querySelector('#v .card[data-tid]'),
+  b:`Each machine has its own tools: number (T${L?'0101 style on lathes':'1, T2…'}), type and Ø. Jobs offer these tools, and a tool with bad data (like Ø 0) is marked red. Add or check a tool here before you build.`},
+ {t:'3 · Build: pick a job',go:()=>{tab('new');pickJob(L?'lturn':'face')},spot:()=>V.querySelector('#out .card'),
+  b:`Pick an operation — here <b>${L?'OD turn':'Face mill'}</b>. Its values are <b>chips</b>. Red <b>?</b> chips are required positions and sizes: they are <b>never guessed</b>. Gray chips are suggestions (RPM, feed, clearance) you can change. Below, the <b>Need list</b> asks for what is still missing.`},
+ {t:'4 · Work offset and zero',go:()=>{tab('new');const q=$('#q');if(q)q.value=JB[L?'lturn':'face'][1];go()},spot:()=>{const c=[...V.querySelectorAll('#out .card .chip')].find(c=>/Work offset|Z0/.test(c.textContent));return c||V.querySelector('#out .card')},
+  b:`Now the job has values (tour only — it is thrown away at the end). <b>Work offset</b> (G54) is where the part sits on the machine; <b>Z0</b> is ${L?'the finished face of the part, and X is a diameter':'the top of the part'}. Positions are measured from there.`},
+ {t:'5 · Editor, checks and Ready',go:()=>tab('edit'),spot:()=>$('#ck')||$('#ed'),
+  b:`<b>Generate Code</b> writes the program. The <b>checks bar</b> tests it against this machine — tap it to see what failed. When all pass you get the <b>Ready</b> badge. Not ready? Fix the values, or use Override only after you verify the code yourself.`},
+ {t:'6 · Simulate',go:()=>tab('sim'),spot:()=>$('#cv'),
+  b:`Watch the tool path before it reaches the machine. Play, Step or drag the slider; the current line is highlighted. Use Top / Front / Iso to look from each side${L?'':' — Top shows the hole and pass positions'}.`},
+ {t:'7 · Save, export and share',go:()=>tab('edit'),spot:()=>[...V.querySelectorAll('button')].find(b=>/Save…/.test(b.textContent))||$('#qsave'),
+  b:`<b>💾 Save…</b> keeps the job in your <b>Library</b> on this phone. <b>⬇ Download</b> or Share exports the program file (the “post”) with the machine’s extension, and a <b>.mbjob</b> shares the job itself. Your real jobs start empty — nothing from this tour is saved.`},
+ {t:'Words you will see',go:()=>{},spot:()=>null,gl:1,b:''}]}
+function r89snap(){return {S:JSON.stringify(S),J:(typeof J!='undefined'&&J)?jClone(J):null,TLV:typeof TLV!='undefined'?TLV:null,NOASK:typeof NOASK!='undefined'?NOASK:0}}
+function r89start(kind){try{r89close(true)}catch(e){}const snap=r89snap();const P=Storage.prototype,si=P.setItem,ri=P.removeItem;
+ P.setItem=function(k,v){if(R89&&this===localStorage&&k!==R89K)return;return si.apply(this,arguments)};P.removeItem=function(k){if(R89&&this===localStorage&&k!==R89K)return;return ri.apply(this,arguments)};
+ R89={kind,i:0,snap,si,ri};NOASK=1;const want=kind=='lathe'?S.m.findIndex(m=>isLT(m.type)):Math.max(0,S.m.findIndex(m=>/^Mill A$/.test(m.name)));S.cur=want>=0?want:0;J=null;r89show()}
+function r89spotOff(){document.querySelectorAll('.r89spot').forEach(e=>e.classList.remove('r89spot'))}
+function r89show(){const st=r89steps(R89.kind),s=st[R89.i];r89spotOff();try{s.go()}catch(e){}
+ let o=$('#r89');if(!o){o=document.createElement('div');o.id='r89';o.setAttribute('role','dialog');o.setAttribute('aria-modal','false');document.body.appendChild(o)}
+ o.className=s.gl?'r89full':'';o.setAttribute('aria-label','Tutorial step '+(R89.i+1)+' of '+st.length);
+ o.innerHTML=`<div class="r89c"><div class="r89h"><span class="r89k">${R89.kind=='lathe'?'Lathe':'Mill'} tour · ${R89.i+1}/${st.length}</span><button type="button" class="r89skip" onclick="r89close()">Skip tour</button></div><div class="t">${s.t}</div>${s.gl?`<dl class="r89gl">${R89G.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('')}</dl>`:`<div class="s r89b">${s.b}</div>`}
+ <div class="r89n"><button type="button" class="btn o" ${R89.i?'':'disabled'} onclick="r89go(-1)">‹ Back</button><button type="button" class="btn" onclick="${R89.i==st.length-1?'r89close()':'r89go(1)'}">${R89.i==st.length-1?'Finish':'Next ›'}</button></div><div class="r89dots">${st.map((_,k)=>`<i class="${k==R89.i?'on':''}"></i>`).join('')}</div></div>`;
+ setTimeout(()=>{try{const el=s.spot&&s.spot();if(el){el.classList.add('r89spot');el.scrollIntoView({block:'center'});const sh=o.querySelector('.r89c').getBoundingClientRect();const r=el.getBoundingClientRect();if(r.bottom>sh.top-8)window.scrollBy(0,r.bottom-sh.top+16)}}catch(e){}},60)}
+function r89go(d){const n=r89steps(R89.kind).length;R89.i=Math.max(0,Math.min(n-1,R89.i+d));r89show()}
+function r89close(silent){if(!R89)return;const {snap,si,ri}=R89;r89spotOff();const o=$('#r89');if(o)o.remove();clearTimeout(window.R82T);
+ try{const old=JSON.parse(snap.S);Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,old)}catch(e){}J=snap.J;try{TLV=snap.TLV}catch(e){}NOASK=snap.NOASK;
+ Storage.prototype.setItem=si;Storage.prototype.removeItem=ri;R89=null;r89mark('done');if(!silent)home()}
+function r89card(){return `<div class="card r89welcome" id="r89w"><div class="t">🎓 New here? Take the tour</div><div class="s">Seven short steps on the real screens: machine → tools → job and chips → zero point → code and checks → simulate → save and export. Nothing you see is saved.</div>
+ <div class="row r89wb"><button type="button" class="btn" onclick="r89start('mill')">Mill tour</button><button type="button" class="btn" onclick="r89start('lathe')">Lathe tour</button></div><button type="button" class="chip gr r89wskip" onclick="r89mark('skip');this.closest('#r89w').remove()">Skip — not now</button></div>`}
+function r89pick(){return `<div class="card" id="r89again"><div class="t">🎓 Tutorial</div><div class="s">A step-by-step tour on the real screens. Nothing is saved.</div><div class="row r89wb"><button type="button" class="btn" onclick="r89start('mill')">Mill tour</button><button type="button" class="btn" onclick="r89start('lathe')">Lathe tour</button></div></div>`}
+{const _h89=home;home=function(){const r=_h89.apply(this,arguments);try{if(!r89seen()&&!R89){const h=$('#home'),f=h&&h.querySelector('.card');if(f)f.insertAdjacentHTML('afterend',r89card())}}catch(e){}return r}}
+{const _m89=more;more=function(){const r=_m89.apply(this,arguments);try{if(!$('#r89more')){const c=document.createElement('div');c.className='card';c.id='r89more';c.setAttribute('onclick','r89open()');c.innerHTML='<div class="t">🎓 Tutorial</div><div class="s">Mill or lathe tour, start to finish.</div>';const h=V.querySelector('.card[onclick^="help("]')||[...V.querySelectorAll('.card')].find(x=>/Help/.test(x.textContent));if(h)h.after(c);else V.appendChild(c)}}catch(e){}return r}}
+{const _hp89=help;help=function(topic){const r=_hp89.apply(this,arguments);try{if(!topic&&!$('#r89again'))V.insertAdjacentHTML('afterbegin',r89pick())}catch(e){}return r}}
+function r89open(){help();const c=$('#r89again');if(c)c.scrollIntoView({block:'start'})}
+document.head.insertAdjacentHTML('beforeend',`<style id="r89css">
+#r89{position:fixed;left:0;right:0;bottom:0;z-index:9000;padding:0 8px calc(8px + env(safe-area-inset-bottom));pointer-events:none}
+#r89 .r89c{pointer-events:auto;max-width:560px;margin:0 auto;background:var(--sf,#1c1c1c);color:var(--tx,#eee);border:2px solid #ffd21f;border-radius:14px;padding:12px 14px;box-shadow:0 -6px 24px rgba(0,0,0,.6);max-height:48vh;overflow:auto;box-sizing:border-box}
+#r89.r89full{top:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end}#r89.r89full .r89c{max-height:86vh;width:100%}
+.r89h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}.r89k{color:#ffd21f;font-weight:700;font-size:13px}
+.r89skip{min-height:44px;min-width:44px;background:transparent;border:0;color:#aaa;text-decoration:underline;font-size:14px}
+#r89 .t{font-size:18px;margin:2px 0 6px}.r89b{font-size:15px;line-height:1.45}
+.r89n{display:flex;gap:8px;margin-top:10px;position:sticky;bottom:-12px;background:var(--sf,#1c1c1c);padding:8px 0}html[data-theme=light] .r89n{background:#fff}.r89n .btn{flex:1;min-height:44px;margin:0}.r89n .btn[disabled]{opacity:.4}
+.r89dots{display:flex;gap:6px;justify-content:center;margin-top:8px}.r89dots i{width:8px;height:8px;border-radius:50%;background:#555}.r89dots i.on{background:#ffd21f}
+.r89gl{margin:0;font-size:14px;line-height:1.4}.r89gl dt{color:#ffd21f;font-weight:700;margin-top:8px}.r89gl dd{margin:2px 0 0}
+.r89spot{position:relative;z-index:50;outline:3px solid #ffd21f!important;outline-offset:3px;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.45)!important}
+.r89welcome{border:2px solid #ffd21f}.r89wb{display:flex;gap:8px;flex-wrap:wrap}.r89wb .btn{flex:1 1 120px;min-height:44px;margin:6px 0 0}.r89wskip{min-height:44px;margin-top:8px}
+html[data-theme=light] #r89 .r89c{background:#fff;color:#111}
+</style>`);
 
 /* R79-END */</script>
 </body></html>

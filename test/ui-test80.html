@@ -1,0 +1,32 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 89 first-run tutorial: welcome card, mill + lathe tours, glossary, nothing saved: zero steps, macro step guards, engrave samples, back bore, tap pitch, tool library validation, kept lines, export gate/labels, share names, origin, draft --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
+  const LS=()=>JSON.stringify(Object.keys(w.localStorage).filter(k=>k!='mc_tour').sort().map(k=>[k,w.localStorage.getItem(k)]));
+ E("home()");await sl(40);log('first launch: welcome card with Mill, Lathe, Skip',!!d.querySelector('#r89w')&&/Mill tour/.test(d.querySelector('#r89w').textContent)&&/Lathe tour/.test(d.querySelector('#r89w').textContent)&&/Skip/.test(d.querySelector('#r89w').textContent));
+ [...d.querySelectorAll('#r89w button')].find(b=>/Skip/.test(b.textContent)).click();await sl(30);log('Skip remembered: no nagging',w.localStorage.getItem('mc_tour')=='skip'&&(E("home()"),!d.querySelector('#r89w')));
+ E("more()");await sl(30);log('More has 🎓 Tutorial',!!d.querySelector('#r89more'));d.querySelector('#r89more').click();await sl(40);log('…which opens Help with Mill/Lathe tour',!!d.querySelector('#r89again'));
+ E("help()");await sl(30);log('Help has the Tutorial card',!!d.querySelector('#r89again'));
+ // draft + a job in the Library to prove they survive
+ w.localStorage.setItem(E("DRK"),JSON.stringify({J:{op:'bolt',p:{Dia:{v:2,g:false}},edits:{}},cur:0,t:Date.now()}));const jobs0=E("S.jobs.length"),cur0=E("S.cur"),before=LS(),m0=E("JSON.stringify(S.m)");
+ E("r89start('mill')");await sl(80);const st=[];const steps=E("r89steps('mill').length");
+ for(let i=0;i<steps;i++){await sl(90);st.push({ttl:d.querySelector('#ttl').textContent,spot:!!d.querySelector('.r89spot'),skip:!!d.querySelector('#r89 .r89skip'),back:!!d.querySelector('#r89 button.btn.o'),k:d.querySelector('#r89 .r89k').textContent,op:E("J&&J.op")});if(i<steps-1)E("r89go(1)")}
+ log('mill tour has 8 steps (7 screens + glossary)',steps==8);
+ log('step screens in order: Machines, Tool Library, Build, Build, Editor, Simulate, Editor',['Machines','Tool','Build','Build','Editor','Simulate','Editor'].every((t,i)=>st[i].ttl.includes(t)),st.map(x=>x.ttl).join('|'));
+ log('each screen step spotlights a real element',st.slice(0,7).every(x=>x.spot));log('every step has Skip and Back/Next',st.every(x=>x.skip&&x.back));
+ log('mill sample is Face mill on Mill A',st[2].op=='face'&&st[3].op=='face'&&E("S.m[S.cur].name")=='Mill A');
+ log('step 3 shows red ? chips (nothing prefilled)',st[2]&&true&&(E("r89go(-5)"),await sl(90),E("Object.entries(J.p).filter(([k,x])=>x.v==null).length")>3));
+ log('no DEMO label (values cannot be used)',!/DEMO NUMBERS/.test(d.body.innerHTML));
+ E("r89go(10)");await sl(60);const gl=d.querySelector('#r89 .r89gl');log('glossary lists all the terms',!!gl&&['Macro','O-number','G54','work offset','Z0','Chip','Need list','Override','Ready','Post','export','.mbjob'].every(t=>gl.textContent.includes(t)));
+ E("r89close()");await sl(60);log('mill tour leaves no data: storage, jobs, draft, machines, selected machine unchanged',LS()==before&&E("S.jobs.length")==jobs0&&E("S.cur")==cur0&&E("JSON.stringify(S.m)")==m0&&/"Dia":\{"v":2/.test(w.localStorage.getItem(E("DRK"))));
+ log('Finish/Skip goes Home and marks the tour done',d.querySelector('#ttl').textContent=='Home'&&w.localStorage.getItem('mc_tour')=='done');
+ E("r89start('lathe')");await sl(80);E("r89go(2)");await sl(90);log('lathe sample: OD turn on the demo lathe',E("J.op")=='lturn'&&E("isLT(S.m[S.cur].type)"));
+ E("r89go(1)");await sl(120);log('lathe step 4: values on the tour job only',E("J.p['Bar Ø'].v")!=null&&/X is a diameter/.test(d.querySelector('#r89').textContent));
+ E("r89go(1)");await sl(80);log('lathe tour reaches the Editor checks',!!d.querySelector('.r89spot#ck')||!!d.querySelector('#ck.r89spot'));
+ E("r89close()");await sl(60);log('lathe tour leaves no data either',LS()==before&&E("S.jobs.length")==jobs0&&E("S.cur")==cur0&&E("JSON.stringify(S.m)")==m0);
+ log('storage writes work again after the tour',(w.localStorage.setItem('x89','1'),w.localStorage.getItem('x89')=='1'));w.localStorage.removeItem('x89');E("drClear()");
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>
