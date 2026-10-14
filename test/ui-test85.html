@@ -25,6 +25,29 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  E("J=null;tab('new');$('#q').value='G54 T1 rectangular pocket 2 x 1 corner r 0 cutter 0.25 0.5 deep stepdown 0.1 center x0 y0 z0 0';go()");log('(d) Swiss Tool number given with Turn tool',E("(()=>{const j=Object.assign({},J,{op:'swiss',p:Object.assign({},J.p,{'Turn tool':{v:1}}),code:J.code||['%']});try{return checks(j).find(x=>x[0]=='Tool number given')[1]===true}catch(e){return 'ERR '+e.message}})()")===true,E("(()=>{const j=Object.assign({},J,{op:'swiss',p:Object.assign({},J.p,{'Turn tool':{v:1}}),code:J.code||['%']});try{return JSON.stringify(checks(j).find(x=>x[0]=='Tool number given'))}catch(e){return 'ERR '+e.stack}})()"));
  log('(e) only Tombstone hidden on 3-axis Mill A',E(`(()=>{S.cur=${A};return !jAvail('tomb')})()`));
  log('layout: tabs scroll at narrow widths (CSS present)',/max-width:360px/.test(E("$('#r94css').textContent")));
+
+ // Round 95
+ const vis=re=>E(`[...document.querySelectorAll('#v .set,#v .chip')].filter(e=>e.offsetParent&&${re}.test(e.textContent)).length`);
+ E(`edit(${B})`);await sl(30);log('R95 Mill B setup hides Pallet change code',vis('/Pallet change code/')==0);log('R95 Mill B setup keeps Rotary axis',vis('/Rotary axis/')>0);
+ E(`(()=>{const m=S.m[${B}];m.opt.pallet=true;edit(${B})})()`);await sl(30);log('R95 Pallet row returns when Pallet changer ticked',vis('/Pallet change code/')>0);E(`delete S.m[${B}].opt.pallet;save()`);
+ E("tab('machines');document.querySelectorAll('details.mchips').forEach(d=>d.open=true)");await sl(30);
+ const card=n=>E(`(()=>{const d=[...document.querySelectorAll('details.mchips')].find(d=>d.closest('.card').textContent.includes('${n}'));return [...d.querySelectorAll('.chip')].filter(c=>c.offsetParent).map(c=>c.textContent).join('|')})()`);
+ log('R95 Machines list: Mill A hides rotary/brake/pallet',!/Rotary|brake|Pallet change/.test(card('Mill A')));
+ log('R95 Machines list: Mill B hides only pallet',/Rotary axis/.test(card('Mill B'))&&!/Pallet change/.test(card('Mill B')));
+ E(`S.cur=${A}`);set('Control','Haas NGC-style');E(`J=null;tab('new');$('#q').value='G54 T1 rectangular pocket 2 x 1 corner r 0 cutter 0.25 0.5 deep stepdown 0.1 center x0 y0 z0 0';go()`);log('R95 path present',E('(J.M||J.moves||[]).length')>0);
+ E("J.p.Depth={v:null};show()");log('R95 cleared value drops toolpath',E('J.code==null&&!(J.M||J.moves||[]).length'));
+
+ // mc-v96 (4)(5): visibility from type + options only
+ const mk=(n,ax4)=>E(`(()=>{const m=JSON.parse(JSON.stringify(S.m[${A}]));m.name=${JSON.stringify(n)};m.type='VMC';m.opt=Object.assign({},m.opt,{ax4:${ax4}});delete m.opt.pallet;const x=m.s.find(x=>x.k=='Rotary axis');if(x){x.v='A';x.st='user'};S.m.push(m);save();return S.m.length-1})()`);
+ const rowsV=i=>E(`(()=>{edit(${i});return [...V.querySelectorAll('.set')].filter(s=>s.offsetParent).map(s=>(s.querySelector('span')||{}).textContent||'').filter(t=>/Rotary axis|Rotary direction|4th-axis brake|Pallet change code/.test(t)).join('|')})()`);
+ const optsV=i=>E(`(()=>{edit(${i});return ['4th axis','Full 5-axis','Pallet changer','Tombstone','Cylindrical interpolation'].every(n=>[...V.querySelectorAll('label.set')].some(l=>l.offsetParent&&l.textContent.includes(n)))})()`);
+ const X=mk('Demo 4X VMC',true);log('4X VMC with 4th ticked shows rotary rows',/Rotary axis/.test(rowsV(X)));
+ E(`S.m[${X}].opt.ax4=false;save()`);log('untick 4th hides rotary rows',!/Rotary|brake/.test(rowsV(X)));log('untick keeps saved value',E(`S.m[${X}].s.find(x=>x.k=='Rotary axis').v`)=='A');log('options stay visible after untick',optsV(X));
+ E(`S.m[${X}].opt.ax4=true;save()`);log('re-tick brings rotary rows back',/Rotary axis/.test(rowsV(X)));
+ for(const n of ['HMC-style fixture','4th op mill']){const i=mk(n,false);log(`'${n}' (3-axis type) shows no rotary/pallet rows`,rowsV(i)==='',rowsV(i));log(`'${n}' options visible`,optsV(i));log(`'${n}' rotary jobs hidden`,!E(`(()=>{S.cur=${i};return jAvail('index')})()`))}
+ E("S.m.splice(-3);save()");
+ E(`S.cur=${A};J=null;tab('new');$('#q').value='G54 T1 rectangular pocket 2 x 1 corner r 0 cutter 0.25 0.5 deep stepdown 0.1 center x0 y0 z0 0';go()`);
+ log('(5) NaN message names only the bad field',E("(()=>{const j=Object.assign({},J,{p:Object.assign({},J.p,{Depth:{v:NaN},Mode:{v:'climb'},Text:{v:'AB'}})}),g={code:['G01 ZNaN'],r92bad:['Some address words have no valid number: line 1: “ZNaN”. Check the values you typed.']};r92code(j,g);const m=g.r92bad.find(x=>/no valid number/.test(x));return /field Depth/.test(m)&&!/Mode|Text/.test(m)})()"));
  E("J=null;drClear()");log('no console errors',!errs.length,errs.join('|'));
  o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
 </script></body></html>

@@ -48,7 +48,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('R14 editor lint flags XNaN',E("lintLine('G01 XNaN Y1.',0).some(x=>/not a number/.test(x[1]))"));
  E("edit(S.cur)");log('R1 travel inputs on machine screen',E("!!document.querySelector('#r93trv input[data-r93t]')"));
  E("(()=>{const i=document.querySelector('#r93trv input');i.value='30';i.onchange()})()");log('R1 travel saved as yours',E("S.m[S.cur].s.find(x=>x.k=='X travel').st")=='user');
- log('R8 3-axis hides 5-axis/pallet rows',E("[...V.querySelectorAll('label.set')].filter(l=>/Pallet changer|Full 5-axis/.test(l.textContent)).every(l=>l.style.display=='none')"));
+ log('R8 3-axis keeps option checkboxes visible (re-tickable)',E("[...V.querySelectorAll('label.set')].filter(l=>/Pallet changer|Full 5-axis/.test(l.textContent)).every(l=>l.style.display!='none')"));
  log('R10 control picker full width',E("[...V.querySelectorAll('select.r92pick')].every(s=>s.style.width=='100%')"));
  log('R8 tombstone job hidden on 3-axis',!E("jAvail('tomb')"));
  E("calc()");E("[['b1','4'],['b2','2'],['b3','0'],['b4','0'],['b5','0']].forEach(([i,v])=>{const e=$('#'+i);e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}))})");await sl(50);log('R12 bolt calc shows no -0.0000',!/-0\.0000/.test(E("$('#bo').innerText")));
