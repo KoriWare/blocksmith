@@ -23,7 +23,7 @@ textarea,input,select{width:100%;background:#0a0a0a;color:#eee;border:1px solid 
 .ln{white-space:pre;padding:0 8px;border-left:3px solid #ffd21f;outline:none}.ln.cur{background:#3a3200!important}.ln.u{border-left-color:#ff5fa2;background:#2a1020}
 .tabs{position:fixed;bottom:0;left:0;right:0;display:flex;background:#1c1c1c;border-top:1px solid #333}
 .tabs button{flex:1;background:none;border:0;color:#999;padding:14px;font-size:14px;font-weight:700}.tabs button.on{color:#ffd21f}
-.foot{font-size:12px;color:#ff8a8a;margin-top:8px}canvas{width:100%;height:300px;background:#0a0a0a;border-radius:12px;touch-action:none;display:block}
+.foot{font-size:12px;color:#ff8a8a;margin-top:8px}canvas{width:100%;height:354px;background:#0a0a0a;border-radius:12px;touch-action:none;display:block}#cv{height:354px}
 .row{display:flex;gap:6px;flex-wrap:wrap}.row button{flex:1}.hid{display:none}label{font-size:14px}
 .set{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #2a2a2a;font-size:14px}
 .hc{color:#7d7d7d}.hv{color:#ff9fd0}.hk{color:#ffd21f;font-weight:700}.hg{color:#14b8a6}.hn{color:#9aa4ff}
@@ -35,7 +35,7 @@ textarea,input,select{width:100%;background:#0a0a0a;color:#eee;border:1px solid 
 .chip{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
 .tabs button{padding:14px 2px;font-size:12.5px}.ico{width:18px;height:18px;vertical-align:-3px;margin-right:5px}#mode .ico{width:14px;height:14px;margin-right:3px}
 #out[data-view=edit] .simonly{display:none!important}#out[data-view=sim] .edonly{display:none!important}
-#pbar{position:sticky;bottom:52px;z-index:4;background:#111;padding:6px 0;border-top:1px solid #333}#simcode pre div.cur{background:#3a3200}#simcode pre{height:calc(6 * 1.55em + 12px);overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;box-sizing:border-box}#simcode pre div{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;white-space:pre-wrap}
+#pbar{position:sticky;bottom:52px;z-index:4;background:#111;padding:6px 0;border-top:1px solid #333}#simcode pre div.cur{background:#3a3200}#simcode pre{height:calc(3 * 1.55em + 12px);overflow:hidden;white-space:nowrap;box-sizing:border-box}#simcode pre div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #qhelp{position:fixed;right:10px;bottom:66px;z-index:30;width:36px;height:36px;border-radius:50%;border:1px solid #444;background:#1c1c1c;color:#ffd21f;font-weight:800;font-size:16px;opacity:.85}
 .cat-mark{height:1.25em;width:auto;vertical-align:-.25em;margin-right:6px}
 #pmkey{position:fixed;right:10px;bottom:110px;z-index:120;width:44px;height:44px;border-radius:10px;border:1px solid var(--bd2,#444);background:var(--sf,#1c1c1c);color:var(--ac,#ffd21f);font-size:22px;font-weight:800}#pmkey[hidden]{display:none}
@@ -310,12 +310,12 @@ function time(m,rr){let s=0;const L=J.lathe,mx=+((sv('Max RPM (G50)')||{v:3000})
 function copy(){navigator.clipboard?.writeText(txt().join('\n'));$('#cp').textContent='Copied ✓'}
 // ---------- view
 const view={rx:-0.9,rz:-0.6,s:1,n:0,rev:0};let cv,ctx,pl;
-function initCv(){cv=$('#cv');const d=devicePixelRatio||1;cv.width=cv.clientWidth*d;cv.height=300*d;ctx=cv.getContext('2d');ctx.scale(d,d);vw(J.lathe?'iso2':'iso');
+function initCv(){cv=$('#cv');const d=devicePixelRatio||1,H=cv.clientHeight||354;cv.width=cv.clientWidth*d;cv.height=H*d;ctx=cv.getContext('2d');ctx.scale(d,d);vw(J.lathe?'iso2':'iso');
  let dr=null;cv.onpointerdown=e=>dr=[e.clientX,e.clientY];onpointerup=()=>dr=null;cv.onpointermove=e=>{if(!dr||(J.lathe&&!view.rev))return;view.rz+=(e.clientX-dr[0])/100;view.rx+=(e.clientY-dr[1])/100;dr=[e.clientX,e.clientY];draw()}}
 function rev(){view.rev=!view.rev;const b=$('#rv');if(b)b.textContent=view.rev?'Flat X–Z':'Revolve 3D';vw(view.rev?'iso2':'fit')}
 function vw(k){if(k=='top')view.rx=0,view.rz=0;if(k=='front')view.rx=-Math.PI/2,view.rz=0;if(k=='iso')view.rx=-0.9,view.rz=-0.6;if(k=='iso2')view.rx=-1.2,view.rz=0.9;
- const st=J.stock;view.c=[(st[0]+st[3])/2,(st[1]+st[4])/2,(st[2]+st[5])/2];view.s=Math.min(cv.clientWidth,300)*0.75/Math.max(st[3]-st[0],st[4]-st[1],st[5]-st[2],2.5);
- if(J.lathe){const b=J.lb,zs=b.L+b.z+1.2,rs=b.R+1.2;view.fs=Math.min((cv.clientWidth-20)/zs,280/rs);view.fz=b.z+0.6;view.fr=b.R+0.9}draw()}
+ const st=J.stock;view.c=[(st[0]+st[3])/2,(st[1]+st[4])/2,(st[2]+st[5])/2];view.s=Math.min(cv.clientWidth,cv.clientHeight||354)*0.75/Math.max(st[3]-st[0],st[4]-st[1],st[5]-st[2],2.5);
+ if(J.lathe){const b=J.lb,zs=b.L+b.z+1.2,rs=b.R+1.2;view.fs=Math.min((cv.clientWidth-20)/zs,((cv.clientHeight||354)-20)/rs);view.fz=b.z+0.6;view.fr=b.R+0.9}draw()}
 function P(p){if(J.lathe&&!view.rev)return[10+(view.fz-p[2])*view.fs*-1+ (cv.clientWidth-20) ,0].map((v,i)=>i?20+(view.fr-p[0])*view.fs:cv.clientWidth-10-(view.fz-p[2])*view.fs);
  let x=p[0]-view.c[0],y=p[1]-view.c[1],z=p[2]-view.c[2];const cz=Math.cos(view.rz),sz=Math.sin(view.rz);[x,y]=[x*cz-y*sz,x*sz+y*cz];const cx=Math.cos(view.rx),sx=Math.sin(view.rx);[y,z]=[y*cx-z*sx,y*sx+z*cx];return[cv.clientWidth/2+x*view.s,150-y*view.s]}
 const rot=(p,a)=>[p[0]*Math.cos(a),p[0]*Math.sin(a),p[2]];
@@ -449,13 +449,13 @@ function alarmPreview(){const t=txt(),out=[];t.forEach((l,i)=>{const m=l.match(/
  const a=J.run&&J.run.alarms[0];return `<div class="t">Alarm preview</div>${out.join('')}<div class="s" style="margin-top:6px">This run: ${a?'<span style="color:#ff8a8a">stops at alarm '+a.n+' (line '+(a.l+1)+')</span>':'no alarm fires ✓'}</div>`}
 // ---------- view: fit / pan / zoom
 function vw(k){if(k=='top')view.rx=0,view.rz=0;if(k=='front')view.rx=-Math.PI/2,view.rz=0;if(k=='iso')view.rx=-0.9,view.rz=-0.6;if(k=='iso2')view.rx=-1.2,view.rz=0.9;view.px=0;view.py=0;
- const st=J.stock,M=J.M||J.moves;view.c=[(st[0]+st[3])/2,(st[1]+st[4])/2,(st[2]+st[5])/2];view.s=Math.min(cv.clientWidth,300)*0.8/Math.max(Math.hypot(st[3]-st[0],st[4]-st[1],st[5]-st[2])*(J.rot||(!J.lathe&&rotAx())?1.35:1),2.5);
+ const st=J.stock,M=J.M||J.moves;view.c=[(st[0]+st[3])/2,(st[1]+st[4])/2,(st[2]+st[5])/2];view.s=Math.min(cv.clientWidth,cv.clientHeight||354)*0.8/Math.max(Math.hypot(st[3]-st[0],st[4]-st[1],st[5]-st[2])*(J.rot||(!J.lathe&&rotAx())?1.35:1),2.5);
  if(J.lathe){let z0=st[2],z1=st[5],r1=J.lb.R;M.forEach(m=>[m.a,m.b].forEach(p=>{z0=Math.min(z0,p[2]);z1=Math.max(z1,p[2]);r1=Math.max(r1,p[0])}));z1+=0.25;z0-=0.15;r1+=0.8;const r0=-0.15;
-  view.fs=Math.min((cv.clientWidth-20)/(z1-z0),270/(r1-r0));view.fz=z1;view.fz0=z0;view.fr=r1;view.fx=10+((cv.clientWidth-20)-(z1-z0)*view.fs)/2}draw()}
+  view.fs=Math.min((cv.clientWidth-20)/(z1-z0),((cv.clientHeight||354)-20)/(r1-r0));view.fz=z1;view.fz0=z0;view.fr=r1;view.fx=10+((cv.clientWidth-20)-(z1-z0)*view.fs)/2}draw()}
 function P(p){if(J.lathe&&!view.rev)return[view.fx+(p[2]-view.fz0)*view.fs+view.px,15+(view.fr-p[0])*view.fs+view.py];
  let x=p[0]-view.c[0],y=p[1]-view.c[1],z=p[2]-view.c[2];const cz=Math.cos(view.rz),sz=Math.sin(view.rz);[x,y]=[x*cz-y*sz,x*sz+y*cz];const cx=Math.cos(view.rx),sx=Math.sin(view.rx);[y,z]=[y*cx-z*sx,y*sx+z*cx];return[cv.clientWidth/2+x*view.s+view.px,150-y*view.s+view.py]}
 function zoom(f){view.s*=f;if(view.fs)view.fs*=f;draw()}
-function initCv(){cv=$('#cv');const d=devicePixelRatio||1;cv.width=cv.clientWidth*d;cv.height=300*d;ctx=cv.getContext('2d');ctx.scale(d,d);view.px=view.py=0;vw(J.lathe?'fit':'iso');
+function initCv(){cv=$('#cv');const d=devicePixelRatio||1,H=cv.clientHeight||354;cv.width=cv.clientWidth*d;cv.height=H*d;ctx=cv.getContext('2d');ctx.scale(d,d);view.px=view.py=0;vw(J.lathe?'fit':'iso');
  let dr=null;cv.onpointerdown=e=>dr=[e.clientX,e.clientY,e.shiftKey];onpointerup=()=>dr=null;cv.onwheel=e=>{e.preventDefault();zoom(e.deltaY<0?1.15:1/1.15)};
  cv.onpointermove=e=>{if(!dr)return;const dx=e.clientX-dr[0],dy=e.clientY-dr[1];if((J.lathe&&!view.rev)||view.pan){view.px+=dx;view.py+=dy}else{view.rz+=dx/100;view.rx+=dy/100}dr=[e.clientX,e.clientY];draw()}}
 // ---------- tool library (§5)
@@ -758,7 +758,7 @@ function drawHMC(){ctx.clearRect(0,0,cv.width,cv.height);const s=J.stock,M=J.M||
  [['X',[1,0,0]],['Y',[0,1,0]],['Z',[0,0,1]]].forEach(([k,dv])=>{const p=PM(dv);const dx=p[0]-c0[0],dy=p[1]-c0[1],m=Math.hypot(dx,dy)||1;if(m/view.s<0.3){ctx.fillStyle=C3[k];ctx.beginPath();ctx.arc(gx,gy,4,0,7);ctx.fill();ctx.fillText(k,gx+6,gy+14);return}arrow([gx,gy],[gx+dx/m*g,gy+dy/m*g],C3[k],k,1)});
  const el=$('#tpos');if(el&&cur){const t=PT(cur.b),f=x=>{x*=KU();return(x>=0?' ':'')+x.toFixed(KU()>1?3:4)};el.innerHTML=`Tool at <b style="color:${C3.X}">X${f(t[0])}</b> <b style="color:${C3.Y}">Y${f(t[1])}</b> <b style="color:${C3.Z}">Z${f(t[2])}</b> <b style="color:#ff9f1a">B${th.toFixed(1)}°</b> · line ${cur.l+1}`}}
 const _draw8=draw;draw=function(){if(J&&J.hmc&&cv&&ctx)return drawHMC();_draw8()};
-const _vw8=vw;vw=function(k){_vw8(k);if(J&&J.hmc){const s=J.stock;view.c=[0,0,0];view.s=Math.min(cv.clientWidth,300)*0.8/(Math.hypot(s[3]-s[0],s[4]-s[1]+0.6,s[5]-s[2])*1.5);if(k=='iso'||k=='fit'){view.rx=-1.15;view.rz=-0.55}draw()}};
+const _vw8=vw;vw=function(k){_vw8(k);if(J&&J.hmc){const s=J.stock;view.c=[0,0,0];view.s=Math.min(cv.clientWidth,cv.clientHeight||354)*0.8/(Math.hypot(s[3]-s[0],s[4]-s[1]+0.6,s[5]-s[2])*1.5);if(k=='iso'||k=='fit'){view.rx=-1.15;view.rz=-0.55}draw()}};
 
 // ---------- round 8
 OPN.import='Imported program';REQ.import=[];
@@ -779,7 +779,7 @@ const _refresh9=refresh;refresh=function(){_refresh9();if(J.lathe||J.hmc||J.rot|
  J.M.forEach(m=>{if(!m.r&&m.b[2]<s[5]-1e-6&&(m.b[0]<s[0]+r-1e-6||m.b[0]>s[3]-r+1e-6||m.b[1]<s[1]+r-1e-6||m.b[1]>s[4]-r+1e-6)){if(!m.out)n++;m.out=1}});
  if(n){$('#info').insertAdjacentHTML('beforeend',`<div class="s" style="color:#ff8a8a">⚠ ${n} cut move(s) leave the side of the stock (red)</div>`);const ck=$('#cl');ck.insertAdjacentHTML('afterbegin','<div class="s">❌ Cuts stay inside stock sides</div>');if(ctx)draw()}};
 // HMC fit bigger
-const _vw9=vw;vw=function(k){_vw9(k);if(J&&J.hmc){const s=J.stock;view.s=Math.min(cv.clientWidth,300)*1.5/Math.hypot(s[3]-s[0],s[4]-s[1],s[5]-s[2]);view.py=-30;draw()}};
+const _vw9=vw;vw=function(k){_vw9(k);if(J&&J.hmc){const s=J.stock;view.s=Math.min(cv.clientWidth,cv.clientHeight||354)*1.5/Math.hypot(s[3]-s[0],s[4]-s[1],s[5]-s[2]);view.py=-30;draw()}};
 // import button on New screen
 const _nw9=nw;nw=function(){_nw9();const l=document.createElement('label');l.className='btn o';l.style.display='block';l.innerHTML='⬆ Import .nc / .txt into the editor<input type="file" accept=".nc,.txt,.tap,.cnc" style="display:none">';V.querySelector('.btn').after(l);l.querySelector('input').onchange=async e=>{importToEditor(await e.target.files[0].text())}};
 
@@ -834,7 +834,7 @@ const _vw13=vw;vw=function(k){_vw13(k);if(!J||!J.swiss||view.rev||!cv)return;if(
  const sub=sv('Sub spindle'),hasSub=sub&&!/^no|^none|^0/i.test(String(sub.v));
  let z0=-0.45-0.35,z1=Math.max(0.6,ext+0.1);if(hasSub)z1=Math.max(z1,0.02+ext+0.45);
  const W=cv.clientWidth-20,lblIn=0.45;// room for tool / sub spindle labels
- let r1=R+0.95,r0=-R-0.3;view.fs=Math.min(W/(z1-z0+lblIn),270/(r1-r0));view.fz0=z0;view.fz=z1;view.fr=r1;view.fx=10;view.px=0;view.py=0;draw()};
+ let r1=R+0.95,r0=-R-0.3;view.fs=Math.min(W/(z1-z0+lblIn),((cv.clientHeight||354)-20)/(r1-r0));view.fz0=z0;view.fz=z1;view.fr=r1;view.fx=10;view.px=0;view.py=0;draw()};
 function sw2(){const M=J.M||[],n=Math.min(view.n,M.length),m=M[n-1],t=m?m.b:[J.lb.R+0.3,0,0.3],R=J.lb.R,flat=!view.rev;
  const lines=txt();let ca=0;if(m)for(let i=m.l;i>=0;i--){const q=(lines[i]||'').toUpperCase().match(/\bC(-?[\d.]+)/);if(q){ca=+q[1];break}}
  const zb=Math.min(0,t[2])-0.06;// bushing fixed in machine, just behind the cut; bar slides
@@ -868,7 +868,7 @@ const _genS14=genS;genS=function(j){const r=_genS14(j);if(!isNT())return r;j.nt=
  const o=[];let skip=0;c.forEach(x=>{if(/^O9500/.test(x))skip=1;if(skip&&x=='%')skip=0;if(skip)return;if(/^G65 P9500/.test(x)){const st=j.p['Bar Ø'].v,fin=j.p['Finish Ø'].v,len=j.p.Length.v,F=f4(j.p['Feed/rev'].v);o.push(`(OD ROUGH - FULL-LENGTH PASSES, ${GENMM?'1 MM':'0.04'} DIA PER PASS)`);let d=st;while(d>fin+1e-6){d=Math.max(fin,d-C(0.04));o.push(`G00 X${f4(d)}`);o.push(`G01 Z-${f4(len)} F${F}`);o.push(`G01 X${f4(st+C(0.04))}`);o.push('G00 Z0.02')}return}o.push(x)});
  r.code=o;return r};
 const _checks14=checks;checks=function(j){let c=_checks14(j);if(!(j&&j.nt))return c;c=c.filter(x=>!/bushing/i.test(x[0]));const ok=k=>{const x=sv(k);return x&&x.st=='user'};c.push(['Y-axis confirmed (flat uses Y)',ok('Y-axis')],['Sub spindle confirmed for transfer',ok('Sub spindle')]);return c};
-function ntFit(){const R=J.lb.R,L=J.lb.L,W=cv.clientWidth-20;const z0=-L-0.55,z1=0.9+0.45+0.45,r1=R+0.95,r0=-R-0.3;view.fs=Math.min(W/(z1-z0),270/(r1-r0));view.fz0=z0;view.fz=z1;view.fr=r1;view.fx=10;view.px=0;view.py=0;draw()}
+function ntFit(){const R=J.lb.R,L=J.lb.L,W=cv.clientWidth-20;const z0=-L-0.55,z1=0.9+0.45+0.45,r1=R+0.95,r0=-R-0.3;view.fs=Math.min(W/(z1-z0),((cv.clientHeight||354)-20)/(r1-r0));view.fz0=z0;view.fz=z1;view.fr=r1;view.fx=10;view.px=0;view.py=0;draw()}
 // ---- Round 16: lathe probing (G31 + G10), NT second turret + twin timing, backup merge
 OPN.lprobe='Lathe probe (OD / face touch)';REQ.lprobe=['Probe mode','Touch at','Offset #','Write to'];
 Object.assign(UNIT,{'Nominal Ø':'in (expected OD)','Probe at Z':'in','Probe at X':'in Ø','Offset #':'number','Write to':'wear / geometry / work','Probe feed':'in/min','Tol':'in max error'});
@@ -1019,7 +1019,7 @@ const _draw17=draw;draw=function(){const swiss=J&&(J.swiss||J.nt)&&ctx;let ft=nu
  ctx.fillStyle='#ff4fd8';ctx.font='bold 11px -apple-system,sans-serif';ctx.fillText(`G76: ${k} of ${th.length} thread passes${ex>1?' · depth exaggerated ×10':''}`,8,28)};
 const _refresh18=refresh;refresh=function(){_refresh18();if(!J||!J.M||!J.M.some(m=>m.th))return;const i=$('#info');if(!i)return;const d=document.createElement('div');d.className='s';d.innerHTML=`<button class="chip ${view.thx!==0?'y':'gr'}" id="thx">Depth ×10 ${view.thx!==0?'on':'off'}</button> depth exaggerated in the view only, code unchanged`;i.appendChild(d);$('#thx').onclick=()=>{view.thx=view.thx===0?1:0;refresh()}};
 const _vw17=vw;vw=function(k){_vw17(k);if(!J||!J.lathe||view.rev||!J.M||!cv||J.swiss)return;const th=J.M.filter(m=>m.th);if(!th.length)return;const ex=view.thx!==0?10:1,rT=Math.max(...th.map(m=>m.a[0]));let z0=1e9,z1=-1e9,r0=1e9,r1=-1e9;th.forEach(m=>[m.a,m.b].map(p=>[rT-(rT-p[0])*ex,0,p[2]]).forEach(p=>{z0=Math.min(z0,p[2]);z1=Math.max(z1,p[2]);r0=Math.min(r0,p[0]);r1=Math.max(r1,p[0])}));
- z0-=0.1;z1+=0.1;r0-=0.04;r1+=0.06;view.fs=Math.min((cv.clientWidth-20)/(z1-z0),250/(r1-r0));view.fz0=z0;view.fz=z1;view.fr=r1;view.fx=10+((cv.clientWidth-20)-(z1-z0)*view.fs)/2;view.px=0;view.py=0;draw()};
+ z0-=0.1;z1+=0.1;r0-=0.04;r1+=0.06;view.fs=Math.min((cv.clientWidth-20)/(z1-z0),((cv.clientHeight||354)-20)/(r1-r0));view.fz0=z0;view.fz=z1;view.fr=r1;view.fx=10+((cv.clientWidth-20)-(z1-z0)*view.fs)/2;view.px=0;view.py=0;draw()};
 // ---- Round 19: global in | mm. Internals stay in inch; the UI and the written program follow the active units.
 const UKEY='mc_units';let FORCE_IN=0;
 function GUNITS(){return localStorage.getItem(UKEY)==='mm'?'mm':'in'}
@@ -5218,6 +5218,7 @@ LOG.unshift(['3.5 · Oct 13','Programs: every Job manager build is saved per mac
  const rest=HELP.filter(h=>!ORD.includes(h[0])),sorted=ORD.map(G).filter(Boolean);HELP.length=0;HELP.push(...sorted.slice(0,-1),...rest,sorted[sorted.length-1]);
  // aliases for removed ids + '?' routing for screens without a topic
  const AL={ready:'editor',lwo:'offsets'};const _h68=help;help=function(topic){const r=_h68.call(this,AL[topic]||topic);const ft=[...document.querySelectorAll('#v > .s, .s')].find(x=>/Generic Fanuc-style Macro B/.test(x.textContent));if(ft)ft.textContent='Written for this app. Generic Haas / Fanuc 0i-style Macro B; not for any specific machine.';return r};
+ LOG.unshift(['3.8 · Oct 13','Simulate: code pane is a fixed 3-line window (previous · current · next) with long lines ellipsized; the reclaimed height goes to a taller graphics canvas that re-fits the stock.']);
  LOG.unshift(['3.7 · Oct 13','Phone fixes: fixed page width on every screen (wide code/tables scroll inside), tap a red ! again to undo it, 🗑 Delete machine (keep its tools/lists/programs as Unassigned or delete them), switching Build jobs clears the old one, in-app dialogs replace browser pop-ups, the "In use" machine no longer shows a ⭐ that looked like a Favorite, number fields open the number pad (± key for minus), Simulate shows exactly previous · current · next line; tap any job setting chip for a quick edit (pick lists for choices); 🔧 Tools on every machine card and in Build; tool picker on every tool-using job (copy from another machine when empty); Build has swipeable job category tabs + Search jobs in a tidy 2-column grid; the Build button is now called Process Code; Library shows only your saved items.']);
  LOG.unshift(['3.6 · Oct 13','Help review: topics match today\'s screens and button names, work offset and lathe offset merged into one topic, Ready badge folded into Editor, new order from Getting started to Troubleshooting, more troubleshooting (preset list, tool picker, tool copy, Job manager, Programs, DXF, sharing, theme).']);
  const _c68=curTopic;curTopic=function(){const t=$('#ttl').textContent;if(/^Transfer/.test(t))return'export';if(/^Import drawing/.test(t))return'dxf';if(/^Tool library/.test(t))return'tools';if(/^Your data/.test(t))return'backup';return _c68()};
