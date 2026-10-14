@@ -7,8 +7,8 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  E("[...document.querySelectorAll('#jcbar .chip')].find(c=>/Automation/.test(c.textContent)).click()");await sl(50);
  const rb=[...d.querySelectorAll('#jcjobs .chip b')].find(b=>/Robot/.test(b.textContent));log('D24 "(amber: verify)" replaced by an amber dot',rb&&!/amber: verify/.test(rb.textContent)&&!!rb.querySelector('.r79amb'),rb&&rb.innerHTML);
  log('D24 long job names wrap to 2 lines',rb&&w.getComputedStyle(rb).webkitLineClamp=='2'&&w.getComputedStyle(rb).whiteSpace!='nowrap');
- E("pickJob('bolt')");await sl(80);const kids=[...E("V").children];const iJ=kids.indexOf(d.querySelector('#jpbox')),iO=kids.indexOf(d.querySelector('#out')),iP=kids.findIndex(x=>/Process Code/.test(x.textContent)&&x.tagName=='BUTTON');
- log('D21 form right under the job, Process Code below it',iO==iJ+1&&iP>iO,[iJ,iO,iP].join());
+ E("pickJob('bolt')");await sl(80);const kids=[...E("V").children];const iJ=kids.indexOf(d.querySelector('#jpbox')),iO=kids.indexOf(d.querySelector('#out')),iP=kids.findIndex(x=>/Generate Code/.test(x.textContent)&&x.tagName=='BUTTON');
+ log('D21 form right under the job, Generate Code below it',iO==iJ+1&&iP>iO,[iJ,iO,iP].join());
  log('D21 job list folds to one line showing the job',d.querySelector('#jpbox').classList.contains('r79folded')&&/Job: Bolt circle/.test(d.querySelector('#r79fold').textContent)&&!vis(d.querySelector('#jcwrap')));
  d.querySelector('#r79fold').click();log('D21 tap expands the list again',vis(d.querySelector('#jcwrap')));d.querySelector('#r79fold').click();
  log('D22 legend says red = needed',/red = needed/.test(d.querySelector('#out').textContent));

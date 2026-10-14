@@ -20,7 +20,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
   d.querySelector('#r79ctl').value='Fanuc 0i-MF';E("ctlConfirm()");log('C16 Confirm sets Control and clears the red item',E("sv('Control').v=='Fanuc 0i-MF'&&sv('Control').st=='user'"))}else{log('C16 control red item present',false,'none')}
  // C20
  E("tab('new')");d.querySelector('#q').value=E("JB.bolt[1]");E("go()");const zi=E("J.code.findIndex(l=>/^G43/.test(l))");E(`J.edits[${zi}]='G43 H2 Z1.5 M08'`);d.querySelector('#q').value=E("JB.bolt[1]").replace('0.5 deep','0.6 deep');E("go()");await sl(60);
- log('C20 Process Code after a hand edit says new values applied and edits dropped',/New values applied/.test((d.querySelector('#r79pc')||{}).textContent||'')&&/hand edits were dropped/.test(d.querySelector('#r79pc').textContent),(d.querySelector('#r79pc')||{}).textContent);
+ log('C20 Generate Code after a hand edit says new values applied and edits dropped',/New values applied/.test((d.querySelector('#r79pc')||{}).textContent||'')&&/hand edits were dropped/.test(d.querySelector('#r79pc').textContent),(d.querySelector('#r79pc')||{}).textContent);
  d.querySelector('#r79putback').click();log('C20 "Put my edits back" re-applies them on the new code',E(`J.edits[${zi}]=='G43 H2 Z1.5 M08'`)&&/0\.6|Z0\.6/.test(E("txt().join(' ')")));
  // C19
  E("S.jobs.push({name:'Orphan',op:'bolt',p:JSON.parse(JSON.stringify(J.p)),edits:{},code:J.code,machine:'Gone Mill',mid:12345,date:1,versions:[]});save()");E("reopen(S.jobs.length-1)");await sl(60);log('C19 job whose machine was deleted shows a notice',/Its machine was deleted/.test(d.querySelector('#out').innerText));

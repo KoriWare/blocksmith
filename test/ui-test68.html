@@ -15,7 +15,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  E("tab('new')");d.querySelector('#q').value=E("JB.bolt[1]");E("S.cur=1");E("go()");E("S.jobs.unshift({...JSON.parse(JSON.stringify(J)),name:'OJ',machine:S.m[1].name,date:Date.now(),versions:[]});save()");log('13 saved job binds to machine id',E("S.jobs[0].mid==S.m[1].id"));
  E("const nm=S.m[1].name;delMgo(1,1);S.m[0].name='tmp';S.m[1].name=nm;save();S.cur=0");E("reopen(0)");await sl(150);log('13 deleted machine still warns when another has its name',!!d.querySelector('#r79orph'));
  // 14 red Control
- E("const c=S.m[S.cur].s.find(x=>x.k=='Control');c.v='';c.st='confirm';save()");E("tab('new')");d.querySelector('#q').value=E("JB.bolt[1]");E("go()");await sl(50);const sm=d.querySelector('.r79sm');log('14 Process Code with red Control says so + link',sm&&/Control/.test(sm.textContent)&&!!sm.querySelector('a'),sm&&sm.textContent);
+ E("const c=S.m[S.cur].s.find(x=>x.k=='Control');c.v='';c.st='confirm';save()");E("tab('new')");d.querySelector('#q').value=E("JB.bolt[1]");E("go()");await sl(50);const sm=d.querySelector('.r79sm');log('14 Generate Code with red Control says so + link',sm&&/Control/.test(sm.textContent)&&!!sm.querySelector('a'),sm&&sm.textContent);
  log('14 setupMiss lists Control',E("setupMiss().join()").includes('Control'));
  // 15 tools header
  E("tlOpenFor(1)");await sl(80);const nm1=E("S.m[1].name");log('15 Tools for another machine: header + Showing match it',d.querySelector('#ttl').textContent.includes(nm1)&&[...d.querySelectorAll('#v .s')].some(x=>x.textContent.includes('Showing '+nm1)),d.querySelector('#ttl').textContent);

@@ -102,7 +102,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   const narrow=gb.filter(b=>!b.classList.contains('wide')).map(b=>Math.round(b.getBoundingClientRect().width));log('non-wide chips equal width; long ones full width',new Set(narrow).size==1&&gb.some(b=>b.classList.contains('wide')&&/Zero point/.test(b.textContent)));
   log('chips keep label + value and colors, still tap-to-edit',gb.every(b=>b.querySelector('small')&&b.querySelector('b')&&/chip (y|gr|r|g)/.test(b.className)&&/^ed\(/.test(b.getAttribute('onclick'))));
   const jg=[...d.querySelectorAll('#jcjobs>button')].map(b=>Math.round(b.getBoundingClientRect().height));log('job buttons uniform height',jg.length>0&&new Set(jg).size==1);
-  log('Build button renamed to Process Code (no Make my macro left)',!/Make my macro/i.test(d.documentElement.innerHTML+[...d.scripts].map(s=>s.textContent).join(''))&&[...d.querySelectorAll('button')].some(b=>b.textContent.trim()=='Process Code'&&b.offsetParent));
+  log('Build button renamed to Generate Code (no Make my macro left)',!/Make my macro/i.test(d.documentElement.innerHTML+[...d.scripts].map(s=>s.textContent).join(''))&&[...d.querySelectorAll('button')].some(b=>b.textContent.trim()=='Generate Code'&&b.offsetParent));
   log('Help explains the category tabs',/category tabs/.test(E("HELP.find(x=>x[0]=='build')[2]()")));
   // 15 Library: no sample chips
   E("tab('recent')");log('Library shows no sample/demo chips',!d.querySelector('#v [onclick^="sample("]'));
