@@ -5675,6 +5675,16 @@ function r87rows(){try{if(!/^Tool/.test(($('#ttl')||{}).textContent||''))return;
  ['n','dia'].forEach(f=>{if(bf.has(f))return;const el=V.querySelector(`input[data-f="${f}"][data-i="${i}"]`);if(!el||String(el.value).trim()!==String(f=='dia'?(t.dia!=null?+(t.dia*KU()).toFixed(4):''):(t.n??'')))return;el.style.outline='';el.removeAttribute('aria-invalid');const w=card.querySelector(`.r83err[data-for="${f}${i}"]`);if(w)w.remove()});
  card.classList.toggle('r83badtool',!!bad.length)});const n=r83badCount(m),b=$('#r83tlbad');if(!n&&b)b.remove();else if(n&&b)b.textContent=`⚠ ${n} tool${n>1?'s have':' has'} bad saved data (marked red) — jobs can't use ${n>1?'them':'it'} until fixed.`;r83markBtns()}catch(e){}}
 window.addEventListener('change',e=>{const el=e.target;if(el&&el.dataset&&el.dataset.i!=null&&el.dataset.f)setTimeout(r87rows,0)});
+// R88 Build: once a job is open the picker (tabs, job grid, search) folds into one bar '▸ Category · Job — Change'; tap expands with that job's tab selected
+function r88cat(){try{const gs=jcGroups();if(J&&J.r88cat&&gs.some(g=>g[0]==J.r88cat))return J.r88cat;const g=gs.find(g=>g[0]==S.jtab&&g[1].some(([v])=>jcOn(v)))||gs.find(g=>g[1].some(([v])=>jcOn(v)));return g?g[0]:''}catch(e){return ''}}
+function r88bar(){try{const jb=$('#jpbox'),fb=$('#r79fold');if(!jb||!fb||typeof J=='undefined'||!J||!J.op)return;const folded=jb.classList.contains('r79folded'),cat=r88cat();
+ fb.innerHTML=`<span>${folded?'▸':'▾'} ${cat?esc(cat)+' · ':''}<b>${esc(r79name(J.op))}</b></span><span class="s">${folded?'Change':'Hide'}</span>`;fb.setAttribute('aria-expanded',String(!folded));fb.setAttribute('aria-label',(cat?cat+' · ':'')+r79name(J.op)+(folded?' — Change job':' — Hide job picker'));
+ fb.onclick=()=>{const o=jb.classList.toggle('r79folded');if(!o){const c=r88cat();if(c&&S.jtab!==c){S.jtab=c;save()}const q=$('#jcq');if(q&&q.value){q.value=''}try{jcRender()}catch(e){}}r88bar()}}catch(e){}}
+{const _pj88=pickJob;pickJob=function(){const r=_pj88.apply(this,arguments);try{const jb=$('#jpbox');if(jb&&J&&J.op&&$('#r79fold'))jb.classList.add('r79folded');r88bar()}catch(e){}return r}}
+{const _s88=show;show=function(){const r=_s88.apply(this,arguments);r88bar();return r}}
+{const _t88=tab;tab=function(){const r=_t88.apply(this,arguments);r88bar();return r}}
+{const _r88=refresh;refresh=function(){const r=_r88.apply(this,arguments);r88bar();return r}}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#jcbody [data-op]');if(!b)return;const q=(($('#jcq')||{}).value||'').trim();window.R88CAT=q?null:S.jtab;setTimeout(()=>{try{if(J&&J.op){if(window.R88CAT)J.r88cat=window.R88CAT;else delete J.r88cat;window.R88CAT=null;r88bar()}}catch(x){}},0)},true);
 
 /* R79-END */</script>
 </body></html>
