@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>BlockSmith with Macro B</title><meta name="apple-mobile-web-app-title" content="BlockSmith"><meta name="application-name" content="BlockSmith"><link rel="manifest" href="manifest.json"><link rel="icon" type="image/svg+xml" href="icons/a.svg"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><meta name="theme-color" content="#ffd21f">
 <style>
-*{box-sizing:border-box}body{margin:0;background:#111;color:#eee;font-family:-apple-system,Helvetica,Arial,sans-serif;padding-bottom:70px}
+*{box-sizing:border-box}body{margin:0;background:#111;color:#eee;font-family:-apple-system,Helvetica,Arial,sans-serif;padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
 .h{background:#ffd21f;color:#111;padding:14px 16px;font-weight:800;font-size:19px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
 .h .hr{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .units{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;border:1px solid #111;border-radius:999px;padding:2px 4px;color:#6b5800;display:flex;align-items:center}
@@ -21,8 +21,8 @@ textarea,input,select{width:100%;background:#0a0a0a;color:#eee;border:1px solid 
 .ok.bad{background:#5a1e1e;color:#ff8a8a}
 .code{background:#0a0a0a;border:1px solid #333;border-radius:12px;font:11.5px/1.55 ui-monospace,Menlo,monospace;max-height:340px;overflow:auto}
 .ln{white-space:pre;padding:0 8px;border-left:3px solid #ffd21f;outline:none}.ln.cur{background:#3a3200!important}.ln.u{border-left-color:#ff5fa2;background:#2a1020}
-.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;background:#1c1c1c;border-top:1px solid #333}
-.tabs button{flex:1;background:none;border:0;color:#999;padding:14px;font-size:14px;font-weight:700}.tabs button.on{color:#ffd21f}
+.tabs{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:0 8px;padding-bottom:env(safe-area-inset-bottom,0px);background:#1c1c1c;border-top:1px solid #333;box-sizing:border-box}
+.tabs button{min-width:0;background:none;border:0;color:#999;padding:16px 1px;min-height:48px;font-size:11px;font-weight:700;text-align:center;line-height:1.15;overflow:hidden;white-space:nowrap}.tabs button.on{color:#ffd21f}
 .foot{font-size:12px;color:#ff8a8a;margin-top:8px}canvas{width:100%;height:354px;background:#0a0a0a;border-radius:12px;touch-action:none;display:block}#cv{height:354px}
 .row{display:flex;gap:6px;flex-wrap:wrap}.row button{flex:1}.hid{display:none}label{font-size:14px}
 .set{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #2a2a2a;font-size:14px}
@@ -33,7 +33,7 @@ textarea,input,select{width:100%;background:#0a0a0a;color:#eee;border:1px solid 
 #cv.fs{position:fixed;inset:0;width:100vw!important;height:100vh!important;z-index:60;background:#0a0a0a}#fsx{position:fixed;top:10px;right:10px;z-index:61}
 .diff .dm{color:#ff8a8a;background:#2a0d0d;white-space:pre}.diff .dp{color:#7ee2b8;background:#0d2a1f;white-space:pre}
 .chip{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
-.tabs button{padding:14px 2px;font-size:12.5px}.ico{width:18px;height:18px;vertical-align:-3px;margin-right:5px}#mode .ico{width:14px;height:14px;margin-right:3px}
+.tabs button{padding:16px 1px;font-size:11px;min-height:48px}.ico{width:18px;height:18px;vertical-align:-3px;margin-right:5px}#mode .ico{width:14px;height:14px;margin-right:3px}
 #out[data-view=edit] .simonly{display:none!important}#out[data-view=sim] .edonly{display:none!important}
 #pbar{position:static;background:#111;padding:6px 0;border-top:1px solid #333}#simcode pre div.cur{background:#3a3200}#simcode{padding:6px 10px}#simcode pre{height:calc(3 * 1.55em + 12px);overflow:hidden;white-space:nowrap;box-sizing:border-box}#simcode pre div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #qhelp{position:fixed;right:10px;bottom:66px;z-index:30;width:36px;height:36px;border-radius:50%;border:1px solid #444;background:#1c1c1c;color:#ffd21f;font-weight:800;font-size:16px;opacity:.85}
