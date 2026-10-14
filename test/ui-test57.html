@@ -5,7 +5,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
  if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
  const errs=[];w.onerror=m=>errs.push(String(m));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
  w.alert=w.confirm=w.prompt=()=>null;
- setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");
+ setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");w.UIA.prompt=()=>"1";/* R92: ~lc samples ask for a tool number */
   const types=[['Mill A (demo)',null,0],['VMC','vmc'],['VMC 4th','vmc 4th axis'],['HMC','hmc 4-axis'],['5-axis','5-axis vmc'],['Lathe','lathe'],['Live lathe','lathe live tooling'],['Swiss','swiss lathe'],['Multitask','multitask lathe']];
   let total=0;const dead=[];
   types.forEach(([lab,t,idx])=>{

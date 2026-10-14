@@ -13,7 +13,7 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   w.ex('G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 70 z0 0');
   log('A1 macro body constants round in mm (X[-#7/2-2.5], G00 Z25.)',/X\[-#7\/2-2\.5\]/.test(code())&&/G00 Z25\./.test(code())&&!/27\.94|2\.54\b/.test(code()));
   w.pick('Nakamura-Tome multitasking lathe (generic)','Multitasking lathes');E('S.cur=S.m.length-1');w.tab('new');
-  w.ex('G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 part off 0.125');
+  w.ex('G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 part off 0.125');['Turn tool','Part-off tool'].forEach((k,i)=>{const el=d.querySelector('#out input[data-k="'+k+'"]');if(el)el.value=String(i+1)});w.fill();/* R92: step tools are typed, never defaulted */
   log('A2 comment in active units (1 MM DIA PER PASS)',/1 MM DIA PER PASS/.test(code())&&!/0\.04 DIA/.test(code()));
   log('A1 NT clearance X26. (bar 25 + 1)',/G00 X26\. Z0\.5/.test(code()));
   d.querySelector('#u-in').click();log('A3 toggle back to inch swaps the example text',d.querySelector('#q').value=='G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 part off 0.125'||E('J.text')=='G54 multitask turn 1.0 bar to 0.75 dia 1.5 long z0 0 part off 0.125');

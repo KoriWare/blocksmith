@@ -24,7 +24,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  E(`J.edits[${oi}]=J.code[${oi}].replace('G54','G54.1 P300');refresh()`);log('G54.1 P300 beyond machine caught',fails().some(f=>/Work offset in the code is valid/.test(f)));
  E(`J.edits[${oi}]=J.code[${oi}].replace('G54','G55');refresh()`);log('G55 typed by hand is fine',!fails().some(f=>/Work offset in the code/.test(f)));
  E("J.edits={};refresh()");const left=fails();
- log('remaining fails on the clean program are setup items only',left.every(x=>/Common variables|confirmed|setup/i.test(x)),left.join('|'));E("CK79={n:0,line:-1};gate79()");log('Copy back to normal once checks pass',!/^Fix/.test(d.querySelector('#cp').textContent)&&!d.querySelector('#cp').classList.contains('fixn')&&d.querySelector('#cp').getAttribute('aria-disabled')==null);
+ log('remaining fails on the clean program are setup items only',left.every(x=>/Common variables|confirmed|setup|clears #100/i.test(x)),left.join('|'));E("CK79={n:0,line:-1};gate79()");log('Copy back to normal once checks pass',!/^Fix/.test(d.querySelector('#cp').textContent)&&!d.querySelector('#cp').classList.contains('fixn')&&d.querySelector('#cp').getAttribute('aria-disabled')==null);
  log('ckCode: G01 Z-0.5 then G00 back to Z-0.4 at same XY (peck chip-break) is allowed',E("ckCode(['G90','G00 X1 Y1','G01 Z-0.5 F5','G00 Z0.1','G00 Z-0.4'],{p:{}})[0][1]")===true);
  log('ckCode: G00 Z-0.4 at a new XY is flagged',E("ckCode(['G90','G00 X1 Y1','G01 Z-0.5 F5','G00 Z0.1','G00 X2','G00 Z-0.4'],{p:{}})[0][1]")===false);
  log('ckCode: canned cycle depth not flagged',E("ckCode(['G90 G00 X0 Y0','G81 Z-0.5 R0.1 F5','G80'],{p:{}})[0][1]")===true);

@@ -16,7 +16,7 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   log('Haas: two-block G71 flagged',has(/Haas uses one-block G71/,false));log('Haas: #709 forbidden flagged',has(/#709/,false));
   log('Haas: write to read-only #5061',has(/read-only Haas variables: #5061/,false));log('Haas: G65 integer arg flagged',has(/decimal point \(fix: A1\)/,false));
   log('Haas: dwell P10 = ms shown',has(/P10 = 10 ms/,true));c=CK('O1\n#150=1\nM30');log('Haas: #150 retained, no warning',has(/All #variables valid for Haas/,true)&&!c.some(x=>/clears/.test(x[0])));
-  setC('Fanuc-style');log('generic control: no control-specific checks',CK('O1\n#600=1\nM30').length==0);
+  setC('Maker control (verify)');log('generic control: no control-specific checks',CK('O1\n#600=1\nM30').length==0);
   log('reference shows sourced/verify',E("REFMB.every(x=>/sourced|verify/.test(x.s))")&&E("REFMB.some(x=>x.st=='sourced')"));
  }catch(e){out.push('ERROR '+e.message+' '+(e.stack||'').split('\n')[1])}o.textContent=out.join('\n')},800)};
 </script></body>

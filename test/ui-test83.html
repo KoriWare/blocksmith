@@ -1,0 +1,95 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 92 fix batch: final-code guard, swiss tools/limits/phrases, HMC control picker/B axis/brake/pallet loop, Casey 4-axis, Maria 3-axis --><iframe id="f" src="../index.html?v=92" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const add=(n,g)=>{E(`pick(${JSON.stringify(n)},${JSON.stringify(g)})`);return E('S.cur=S.m.length-1')};
+ const set=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(x){x.v=${JSON.stringify(v)};x.st='user'}else S.m[S.cur].s.push({k:${JSON.stringify(k)},v:${JSON.stringify(v)},st:'user'});save()})()`);
+ const job=(op,vals)=>{E(`J=null;tab('new');pickJob('${op}')`);for(const [k,v] of Object.entries(vals||{})){const el=d.querySelector(`#out [data-k="${k}"]`);if(el)el.value=v}E('fill()')};
+ const code=()=>E("J&&J.code?txt().join('\\n'):''");const bad=()=>(d.querySelector('#r92bad')||{}).textContent||'';
+ // A
+ log('A: NaN / Infinity / empty address words found',E("r92bad(['G01 XNaN Y1.','G00 X Y2.','G01 ZInfinity','G01 X1. (X)']).length")==3);
+ log('A: -0 normalized, -0.05 kept',E("r92neg0('G01 X-0. Z-0.0000 Y-0.05 X-0')")=='G01 X0. Z0.0000 Y-0.05 X0');
+ // C HMC
+ add('Generic HMC w/ pallet','Horizontal mills');E('edit(S.cur)');
+ log('C: Control is a picker on the machine screen',!!d.querySelector('select.r92pick')&&[...d.querySelectorAll('select.r92pick option')].some(o=>/Fanuc 0i-style/.test(o.value)));
+ log('C: Rotary axis is an A/B/C picker',[...d.querySelectorAll('select.r92pick')].some(s=>[...s.options].map(o=>o.value).join()=='A,B,C'||[...s.options].map(o=>o.value).slice(-3).join()=='A,B,C'));
+ log('C: B rotary direction reads about Y',/\+Y end/.test(E("S.m[S.cur].s.find(x=>x.k=='Rotary direction').v")));
+ E("chipTap(S.cur,S.m[S.cur].s.findIndex(x=>x.k=='Control'))");log('E5: confirmed “Fanuc-style” counts as Fanuc',E('ctrlKey()')=='fanuc0i');
+ set('Pallet change code','M60');
+ job('palloop',{'Cycles':'4','Part program':'O1234','Count #':'600'});log('C: Pallet loop accepts O1234',/M98 P1234/.test(code()),bad());
+ log('C: no “- DEMO” in titles',!/DEMO/.test(code()));
+ job('palloop',{'Cycles':'abc','Part program':'0','Count #':'1'});const pe=bad();log('C: all pallet errors listed, not just the first',/Cycles/.test(pe)&&/Part program/.test(pe)&&/Count #/.test(pe),pe);
+ E("J=null;tab('new');pickJob('palloop')");const ins=[...d.querySelectorAll('#out input[data-k]')];
+ log('C: Need-form hints never look like values (no placeholders)',ins.length&&ins.every(i=>!i.placeholder));
+ log('C: number fields get the numeric keypad',ins.every(i=>i.getAttribute('inputmode')=='decimal'));
+ ins[0].value='3';ins[0].dispatchEvent(new w.Event('input',{bubbles:true}));log('E9: Need count updates live while typing',/Need 2 more/.test([...d.querySelectorAll('#out .card .t')].map(t=>t.textContent).join('|')));
+ job('index',{'Faces':'4','Depth':'0.5','Hole X':'1','Hole Y':'0','Z0':'2','Work offset':'G54','Tool':'5'});
+ log('C: B rotary move refused until the brake code is set',!code()&&/brake/i.test(bad()),bad());
+ set('4th-axis brake on / off','M10 / M11');job('index',{'Faces':'4','Depth':'0.5','Hole X':'1','Hole Y':'0','Z0':'2','Work offset':'G54','Tool':'5'});
+ const ic=code();log('C: brake off before / on after the B move',/M11 \(B BRAKE OFF\)\nG00 B/.test(ic)&&/G00 B[^\n]*\nM10 \(B BRAKE ON\)/.test(ic),ic.slice(0,300));
+ log('C: B comment uses X0 Z0 on the B centerline',/X0 Z0 ON B-AXIS CENTERLINE/.test(ic)&&!/Y0 Z0 ON ROTARY/.test(ic));
+ E("J=null;tab('new');pickJob('index')");log('C: B-axis labels (Hole Y along the B axis)',/along the B axis/.test(d.querySelector('#out').textContent));
+ job('index',{'Faces':'2.5','Depth':'0.5','Hole X':'1','Hole Y':'0','Z0':'2','Work offset':'G54','Tool':'5'});log('D: Faces 2.5 refused',!code()&&/Faces/.test(bad()));
+ job('index',{'Faces':'500','Depth':'0.5','Hole X':'1','Hole Y':'0','Z0':'2','Work offset':'G54','Tool':'5'});log('D: Faces 500 refused',!code()&&/Faces/.test(bad()));
+ E("J=null;tab('new');pickJob('rotcl')");log('C: A-only probing cycle refused on a B machine',/written for an A axis/.test(bad()));
+ // Tool library
+ E("tab('new')");E("tools()");log('D: Tool Library from Build keeps Build highlighted',(d.querySelector('.tabs button.on')||{}).dataset.t=='new');
+ E("tlModal('<div class=\"card\"><select id=\"tn_type\"><option>Flat end mill</option><option>Turning insert</option><option>Lathe drill</option></select></div>')");
+ log('D/E7: mill tool type list has no lathe types',![...d.querySelectorAll('#tn_type option')].some(o=>/Turning|Lathe/.test(o.textContent)));
+ E("tab('machines')");log('C: Tool Library popup closes on leaving',!d.querySelector('#tlmod'));
+ // draft banner / machine switch / restore
+ job('palloop',{'Cycles':'4'});E('drSave()');E("tab('new');pickJob('palloop')");log('C: no Restore banner for the job being edited',!d.querySelector('#r79dr'));
+ const hm=E('S.cur');add('Generic 3-axis VMC','Vertical mills');const vm=E('S.cur');E(`S.cur=${hm}`);job('palloop',{'Cycles':'4'});E(`cur(${vm})`);await sl(120);
+ log('D/E11: machine switch says the job moved to a draft',/moved to a draft/.test((d.querySelector('#r79toast')||{}).textContent||''));
+ log('E7: pallet / rotary jobs hidden on a 3-axis mill',E("jAvail('palloop')")===false&&E("jAvail('index')")===false);
+ E(`edit(${vm})`);log('E7: rotary / brake / pallet rows hidden on a 3-axis mill',[...d.querySelectorAll('#v .set')].filter(s=>/Rotary axis|4th-axis brake|Pallet change code/.test(s.textContent)).every(s=>s.style.display=='none'));
+ log('E1: blank X/Y/Z travel fields added (never guessed)',['X','Y','Z'].every(a=>E(`(S.m[S.cur].s.find(x=>x.k=='${a} travel')||{v:'?'}).v`)===''));
+ w.localStorage.setItem('mc_draft',JSON.stringify({J:{op:'swiss',p:{},edits:{}},cur:0,t:Date.now()}));E(`S.cur=${vm}`);let ok=true;try{E('drRestore()')}catch(e){ok=false}await sl(80);log('D: restoring an unavailable draft shows a message, no crash',ok&&/can’t open|gone/.test((d.querySelector('#r79toast')||{}).textContent||''));
+ E('drClear()');
+ // E1 travel check
+ E(`S.cur=${vm}`);job('bolt',{'Holes':'4','Dia':'2','Start°':'0','Depth':'0.25','Tool':'1','Center X':'0','Center Y':'0','Z0':'0','Work offset':'G54'});await sl(50);
+ log('E1: blank travel shows gray “not checked” (not a pass)',/Travel not checked/.test((d.querySelector('#cl')||{}).textContent||''));
+ set('X travel','1');set('Y travel','30');set('Z travel','20');job('bolt',{'Holes':'4','Dia':'2','Start°':'0','Depth':'0.25','Tool':'1','Center X':'0','Center Y':'0','Z0':'0','Work offset':'G54'});await sl(50);
+ log('E1: typed travel checks the moves (2" circle fails 1" X)',/❌ X moves span/.test((d.querySelector('#cl')||{}).textContent||''),(d.querySelector('#cl')||{}).textContent);
+ // B swiss
+ const sw=add('Tsugami Swiss-type (generic)','Swiss-type');set('Control','Fanuc 0i-style');
+ E("J=null;tab('new');ex('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 part off 0.062')");log('B: ~sw1 sample writes no code until step tools are typed',!code()&&/Turn tool/.test(d.querySelector('#out').textContent));
+ E("J=null;tab('new');ex('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 flat 0.05 deep 0.3 long cross drill 0.125 at z-0.55 0.15 deep center drill 0.1 deep part off 0.062')");
+ const tk=['Turn tool','Drill tool','Flat tool','Cross tool','Part-off tool'];log('B: ~sw0 asks a tool for every swiss step',tk.every(k=>d.querySelector(`#out [data-k="${k}"]`)),d.querySelector('#out').textContent.slice(0,300));
+ tk.forEach((k,i)=>{const el=d.querySelector(`#out [data-k="${k}"]`);if(el)el.value=String(i+11)});E('fill()');const sc=code();
+ log('B: typed step tools used, no T0101..T0505 defaults',/T1111/.test(sc)&&/T1515/.test(sc)&&!/T0[1-5]0[1-5]/.test(sc),sc.slice(0,400));
+ const swj=(t)=>{E(`J=null;tab('new');ex(${JSON.stringify(t)})`);tk.forEach((k,i)=>{const el=d.querySelector(`#out [data-k="${k}"]`);if(el)el.value=String(i+1)});E('fill()')};
+ swj('G54 swiss turn -0.5 bar to 0.375 dia 0.8 long z0 0 part off 0.062');log('B: “-0.5 bar” refused with a reason',!code()&&/negative/.test(bad()),bad());
+ swj('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 part off 0');log('B: part-off width 0 refused',!code()&&/blade width/.test(bad()),bad());
+ swj('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 segment 0 part off 0.062');log('B: segment 0 refused',!code()&&/Segment/.test(bad()),bad());
+ swj('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 flat 0.05 deep 0 long part off 0.062');log('B: flat length 0 refused',!code()&&/Flat length/.test(bad()),bad());
+ swj('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 cross drill 0.6 at z-0.5 0.1 deep part off 0.062');log('B: cross drill ≥ bar refused',!code()&&/Cross drill/.test(bad()),bad());
+ swj('G54 swiss turn 0.5 bar to 0.375 dia 999 long z0 0 part off 0.062');log('B: length 999 refused',!code()&&/Length/.test(bad()),bad());
+ swj('G54 swiss turn 12 bar to 10 dia 1 long z0 0 part off 0.062');log('B: unit-scale mismatch warning (12 in bar)',/did you mean mm/.test((d.querySelector('#r92warn')||{}).textContent||''));
+ swj('G54 swiss turn 0.5 bar to -0.375 dia 0.8 long z0 0 part off 0.062');log('B: negative diameter in a phrase refused with a reason',!code()&&/negative/.test(bad()),bad());
+ log('B: “face the part” on a swiss machine → plain lathe job',E("parseL('face the part').op")!='swiss',E("parseL('face the part').op"));
+ log('B: “turn OD to 0.5” → plain lathe job',E("parseL('turn od to 0.5').op")!='swiss');
+ log('B: “center drill” → plain lathe job',E("parseL('center drill 0.1 deep').op")!='swiss');
+ log('B: swiss composite text still → swiss',E("parseL('swiss turn 0.5 bar to 0.4 dia 1 long').op")=='swiss');
+ E("J=null;tab('new');ex('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 part off 0.062')");const zs=[...d.querySelectorAll('#out .set')].find(s=>s.querySelector('[data-k="Z0"]'));log('B: lathe Z0 hint has no 4th-axis text',!zs||!/4th/.test(zs.textContent));
+ E("J=null;tab('new');pickJob('subxfer')");const rs=[...d.querySelectorAll('#out .set')].find(s=>s.querySelector('[data-k="Retract"]')),rp=[...d.querySelectorAll('#out .set')].find(s=>s.querySelector('[data-k="RPM"]'));
+ log('B: sub-spindle Retract / RPM hints fixed',rs&&!/G71/.test(rs.textContent)&&rp&&/rpm/.test(rp.textContent),(rs||{}).textContent+' / '+(rp||{}).textContent);
+ E("J=null;tab('new');pickJob('swiss')");const bi=d.querySelector('#out [data-k="Bar Ø"]');if(bi){bi.value='-0.5';E('fill()')}log('B: form shows the reason for a refused value',/wasn’t accepted/.test(d.querySelector('#out').textContent));
+ w.UIA.prompt=()=>'';E("lcyc('g71')");await sl(50);log('B: ~lc sample writes nothing without a tool number',/type a tool number/.test((d.querySelector('#r79toast')||{}).textContent||''));
+ w.UIA.prompt=()=>'7';E("lcyc('g71')");log('B: ~lc sample uses the typed tool',/T0707/.test(E("txt().join('\\n')"))&&!/T0101/.test(E("txt().join('\\n')")));delete w.UIA.prompt;
+ // D: Haas G47 wrapped engrave
+ add('Haas VF-style VMC (generic)','Vertical mills');E("S.m[S.cur].opt.ax4=1;S.m[S.cur].opt.cyl=0;S.m[S.cur].opt.look=0;save()");set('Control','Haas NGC-style');
+ const g47=(o)=>{E("J=null;tab('new');pickJob('g47w')");const ms=d.querySelector('#out select[data-k="Mode"]');if(ms){ms.value='Text'}E('fill()');const vals=Object.assign({'Text':'ABC','Stock Ø':'2','Start X':'0','Start Y':'0','Text height':'0.25','Depth':'0.01','Return R':'0.1','Tool':'3','Work offset':'G54','Angle':'0'},o||{});for(const [k,v] of Object.entries(vals)){const el=d.querySelector(`#out [data-k="${k}"]`);if(el)el.value=v}E('fill()');for(const [k,v] of Object.entries(o||{}))if(!d.querySelector(`#out [data-k="${k}"]`))E(`J.p[${JSON.stringify(k)}]={v:${JSON.stringify(+v)},g:false};show()`)};
+ g47();log('D: G47 wrap refused until Cylindrical interpolation is ticked',!code()&&/Cylindrical interpolation/.test(d.querySelector('#out').textContent),d.querySelector('#out').textContent.slice(-300));
+ E("S.m[S.cur].opt.cyl=1;save()");g47();log('D: G47 wrap refused until the brake code is set (no assumed M11)',!code()&&/brake/.test(d.querySelector('#out').textContent));
+ set('4th-axis brake on / off','M10 / M11');g47();const gc=code();log('D: no G187 unless smoothing is ticked; brake off / on from your setting',!!gc&&!/G187/.test(gc)&&/M11 \(4TH AXIS BRAKE OFF\)/.test(gc)&&/G107 \(MAPPING OFF\)\nM10 \(4TH AXIS BRAKE ON\)/.test(gc),gc.slice(0,500)+" OUT "+d.querySelector("#out").textContent.slice(-400));
+ E("S.m[S.cur].opt.look=1;save()");g47();log('D: G187 written when smoothing is ticked',/G187/.test(code()));
+ g47({'Depth':'1.5'});log('D: G47 depth ≥ shaft radius refused',!code()&&/Depth/.test(d.querySelector('#out').textContent));
+ g47({'Angle':'999'});log('D: G47 angle 999 refused',!code()&&/Angle/.test(d.querySelector('#out').textContent));
+ g47({'Text height':'0'});log('D: G47 text height 0 refused',!code());
+ // D: no-extension download type (real Chrome download verified separately: file name O5000, no .txt)
+ E("S.m[S.cur].ext=''");log('D: “no extension” download blob is octet-stream (browser adds no .txt)',E("R92.oct=1;new Blob(['x'],{type:'text/plain'}).type")=='application/octet-stream'&&E("new Blob(['x'],{type:'text/plain'}).type")=='text/plain');
+ E("J=null;drClear()");log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

@@ -12,7 +12,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  const so=d.querySelector('#out select[data-k="Work offset"]');so.value=[...so.options].find(o=>o.text=='G54').value;so.dispatchEvent(new Event('change',{bubbles:true}));
  [...d.querySelectorAll('#out button')].find(b=>/Continue/.test(b.textContent)).click();await sl(300);
  const g=blk('O9202');log('O9202 generated from filled groove values',!!g,E("J&&J.op"));log('O9202 guard IF[#4LE0]GOTO97 before the loop + N97 alarm',guarded(g,4),g&&g.join('|'));
- E("pick('Generic Swiss-type','Swiss-type');S.cur=S.m.length-1;tab('new');ex('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 part off 0.062')");await sl(300);
+ E("pick('Generic Swiss-type','Swiss-type');S.cur=S.m.length-1;tab('new');ex('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 part off 0.062')");await sl(200);['Turn tool','Part-off tool'].forEach((k,i)=>{const el=d.querySelector('#out input[data-k="'+k+'"]');if(el)el.value=String(i+1)});E('fill()');await sl(200);/* R92: every swiss step needs its tool */
  const s=blk('O9500');log('O9500 generated on a temporary swiss machine',!!s&&E("S.m.length")==mBefore+1);log('O9500 guard IF[#6LE0]GOTO97 before the loop + N97 alarm',guarded(s,6),s&&s.join('|'));
  E("S.m.splice(S.m.length-1,1);S.cur=0;save()");log('temporary swiss machine removed',E("S.m.length")==mBefore&&!E("S.m.some(m=>/Swiss/.test(m.name))"));
  log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
