@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 106 --><iframe id="f" src="../index.html?v=106" style="width:320px;height:760px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListener('error',e=>errs.push(e.message));const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const sl=t=>new Promise(r=>setTimeout(r,t));
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(async()=>{try{
+ if(step==1){
+  log('1: setup starts at 3%',/^Setup 3% · /.test(E("setupLine(S.m[1])")),E("setupLine(S.m[1])"));
+  E("(()=>{const m=S.m[1];const f=k=>m.s.find(x=>x.k.startsWith(k));[['Max RPM','asdf'],['Rapid','fast!!'],['Probe','TBD']].forEach(([k,v])=>{const x=f(k);x.v=v;x.st='user'});save()})()");step=2;w.location.reload();return}
+ if(step==2){
+  const K=['Max RPM','Rapid rate (in/min)','Probe'];E("cur(1);tab('machines');edit(1)");await sl(60);
+  const line=E("setupLine(S.m[1])");
+  log('1: after reload Setup does not rise from 3% and the junk counts as to confirm + needs fixing',/^Setup 3% · \d+ to confirm \(3 needs fixing\)$/.test(line),line);
+  log('1: all 3 are unconfirmed and flagged',E(`${JSON.stringify(K)}.every(k=>{const x=S.m[1].s.find(y=>y.k==k);return x.st!='user'&&x.r106bad})`));
+  log('1: the top notice lists all 3',E(`(()=>{const t=($('#r99notice')||{}).textContent||'';return ${JSON.stringify(K)}.every(k=>t.includes(k))})()`),E("($('#r99notice')||{}).textContent"));
+  log('1: single blocking count + Need N include all 3',E(`(()=>{NOASK=1;J=null;tab('new');pickJob('ctr');const b=r103block();const t=($('#out .r102mach')||{}).textContent||'';return ${JSON.stringify(K)}.every(k=>b.includes(k))&&new RegExp('Machine: '+b.length+' to confirm').test(t)})()`),E("r103block().join()"));
+  E("cur(1);tab('machines');edit(1)");await sl(40);
+  log('2: Setup shows ONE status line',E("[...V.querySelectorAll('.s')].filter(s=>/^Setup \\d+%/.test(s.textContent.trim())).length")==1);
+  log("2: no floating 'needs a real answer · Open' bar on Setup",E("(()=>{const t=$('#r79toast');return !t||t.hidden||getComputedStyle(t).display=='none'||!/needs a real answer/.test(t.textContent)})()"));
+  log('2: top notice kept',!!E("$('#r99notice')"));
+  log("3: 'Confirm rotary letter' uses the yellow style of 'Open the first'",E("(()=>{const b=[...document.querySelectorAll('#r99notice button')].find(b=>/Confirm rotary letter/.test(b.textContent));const o=$('#r99notice .chip.y');return !b||(b.classList.contains('y')&&!b.classList.contains('r')&&getComputedStyle(b).backgroundColor==getComputedStyle(o).backgroundColor)})()"));
+  E("(()=>{const x=S.m[1].s.find(y=>y.k=='Max RPM');edit(1);const i=document.querySelector('.r99f[data-r99k=\"Max RPM\"] input');i.value='8000';i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('change',{bubbles:true}))})()");await sl(40);
+  log('1: fixing one value clears it from needs fixing',/\(2 needs fixing\)/.test(E("setupLine(S.m[1])"))&&E("S.m[1].s.find(y=>y.k=='Max RPM').st")=='user',E("setupLine(S.m[1])"));
+  // 4: Control picker
+  E("localStorage.removeItem(DRK);J=null;tab('new');pickJob('ctr')");await sl(40);E("$('.r104ctl').click()");await sl(80);
+  E("document.querySelector('.r99f[data-r99k=\"Control\"] .r99w').click()");await sl(40);
+  log('4: Control opens the picker sheet with a gray Done',!!E("$('#r99sheet')")&&E("getComputedStyle($('#r99sheet .done')).backgroundColor")=='rgb(85, 85, 85)');
+  E("[...document.querySelectorAll('#r99sheet .opt')].find(b=>/Haas NGC/.test(b.textContent)).click()");await sl(30);
+  log('4: tapping a row only highlights it; Done turns yellow; nothing saved yet',E("S.m[1].s.find(x=>x.k=='Control').st")!='user'&&!!E("$('#r99sheet .opt.sel')")&&E("getComputedStyle($('#r99sheet .done')).backgroundColor")=='rgb(255, 210, 31)');
+  E("$('#r99sheet .done').click()");await sl(300);E("$('#r103back')&&$('#r103back').click()");await sl(150);
+  log('4: Done saves the Control and the job goes to the v105 draft + Restore card',/Haas NGC/.test(E("S.m[1].s.find(x=>x.k=='Control').v"))&&E("S.m[1].s.find(x=>x.k=='Control').st")=='user'&&E("(drGet()||{J:{}}).J.op")=='ctr'&&!!E("$('#r79dr')"));
+
+ log('no console errors',!errs.length,errs.join('|'));
+  o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL';step=9}
+ }catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1300)};
+</script></body></html>

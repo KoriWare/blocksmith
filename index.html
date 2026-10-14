@@ -6960,6 +6960,31 @@ function r105arrows(){document.querySelectorAll('.r99f').forEach(f=>{const s=f.q
 {const _e=edit;edit=function(){const r=_e.apply(this,arguments);r105arrows();return r}}
 {const _s=show;show=function(){const r=_s.apply(this,arguments);r105arrows();return r}}
 document.addEventListener('change',()=>setTimeout(r105arrows,0),true);
+// ===== mc-v106 =====
+// 1: a saved value with a red ring (junk / placeholder) is UNCONFIRMED everywhere — one sweep feeds Setup %, to-confirm, r103block, Need N and the notice
+function r106junk(m,x){try{if(!x||x.st!='user')return false;const v=String(x.v==null?'':x.v).trim();if(!v||R102PH(v))return false;if(r99ph(v))return true;const sp=r99spec(x.k);if(!sp)return false;return !r99ok(x.k,v,sp)}catch(e){return false}}
+function r106sweep(flag){try{(S.m||[]).forEach(m=>{let ch=false;(m.s||[]).forEach(x=>{if(flag&&r106junk(m,x)){x.st='confirm';x.r99flag=1;x.r106bad=1;ch=true}else if(x.r106bad&&(x.st=='user'||!String(x.v||'').trim())){delete x.r106bad;ch=true}});
+  const bad=(m.s||[]).filter(x=>x.r106bad&&!r103hid(m,x.k)).map(x=>x.k);const nd=(m.r99need||[]).filter(k=>{const x=(m.s||[]).find(y=>y.k==k);return x&&x.st!='user'});bad.forEach(k=>{if(!nd.includes(k))nd.push(k)});
+  if(JSON.stringify(nd)!==JSON.stringify(m.r99need||[])){m.r99need=nd;ch=true}if(ch)save()})}catch(e){console.error(e)}}
+function r106fix(m){return r103vis(m).filter(x=>x.st!='user'&&x.r106bad&&String(x.v||'').trim()).length}
+setupLine=function(m){const v=r103vis(m),x=v.filter(z=>z.st=='confirm').length,y=r106fix(m);return `Setup ${r103pct(m)}% · ${x} to confirm${y?` (${y} needs fixing)`:''}`};
+r106sweep(1); // saved data only: live typing already refuses junk, so the red-ring sweep runs on load
+['edit','home','machines'].forEach(fn=>{const o=window[fn];if(typeof o!='function')return;window[fn]=function(){r106sweep(0);return o.apply(this,arguments)}});
+// 2: Setup shows one status line; no floating 'needs a real answer · Open' bar on the Setup screen (top notice stays)
+{const _e=edit;edit=function(){const r=_e.apply(this,arguments);try{document.body.classList.add('r106setup');const m=S.m[arguments[0]];if(m){const ls=[...V.querySelectorAll('.s')].filter(s=>/^Setup \d+%/.test(s.textContent.trim()));ls.forEach((s,i)=>{if(i)s.remove();else s.textContent=setupLine(m)})}}catch(e){}return r}}
+{const _t=tab;tab=function(){document.body.classList.remove('r106setup');return _t.apply(this,arguments)}}
+// 3 + style
+{const st=document.createElement('style');st.textContent=`body.r106setup #r79toast.r99pin{display:none!important}`;document.head.appendChild(st)}
+{const _e=edit;edit=function(){const r=_e.apply(this,arguments);try{V.querySelectorAll('#r99notice .chip.r').forEach(b=>{if(/Confirm rotary letter/.test(b.textContent)){b.classList.remove('r');b.classList.add('y')}})}catch(e){}return r}}
+// 4: Control opens the standard picker sheet: a tap only highlights, Done saves (the select's change path — draft/Restore — is kept)
+function r106ctl(){try{const f=V.querySelector('.r99f[data-r99k="Control"]');if(!f||f.dataset.r106)return;const sel=f.querySelector('.r99w select');if(!sel)return;f.dataset.r106=1;
+ const w=f.querySelector('.r99w');const opts=[...sel.options].filter(o=>o.value&&!/pick one/i.test(o.text));const curO=sel.options[sel.selectedIndex];const m=S.m[S.cur];const x=(m&&m.s||[]).find(y=>y.k=='Control');const conf=x&&x.st=='user';
+ const lbl=document.createElement('input');lbl.readOnly=true;lbl.className='r99ph r106ci';lbl.style.width='100%';lbl.placeholder='Pick: '+opts.map(o=>o.text.replace(/-style$/,'')).slice(0,2).join(' / ')+' / …';lbl.value=conf&&curO&&curO.value?curO.text:'';
+ sel.style.display='none';sel.insertAdjacentElement('afterend',lbl);const end=f.querySelector('.r99end');if(end&&!conf)end.textContent='▾';
+ const open=e=>{e.preventDefault();e.stopPropagation();const sp={...(r99spec('Control')||{}),st:'picker',ch:opts.map(o=>o.text)};r99sheet('Control',sp,()=>conf&&curO?curO.text:'',v=>{const o=opts.find(o=>o.text==v);if(!o)return;sel.value=o.value;sel.dispatchEvent(new Event('change',{bubbles:true}))})};
+ w.style.cursor='pointer';w.addEventListener('click',open,true);lbl.addEventListener('focus',e=>{lbl.blur();open(e)})}catch(e){console.error(e)}}
+{const _e=edit;edit=function(){const r=_e.apply(this,arguments);r106ctl();return r}}
+{const _b=r103block;r103block=function(){const A=_b.apply(this,arguments);try{const m=S.m[S.cur];r103vis(m).forEach(x=>{if(x.r106bad&&x.st!='user'&&String(x.v||'').trim()&&!A.includes(x.k))A.push(x.k)})}catch(e){}return A}}
 
 /* R79-END */</script>
 </body></html>

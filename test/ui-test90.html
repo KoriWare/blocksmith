@@ -41,7 +41,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('Encoder counts e.g. 4096; Orient spindle P e.g. 1',E("R99SPEC['Spindle encoder counts per rev'].ex")=='4096'&&E("R99SPEC['Orient parameter spindle (P)'].ex")=='1');
  log('no placeholder has a mid-word ellipsis',E("[...document.querySelectorAll('input[placeholder]')].filter(i=>/\\w…/.test(i.placeholder)).map(i=>i.placeholder).join('|')")==='');
  E("toast79('test');$('#r79toast').classList.add('r99pin')");await sl(30);
- log('real-answer notice docks just above the tab bar',E("(()=>{const t=$('#r79toast').getBoundingClientRect(),b=document.querySelector('.tabs').getBoundingClientRect();return t.bottom<=b.top+1&&t.bottom>=b.top-20})()"),E("JSON.stringify([$('#r79toast').getBoundingClientRect().bottom,document.querySelector('.tabs').getBoundingClientRect().top])"));
+ log('real-answer notice docks just above the tab bar',E("(()=>{if(document.body.classList.contains('r106setup'))return getComputedStyle($('#r79toast')).display=='none'; /* v106: no floating bar on the Setup screen */const t=$('#r79toast').getBoundingClientRect(),b=document.querySelector('.tabs').getBoundingClientRect();return t.bottom<=b.top+1&&t.bottom>=b.top-20})()"),E("JSON.stringify([$('#r79toast').getBoundingClientRect().bottom,document.querySelector('.tabs').getBoundingClientRect().top])"));
  E("$('#r79toast').classList.remove('r99pin');$('#r79toast').hidden=true");
  // Kori 10 / Stacey: Simulate on every 5-axis job
  E("(()=>{pick('Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills');cur(S.m.length-1)})()");await sl(60);
