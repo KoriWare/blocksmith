@@ -1,0 +1,30 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 83 Casey: custom extension, draft after Discard, bad saved tools marked on load, unique share names: zero steps, macro step guards, engrave samples, back bore, tap pitch, tool library validation, kept lines, export gate/labels, share names, origin, draft --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
+  // 1 custom extension
+ E("S.cur=0;edit(0)");await sl(100);const se=d.querySelector('#pexs'),ci=d.querySelector('#pexc');se.value='custom';se.dispatchEvent(new Event('change'));
+ for(const v of ['..','.','  .  ','-']){ci.value=v;ci.dispatchEvent(new Event('change'));await sl(10);log('1 ext “'+v+'” refused with inline warning',E("S.m[0].ext")==undefined&&/needs at least one letter or number/.test((d.querySelector('#r83exterr')||{}).textContent||''),E("S.m[0].ext"))}
+ ci.value='.EIA';ci.dispatchEvent(new Event('change'));await sl(10);log('1 valid custom ext saved, warning gone',E("S.m[0].ext")=='.EIA'&&!d.querySelector('#r83exterr'));
+ log('1 old saved “..” falls back to .nc',E("pextOf({ext:'..'})")=='.nc'&&E("pextOf({ext:'.'})")=='.nc');
+ let dlName=null;const lab=()=>{const b=[...d.querySelectorAll('#v .s b')].find(b=>/^File: /.test(b.parentNode.textContent));return b&&b.textContent};
+ for(const ext of ['.EIA','.tap','',undefined,'.nc']){E(ext===undefined?"delete S.m[0].ext;save()":"S.m[0].ext="+JSON.stringify(ext)+";save()");q(E("JB.bolt[1]"));await sl(30);E("J.override=1;refresh()");await sl(30);const vf=d.querySelector('#vf');if(vf&&!vf.checked){vf.checked=true;vf.dispatchEvent(new Event('change'))}await sl(30);E("(()=>{const o=URL.createObjectURL;const c=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){window.DLN=this.download};dl('nc');HTMLAnchorElement.prototype.click=c})()");dlName=E("window.DLN");log('1 File label = downloaded name (ext '+JSON.stringify(ext)+')',!!lab()&&lab()==dlName,lab()+' vs '+dlName)}
+ // 2 draft after Discard
+ w.localStorage.setItem(E("DRK"),JSON.stringify({J:{op:'bolt',p:{},edits:{}},cur:0,t:Date.now()}));E("J=null;tab('new');nw()");await sl(50);const disc=[...d.querySelectorAll('#r79dr button')].find(b=>/Discard/.test(b.textContent));log('2 banner offered',!!disc);disc&&disc.click();log('2 Discard clears the draft',!w.localStorage.getItem(E("DRK")));
+ E("pickJob('bolt')");await sl(50);const cx=d.querySelector('#out input[data-k="Center X"]');cx.value='1.25';cx.dispatchEvent(new Event('input',{bubbles:true}));
+ log('2 first edit after Discard is in the draft at once (F5 right away keeps it)',/"Center X":"1.25"/.test(w.localStorage.getItem(E("DRK"))||''));
+ log('2 typed-only work counts as unsaved (leave/hidden save it)',E("hasUser(J)")===true);
+ w.localStorage.removeItem(E("DRK"));w.dispatchEvent(new Event('beforeunload'));log('2 leaving the page saves the typed-only draft',/"Center X":"1.25"/.test(w.localStorage.getItem(E("DRK"))||''));E("drClear();J=null");
+ // 3 bad saved tools marked
+ E("tlCurM().tools[0].dia=-0.5;tlCurM().tools[1].n=tlCurM().tools[2].n;save();tab('new')");await sl(30);const tb=[...d.querySelectorAll('button')].find(b=>/^\s*🔧\s*Tool Library/.test(b.textContent));
+ log('3 Tool Library button marked with the bad count',tb&&tb.classList.contains('r83badbtn')&&tb.dataset.r83bad=='3',tb&&tb.dataset.r83bad);
+ E("tools()");await sl(50);const c0=d.querySelector('input[data-f="dia"][data-i="0"]');log('3 bad Ø shown red with inline message',c0.getAttribute('aria-invalid')=='true'&&/Saved Ø -0.5/.test((d.querySelector('.r83err[data-for="dia0"]')||{}).textContent||''));
+ log('3 duplicate saved T shown red on both tools',d.querySelector('input[data-f="n"][data-i="1"]').closest('.card').classList.contains('r83badtool')&&d.querySelector('input[data-f="n"][data-i="2"]').closest('.card').classList.contains('r83badtool'));
+ log('3 header summary',/3 tools have bad saved data/.test((d.querySelector('#r83tlbad')||{}).textContent||''));
+ // 4 unique share names
+ const a=E("mbFname('..')"),b=E("mbFname('..')"),c=E("mbFname('Bracket')"),e2=E("mbFname('Bracket')");log('4 same-second share names get a suffix',a!=b&&/-2\.mbjob$/.test(b)&&c=='Bracket.mbjob'&&e2=='Bracket-2.mbjob',[a,b,c,e2].join(' '));
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>
