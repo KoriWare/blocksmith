@@ -1,0 +1,64 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 98 (mc-v98): machine type picker, setter/Fanuc cards, type migration, type-switch draft, control-named page line:  editor undo after snippet, 4-axis option guards, holes-on-face check axis, engrave flat on 3-axis, mm peck Q, sim axis letter, editor/import checks, snippets by machine, Haas rigid tap, regen warning --><iframe id="f" src="../index.html?v=98" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const FIRST=E("[...document.querySelectorAll('details.mchips .chip')].filter(c=>c.style.display!='none'&&/Pallet change/.test(c.textContent)).length");E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const add=(n,g)=>{E(`pick(${JSON.stringify(n)},${JSON.stringify(g)})`);return E('S.cur=S.m.length-1')};
+ const set=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(x){x.v=${JSON.stringify(v)};x.st='user'}else S.m[S.cur].s.push({k:${JSON.stringify(k)},v:${JSON.stringify(v)},st:'user'});save()})()`);
+ const job=(op,vals)=>{E(`J=null;tab('new');pickJob('${op}')`);for(const [k,v] of Object.entries(vals||{})){const el=d.querySelector(`#out [data-k="${k}"]`);if(el)el.value=v}E('fill()')};
+ const code=()=>E("J&&J.code?txt().join('\\n'):''");const bad=()=>(d.querySelector('#r92bad')||{}).textContent||'';
+
+ const vis=re=>E(`[...V.querySelectorAll('.set')].filter(s=>s.offsetParent).map(s=>(s.querySelector('span')||{}).textContent||'').filter(t=>${re}.test(t)).join('|')`);
+ const iA=E("S.m.findIndex(m=>m.name=='Mill A')"),iB=E("S.m.findIndex(m=>m.name=='Mill B')"),iL=E("S.m.findIndex(m=>isLT(m.type))");
+ // 4 migration on fresh demo data
+ log('mig: Mill A (VMC, no rotary/pallet) -> 3-axis VMC',E(`S.m[${iA}].mtype`)=='vmc3');log('mig: Mill B (rotary type) -> 4-axis VMC',E(`S.m[${iB}].mtype`)=='vmc4');log('mig: lathe -> Swiss/lathe',E(`S.m[${iL}].mtype`)=='swiss');
+ const old=(name,type,o,rot)=>E(`(()=>{const m=JSON.parse(JSON.stringify(S.m[${iA}]));m.name=${JSON.stringify(name)};m.type=${JSON.stringify(type)};m.opt=${JSON.stringify(o)};delete m.mtype;delete m.r98mig;delete m.optHid;delete m.optImp;const r=m.s.find(x=>x.k=='Rotary axis');if(${JSON.stringify(rot)}){r.v=${JSON.stringify(rot)};r.st='user'}else{r.v='';r.st='suggested'}S.m.push(m);r98mig();return S.m.length-1})()`);
+ let k=old('HMC-named plain','mill',{macroB:1},null);log('mig: name never used, unclear plain mill left blank',E(`S.m[${k}].mtype`)==null||E(`S.m[${k}].mtype`)===undefined,E(`S.m[${k}].mtype`));
+ E(`edit(${k})`);log('blank type shows Pick a type',/Pick a type/.test(E("$('#r98type').textContent"))&&E("!document.querySelector('#r98type button.on')"));
+ k=old('Old saved B','VMC',{macroB:1},'B');log('mig: saved rotary on VMC -> 4-axis VMC, letter kept',E(`S.m[${k}].mtype`)=='vmc4'&&E(`S.m[${k}].s.find(x=>x.k=='Rotary axis').v`)=='B');
+ k=old('Old horiz A','horizontal machining center',{macroB:1},'A');log('mig: horizontal type text -> HMC, saved A kept',E(`S.m[${k}].mtype`)=='hmc'&&E(`(()=>{const c=S.cur;S.cur=${k};const a=rotAx();S.cur=c;return a})()`)=='A');
+ k=old('Old VMC pallet','VMC',{macroB:1,pallet:1},null);log('mig: VMC with pallet evidence is ambiguous -> blank',!E(`S.m[${k}].mtype`));
+ E(`S.m[${k}].mtype='vmc3';S.m[${k}].r98mig=1;r98mig()`);log('mig runs once, user choice sticks',E(`S.m[${k}].mtype`)=='vmc3');
+ E("S.m.splice(-4);save()");
+ // 1 picker: type decides rows, values parked not deleted, hidden never reaches code
+ E(`edit(${iB})`);log('picker at top of setup',E("V.querySelector('.card').id")=='r98type');log('Mill B shows rotary rows',/Rotary axis/.test(vis('/Rotary|brake/')));
+ E("document.querySelector('#r98type button[data-t=vmc3]').click()");log('switch to 3-axis hides rotary rows',vis('/Rotary|brake/')==='');log('3-axis hides 4th axis option',E("(()=>{const l=document.querySelector('input[data-o=ax4]').closest('label');return l.style.display=='none'})()"));
+ log('saved rotary value kept',E(`S.m[${iB}].s.find(x=>x.k=='Rotary axis').v`)=='A');log('hidden rotary never reaches code (index job unavailable)',!E(`(()=>{const c=S.cur;S.cur=${iB};const r=jAvail('index');S.cur=c;return r})()`));
+ E("document.querySelector('#r98type button[data-t=vmc4]').click()");log('switch back restores rotary rows',/Rotary axis/.test(vis('/Rotary|brake/'))&&E(`(()=>{const c=S.cur;S.cur=${iB};const r=jAvail('index');S.cur=c;return r})()`));
+ E("document.querySelector('#r98type button[data-t=swiss]').click()");log('mill cannot flip to Swiss/lathe (nothing changed)',E(`S.m[${iB}].mtype`)=='vmc4');
+ E(`edit(${iA})`);log('Mill A pallet code hidden, pallet option hidden on 3-axis',vis('/Pallet change code/')===''&&E("document.querySelector('input[data-o=pallet]').closest('label').style.display")=='none');
+ E(`S.m[${iA}].opt.pallet=1;save()`);E(`document.querySelector('#r98type button[data-t=hmc]').click()`);log('HMC shows pallet code when Pallet changer ticked',/Pallet change code/.test(vis('/Pallet change code/')));
+ E(`document.querySelector('#r98type button[data-t=vmc3]').click()`);log('3-axis parks the pallet tick (kept, not used)',E(`!S.m[${iA}].opt.pallet&&S.m[${iA}].optHid.pallet==1`));
+ E(`document.querySelector('#r98type button[data-t=hmc]').click()`);log('HMC again restores pallet tick',E(`S.m[${iA}].opt.pallet==1`));E(`document.querySelector('#r98type button[data-t=vmc3]').click();delete S.m[${iA}].optHid.pallet;save()`);
+ // 2/3 cards
+ set('Control','Haas NGC-style');
+ const prep=(i,ctl,ts)=>{E(`S.cur=${i}`);set('Control',ctl);E(`(()=>{const m=S.m[${i}];if(${ts})m.opt.tset=1;else delete m.opt.tset;save();edit(${i})})()`)};
+ prep(iA,'Haas NGC-style',false);log('Haas, no setter: no setter card, no Fanuc card',E("$('#r98ts').style.display")=='none'&&E("$('#r98fan').style.display")=='none');
+ prep(iA,'Haas NGC-style',true);log('setter ticked: Tool setter card shown with setter rows',E("$('#r98ts').style.display")==''&&E("$('#r98ts').querySelectorAll('.set').length")>=6);
+ log('X Y / clear Z hidden unless moves itself = no',E("[...$('#r98ts').querySelectorAll('.set')].filter(s=>/Setter X Y|clear Z/.test(s.textContent)).every(s=>s.style.display=='none')"));
+ E(`(()=>{const x=S.m[${iA}].s.find(x=>x.k=='Setter moves to itself');x.v='no';x.st='user';save();edit(${iA})})()`);log('moves itself = no shows X Y / clear Z in the card',E("[...$('#r98ts').querySelectorAll('.set')].filter(s=>/Setter X Y|clear Z/.test(s.textContent)).every(s=>s.style.display!='none')"));
+ E(`(()=>{const x=S.m[${iA}].s.find(x=>x.k=='Setter moves to itself');x.v='';x.st='confirm';save()})()`);
+ prep(iA,'Fanuc 0i-style',false);log('Fanuc, no setter: Fanuc card shown with 3 rows',E("$('#r98fan').style.display")==''&&E("$('#r98fan').querySelectorAll('.set').length")==3&&E("$('#r98fan .set input,#r98fan .set select')!=null"));
+ log('Fanuc card sits before Machine travel',E("(()=>{const a=$('#r98fan'),b=$('#r93trv');return !!(a&&b&&(a.compareDocumentPosition(b)&4))})()"));
+ E(`(()=>{const x=S.m[${iA}].s.find(x=>x.k=='Control');x.v='';x.st='confirm';save();edit(${iA})})()`);log('Control unpicked: no Fanuc card (never guessed)',E("$('#r98fan').style.display")=='none');
+ // 6 page warning line names the control
+ prep(iA,'Haas NGC-style',false);
+ E(`S.cur=${iA};J=null;tab('new');$('#q').value='G54 T1 rectangular pocket 2 x 1 corner r 0 cutter 0.25 0.5 deep stepdown 0.1 center x0 y0 z0 0';go()`);await sl(40);
+ const ft=()=>E("[...document.querySelectorAll('#out .foot')].map(f=>f.textContent).join('|')");
+ log('page line names Haas NGC-style',/Haas NGC-style Macro B\. Not for any specific machine\./.test(ft())&&!/Generic Fanuc-style/.test(ft()),ft());
+ log('program text untouched by the footer change',!/Not for any specific machine/.test(E("txt().join('\\n')")));
+ set('Control','Fanuc 0i-style');E('show()');await sl(40);log('page line names Fanuc 0i-style',/Fanuc 0i-style Macro B/.test(ft()),ft());
+ E(`(()=>{const x=S.m[${iA}].s.find(x=>x.k=='Control');x.v='';x.st='confirm';save();show()})()`);await sl(40);log('unpicked: neutral line, no control guessed',!/Haas|Fanuc/.test(ft()),ft());
+ set('Control','Haas NGC-style');
+ add('Tsugami Swiss-type (generic)','Swiss-type');set('Control','Fanuc 0i-style');E("J=null;tab('new');pickJob('swiss')");await sl(40);log('Swiss page line names control',/Fanuc 0i-style Macro B/.test(ft())||!ft(),ft());
+ E(`S.cur=${iL}`);set('Control','Fanuc 0i-style');E("J=null;tab('new');$('#q').value='G56 T1 g71 profile x0.5,z0; x0.5,z-1; x1.1,z-1.2 1.0 bar start z0.1 doc 0.06 finish t2 z0 at finished face';go()");await sl(40);log('lathe page line names the control',/Fanuc 0i-style Macro B\. Not for any specific machine\./.test(ft()),ft()+' code='+E('!!J&&!!J.code'));
+ // 5 type switch with a job open
+ E(`S.cur=${iB};J=null;tab('new');$('#q').value='G54 T1 drill 4 holes on a 2.0 bolt circle 0.5 deep center x0 y0 z0 0';go()`);const op=E('J&&J.op');
+ E(`(()=>{J.p['Depth']=J.p['Depth']||{v:0.5,g:false};J.p.Depth.g=false})()`);
+ E(`edit(${iB})`);E("document.querySelector('#r98type button[data-t=vmc3]').click()");
+ log('type switch with job open moves it to a draft',!!op&&E('!(J&&J.op)')&&E('!!drGet()'),op);
+ E("tab('new')");await sl(30);log('Build shows the switch card + Restore',E("!!$('#r93mv')&&/Restore/.test($('#r93mv').textContent)"));
+ E(`edit(${iB})`);E("document.querySelector('#r98type button[data-t=vmc4]').click()");await sl(30);log('switching back restores the job',E(`J&&J.op`)==op,E('J&&J.op')+' vs '+op);
+ E("J=null;drClear()");log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

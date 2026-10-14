@@ -6033,5 +6033,80 @@ const R97SET=['Tool setter type','Tool setter macro call','Setter writes length 
  const _h=r95hideKey;r95hideKey=function(m,t){if(m&&!isLT(m.type||'')){const ts=!!(m.opt&&m.opt.tset),own=!/^\s*n/i.test(((m.s||[]).find(x=>x.k=='Setter moves to itself')||{}).v||'');
   if(hit(t,R97FAN))return mCtrl(m)=='haas';if(hit(t,R97POS))return !ts||own;if(hit(t,R97SET))return !ts}return _h.apply(this,arguments)}}
 
+// ===== mc-v98: machine type picker, Tool setter card, Fanuc settings card, type migration, type-switch draft card, control-named footer =====
+const R98T={vmc3:'3-axis VMC',vmc4:'4-axis VMC',hmc:'HMC',swiss:'Swiss/lathe'};
+const R98HID={vmc3:['ax4','ax5','cyl','tomb','pallet'],vmc4:['ax5'],hmc:['ax5'],swiss:[]};   // options this type cannot have (ticks kept, not used)
+const R98IMP={vmc4:['ax4'],hmc:['ax4']};                                                       // options the type itself implies
+const R98TXT={vmc3:'VMC',vmc4:'VMC 4th',hmc:'horizontal mill'};                                 // type text used by older checks
+function r98fam(m){return isLT((m&&m.type)||'')?'lathe':'mill'}
+function r98t(m){return m&&R98T[m.mtype]?m.mtype:null}
+// older checks read the saved type text; when a type is picked they see the picked type instead
+function r98as(m,fn){const t=r98t(m);if(!t||!R98TXT[t])return fn();const o=m.type;m.type=R98TXT[t];try{return fn()}finally{m.type=o}}
+{const _j=jAvail;jAvail=function(){const a=arguments,m=S.m[S.cur];return r98as(m,()=>_j.apply(this,a))}}
+{const _r=rotAx;rotAx=function(){const a=arguments,m=S.m[S.cur];return r98as(m,()=>_r.apply(this,a))}}
+{const _h=r94has4;r94has4=function(m){const t=r98t(m);if(t)return t=='vmc4'||t=='hmc'||(t!='vmc3'&&!!((m.opt||{}).ax4||(m.opt||{}).ax5));return _h.apply(this,arguments)}}
+{const _i=r93is3;r93is3=function(m){const t=r98t(m);if(t)return t=='vmc3';return _i.apply(this,arguments)}}
+// apply a type to the options: hidden ticks are parked in m.optHid (never deleted), implied options switched on
+function r98opts(m,t){m.opt=m.opt||{};m.optHid=m.optHid||{};m.optImp=m.optImp||{};
+ Object.keys(m.optImp).forEach(k=>{if(!(R98IMP[t]||[]).includes(k)){delete m.opt[k];delete m.optImp[k]}});
+ Object.keys(m.optHid).forEach(k=>{if(!(R98HID[t]||[]).includes(k)){m.opt[k]=1;delete m.optHid[k]}});
+ (R98HID[t]||[]).forEach(k=>{if(m.opt[k]){m.optHid[k]=1;delete m.opt[k]}});
+ (R98IMP[t]||[]).forEach(k=>{if(!m.opt[k]){m.opt[k]=1;m.optImp[k]=1}})}
+let R98back=null;
+function r98set(i,t){const m=S.m[i];if(!m||!R98T[t])return;const fam=t=='swiss'?'lathe':'mill';if(fam!=r98fam(m)){toast79(fam=='lathe'?'A mill can’t become a Swiss/lathe here — add a lathe from Presets. Nothing was changed.':'A lathe can’t become a mill here — add a mill from Presets. Nothing was changed.');return}
+ const old=r98t(m);if(old==t)return;
+ if(i==S.cur&&typeof J!='undefined'&&J&&J.op&&hasUser(J)){drSave();R92.moved={op:J.op,from:m.name+' ('+(R98T[old]||'no type')+')',to:m.name+' ('+R98T[t]+')'};R98back={i,t:old,op:J.op};J=null}
+ m.mtype=t;m.r98mig=1;r98opts(m,t);save();
+ if(R98back&&R98back.i==i&&R98back.t==t&&!(typeof J!='undefined'&&J&&J.op)){const d=drGet();if(d&&d.J&&d.J.op==R98back.op){R92.moved=null;R98back=null;edit(i);toast79('Back to '+R98T[t]+' — your '+((OPN[d.J.op]||'job').replace(/^⚠\s*/,''))+' is restored in Build.');try{const c=S.cur;drRestore();if(typeof tab=='function'&&S.cur==c)edit(i)}catch(e){}return}}
+ edit(i)}
+// one-time inference for machines saved before types existed — saved data only, never the name
+function r98mig(){let ch=0;(S.m||[]).forEach(m=>{if(!m||m.r98mig)return;m.r98mig=1;ch=1;if(m.mtype)return;
+ if(isLT(m.type||'')){m.mtype='swiss';return}
+ const tt=String(m.type||''),o=m.opt||{},sv_=k=>(m.s||[]).find(x=>x.k==k)||{},user=k=>{const x=sv_(k);return x.st=='user'&&String(x.v||'').trim()!==''};
+ const rot=!!(o.ax4||o.ax5)||user('Rotary axis')||user('Rotary direction')||user('4th-axis brake on / off')||/4th|4-axis|horizontal|hmc|rotary/i.test(tt);
+ const pal=!!o.pallet||user('Pallet change code'),five=!!o.ax5||/5-axis|trunnion/i.test(tt);
+ if(five)return;                                  // 5-axis has no type here: leave blank, never guess
+ if(rot){m.mtype=/horizontal|hmc/i.test(tt)?'hmc':'vmc4';r98opts(m,m.mtype);return}
+ if(!pal&&/\bvmc\b|vertical/i.test(tt)){m.mtype='vmc3';r98opts(m,'vmc3')}   // only when the saved type text says vertical and nothing suggests more
+});if(ch)try{save()}catch(e){}}
+try{r98mig()}catch(e){console.error(e)}
+{const _p=pick;pick=function(){const r=_p.apply(this,arguments);try{const m=S.m.at(-1),tt=String(m.type||'');m.r98mig=1;const o=m.opt||{};if(isLT(tt))m.mtype='swiss';else if(/horizontal|hmc/i.test(tt))m.mtype='hmc';else if(o.ax5||/5-axis|trunnion/i.test(tt))m.mtype=null;else if(o.ax4||/4th|4-axis/i.test(tt))m.mtype='vmc4';else if(/\bvmc\b|vertical|mill/i.test(tt))m.mtype='vmc3';if(m.mtype)r98opts(m,m.mtype);save();edit(S.m.length-1)}catch(e){}return r}}
+// pallet / tombstone / cyl jobs follow parked options too (opt() reads m.opt, already parked)
+// Fanuc rows: only on a picked, non-Haas control
+{const _h=r95hideKey;r95hideKey=function(m,t){const k=String(t).replace(/^[!\s✓•]+/,'').trim();if(m&&!isLT(m.type||'')&&R97FAN.some(x=>k.startsWith(x))){const c=(m.s||[]).find(x=>x.k=='Control')||{};return !(c.st=='user'&&String(c.v||'').trim())||mCtrl(m)=='haas'}return _h.apply(this,arguments)}}
+// setup page: picker card, parked option rows, Tool setter card, Fanuc settings card
+{const _ed=edit;edit=function(i){const r=_ed.apply(this,arguments);try{r98page(i)}catch(e){console.error(e)}return r}}
+function r98page(i){const m=S.m[i];if(!m||$('#r98type'))return;const t=r98t(m),lt=r98fam(m)=='lathe';
+ const c=document.createElement('div');c.className='card';c.id='r98type';
+ c.innerHTML=`<div class="t">Machine type</div><div class="r98seg" role="radiogroup" aria-label="Machine type">${Object.entries(R98T).map(([k,l])=>`<button type="button" role="radio" aria-checked="${t==k}" data-t="${k}" class="${t==k?'on':''}${(k=='swiss')!=lt?' off':''}">${l}</button>`).join('')}</div><div class="s">${t?'Type decides which options show. Name is just a label.':'<b style="color:var(--rt,#ff8a8a)">Pick a type</b> — older machine, the type could not be told from its saved settings. Name is just a label.'}</div>`;
+ c.querySelectorAll('button[data-t]').forEach(b=>b.onclick=()=>r98set(i,b.dataset.t));
+ const first=V.querySelector('.card');first?first.insertAdjacentElement('beforebegin',c):V.prepend(c);
+ // options this type cannot have are not listed (ticks are parked, not deleted)
+ const hid=t?[...(R98HID[t]||[]),...(R98IMP[t]||[])]:[];V.querySelectorAll('input[data-o]').forEach(el=>{const l=el.closest('label');if(l)l.style.display=hid.includes(el.dataset.o)?'none':''});
+ const oc=V.querySelector('input[data-o]');if(oc&&t){const card=oc.closest('.card');const s=card&&card.querySelector('.s');if(s&&!$('#r98onote'))s.insertAdjacentHTML('afterend',`<div class="s" id="r98onote">Only options a ${R98T[t]} can have are listed.</div>`)}
+ if(lt)return;
+ const k0=s=>String(s).replace(/^[!\s✓•]+/,'').trim(),rows=L=>[...V.querySelectorAll('.set')].filter(st=>{const sp=st.querySelector('span');return sp&&L.some(k=>k0(sp.textContent).startsWith(k))});
+ const mkCard=(id,title,tag,sub,note,L,show)=>{const d=document.createElement('div');d.className='card r98card';d.id=id;d.innerHTML=`<div class="t">${title}${tag?`<span class="r98tag">${tag}</span>`:''}</div><div class="s">${sub}</div><div class="r98rows"></div><div class="r98note">${note}</div>`;const box=d.querySelector('.r98rows');rows(L).forEach(st=>box.appendChild(st));d.style.display=show?'':'none';return d};
+ const ts=!!(m.opt||{}).tset,cc=(m.s||[]).find(x=>x.k=='Control')||{},fan=cc.st=='user'&&String(cc.v||'').trim()&&mCtrl(m)!='haas';
+ const A=mkCard('r98ts','Tool setter','',"From your setter's manual. Red = confirm on the control. Never guessed.",'Shows only while “Tool setter” is ticked in Options.',[...R97SET,...R97POS],ts);
+ const B=mkCard('r98fan','Fanuc settings','FANUC',"Check these on the control's offset and parameter screens.",'Only shows on Fanuc-style controls. G10 wear jobs read the offset memory, setter or not.',R97FAN,!!fan);
+ const tr=$('#r93trv');if(tr){tr.insertAdjacentElement('beforebegin',A);tr.insertAdjacentElement('beforebegin',B)}else{const pe=$('#pextc');if(pe){pe.insertAdjacentElement('beforebegin',A);pe.insertAdjacentElement('beforebegin',B)}else{V.appendChild(A);V.appendChild(B)}}
+ try{r95apply()}catch(e){}}
+document.head.insertAdjacentHTML('beforeend',`<style id="r98css">
+.r98seg{display:flex;background:var(--bg,#0a0a0a);border:1px solid var(--bd,#444);border-radius:12px;padding:3px;gap:3px;margin:8px 0 6px}
+.r98seg button{flex:1;min-width:0;text-align:center;font-size:12px;font-weight:700;padding:9px 2px;border-radius:9px;color:var(--mu,#bbb);background:none;border:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r98seg button.on{background:#ffd21f;color:#111}.r98seg button.off{opacity:.45}
+.r98tag{font-size:10px;font-weight:800;background:#333;color:#bbb;border-radius:8px;padding:2px 7px;margin-left:6px;vertical-align:middle}
+.r98note{color:var(--mu,#999);font-size:12px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--bd,#333)}
+.r98card .set:last-child{border-bottom:0}
+html[data-theme=light] .r98tag{background:#e6e6e6;color:#444}
+@media (max-width:360px){.r98seg button{font-size:11px;padding:9px 1px}}
+</style>`);
+// footer names the picked control; neutral when none is picked
+function r98foot(){const c=sv('Control')||{},v=c.st=='user'&&String(c.v||'').trim()?String(c.v).trim().replace(/\s*\(verify[^)]*\)\s*/i,''):'';return v?`Written for ${v} Macro B. Not for any specific machine.`:'Macro B for the control on this machine (Control not picked yet). Not for any specific machine.'}
+function r98fixFoot(){document.querySelectorAll('#out .foot').forEach(f=>{if(/Generic Fanuc-style Macro B\. Not for any specific machine\./.test(f.textContent))f.textContent=f.textContent.replace('Generic Fanuc-style Macro B. Not for any specific machine.',r98foot());else if(f.dataset.r98!=null&&!f.textContent.includes(r98foot()))f.textContent=f.textContent.replace(/(Written for .*? Macro B|Macro B for the control on this machine \(Control not picked yet\))\. Not for any specific machine\./,r98foot());f.dataset.r98=''})}
+{const _s=show;show=function(){const r=_s.apply(this,arguments);try{r98fixFoot()}catch(e){}return r}}
+{let q=0;new MutationObserver(()=>{if(q)return;q=1;requestAnimationFrame(()=>{q=0;try{r98fixFoot()}catch(e){}})}).observe(document.body,{childList:true,subtree:true})}
+
 /* R79-END */</script>
 </body></html>
