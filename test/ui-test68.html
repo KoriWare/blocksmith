@@ -1,0 +1,31 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 80 (Casey): keep file program, unique names + id binding, red Control notice, Tools header, literal brackets, Build refill, share toast --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ // 12 keep the file's program
+ E("tab('new')");d.querySelector('#q').value=E("JB.bolt[1]");E("go()");E("S.jobs.unshift({op:J.op,name:'Kjob',machine:S.m[S.cur].name,p:JSON.parse(JSON.stringify(J.p)),text:J.text,date:Date.now(),versions:[]});save()");
+ const KF={app:'koriware-blocksmith',format:1,job:{type:'bolt',name:'Shared',values:{},code:['%','O1000','G54 G00 X0 Y0','(MY EDIT)','M30','%']},from:{machineType:'demo VMC'}};E("tab('recent')");await sl(150);E("mbPreview("+JSON.stringify(JSON.stringify(KF))+")");await sl(80);if(!d.querySelector('#mbkeep'))log('dbg',0,d.querySelector('#mbimp').textContent);d.querySelector('#mbkeep').click();d.querySelector('#mbgo').click();await sl(400);
+ log('12 keep: opens in Editor with the edit',E("V.dataset.page")=='edit'&&E("J.op=='import'&&txt().includes('(MY EDIT)')"),E("V.dataset.page"));
+ log('12 kept lines: From file label + blue bar',!!d.querySelector('#r79from')&&d.querySelector('#v').classList.contains('r79kept'));
+ log('12 checks run on kept code',E("CK79.n")>=0&&!!d.querySelector('#cl'));
+ E("tab('recent')");await sl(100);E("reopen(S.jobs.findIndex(j=>j.kept))");await sl(150);log('12 reopening the kept job from Library keeps the edit',E("txt().includes('(MY EDIT)')"));
+ // 13 names + ids
+ E("S.m.push(JSON.parse(JSON.stringify(S.m[0])));S.m.at(-1).id=Date.now()+.5;save()");log('13 a second machine with the same name is renamed',E("new Set(S.m.map(m=>m.name)).size==S.m.length"),E("S.m.map(m=>m.name).join()"));
+ E("tab('new')");d.querySelector('#q').value=E("JB.bolt[1]");E("S.cur=1");E("go()");E("S.jobs.unshift({...JSON.parse(JSON.stringify(J)),name:'OJ',machine:S.m[1].name,date:Date.now(),versions:[]});save()");log('13 saved job binds to machine id',E("S.jobs[0].mid==S.m[1].id"));
+ E("const nm=S.m[1].name;delMgo(1,1);S.m[0].name='tmp';S.m[1].name=nm;save();S.cur=0");E("reopen(0)");await sl(150);log('13 deleted machine still warns when another has its name',!!d.querySelector('#r79orph'));
+ // 14 red Control
+ E("const c=S.m[S.cur].s.find(x=>x.k=='Control');c.v='';c.st='confirm';save()");E("tab('new')");d.querySelector('#q').value=E("JB.bolt[1]");E("go()");await sl(50);const sm=d.querySelector('.r79sm');log('14 Process Code with red Control says so + link',sm&&/Control/.test(sm.textContent)&&!!sm.querySelector('a'),sm&&sm.textContent);
+ log('14 setupMiss lists Control',E("setupMiss().join()").includes('Control'));
+ // 15 tools header
+ E("tlOpenFor(1)");await sl(80);const nm1=E("S.m[1].name");log('15 Tools for another machine: header + Showing match it',d.querySelector('#ttl').textContent.includes(nm1)&&[...d.querySelectorAll('#v .s')].some(x=>x.textContent.includes('Showing '+nm1)),d.querySelector('#ttl').textContent);
+ // 16 literal brackets
+ E("edit(0)");await sl(80);const mn=d.querySelector('#mn');mn.value='<b>x</b>';mn.dispatchEvent(new Event('change'));await sl(50);log('16 name stored as typed',E("S.m[0].name")=='<b>x</b>',E("S.m[0].name"));
+ E("machines()");await sl(80);log('16 name shown with literal brackets, no tag',[...d.querySelectorAll('#v .card .t')].some(t=>t.textContent.includes('<b>x</b>'))&&!d.querySelector('#v .card .t b'));
+ // 17 Build never empty for a live job
+ E("tab('new')");d.querySelector('#q').value=E("JB.bolt[1]");E("go()");E("document.querySelector('#out').innerHTML=''");E("tab('machines')");E("tab('new')");await sl(80);log('17 Build re-shows the job form',d.querySelectorAll('#out .chip').length>3);
+ // 18 share toast
+ w.navigator.share=async()=>{};E("R80SH=null");await E("shareJob(0)");await sl(200);const tt=d.querySelector('#r79toast');log('18 Share job shows a toast',tt&&!tt.hidden&&tt.textContent.length>5,tt&&tt.textContent);
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

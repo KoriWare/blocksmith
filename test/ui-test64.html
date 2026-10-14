@@ -25,7 +25,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  E("document.querySelector('#u-mm')&&document.querySelector('#u-mm').click()");await sl(100);x=await run(BC('x',''));log('B10 3 mm bolt circle on mm machine warned',/did you mean 3 in/.test(x.out),x.out.slice(0,300));
  E("document.querySelector('#u-in')&&document.querySelector('#u-in').click()");await sl(100);
  x=await run(BC('3 dia','3.12345 dia'));log('B14 rounding note shown',/3\.12345 is written as 3\.1235/.test(x.out));
- x=await run(BC('0.5 deep','0.5 deep then face mill 0.02 deep'));log('B12 second job: only first built, user told',x.code&&/Only the first job \(Bolt circle\) was built/.test(x.out));
+ x=await run(BC('0.5 deep','0.5 deep then face mill 0.02 deep'));log('B12 second job: only first built, user told',x.code&&/Only the first job was built: Bolt circle/.test(x.out));
  E("S.cur=2");x=await run(BC('x',''));log('B12 mill job on lathe: message, no silent swap',!x.code&&/mill job, and .* is a lathe/.test(x.out),x.out.slice(0,200));E("S.cur=0");
  // fill boxes
  E("tab('new')");E("pickJob('bolt')");await sl(60);{const i2=d.querySelector('#out input[data-k="Depth"]');i2.value='0,5';E("fill()");log('B7 comma decimal in a box read as 0.5',E("J.p.Depth.v")==0.5,E("JSON.stringify(J.p.Depth)"))}const inp=d.querySelector('#out input[data-k="Dia"]');inp.value='1e2';E("fill()");log('B7 typed 1e2 in a box rejected',E("J.p.Dia.v==null")&&/Not a plain number/.test(d.querySelector('#out').innerText));
