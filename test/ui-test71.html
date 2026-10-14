@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 82 design: zero steps, macro step guards, engrave samples, back bore, tap pitch, tool library validation, kept lines, export gate/labels, share names, origin, draft --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
+  q(E("JB.bolt[1]"));E("tab('sim')");await sl(300);log('8 holes found for Top markers',E("r82holes().length")==6);
+ E("tab('edit')");await sl(200);const a=d.querySelector('#alm');log('9 quiet alarm preview folded/gray',a&&a.classList.contains('r82quiet')&&!a.classList.contains('r82fire'));
+ log('10 single pass badge (no duplicate Ready)',(()=>{const x=d.querySelector('#ready');return !x||x.style.display=='none'||getComputedStyle(x).display=='none'||!/all checks pass/.test(x.textContent)})());
+ const cur=d.querySelector('.ln.cur');log('11 ▶ now tag on current line',cur&&/now/.test(getComputedStyle(cur,'::after').content));
+ const sv=[...d.querySelectorAll('button')].find(b=>/Save…/.test(b.textContent));log('12 Save… is outline style',sv&&sv.classList.contains('r82save')&&getComputedStyle(sv).backgroundColor!='rgb(255, 210, 31)');
+ E("S.ts=150;applyTS();tab('new')");await sl(100);log('13 chip text wraps at 150%',[...d.querySelectorAll('#out .chip,#out .c')].slice(0,3).every(c=>getComputedStyle(c).whiteSpace!='nowrap'));E("S.ts=100;applyTS();refresh()");
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

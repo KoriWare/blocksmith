@@ -5587,6 +5587,25 @@ document.addEventListener('input',e=>{const el=e.target;if(!el||el.tagName!='INP
 // R82-20 a kept program keeps its real origin when shared again
 {const _do=mbDo;mbDo=function(){const fr=MBX&&MBX.from?JSON.parse(JSON.stringify(MBX.from)):null,keep=$('#mbkeep')&&$('#mbkeep').checked,n0=S.jobs.length;const r=_do.apply(this,arguments);try{if(keep&&fr){const j=S.jobs.find(x=>Array.isArray(x.kept)&&!x.keptFrom);if(j){j.keptFrom={control:mbClean(fr.control||'',40),machineType:mbClean(fr.machineType||'',40)};save()}}}catch(e){}return r}}
 {const _mf=mbFile;mbFile=function(j){const f=_mf.apply(this,arguments);try{if(f&&f.from&&Array.isArray(j.kept)&&j.kept.length){const k=j.keptFrom||{};f.from.control=k.control||'unknown (program kept as-is from a file)';if(k.machineType)f.from.machineType=k.machineType;f.from.note='program text kept as-is from an imported file — not rebuilt for this machine'}}catch(e){}return f}}
+// ===== R82 design =====
+// 8 Simulate Top view: teal hole markers + numbers at each plunge
+function r82holes(){const M=(typeof J!='undefined'&&J&&J.M)||[],H=[];M.forEach(m=>{if(!m||m.r||!m.a||!m.b)return;if(Math.abs(m.a[0]-m.b[0])<1e-6&&Math.abs(m.a[1]-m.b[1])<1e-6&&m.b[2]<m.a[2]-1e-6){const k=m.b[0].toFixed(4)+','+m.b[1].toFixed(4);if(!H.some(h=>h.k==k))H.push({k,x:m.b[0],y:m.b[1],z:m.b[2]})}});return H.length>1&&H.length<=400?H:[]}
+{const _dr=draw;draw=function(){const r=_dr.apply(this,arguments);try{if(typeof view=='undefined'||!ctx||Math.abs(view.rx)>1e-6||Math.abs(view.rz)>1e-6||V.dataset.page!='sim')return r;if(J&&J.lathe)return r;const H=r82holes();if(!H.length)return r;ctx.save();ctx.strokeStyle='#2ad4c4';ctx.fillStyle='#2ad4c4';ctx.lineWidth=1.5;ctx.font='bold 11px sans-serif';ctx.textBaseline='bottom';
+ H.forEach((h,i)=>{const p=P([h.x,h.y,0]);ctx.beginPath();ctx.arc(p[0],p[1],5,0,Math.PI*2);ctx.stroke();ctx.fillText(String(i+1),p[0]+6,p[1]-4)});ctx.restore()}catch(e){}return r}}
+document.head.insertAdjacentHTML('beforeend',`<style id="r82look">
+.r82save{background:transparent!important;color:var(--y,#ffd21f)!important;border:2px solid var(--y,#ffd21f)!important;box-shadow:none!important}
+html[data-theme=light] .r82save{color:#7a5a00!important;border-color:#c99a00!important}
+#v[data-page=edit] .ln.cur::after{content:'▶ now · Simulate step';float:right;font:600 10px/1.6 sans-serif;color:#111;background:#ffd21f;border-radius:6px;padding:0 5px;margin-left:6px}
+#alm.r82quiet{border-left:4px solid #555}#alm.r82quiet>.t{color:#aaa;cursor:pointer;font-size:15px}#alm.r82quiet:not(.r82open)>:not(.t){display:none}#alm.r82quiet b{color:#aaa!important}
+#alm.r82fire{border-left:4px solid #ff4d4d}
+html.r82big #out .card .chip{min-width:0}html.r82big #out .card .chip b,html.r82big #out .card .chip small{white-space:normal!important;overflow-wrap:anywhere;word-break:normal;overflow:visible!important;text-overflow:clip!important}html.r82big #out .jgrid>button,html.r82big #out .card>.chip{height:auto!important;min-height:44px}
+</style>`);
+function r82look(){try{document.documentElement.classList.toggle('r82big',(S.ts||100)>100);const a=$('#alm');if(a){const quiet=/no alarm fires/.test(a.textContent);a.classList.toggle('r82quiet',quiet);a.classList.toggle('r82fire',!quiet);const t=a.querySelector('.t');if(t){if(quiet&&!t.dataset.r82){t.dataset.r82=1;t.textContent='Alarm preview — no alarm fires this run ▸';t.onclick=()=>{const o=a.classList.toggle('r82open');t.textContent='Alarm preview — no alarm fires this run '+(o?'▾':'▸')}}else if(!quiet&&t.dataset.r82){delete t.dataset.r82;t.textContent='Alarm preview';t.onclick=null}}}
+ const rd=$('#ready');if(rd){const only=rd.children.length==1&&/Ready — all checks pass/.test(rd.textContent);rd.style.display=only?'none':''}
+ V.querySelectorAll('button').forEach(b=>{if(/^\s*💾\s*Save…\s*$/.test(b.textContent))b.classList.add('r82save')})}catch(e){}}
+{const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);r82look();return r}}
+{const _sh=show;show=function(){const r=_sh.apply(this,arguments);r82look();return r}}
+{const _tb=tab;tab=function(){const r=_tb.apply(this,arguments);r82look();return r}}
 
 /* R79-END */</script>
 </body></html>
