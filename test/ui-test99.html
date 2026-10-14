@@ -1,0 +1,23 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 109 --><iframe id="f" src="../index.html?v=109" style="width:320px;height:760px;border:0"></iframe><script>
+const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+f.onload=()=>setTimeout(()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ const pr=ty=>JSON.parse(E(`(()=>{J={p:{Tool:{v:77},Cutter:{v:0.375}}};S.tools=S.tools.filter(t=>t.n!=77);${ty===null?'':`S.tools.push({n:77,type:${JSON.stringify(ty)},dia:0.5,nr:0.05,tip:0.01,ang:60});`}const p=r109prof();J=null;return JSON.stringify(p)})()`));
+ const fe=pr('End mill'),bl=pr('Ball nose'),bn=pr('Bull nose / corner radius'),dr=pr('Drill'),sd=pr('Spot / center drill'),ch=pr('Chamfer mill'),en=pr('Engraving tool'),un=pr('Mystery'),nl=pr(null);
+ log("v109: end mill flat bottom at real Ø",fe.P[0][0]==0.5&&fe.P[0][1]==0,JSON.stringify(fe));
+ log("v109: ball nose hemisphere (point at tip, full Ø at h=r)",bl.P[0][0]==0&&Math.abs(bl.P[6][0]-0.5)<1e-9&&Math.abs(bl.P[6][1]-0.25)<1e-9,JSON.stringify(bl));
+ log("v109: bull nose flat of Ø-2r then corner",Math.abs(bn.P[0][0]-0.4)<1e-9&&Math.abs(bn.P[4][1]-0.05)<1e-9,JSON.stringify(bn));
+ log("v109: drill 118° point, spot drill 90°",dr.P[0][0]==0&&Math.abs(dr.P[1][1]-0.25/Math.tan(59*Math.PI/180))<1e-9&&Math.abs(sd.P[1][1]-0.25)<1e-9);
+ log("v109: chamfer 90° V with tip flat; engraving V with tip width",ch.P[0][0]==0.01&&Math.abs(ch.P[1][1]-0.245)<1e-9&&en.P[0][0]==0.01&&Math.abs(en.P[1][1]-0.245/Math.tan(Math.PI/6))<1e-9);
+ log("v109: unknown / no library tool draws flat, no point; falls back to job Cutter",un.P[0][0]==0.5&&nl.P[0][0]==0.375&&nl.P[0][1]==0,JSON.stringify(nl));
+
+ const ro=(code,l)=>E(`(()=>{const sv=J,sn=view.n;J={code:${JSON.stringify(code)},M:[{l:${l}}],lathe:${code[0]=='L'}};view.n=1;const r=r109ro();J=sv;view.n=sn;return r})()`);
+ const mc=['G20','T8 M06','G43 H8 Z0.1 (T9 S99 F99)','S3000 M03','G01 Z0 F20.0','X1.','G21 F254.'];
+ log("v109 RO: dashes before any T/S/F",ro(mc,0)=='T– · S– · F–',ro(mc,0));
+ log("v109 RO: T then S, comment ignored",ro(mc,3)=='T8 · S3000 · F–',ro(mc,3));
+ log("v109 RO: F modal carry",ro(mc,5)=='T8 · S3000 · F20.0',ro(mc,5));
+ log("v109 RO: mm F as written",ro(mc,6)=='T8 · S3000 · F254.',ro(mc,6));
+ const lc=['L','G21','T0101','G96 S180 M03','G01 X20 F0.2','G97 S1500'];
+ log("v109 RO: lathe T0101 → T1, G96 m/min",ro(lc,4)=='T1 · S180 m/min · F0.2',ro(lc,4));
+ log("v109 RO: G97 drops CSS unit",ro(lc,5)=='T1 · S1500 · F0.2',ro(lc,5));
+ document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500);
+</script>

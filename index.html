@@ -747,7 +747,7 @@ const _draw7=draw;draw=function(){_draw7();if(!J||!cv)return;const flat=J.lathe&
   const ax=J.lathe?null:(J.rot||rotAx());if(ax){const ok=(sv('Rotary direction')||{}).st=='user',H=Math.max(J.stock[5]-J.stock[2],J.stock[4]-J.stock[1])*0.75,x0=J.stock[0]-0.15,pts=[];for(let k=0;k<=20;k++){const a=0.3+k*0.22;{const cx=(J.stock[0]+J.stock[3])/2,cz=(J.stock[2]+J.stock[5])/2;pts.push(ax=='A'?[x0,H*Math.cos(a),H*Math.sin(a)]:[cx+H*Math.cos(a),J.stock[1]-0.15,cz+H*Math.sin(a)])}}
    ctx.strokeStyle='#ff9f1a';ctx.lineWidth=2;ctx.setLineDash(ok?[]:[5,4]);ctx.beginPath();pts.forEach((p,i)=>{const s=P(p);i?ctx.lineTo(s[0],s[1]):ctx.moveTo(s[0],s[1])});ctx.stroke();ctx.setLineDash([]);arrow(P(pts[18]),P(pts[20]),'#ff9f1a',ax+'+'+(ok?'':' ? (confirm dir)'),1);
    if(ax=='A'){ctx.setLineDash([6,3]);ctx.strokeStyle='#ff9f1a88';ln([J.stock[0]-0.4,0,0],[J.stock[3]+0.4,0,0]);ctx.setLineDash([])}}
-  ctx.fillStyle='#ddd';ctx.font='11px -apple-system,sans-serif';ctx.fillText(`${offLbl((J.p['Work offset']||{}).v||'G54')} · ${zeroDesc()}`,8,14)}
+  ctx.fillStyle='#ddd';ctx.font='11px -apple-system,sans-serif';ctx.fillText(`${offLbl((J.p['Work offset']||{}).v||'G54')} · ${zeroDesc()}`,8,28);if(typeof r109ro=='function'){ctx.fillStyle='#ffd21f';ctx.font='bold 11px ui-monospace,monospace';ctx.fillText(r109ro(),8,14)}}
  // fixed corner gizmo
  const gx=34,gy=262,g=22;ctx.fillStyle='#0008';ctx.beginPath();ctx.arc(gx,gy,30,0,7);ctx.fill();
  if(flat){arrow([gx,gy],[gx,gy-g],C3.X,'X',1);arrow([gx,gy],[gx+g,gy],C3.Z,'Z',1)}
@@ -778,12 +778,12 @@ function drawHMC(){ctx.clearRect(0,0,cv.width,cv.height);const s=J.stock,M=J.M||
  arrow(PM(pts[22]),PM(pts[24]),'#ff9f1a',`B+${ok?'':' ?'} ${th.toFixed(0)}°`,1);
  // horizontal tool along +Z (machine frame), tip at current tool point
  const tip=cur?PT(cur.b):[0,0,s[5]+1],d=((J.p['Drill Ø']||{v:.25}).v)/2;ctx.strokeStyle='#f2f2f2';ctx.lineWidth=1.3;
- const ring=z=>{const r=[];for(let i=0;i<=12;i++){const a=i*Math.PI/6;r.push([tip[0]+d*Math.cos(a),tip[1]+d*Math.sin(a),z])}ctx.beginPath();r.forEach((p,i)=>{const q=PM(p);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.stroke()};
- ring(tip[2]+d*.6);ring(tip[2]+1);ring(tip[2]+2.2);for(let i=0;i<4;i++){const a=i*Math.PI/2,x=tip[0]+d*Math.cos(a),y=tip[1]+d*Math.sin(a);lnM([x,y,tip[2]+d*.6],[x,y,tip[2]+2.2])}lnM([tip[0]+d,tip[1],tip[2]+d*.6],tip);lnM([tip[0]-d,tip[1],tip[2]+d*.6],tip);
+ if(typeof r109draw=='function'){r109draw(tip,(r,z)=>{ctx.beginPath();for(let i=0;i<=16;i++){const q=PM([tip[0]+r*Math.cos(i*Math.PI/8),tip[1]+r*Math.sin(i*Math.PI/8),z]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke()},lnM)}else{ const ring=z=>{const r=[];for(let i=0;i<=12;i++){const a=i*Math.PI/6;r.push([tip[0]+d*Math.cos(a),tip[1]+d*Math.sin(a),z])}ctx.beginPath();r.forEach((p,i)=>{const q=PM(p);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.stroke()};
+ ring(tip[2]+d*.6);ring(tip[2]+1);ring(tip[2]+2.2);for(let i=0;i<4;i++){const a=i*Math.PI/2,x=tip[0]+d*Math.cos(a),y=tip[1]+d*Math.sin(a);lnM([x,y,tip[2]+d*.6],[x,y,tip[2]+2.2])}lnM([tip[0]+d,tip[1],tip[2]+d*.6],tip);lnM([tip[0]-d,tip[1],tip[2]+d*.6],tip);}
  ctx.fillStyle='#999';ctx.font='10px -apple-system,sans-serif';const sp=PM([tip[0],tip[1],tip[2]+2.4]);ctx.fillText('spindle',sp[0]+4,sp[1]);
  // triad at work zero (machine frame)
  if(!view.hideTriad){const L=Math.max(0.3,38/view.s);arrow(PM([0,0,0]),PM([L,0,0]),C3.X,'X+',1);arrow(PM([0,0,0]),PM([0,L,0]),C3.Y,'Y+ (up)',1);arrow(PM([0,0,0]),PM([0,0,L]),C3.Z,'Z+ (to spindle)',1);
-  const o=PM([0,0,0]);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(o[0],o[1],3.5,0,7);ctx.fill();ctx.fillStyle='#ddd';ctx.font='11px -apple-system,sans-serif';ctx.fillText(`${offLbl((J.p['Work offset']||{}).v||'G54')} · HMC · X0Z0 = B centerline, Y0 = ${J.p['Hole Y']?'part center':'table'}`,8,14)}
+  const o=PM([0,0,0]);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(o[0],o[1],3.5,0,7);ctx.fill();ctx.fillStyle='#ddd';ctx.font='11px -apple-system,sans-serif';ctx.fillText(`${offLbl((J.p['Work offset']||{}).v||'G54')} · HMC · X0Z0 = B centerline, Y0 = ${J.p['Hole Y']?'part center':'table'}`,8,28);if(typeof r109ro=='function'){ctx.fillStyle='#ffd21f';ctx.font='bold 11px ui-monospace,monospace';ctx.fillText(r109ro(),8,14)}}
  // gizmo
  const gx=34,gy=262,g=22;ctx.fillStyle='#0008';ctx.beginPath();ctx.arc(gx,gy,30,0,7);ctx.fill();const c0=PM([0,0,0]);
  [['X',[1,0,0]],['Y',[0,1,0]],['Z',[0,0,1]]].forEach(([k,dv])=>{const p=PM(dv);const dx=p[0]-c0[0],dy=p[1]-c0[1],m=Math.hypot(dx,dy)||1;if(m/view.s<0.3){ctx.fillStyle=C3[k];ctx.beginPath();ctx.arc(gx,gy,4,0,7);ctx.fill();ctx.fillText(k,gx+6,gy+14);return}arrow([gx,gy],[gx+dx/m*g,gy+dy/m*g],C3[k],k,1)});
@@ -1047,7 +1047,7 @@ const _draw17=draw;draw=function(){const swiss=J&&(J.swiss||J.nt)&&ctx;let ft=nu
  try{_draw17()}finally{if(ft)ctx.fillText=ft}
  if(!J||!J.lathe||view.rev||!ctx||!J.M)return;const th=J.M.filter(m=>m.th&&!m.r);if(!th.length)return;const n=Math.min(view.n,J.M.length);let k=0;const cols=['#ff4fd8','#d94fff','#ff7ae6','#b84fff'];
  const ex=view.thx!==0?10:1,rT=Math.max(...th.map(m=>m.a[0])),X=p=>[rT-(rT-p[0])*ex,0,p[2]];J.M.slice(0,n).forEach(m=>{if(!m.th||m.r)return;const a=P(X(m.a)),b=P(X(m.b));ctx.strokeStyle=cols[k%4];ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();k++});ctx.lineWidth=1;
- ctx.fillStyle='#ff4fd8';ctx.font='bold 11px -apple-system,sans-serif';ctx.fillText(`G76: ${k} of ${th.length} thread passes${ex>1?' · depth exaggerated ×10':''}`,8,28)};
+ ctx.fillStyle='#ff4fd8';ctx.font='bold 11px -apple-system,sans-serif';ctx.fillText(`G76: ${k} of ${th.length} thread passes${ex>1?' · depth exaggerated ×10':''}`,8,42)};
 const _refresh18=refresh;refresh=function(){_refresh18();if(!J||!J.M||!J.M.some(m=>m.th))return;const i=$('#info');if(!i)return;const d=document.createElement('div');d.className='s';d.innerHTML=`<button class="chip ${view.thx!==0?'y':'gr'}" id="thx">Depth ×10 ${view.thx!==0?'on':'off'}</button> depth exaggerated in the view only, code unchanged`;i.appendChild(d);$('#thx').onclick=()=>{view.thx=view.thx===0?1:0;refresh()}};
 const _vw17=vw;vw=function(k){_vw17(k);if(!J||!J.lathe||view.rev||!J.M||!cv||J.swiss)return;const th=J.M.filter(m=>m.th);if(!th.length)return;const ex=view.thx!==0?10:1,rT=Math.max(...th.map(m=>m.a[0]));let z0=1e9,z1=-1e9,r0=1e9,r1=-1e9;th.forEach(m=>[m.a,m.b].map(p=>[rT-(rT-p[0])*ex,0,p[2]]).forEach(p=>{z0=Math.min(z0,p[2]);z1=Math.max(z1,p[2]);r0=Math.min(r0,p[0]);r1=Math.max(r1,p[0])}));
  z0-=0.1;z1+=0.1;r0-=0.04;r1+=0.06;view.fs=Math.min((cv.clientWidth-20)/(z1-z0),((cv.clientHeight||354)-20)/(r1-r0));view.fz0=z0;view.fz=z1;view.fr=r1;view.fx=10+((cv.clientWidth-20)-(z1-z0)*view.fs)/2;view.px=0;view.py=0;draw()};
@@ -6657,7 +6657,7 @@ function r101rotCur(){const M=J&&J.M||[];const n=Math.min((typeof view!='undefin
   if(UK){ctx.save();ctx.font='11px system-ui';ctx.fillStyle='#ff9f1a';ctx.textAlign='right';ctx.textBaseline='alphabetic';ctx.fillText('Rotary: set by G68.2',W-8,16);ctx.restore()}
   ctx.textAlign='left';if(st.pl&&!st.pl.unk){ctx.fillStyle='#ffd23f';ctx.fillText(st.pl.haas?'G268 plane on':'G68.2 I'+st.pl.I+' J'+st.pl.J+' K'+st.pl.K,bx+4,by+bh-13)}
   // banner: short, below the app's 'Rotary:' label at the top right, wraps on narrow screens
-  const t='Rotary moves not shown',tw=ctx.measureText(t).width,lines=tw+12>W*0.55?['Rotary moves','not shown']:[t];const lw=Math.max(...lines.map(x=>ctx.measureText(x).width))+12,lh=15,y0=pad+20;
+  const t='Rotary moves not shown',tw=ctx.measureText(t).width,lines=tw+12>W*0.55?['Rotary moves','not shown']:[t];const lw=Math.max(...lines.map(x=>ctx.measureText(x).width))+12,lh=15,y0=pad+34;
   ctx.fillStyle='rgba(140,20,20,.9)';ctx.fillRect(W-lw-pad,y0,lw,lines.length*lh+6);ctx.fillStyle='#fff';lines.forEach((x,i)=>ctx.fillText(x,W-lw-pad+6,y0+3+i*lh));ctx.restore()}catch(e){console.error(e)}return r}}
 // text banner under the canvas too (screen readers / tests)
 {const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);try{const t=r101simNote();let b=$('#r101simb');const cvs=$('#cv');if(t&&cvs){if(!b){b=document.createElement('div');b.id='r101simb';b.className='ok bad';cvs.insertAdjacentElement('afterend',b)}b.textContent='⚠ Rotary moves not shown — the path is drawn flat in XYZ; the dials show the commanded rotary angles.'}else if(b)b.remove()}catch(e){}return r}}
@@ -7028,6 +7028,31 @@ function r107sw(){try{const d=drGet();const m=S.m[S.cur];[[$('#r79dr'),d&&d.J&&d
 const R107READS={"grid":["Control","Rotary axis"],"face":["Control","Rotary axis"],"pbore":["Control","Rotary axis"],"psurf":["Control","Rotary axis"],"pweb":["Control","Rotary axis"],"ppocket":["Control","Rotary axis"],"engrave":["G93 inverse time"],"tlen":["Control","Setter writes length to","Setter moves to itself","Rotary axis"],"insp":["Control","Rotary axis"],"thmill":["Control","Rotary axis"],"datec":["Control","Rotary axis"],"shome":["Control","Rotary axis"],"sstart":["Control","Rotary axis"],"sphcap":["Control","Rotary axis"],"hsm":["Control","Rotary axis"],"fhlock":["Control","Rotary axis"],"fixid":["Control","Rotary axis"],"fa":["Control","Rotary axis"],"hlife":["Control","Rotary axis"],"hpat":["Control","Rotary axis"],"offexp":["Control","Rotary axis"],"ttype":["Control","Rotary axis"],"coolchk":["Control","Rotary axis"],"rmguard":["Control","Rotary axis"],"verdet":["Control","Rotary axis"],"pallet":["Control","Rotary axis"],"shiftrep":["Control","Rotary axis"],"axload":["Control","Rotary axis"],"atmlife":["Control","Rotary axis"],"index":["Control","Rotary axis"],"lturn":["Control","Max RPM (G50)"],"lface":["Control","Max RPM (G50)"],"lgroove":["Control","Max RPM (G50)"],"ldrill":["Control","Max RPM (G50)"],"lprobe":["Control"],"lhome":["Control"],"ltset":["Control","Setter X position (G36)","Setter Z position (G37)"],"lstart":["Control"],"lgrw":["Control","Skip code (probe)"]};
 function r107uses(m,x){if(typeof J=='undefined'||!J||!J.op)return true;const t=R107READS[J.op];if(t)return t.includes(x.k);return r107reads(m,x)}
 {const _t=toast79;toast79=function(s){try{const m=S.m[S.cur],mv=(R92.moved&&R92.moved.op)||(drGet()&&drGet().J.op);if(/moved to a draft — Restore in Build/.test(s)&&mv&&jKind(mv)=='five'&&m&&r98t(m)!='vmc5')s=s.replace('Restore in Build','switch back to 5-axis to restore')}catch(e){}return _t.apply(this,[s,...[].slice.call(arguments,1)])}}
+// v109: sim tool shape from the Tool Library type + diameter (flat when unknown — never a default point)
+function r109prof(){const t=(typeof jobTool=='function'&&jobTool())||null,jp=(J&&J.p)||{};const pv=k=>jp[k]&&+jp[k].v>0?+jp[k].v:0;
+ const D=t&&+t.dia>0?+t.dia:(pv('Cutter')||pv('Drill Ø')||pv('Tool Ø')||0.25),r=D/2,ty=String(t?t.type||'':''),P=[];
+ const tip=t&&+t.tip>0?Math.min(+t.tip,D):0,deg=Math.PI/180;
+ if(/ball/i.test(ty)){for(let k=0;k<=6;k++){const a=k*Math.PI/12;P.push([2*r*Math.sin(a),r*(1-Math.cos(a))])}}
+ else if(/bull|corner/i.test(ty)){const c=Math.min(Math.max(+t.nr||0,0),r);P.push([D-2*c,0]);for(let k=1;k<=4;k++){const a=k*Math.PI/8;P.push([D-2*c+2*c*Math.sin(a),c*(1-Math.cos(a))])}}
+ else if(/spot|center/i.test(ty)){P.push([0,0],[D,r/Math.tan(45*deg)])}
+ else if(/drill/i.test(ty)){P.push([0,0],[D,r/Math.tan(59*deg)])}
+ else if(/chamfer/i.test(ty)){const a=45*deg;P.push([tip,0],[D,(r-tip/2)/Math.tan(a)])}
+ else if(/engrav/i.test(ty)){const a=(+t.ang>0?+t.ang:60)/2*deg;P.push([tip,0],[D,(r-tip/2)/Math.tan(a)])}
+ else if(/^tap$/i.test(ty)){P.push([D*0.6,0],[D,r*0.4])}
+ else P.push([D,0]);
+ const h=P.at(-1)[1];P.push([D,Math.max(1,h+0.2)],[Math.min(D,0.5)||D,2.2]);return{D,ty,P}}
+function r109draw(t,ring,ln){const{P}=r109prof();P.forEach(([d,h])=>{if(d>1e-9)ring(d/2,t[2]+h)});
+ for(let k=0;k<4;k++){const a=k*Math.PI/2,c=Math.cos(a),s=Math.sin(a);for(let i=1;i<P.length;i++)ln([t[0]+P[i-1][0]/2*c,t[1]+P[i-1][0]/2*s,t[2]+P[i-1][1]],[t[0]+P[i][0]/2*c,t[1]+P[i][0]/2*s,t[2]+P[i][1]])}
+ if(P[0][0]>1e-9)for(let k=0;k<2;k++){const a=k*Math.PI/2;ln([t[0]+P[0][0]/2*Math.cos(a),t[1]+P[0][0]/2*Math.sin(a),t[2]+P[0][1]],[t[0]-P[0][0]/2*Math.cos(a),t[1]-P[0][0]/2*Math.sin(a),t[2]+P[0][1]])}}
+{const _t=tool;tool=function(t){if(!J||J.lathe||J.swiss||(typeof formProf=='function'&&formProf()))return _t.apply(this,arguments);
+ ctx.strokeStyle='#f2f2f2';ctx.lineWidth=1.3;r109draw(t,(r,z)=>poly([...Array(16)].map((_,i)=>[t[0]+r*Math.cos(i*Math.PI/8),t[1]+r*Math.sin(i*Math.PI/8),z])),ln)}}
+// v109: live T · S · F readout at the playhead (modal carry, dash until set)
+function r109ro(){const C=(J&&J.code)||[],m=(J&&J.M||[])[(view.n||0)-1],end=m?m.l:-1;let T=null,S=null,F=null,css=0,met=!!(J&&J.met);
+ for(let i=0;i<=end&&i<C.length;i++){const s=String(C[i]).toUpperCase().replace(/\(.*?\)/g,'').replace(/;.*/,'');if(/^\s*#|^\s*O\d|^\s*%/.test(s))continue;
+  const w=re=>{const x=s.match(re);return x?x[1]:null};let g;const gs=[...s.matchAll(/G0*(\d+)(?!\.)/g)].map(x=>+x[1]);
+  if(gs.includes(96))css=1;if(gs.includes(97))css=0;if(gs.includes(21))met=true;if(gs.includes(20))met=false;
+  if((g=w(/(?:^|[^A-Z#])T(\d+)/)))T=g.length>=4&&J.lathe?String(+g.slice(0,2)):String(+g);if((g=w(/(?:^|[^A-Z#])S(\d+\.?\d*)/)))S=g;if((g=w(/(?:^|[^A-Z#])F(\d*\.?\d*)/)))F=g}
+ return 'T'+(T??'–')+' · S'+(S??'–')+(S!=null&&css?(met?' m/min':' SFM'):'')+' · F'+(F??'–')}
 
 /* R79-END */</script>
 </body></html>
