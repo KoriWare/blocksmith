@@ -5753,6 +5753,33 @@ html[data-theme=light] #r89 .r89c{background:#fff;color:#111}
 </style>`);
 // R90 the first Home render happens before the tour wrapper exists — add the welcome card there too
 setTimeout(()=>{try{const h=$('#home');if(h&&!r89seen()&&!R89&&!$('#r89w')){const f=h.querySelector('.card');if(f)f.insertAdjacentHTML('afterend',r89card())}}catch(e){}},0);
+// R91 wide screens (PC): the whole app is one centered 480px column; phones (≤480px) unchanged
+document.head.insertAdjacentHTML('beforeend',`<style id="r91col">@media (min-width:481px){
+html{background:#0a0b0d}
+body{max-width:480px;margin-left:auto!important;margin-right:auto!important;min-height:100vh;box-shadow:0 0 0 1px #20242a,0 0 60px rgba(0,0,0,.6)}
+.tabs,#r89{left:calc(50% - 240px)!important;right:calc(50% - 240px)!important;width:auto!important}
+#pmkey,#qhelp{right:calc(50% - 230px)!important}
+#dlg .dlgb{max-width:min(420px,456px)}#r86pick .card{max-width:464px!important}
+#v{max-width:calc(480px / var(--tsz,1))}
+#v[style*="width"]{width:calc(480px / var(--tsz,1))!important}
+html[data-theme=light]{background:#d9dce0}
+}</style>`);
+// R91-T the tour is a pure visual guide: a full-screen layer under the tour card eats every tap, scroll and key on the app; only Back / Next / Skip / Finish work
+function r89inTour(e){return !!(e&&e.closest&&e.closest('#r89'))}
+function r89blockOn(){let L=$('#r89block');if(!L){L=document.createElement('div');L.id='r89block';L.setAttribute('aria-hidden','true');document.body.appendChild(L)}try{const a=document.activeElement;if(a&&a!==document.body&&!r89inTour(a))a.blur()}catch(e){}}
+function r89blockOff(){const L=$('#r89block');if(L)L.remove()}
+['click','dblclick','pointerdown','pointerup','mousedown','mouseup','touchstart','touchend','contextmenu','input','change','submit','focusin','paste','drop'].forEach(t=>window.addEventListener(t,e=>{if(!R89||r89inTour(e.target))return;if(e.isTrusted===false&&e.r89own)return;
+ e.stopImmediatePropagation();if(e.cancelable)e.preventDefault();if(t=='focusin'){try{e.target.blur&&e.target.blur();const n=document.querySelector('#r89 .r89n .btn:not([disabled])');n&&n.focus()}catch(x){}}},true));
+['wheel','touchmove'].forEach(t=>window.addEventListener(t,e=>{if(!R89||r89inTour(e.target)&&e.target.closest('.r89c'))return;if(e.cancelable)e.preventDefault();e.stopImmediatePropagation()},{capture:true,passive:false}));
+window.addEventListener('keydown',e=>{if(!R89)return;if(r89inTour(e.target)&&/^(Tab|Enter| |Spacebar)$/.test(e.key))return;if(e.key=='Escape'){e.preventDefault();e.stopImmediatePropagation();r89close();return}if(e.key=='ArrowRight'&&!r89inTour(e.target)){e.preventDefault();e.stopImmediatePropagation();const st=r89steps(R89.kind);if(R89.i<st.length-1)r89go(1);return}if(e.key=='ArrowLeft'&&!r89inTour(e.target)){e.preventDefault();e.stopImmediatePropagation();r89go(-1);return}
+ if(!r89inTour(e.target)||!/^(Tab|Enter| )$/.test(e.key)){e.preventDefault();e.stopImmediatePropagation()}},true);
+{const _s=r89show;r89show=function(){const r=_s.apply(this,arguments);r89blockOn();setTimeout(()=>{try{const n=document.querySelector('#r89 .r89n .btn:not([disabled]):last-child');n&&n.focus({preventScroll:true})}catch(e){}},80);return r}}
+{const _c=r89close;r89close=function(){r89blockOff();return _c.apply(this,arguments)}}
+document.head.insertAdjacentHTML('beforeend','<style>#r89block{position:fixed;inset:0;z-index:8999;background:transparent;touch-action:none;cursor:default}</style>');
+// R91-L a small permanent '🎓 Take the tour' link under Start Building (stays after Skip / Finish)
+function r91link(){try{const b=$('#hBuild');if(!b||$('#r91tour'))return;b.insertAdjacentHTML('afterend','<div id="r91tourrow" style="text-align:center;margin:-2px 0 8px"><button type="button" id="r91tour" class="chip gr" onclick="r89open()" style="min-height:44px">🎓 Take the tour</button></div>')}catch(e){}}
+{const _h91=home;home=function(){const r=_h91.apply(this,arguments);r91link();return r}}
+setTimeout(r91link,0);
 
 /* R79-END */</script>
 </body></html>

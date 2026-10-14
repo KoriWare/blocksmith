@@ -1,0 +1,21 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 91 wide screens: one centered 480px column; phones unchanged: zero steps, macro step guards, engrave samples, back bore, tap pitch, tool library validation, kept lines, export gate/labels, share names, origin, draft --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
+  const box=x=>{const e=d.querySelector(x);if(!e)return null;const r=e.getBoundingClientRect();return [Math.round(r.left),Math.round(r.right)]};const inCol=x=>{const b=box(x),W=d.documentElement.clientWidth;return !!b&&b[0]>=(W-480)/2-1&&b[1]<=(W+480)/2+1};
+ E("tab('new');document.querySelector('#q').value=JB.bolt[1];go()");await sl(60);
+ log('390: no column rules (full width as before)',box('.tabs')[0]==0&&box('.tabs')[1]==d.documentElement.clientWidth&&getComputedStyle(d.documentElement).backgroundColor=='rgba(0, 0, 0, 0)');
+ f.style.width='1280px';f.style.height='800px';await sl(200);
+ log('1280: header, content, tab bar inside a centered 480 column',['.h','#v','.tabs'].every(inCol)&&Math.abs((box('.tabs')[0]+box('.tabs')[1])/2-d.documentElement.clientWidth/2)<2&&box('.tabs')[1]-box('.tabs')[0]==480,JSON.stringify(['.h','#v','.tabs'].map(box)));
+ log('1280: neutral dark outside',getComputedStyle(d.documentElement).backgroundColor=='rgb(10, 11, 13)'&&d.documentElement.scrollWidth<=1280);
+ E("S.ts=150;applyTS();tab('new')");await sl(60);log('1280 at 150% text: content still in the column',inCol('#v'),JSON.stringify(box('#v')));E("S.ts=100;applyTS()");
+ E("ed('Dia')");await sl(60);log('1280: popup inside the column',inCol('#dlg .dlgb'));d.querySelector('#dlg button')&&[...d.querySelectorAll('#dlg button')].pop().click();await sl(40);
+ E("toast79('x')");await sl(30);log('1280: toast inside the column',inCol('#r79toast'));
+ E("r89start('mill')");await sl(120);log('1280: tour sheet inside the column',inCol('#r89 .r89c')&&inCol('#r89'));E("r89close()");
+ f.style.width='1920px';f.style.height='1080px';await sl(200);E("tab('new')");await sl(40);log('1920: column centered',inCol('.tabs')&&inCol('#v'));
+ f.style.width='390px';f.style.height='844px';await sl(200);log('back at 390: full width again',box('.tabs')[0]==0&&box('.tabs')[1]==d.documentElement.clientWidth);
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

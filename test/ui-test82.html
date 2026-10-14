@@ -1,0 +1,29 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 91 tour is a pure visual guide: app underneath ignores taps, typing and keys: zero steps, macro step guards, engrave samples, back bore, tap pitch, tool library validation, kept lines, export gate/labels, share names, origin, draft --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
+  const LS=()=>JSON.stringify(Object.keys(w.localStorage).filter(k=>k!='mc_tour').sort().map(k=>[k,w.localStorage.getItem(k)]));const before=LS(),m0=E("JSON.stringify(S.m)");
+ const state=()=>JSON.stringify([d.querySelector('#ttl').textContent,E("J&&J.op"),E("J&&JSON.stringify(J.p)"),E("S.cur"),E("S.jtab"),!!d.querySelector('#dlg'),!!d.querySelector('#r86pick')]);
+ E("r89start('mill')");await sl(100);log('blocking layer covers the screen under the tour card',(()=>{const L=d.querySelector('#r89block');if(!L)return false;const r=L.getBoundingClientRect(),c=getComputedStyle(L);return r.width>=d.documentElement.clientWidth-1&&r.height>=w.innerHeight-1&&+c.zIndex<+getComputedStyle(d.querySelector('#r89')).zIndex})());
+ const fire=(el,t)=>{if(!el)return;['pointerdown','mousedown','pointerup','mouseup'].forEach(x=>el.dispatchEvent(new MouseEvent(x,{bubbles:true,cancelable:true})));el.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))};
+ const hit=(x,y)=>d.elementFromPoint(x,y);
+ for(const go of [1,2,3]){E("r89go("+(go==1?2:1)+")");await sl(150);const s0=state();
+  const targets=[...d.querySelectorAll('#out .card .chip, #jcjobs [data-op], .tabs button, #r79fold, #bldtl, #v button, #v .card[onclick]')].filter(e=>e.offsetParent).slice(0,25);
+  targets.forEach(t=>fire(t));await sl(120);log(`step ${E("R89.i+1")}: clicking ${targets.length} app buttons/chips does nothing`,state()==s0,s0+' → '+state());
+  const ch=d.querySelector('#out .card .chip');if(ch){const r=ch.getBoundingClientRect();log(`step ${E("R89.i+1")}: a tap on a chip lands on the blocking layer`,hit(r.left+r.width/2,r.top+r.height/2).id=='r89block')}}
+ E("r89go(1)");await sl(150);const s1=state();const ed=d.querySelector('#ed, #edt, textarea');if(ed){ed.focus();ed.dispatchEvent(new KeyboardEvent('keydown',{key:'x',bubbles:true,cancelable:true}));ed.dispatchEvent(new InputEvent('input',{bubbles:true,data:'x'}))}
+ log('typing into the app does nothing, focus does not stay in the app',state()==s1&&(!d.activeElement||!d.activeElement.closest||!!d.activeElement.closest('#r89')||d.activeElement===d.body));
+ d.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));d.body.dispatchEvent(new KeyboardEvent('keydown',{key:'g',bubbles:true,cancelable:true}));await sl(60);log('keys on the app do nothing',state()==s1);
+ const wh=new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:400});d.querySelector('#r89block').dispatchEvent(wh);log('scrolling the app is blocked',wh.defaultPrevented);
+ const i0=E("R89.i");[...d.querySelectorAll('#r89 button')].find(b=>/Next/.test(b.textContent)).click();await sl(120);log('Next works',E("R89.i")==i0+1);
+ [...d.querySelectorAll('#r89 button')].find(b=>/Back/.test(b.textContent)).click();await sl(120);log('Back works',E("R89.i")==i0);
+ d.querySelector('#r89 .r89skip').click();await sl(120);log('Skip works, layer gone',!E("R89")&&!d.querySelector('#r89block')&&!d.querySelector('#r89'));
+ log('everything restored exactly',LS()==before&&E("JSON.stringify(S.m)")==m0&&E("J")==null);
+ E("r89start('lathe')");await sl(100);E("r89go(7)");await sl(100);[...d.querySelectorAll('#r89 button')].find(b=>/Finish/.test(b.textContent)).click();await sl(120);log('Finish works',!E("R89")&&!d.querySelector('#r89block'));
+ const fb=d.querySelector('.tabs button');fire(fb);await sl(60);E("tab('new')");await sl(60);log('after the tour the app takes taps again',d.querySelector('#ttl').textContent!='');
+ const jb=d.querySelector('#jcjobs [data-op]');if(jb){jb.click();await sl(100)}log('…and job buttons open jobs again',!!E("J&&J.op"));E("J=null;drClear()");
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

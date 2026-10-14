@@ -29,5 +29,13 @@ await p.tap('#r89 button:has-text("Finish")');await p.waitForTimeout(300);
 const after2=await p.evaluate(()=>JSON.stringify(Object.keys(localStorage).sort().filter(k=>k!='mc_tour').map(k=>[k,localStorage.getItem(k)])));
 log(wd+' lathe tour leaves storage untouched, no jobs, no draft, machine back',after2==before&&await p.evaluate(j=>S.jobs.length==j&&!localStorage.getItem('mc_draft')&&S.cur==0&&J==null,jobs0),after2.slice(0,120));
 await p.reload();await p.waitForTimeout(900);log(wd+' after reload: nothing from the tour',await p.evaluate(()=>!localStorage.getItem('mc_draft')&&!document.querySelector('#r79dr')));
+
+ {await p.evaluate(()=>r89start('mill'));await p.waitForTimeout(300);await p.evaluate(()=>r89go(2));await p.waitForTimeout(300);// R91-T real taps on the app during the tour do nothing
+  const st=()=>p.evaluate(()=>JSON.stringify([R89&&R89.i,document.querySelector('#ttl').textContent,J&&J.op,J&&JSON.stringify(J.p),S.cur,!!document.querySelector('#dlg')]));const s0=await st();
+  const pts=await p.evaluate(()=>{const top=document.querySelector('#r89 .r89c').getBoundingClientRect().top;return [...document.querySelectorAll('#out .card .chip, .h button, #r79fold')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.top>0&&r.bottom<top}).slice(0,8).map(e=>{const r=e.getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})});
+  for(const [x,y] of pts){await p.touchscreen.tap(x,y);await p.waitForTimeout(80)}await p.evaluate(()=>document.body.focus());await p.keyboard.type('abc');await p.waitForTimeout(200);
+  log(wd+` tour: ${pts.length} real taps on chips/header + typing change nothing`,pts.length>2&&await st()==s0,s0+' → '+await st());
+  await p.tap('#r89 button:has-text("Next")');await p.waitForTimeout(200);log(wd+' tour Next still works by tap',await p.evaluate(()=>R89&&R89.i==3));await p.tap('#r89 .r89skip');await p.waitForTimeout(200);
+  log(wd+' tour link on Home after Skip',await p.evaluate(()=>!!document.querySelector('#r91tour')))}
 log(wd+' no page errors',!errs.length,errs.join('|'));await ctx.close()}
 console.log(F?'FAILS '+F:'ALL PASS');await b.close()})();

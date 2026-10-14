@@ -6,7 +6,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
   const LS=()=>JSON.stringify(Object.keys(w.localStorage).filter(k=>k!='mc_tour').sort().map(k=>[k,w.localStorage.getItem(k)]));
  E("home()");await sl(40);log('first launch: welcome card with Mill, Lathe, Skip',!!d.querySelector('#r89w')&&/Mill tour/.test(d.querySelector('#r89w').textContent)&&/Lathe tour/.test(d.querySelector('#r89w').textContent)&&/Skip/.test(d.querySelector('#r89w').textContent));
- [...d.querySelectorAll('#r89w button')].find(b=>/Skip/.test(b.textContent)).click();await sl(30);log('Skip remembered: no nagging',w.localStorage.getItem('mc_tour')=='skip'&&(E("home()"),!d.querySelector('#r89w')));
+ log('Home has the small 🎓 Take the tour link',!!d.querySelector('#r91tour')&&d.querySelector('#r91tour').offsetHeight>=44);[...d.querySelectorAll('#r89w button')].find(b=>/Skip/.test(b.textContent)).click();await sl(30);log('tour link still on Home after Skip',(E("home()"),!!d.querySelector('#r91tour')&&!!d.querySelector('#r91tour').offsetParent));d.querySelector('#r91tour').click();await sl(40);log('tour link opens the Mill / Lathe choice',!!d.querySelector('#r89again'));log('Skip remembered: no nagging',w.localStorage.getItem('mc_tour')=='skip'&&(E("home()"),!d.querySelector('#r89w')));
  E("more()");await sl(30);log('More has 🎓 Tutorial',!!d.querySelector('#r89more'));d.querySelector('#r89more').click();await sl(40);log('…which opens Help with Mill/Lathe tour',!!d.querySelector('#r89again'));
  E("help()");await sl(30);log('Help has the Tutorial card',!!d.querySelector('#r89again'));
  // draft + a job in the Library to prove they survive
@@ -21,11 +21,11 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('no DEMO label (values cannot be used)',!/DEMO NUMBERS/.test(d.body.innerHTML));
  E("r89go(10)");await sl(60);const gl=d.querySelector('#r89 .r89gl');log('glossary lists all the terms',!!gl&&['Macro','O-number','G54','work offset','Z0','Chip','Need list','Override','Ready','Post','export','.mbjob'].every(t=>gl.textContent.includes(t)));
  E("r89close()");await sl(60);log('mill tour leaves no data: storage, jobs, draft, machines, selected machine unchanged',LS()==before&&E("S.jobs.length")==jobs0&&E("S.cur")==cur0&&E("JSON.stringify(S.m)")==m0&&/"Dia":\{"v":2/.test(w.localStorage.getItem(E("DRK"))));
- log('Finish/Skip goes Home and marks the tour done',d.querySelector('#ttl').textContent=='Home'&&w.localStorage.getItem('mc_tour')=='done');
+ log('Finish/Skip goes Home and marks the tour done',d.querySelector('#ttl').textContent=='Home'&&w.localStorage.getItem('mc_tour')=='done');log('tour link still on Home after the tour, welcome card gone',!!d.querySelector('#r91tour')&&!d.querySelector('#r89w'));
  E("r89start('lathe')");await sl(80);E("r89go(2)");await sl(90);log('lathe sample: OD turn on the demo lathe',E("J.op")=='lturn'&&E("isLT(S.m[S.cur].type)"));
  E("r89go(1)");await sl(120);log('lathe step 4: values on the tour job only',E("J.p['Bar Ø'].v")!=null&&/X is a diameter/.test(d.querySelector('#r89').textContent));
  E("r89go(1)");await sl(80);log('lathe tour reaches the Editor checks',!!d.querySelector('.r89spot#ck')||!!d.querySelector('#ck.r89spot'));
- E("r89close()");await sl(60);log('lathe tour leaves no data either',LS()==before&&E("S.jobs.length")==jobs0&&E("S.cur")==cur0&&E("JSON.stringify(S.m)")==m0);
+ E("r89go(10)");await sl(60);[...d.querySelectorAll('#r89 button')].find(b=>/Finish/.test(b.textContent)).click();await sl(80);log('tour link on Home after Finish',d.querySelector('#ttl').textContent=='Home'&&!!d.querySelector('#r91tour'));log('lathe tour leaves no data either',LS()==before&&E("S.jobs.length")==jobs0&&E("S.cur")==cur0&&E("JSON.stringify(S.m)")==m0);
  log('storage writes work again after the tour',(w.localStorage.setItem('x89','1'),w.localStorage.getItem('x89')=='1'));w.localStorage.removeItem('x89');E("drClear()");
  log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
  o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
