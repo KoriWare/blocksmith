@@ -1,0 +1,70 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 101b: Maria / Stacey / Casey / Kori steering --><iframe id="f" src="../index.html?v=101" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const iA=E("S.m.findIndex(m=>m.name=='Mill A')"),iB=E("S.m.findIndex(m=>m.name=='Mill B')");
+
+ const pct=()=>(V0=>((d.querySelector('#v')||d.body).innerText.match(/Setup (\d+)%/)||[])[1])();
+ // Casey 1: Cancel leaves value, state and % untouched
+ E(`S.cur=${iB};edit(${iB})`);await sl(60);
+ const ck=E("(()=>{const m=S.m[S.cur];const f=[...V.querySelectorAll('.r99f')].find(f=>{const i=f.querySelector('input');const x=m.s.find(y=>y.k==f.dataset.r99k);return i&&i.readOnly&&x&&x.st!='user'&&x.v&&f.offsetParent});return f?f.dataset.r99k:''})()");
+ if(ck){const p0=pct(),st0=E(`S.m[S.cur].s.find(x=>x.k==${JSON.stringify(ck)}).st`);E(`(()=>{const f=V.querySelector('.r99f[data-r99k="'+CSS.escape(${JSON.stringify(ck)})+'"]');f.querySelector('input').focus();f.querySelector('.r99w').click()})()`);await sl(50);
+  const half=E("(()=>{const a=document.querySelector('#r99sheet .cancel'),b=document.querySelector('#r99sheet .done');return a&&b&&Math.abs(a.getBoundingClientRect().width-b.getBoundingClientRect().width)<2})()");
+  log('sheet Cancel / Done split 50/50',half,E("[...document.querySelectorAll('#r99sheet .r99acts button')].map(b=>b.className+':'+b.getBoundingClientRect().width).join(',')+' sheet:'+!!document.querySelector('#r99sheet')"));
+  log('sheet Other box has an italic placeholder',E("(()=>{const i=document.querySelector('#r99othi');return !i||getComputedStyle(i,'::placeholder').fontStyle=='italic'})()"));
+  E("document.querySelector('#r99sheet .cancel').click()");await sl(80);E(`edit(${iB})`);await sl(60);
+  log('Cancel on the sheet: state, dot and Setup % untouched ('+ck+')',E(`S.m[S.cur].s.find(x=>x.k==${JSON.stringify(ck)}).st`)==st0&&pct()==p0&&E(`V.querySelector('.r99f[data-r99k="'+CSS.escape(${JSON.stringify(ck)})+'"]').dataset.s`)!='ok',st0+' '+p0+'→'+pct())}
+ else log('found a gray picker to Cancel',false);
+ log('hint lines start with a capital',E("[...V.querySelectorAll('.r99hint')].filter(h=>h.offsetParent&&/^[a-z]/.test(h.textContent.trim())).length")==0,E("[...V.querySelectorAll('.r99hint')].filter(h=>/^[a-z]/.test(h.textContent.trim())).map(h=>h.textContent.slice(0,30)).join('|')"));
+ // Maria 1–3, 9: 5-axis rows only inside the Machine type card
+ E(`document.querySelector('#r98type button[data-t=vmc5]').click()`);await sl(80);
+ log('pair + directions live inside the Machine type card, lock chip too',E("!!document.querySelector('#r98type #r100rot')&&!!document.querySelector('#r98type #r100lock')"));
+ E("(()=>{const m=S.m[S.cur];const t=r100ensure(m,K5.ta,'','confirm');t.v='A';t.st='confirm';delete t.r100;const x=r100ensure(m,'Rotary pair','','confirm');x.v='A + C';x.st='user';r100sync(m);m.r99need=['Rotary axis'];save();edit(S.cur)})()");await sl(80);
+ log('exactly one pair row + A / C direction rows, none in the settings list',E("[...V.querySelectorAll('.r99f')].filter(f=>f.offsetParent&&/^(Rotary pair|[ABC] direction)$/.test(f.dataset.r99k||'')).map(f=>f.dataset.r99k+(f.closest('#r100rot')?'':'!out')).join('|')")=='Rotary pair|A direction|C direction');
+ log('pair status dot stays 9px after picking',E("Math.round(parseFloat(getComputedStyle(document.querySelector('#r100rot .r99f .r99st')).width))")==9,E("getComputedStyle(document.querySelector('#r100rot .r99f .r99st')).width"));
+ log("'Confirm rotary letter' clears once the pair is set",!E("(S.m[S.cur].r99need||[]).includes('Rotary axis')")&&!/Confirm rotary letter/.test(E("($('#r99notice')||{textContent:''}).textContent")));
+ log('valid default Tilt axis name A stays neutral until confirmed',E("S.m[S.cur].s.find(y=>y.k==K5.ta).st")!='user');
+ E("(()=>{J=parseJ2('','tp32');J.text='';J.edits={};J.code=[];tab('new');show()})()");await sl(40);
+ log('…and stays in Build Need N (5-axis card) until confirmed',E("(()=>{const c=$('#r101five');return !!c&&c.textContent.includes('Confirm '+K5.ta)})()"),E("($('#r101five')||{textContent:'none'}).textContent.slice(0,300)"));
+ E(`S.cur=${iB};edit(${iB})`);await sl(40);
+ // Casey 2: 5 -> 4 parks the 5-axis rows
+ E(`document.querySelector('#r98type button[data-t=vmc4]').click()`);await sl(80);
+ log('5→4: pair / directions / K5 parked out of settings (kept in s5park)',E("(()=>{const m=S.m[S.cur];return !m.s.some(x=>x.k=='Rotary pair'||/^[ABC] direction$/.test(x.k))&&(m.s5park||[]).some(x=>x.k=='Rotary pair'&&x.v=='A + C')})()"));
+ E(`document.querySelector('#r98type button[data-t=vmc5]').click()`);await sl(80);
+ log('4→5 restores the parked pair',E("(S.m[S.cur].s.find(x=>x.k=='Rotary pair')||{}).v")=='A + C');
+ // Maria 4/6: examples
+ const ph=k=>E(`(()=>{const sp=r99spec(${JSON.stringify(k)});return sp&&(sp.ph||sp.ex)})()`);
+ log('#100–#199 placeholder whole words',ph('#100–#199 cleared at')=='Reset / Power off / Other');
+ log('direction placeholder whole words',ph('Tilt axis + direction')=='+ = CCW / + = CW / Other'&&ph('Rotary direction')=='+ = CCW / + = CW / Other');
+ log('risk example Yes, I accept, and it is accepted',ph('I accept the risk (HIGH)')=='Yes, I accept'&&E("r99ok(RISK,'Yes, I accept',r99spec(RISK))")===true);
+ log('Encoder counts e.g. 4096; Orient spindle P e.g. 1',E("R99SPEC['Spindle encoder counts per rev'].ex")=='4096'&&E("R99SPEC['Orient parameter spindle (P)'].ex")=='1');
+ log('no placeholder has a mid-word ellipsis',E("[...document.querySelectorAll('input[placeholder]')].filter(i=>/\\w…/.test(i.placeholder)).map(i=>i.placeholder).join('|')")==='');
+ E("toast79('test');$('#r79toast').classList.add('r99pin')");await sl(30);
+ log('real-answer notice docks just above the tab bar',E("(()=>{const t=$('#r79toast').getBoundingClientRect(),b=document.querySelector('.tabs').getBoundingClientRect();return t.bottom<=b.top+1&&t.bottom>=b.top-20})()"),E("JSON.stringify([$('#r79toast').getBoundingClientRect().bottom,document.querySelector('.tabs').getBoundingClientRect().top])"));
+ E("$('#r79toast').classList.remove('r99pin');$('#r79toast').hidden=true");
+ // Kori 10 / Stacey: Simulate on every 5-axis job
+ E("(()=>{pick('Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills');cur(S.m.length-1)})()");await sl(60);
+ for(const ctl of ['Haas NGC','Fanuc 30i/31i-style']){
+  E(`(()=>{const m=S.m[S.cur];const sv_=(k,v)=>{let x=m.s.find(x=>x.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};sv_('Control',${JSON.stringify(ctl)});m.s.forEach(x=>{if(x.st!='user'&&x.v)x.st='user'});R101K5().forEach(k=>{const x=m.s.find(y=>y.k==k);if(x&&!x.v){x.v=/limit/i.test(k)?'-30 / 110':/code|clamp/i.test(k)?'M10 / M11':'1';x.st='user'}});sv_(K5.tw,/Haas/.test(${JSON.stringify(ctl)})?'G268 / G269':'G68.2 / G69');sv_('Spindle probe on / off','M59 / M69');sv_('DPRNT support','Yes');m.opt=m.opt||{};m.opt.probe=true;save()})()`);
+  const res=E(`(()=>{const V={'Holes':6,'Bolt circle Ø':2,'Start angle':0,'Depth':0.25,'R plane':0.1,'Face Z':0,'Feed':10,'Tool':3,'Safe Z':1,'Tilt angle':30,'Rotary angle':90,'Euler I':0,'Euler J':30,'Euler K':0,'Plane X':0,'Plane Y':0,'Plane Z':0,'Feature program':1234,'Faces':${JSON.stringify(/Haas/.test(ctl)?'30,0; 30,90':'0,30,0; 90,30,0')},'Work offset':'G54','Program end':'M30','I accept the risk (HIGH)':'YES','Angles (tilt list)':'0, 30, 60','Probe Z':0.5};
+   const o=[];['tp32','tpdrill','rcchk','runw','tcpc','dwo','g268','pivchk'].forEach(op=>{let j=null;try{j=parseJ2('',op)}catch(e){}if(!j||!j.p){o.push({op,skip:1});return}J=j;J.text='';J.edits={};J.code=[];tab('new');if(!J||!J.p){o.push({op,skip:1});return}show();const ch=J2[op].choices||{};Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k in V?V[k]:ch[k]?ch[k][0]:1,g:false}});show();
+    if(!J.code||!J.code.length){o.push({op,code:0});return}tab('sim');refresh();draw();const g=J.code.map((l,i)=>/G53 Z0/.test(l)?i:-1).filter(i=>i>=0);
+    o.push({op,code:1,rot:J.M.filter(m=>m.rot5).length,ang:[...new Set(J.M.filter(m=>m.rot5).map(m=>m.rot5.B+'/'+m.rot5.C))].join(','),solve:J.M.some(m=>m.rot5&&m.rot5.pl&&m.rot5.pl.solve),g53up:g.every(i=>{const mm=J.M.filter(m=>m.l==i).pop();return !mm||mm.b[2]>=1.99}),banner:!!$('#r101simb')&&/Rotary moves not shown/.test($('#r101simb').textContent),err:J.run&&J.run.err})});return JSON.stringify(o)})()`);
+  let arr=[];try{arr=JSON.parse(res)}catch(e){log(ctl+' sim run',false,res);continue}
+  arr.forEach(x=>{if(x.skip){r.push('INFO '+ctl+' '+x.op+': Haas-only job, not offered');return}if(!x.code){log(`${ctl} ${x.op}: code written for the sim run`,false);return}
+   log(`${ctl} ${x.op}: simulates, no error, banner 'Rotary moves not shown'`,!x.err&&x.banner,JSON.stringify(x));
+   log(`${ctl} ${x.op}: G53 Z0 drawn as retract to machine top`,x.g53up,JSON.stringify(x));
+   log(`${ctl} ${x.op}: rotary angles tracked (${x.ang}${x.solve?', G53.1 solved by control':''})`,x.rot>0);
+   r.push('INFO '+ctl+' '+x.op+' angles '+x.ang+(x.solve?' (G68.2/G53.1: shown as “set by G53.1”)':''))});
+  if(/Haas/.test(ctl))log('Haas tp32 index line uses Tilt + Rotary angle boxes',arr.some(x=>x.op=='tp32'&&/30\/90/.test(x.ang)));
+ }
+ // Stacey 3: tilt limits -30/110
+ const lim=v=>E(`(()=>{const m=S.m[S.cur];const x=m.s.find(y=>y.k==K5.tl);x.v='-30 / 110';x.st='user';J=parseJ2('','tp32');J.text='';J.edits={};J.code=[];tab('new');show();const V={'Euler I':0,'Euler J':${v},'Euler K':0,'Plane X':0,'Plane Y':0,'Plane Z':0,'Feature program':1234,'Safe Z':1,'Tool':3,'Work offset':'G54'};Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k in V?V[k]:1,g:false}});show();return JSON.stringify({code:!!(J.code&&J.code.length),msg:($('#r101tilt')||{textContent:''}).textContent,req:Object.keys(J.p).join(',')})})()`);
+ for(const v of [150,-60]){const raw=lim(v);let x;try{x=JSON.parse(raw)}catch(e){log('tilt limit run',false,raw);continue}log(`Fanuc 3+2 Euler J=${v} outside -30/110 refused with Needs/Example`,!x.code&&/Needs:.*-30 \/ 110/.test(x.msg)&&/Example/.test(x.msg),JSON.stringify(x))}
+ {let x={};try{x=JSON.parse(lim(45))}catch(e){}log('Euler J=45 inside limits writes code; Fanuc asks Euler only (no ignored Tilt/Rotary angle boxes)',x.code&&!/Tilt angle|Rotary angle/.test(x.req),JSON.stringify(x))}
+ // Casey 4: Haas G65 args all carry a decimal point
+ log('Haas G65: every argument but P/L gets its decimal point (line and check agree)',E("(()=>{const m=S.m[S.cur];m.s.find(x=>x.k=='Control').v='Haas NGC';const g={code:['G65 P9000 I4 J3 H6 (X1)','G65 P9000 A1.5 L2']};r92code(J||{p:{}},g);return g.code.join('|')})()")=='G65 P9000 I4. J3. H6. (X1)|G65 P9000 A1.5 L2',E("(()=>{const g={code:['G65 P9000 I4 J3 H6 (X1)']};r92code(J||{p:{}},g);return g.code.join('|')})()"));
+ log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

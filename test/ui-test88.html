@@ -50,7 +50,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('saved tilt letter (user) never rewritten by pair',E(`S.m[${iA}].s.find(x=>x.k==K5.ta).v`)=='B');
  // type switch hide-not-delete
  E(`S.cur=${iA};edit(${iA});document.querySelector('#r98type button[data-t=vmc3]').click()`);await sl(30);
- log('switch to 3-axis keeps rotary pair data',E(`S.m[${iA}].s.find(x=>x.k=='Rotary pair').v`)=='A + C'&&!E("!!$('#r100rot')"));
+ log('switch to 3-axis parks rotary pair data (kept, not in settings)',E(`(S.m[${iA}].s5park||[]).find(x=>x.k=='Rotary pair').v`)=='A + C'&&!E(`S.m[${iA}].s.some(x=>x.k=='Rotary pair')`)&&!E("!!$('#r100rot')"));
  E("document.querySelector('#r98type button[data-t=vmc5]').click()");await sl(30);
  log('back to 5-axis shows pair again',E("!!document.querySelector('#r100rot .r99f[data-r99k=\"Rotary pair\"]')"));
  // mid-job draft same as other types

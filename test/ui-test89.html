@@ -1,0 +1,66 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 101: Stacey v100 retest --><iframe id="f" src="../index.html?v=101" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const iA=E("S.m.findIndex(m=>m.name=='Mill A')"),iB=E("S.m.findIndex(m=>m.name=='Mill B')");
+ // 2 every faded example passes its own check
+ const bad=E("Object.entries(R99SPEC).filter(([k,sp])=>sp.ex&&r99ok(k,sp.ex,sp)!==true).map(([k,sp])=>k+'='+sp.ex).join(' | ')");
+ log('every R99SPEC example passes its own validator',bad==='',bad);
+ const bad2=E("(()=>{const o=[];const jobs={tomb:['Base offset','First new offset'],wocopy:['Source offset'],lfb:['Axis'],lzset:['Write to'],lprobe:['Write to'],tlen:['Update offset'],psurf:['Axis'],engrave:['Text start X','Text start Y','Text height']};for(const [op,ks] of Object.entries(jobs)){J={op,p:{}};ks.forEach(k=>{const sp=r100bch(k);if(sp&&sp.ex&&!r99ok(k,sp.ex,sp))o.push(op+':'+k+'='+sp.ex)})}J=null;return o.join(' | ')})()");
+ log('every Build picker example passes its own check',bad2==='',bad2);
+ log('5-axis pair/direction examples pass',E("(()=>{const ok=v=>{const t=String(v).trim();return R100PAIR.includes(t)};return ok('A + C')&&R100DIR.includes('Clockwise (+)')})()"));
+ for(const [k,v] of [['Tool change time (s)','3.5'],['Setter X Y (G53 machine)','X-12.5 Y-3.25'],['Tilt axis limits (min / max deg)','-120 / 30'],['Rotary axis limits (min / max deg, or continuous)','continuous'],['Pallets','2']])log('example accepted: '+k+' '+v,E(`r99ok(${JSON.stringify(k)},${JSON.stringify(v)})`)===true);
+ log('Tool change 3.5 is not cut to 5 (range 0.5–60)',E("r99num('3.5','seconds, 0.5–60').ok")===true&&E("r99num('0.4','seconds, 0.5–60').ok")===false);
+ // 1 Confirm rotary letter in Build Need N
+ E(`(()=>{const m=S.m[${iA}];S.cur=${iA};m.opt.ax4=1;m.mtype='vmc4';const r=m.s.find(x=>x.k=='Rotary axis');r.st='confirm';m.r99need=['Rotary axis'];save()})()`);
+ E("J=null;tab('new');pickJob('index')");await sl(40);
+ log('index job: Build Need N has Confirm rotary letter',/Confirm rotary letter/.test(E("$('#out').textContent"))&&!E("!!(J&&J.code)"));
+ E("[...document.querySelectorAll('#out [data-k101]')][0].click()");await sl(60);
+ log('tapping it opens setup at the rotary letter box',E("!!document.activeElement&&!!document.activeElement.closest&&!!document.activeElement.closest('.r99f[data-r99k=\"Rotary axis\"]')")||E("!!$('#r99sheet')"));
+ E("$('#r99sheet')&&$('#r99dim').click()");
+ E(`(()=>{const m=S.m[${iA}];m.mtype='vmc3';delete m.r99need;m.opt.ax4=0;save()})()`);
+ // 3 Build junk never saved
+ E(`S.cur=${iA};J=null;tab('new');$('#q').value='G54 T1 drill 4 holes on a 2.0 bolt circle center x0 y0 z0 0';go()`);await sl(40);
+ E("J.p.Depth={v:null};show()");await sl(30);
+ E("(()=>{const i=document.querySelector('#out .r99f[data-r99k=\"Depth\"] input');i.value='asdf';fill()})()");await sl(30);
+ log('Build Depth asdf + Continue: not saved (no ASDF)',E("J.p.Depth.v")==null,E("JSON.stringify(J.p.Depth)"));
+ log('…box keeps asdf with red Needs',/asdf/.test(E("(document.querySelector('#out .r99f[data-r99k=\"Depth\"] input')||{}).value"))&&/Needs:/.test(E("(document.querySelector('#out .r99f[data-r99k=\"Depth\"] .r99err')||{}).textContent")));
+ // 5 text numbers
+ log('Text start X / Y and Text height use the number rule',E("(()=>{J={op:'engrave',p:{}};const a=r100bch('Text start X'),b=r100bch('Text height');const o=a.st=='typed number'&&b.st=='typed number'&&!r99ok('Text height','abc',b)&&r99ok('Text start X','-0.5',a);J=null;return o})()"));
+ // 4 / 10 5-axis setup rows
+ E(`(()=>{const m=S.m[${iB}];S.cur=${iB};edit(${iB});document.querySelector('#r98type button[data-t=vmc5]').click()})()`);await sl(60);
+ const rows=E("[...V.querySelectorAll('.r99f,.set')].filter(f=>f.offsetParent!==null&&f.style.display!='none'&&!f.closest('[style*=\"display: none\"]')).map(f=>f.dataset.r99k||((f.querySelector('span')||{}).textContent||'').replace(/^[!\\s✓•~]+/,'').trim()).filter(k=>/Rotary|direction|Tilt axis name|Rotary axis name/.test(k)).join('|')");
+ log('5-axis setup: exactly one Rotary pair row, no 4-axis rotary rows',rows=='Rotary pair',rows);
+ log('switch to 5-axis adds the 11 five-axis settings it lacked',E(`R101K5().every(k=>!!S.m[${iB}].s.find(x=>x.k==k))`));
+ E(`J=null;tab('new');$('#q').value='3+2 tilt 30 rotary 0 plane x0 y0 z0 program O1234 safe z 1 T1 G54';go()`);await sl(40);
+ log('Build Need N lists the 5-axis items (pair + 11)',E("(()=>{const c=$('#r101five');return !!c&&c.querySelectorAll('[data-k101]').length>=12})()"),E("($('#r101five')||{textContent:'none'}).textContent.slice(0,200)"));
+ // after pair picked, A/C direction rows appear and exactly one pair row
+ E(`edit(${iB})`);await sl(30);E("document.querySelector('.r99f[data-r99k=\"Rotary pair\"] .r99w').click()");await sl(30);E("document.querySelectorAll('#r99sheet .opt')[0].click();$('#r99sheet .done').click()");await sl(80);
+ const rows2=E("[...V.querySelectorAll('.r99f,.set')].filter(f=>f.offsetParent!==null&&f.style.display!='none').map(f=>f.dataset.r99k||((f.querySelector('span')||{}).textContent||'').replace(/^[!\\s✓•~]+/,'').trim()).filter(k=>/^Rotary|direction|Tilt axis name|Rotary axis name/.test(k)).join('|')");
+ log('5-axis setup after pair: pair + A/C direction rows only',rows2=='Rotary pair|A direction|C direction',rows2);
+ // 6 header comments
+ E(`(()=>{const m=S.m[${iB}];['A','C'].forEach((L,j)=>{const x=r100sv(m,L+' direction');x.v=j?'Counterclockwise (−)':'Clockwise (+)';x.st='user'});R101K5().forEach(k=>{const x=r100sv(m,k);x.v=/code|clamp/.test(k)?'G234 / G49':/Option/.test(k)?'yes':k==K5.kin?'table-table (trunnion)':k==K5.pv?'measured':'-120 / 30';x.st='user'});const c=m.s.find(x=>x.k=='Control');c.v='Haas NGC-style';c.st='user';save()})()`);
+ E(`J=null;tab('new');$('#q').value='3+2 tilted plane tilt 30 rotary 45 plane x2.0 y2.0 z0 program o1234 safe z1.0 t1 g54';go()`);await sl(40);
+ const hd=E("J&&J.code?txt().slice(0,12).join('\\n'):'(no code) '+$('#out').textContent.slice(0,300)");
+ log('5-axis program header states both confirmed directions',/\(A ROTARY: CW \+\)/.test(hd)&&/\(C ROTARY: CCW \+\)/.test(hd),hd);
+ log('no invented direction codes (comments only)',hd.split('\n').filter(l=>/ROTARY: /.test(l)).every(l=>/^\([ABC] ROTARY: [^)]*\)$/.test(l)));
+ // 7 / 8 pickers with Other
+ E(`S.cur=${iA};S.m[${iA}].mtype='vmc3';save()`);
+ log('First new offset: P1…P48 + Other, accepts G54.1 P3 → P3, refuses G55',E("(()=>{J={op:'tomb',p:{}};const s=r100bch('First new offset');const o=s.ch[0]=='P1'&&s.ch.length<=48&&!s.ch.includes('G54')&&s.st=='picker+Other'&&s.ok('G54.1 P3')&&s.save('G54.1 P3')=='P3'&&!s.ok('G55');J=null;return o})()"));
+ log('all 6 job pickers have an Other line with a format check',E("(()=>{const L=[['tomb','Base offset'],['tomb','First new offset'],['wocopy','Source offset'],['lfb','Axis'],['lzset','Write to'],['tlen','Update offset']];const o=L.every(([op,k])=>{J={op,p:{}};const s=r100bch(k);return s&&s.st=='picker+Other'&&(s.ok?!s.ok('asdf'):!r99ok(k,'asdf',s))});J=null;return o})()"));
+ // 9 lathe probe Write to
+ log('lathe probe Write to: Wear / Geometry / Work',E("(()=>{J={op:'lprobe',p:{}};const s=r100bch('Write to');const o=s.ch.join('|')=='Wear|Geometry|Work'&&s.save('Geometry')=='geometry';J=null;return o})()"));
+ log('lathe probe G54 typed as Write to is refused (no quiet wear write)',E("(()=>{J={op:'lprobe',p:{}};const s=r100bch('Write to');const o=!s.ok('G54');J=null;return o})()"));
+ log('OD touch + Work is blocked with a reason',/Face Z mode/.test(E("(()=>{J={op:'lprobe',p:{'Write to':{v:'work'},'Probe mode':{v:'OD X'}}};const t=r101lprobe();J=null;return t})()")));
+ log('Face + Work on G55 writes G10 L2 P2',E("(()=>{J={op:'lprobe',p:{'Write to':{v:'work'},'Probe mode':{v:'Face Z'},'Work offset':{v:'G55'}},code:['G10 L2 P1 W#101 (SHIFT G55 Z)'],edits:{}};r101lprobeFix();const o=J.code[0].startsWith('G10 L2 P2 ');J=null;return o})()"));
+ // 5 Tools
+ E("tools()");await sl(40);
+ for(const f of ['len','fl']){E(`(()=>{const i=V.querySelector('input[data-f="${f}"]');i.value='abc';i.dispatchEvent(new Event('change',{bubbles:true}))})()`);await sl(20);
+  log('Tools '+f+' abc: Needs/Example shown, value kept, not saved',/Needs:/.test(E(`(V.querySelector('input[data-f="${f}"]').parentNode.querySelector('.r101terr')||{textContent:''}).textContent`))&&/Example:/.test(E(`(V.querySelector('input[data-f="${f}"]').parentNode.querySelector('.r101terr')||{textContent:''}).textContent`))&&E(`V.querySelector('input[data-f="${f}"]').value`)=='abc'&&E(`String(tlCurM?((tlCurM()||{tools:S.tools}).tools[0]||{})['${f}']:S.tools[0]['${f}'])`)!='abc')}
+ E("tools()");await sl(30);E("(()=>{const i=V.querySelector('input[data-f=\"dia\"]');i.value='abc';i.dispatchEvent(new Event('change',{bubbles:true}))})()");await sl(40);
+ log('Tools Ø abc: Needs + Example message (not silent)',/Needs:/.test(E("(document.querySelector('.r83err')||{textContent:''}).textContent"))&&/Example: 0\.5/.test(E("(document.querySelector('.r83err')||{textContent:''}).textContent")),E("(document.querySelector('.r83err')||{textContent:'none'}).textContent"));
+ log('Tools Name / Material / Notes have hint lines',E("V.querySelectorAll('.r101th').length")>=3);
+ log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>
