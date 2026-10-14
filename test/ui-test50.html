@@ -64,7 +64,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   fanOps.forEach(op=>{E("tab('new');pickJob('"+op+"')");fillMill();const tx=code();if(/GENERIC FANUC|HAAS-STYLE|HAAS NGC/.test(tx)||!/FANUC 0I/.test(tx))fBad.push(op+':'+tx.split(/\n/).slice(0,3).join('|'))});
   log('Fanuc sample jobs are FANUC 0I',!fBad.length,fBad.join(' || '));
 
-  log('sw.js is mc-v62+',E("(()=>{var x=new XMLHttpRequest();x.open('GET','sw.js',false);x.send();return /mc-v6[2-9]/.test(x.responseText)})()"));
+  log('sw.js is mc-v62+',E("(()=>{var x=new XMLHttpRequest();x.open('GET','sw.js',false);x.send();var m=/mc-v([0-9]+)/.exec(x.responseText);return !!m&&+m[1]>=62})()"));
   log('no console errors',!errs.length,errs.join('|'));
  }catch(e){log('exception',false,e.stack.replace(/\n/g,' | '))}document.getElementById('o').textContent=out.join('\n')},8000)};
 </script></body>
