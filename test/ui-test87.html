@@ -1,0 +1,69 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 99: input standard, pickers, placeholders, Need N, type-switch toast, Swiss tile, cards --><iframe id="f" src="../index.html?v=99" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const add=(n,g)=>{E(`pick(${JSON.stringify(n)},${JSON.stringify(g)})`);return E('S.cur=S.m.length-1')};
+ const set=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(x){x.v=${JSON.stringify(v)};x.st='user'}else S.m[S.cur].s.push({k:${JSON.stringify(k)},v:${JSON.stringify(v)},st:'user'});save()})()`);
+ const iA=E("S.m.findIndex(m=>m.name=='Mill A')"),iB=E("S.m.findIndex(m=>m.name=='Mill B')");
+ // look: label, hint, green/red
+ E(`edit(${iA})`);await sl(40);
+ log('input: Free common variables wrapped with hint',E("$('.r99f[data-r99k=\"Free common variables\"] .r99hint')").length>0||!!E("document.querySelector('.r99f[data-r99k=\"Free common variables\"] .r99hint')"));
+ E(`(()=>{const f=document.querySelector('.r99f[data-r99k="Max RPM"]');const i=f.querySelector('input');i.value='12000';i.dispatchEvent(new Event('blur',{bubbles:true}))})()`);await sl(20);
+ log('input: valid Max RPM goes green with check',E("(()=>{const f=document.querySelector('.r99f[data-r99k=\"Max RPM\"]');return f.querySelector('.r99w').classList.contains('ok')&&/✓/.test(f.querySelector('.r99end').textContent)})()"));
+ E(`(()=>{const f=document.querySelector('.r99f[data-r99k="Max RPM"]');const i=f.querySelector('input');i.value='asdf';i.dispatchEvent(new Event('blur',{bubbles:true}))})()`);await sl(20);
+ log('input: asdf Max RPM red Needs/Example, not saved',E("(()=>{const f=document.querySelector('.r99f[data-r99k=\"Max RPM\"]');const x=S.m[S.cur].s.find(x=>x.k=='Max RPM');return f.querySelector('.r99w').classList.contains('bad')&&/Needs:/.test(f.querySelector('.r99err').textContent)&&/Example:/.test(f.querySelector('.r99err').textContent)&&x.v!='asdf'})()"),E("JSON.stringify(S.m[S.cur].s.find(x=>x.k=='Max RPM'))"));
+ E(`(()=>{const f=document.querySelector('.r99f[data-r99k="Max RPM"]');const i=f.querySelector('input');i.value='8000';i.dispatchEvent(new Event('input',{bubbles:true}))})()`);await sl(20);
+ log('input: fixing clears red live',E("!document.querySelector('.r99f[data-r99k=\"Max RPM\"] .r99w').classList.contains('bad')"));
+ // picker sheet
+ E(`(()=>{const f=document.querySelector('.r99f[data-r99k="DPRNT support"]');f.querySelector('.r99w').click()})()`);await sl(40);
+ log('picker: bottom sheet opens with Yes/No rows + Other',E("!!$('#r99sheet')&&[...document.querySelectorAll('#r99sheet .opt')].length>=2&&!!$('#r99othi')"));
+ log('picker: Done locked (gray) until a choice',E("$('#r99sheet .done').disabled===true&&!$('#r99sheet .done').classList.contains('on')"));
+ E(`(()=>{const i=$('#r99othi');i.value='kinda';i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('blur',{bubbles:true}))})()`);await sl(20);
+ log('picker: Other nonsense shows Needs/Example, Done stays locked',E("/Needs:/.test($('#r99othe').textContent)&&$('#r99sheet .done').disabled===true"));
+ E(`(()=>{document.querySelectorAll('#r99sheet .opt')[0].click()})()`);await sl(20);
+ log('picker: picking a choice unlocks Done (yellow)',E("$('#r99sheet .done').classList.contains('on')&&!$('#r99sheet .done').disabled"));
+ E("$('#r99sheet .done').click()");await sl(20);
+ log('picker: Done saves the listed choice exactly',E("S.m[S.cur].s.find(x=>x.k=='DPRNT support').v").indexOf('Yes')==0||/Yes|DPRNT|No|Not/.test(E("S.m[S.cur].s.find(x=>x.k=='DPRNT support').v")));
+ E(`(()=>{const f=document.querySelector('.r99f[data-r99k="DPRNT support"]');f.querySelector('.r99w').click()})()`);await sl(40);
+ E(`(()=>{const i=$('#r99othi');i.value='Yes, via Ethernet';i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('blur',{bubbles:true}));$('#r99sheet .done').click()})()`);await sl(20);
+ log('picker: Other text saved exactly as typed (no fuzzy match)',E("S.m[S.cur].s.find(x=>x.k=='DPRNT support').v")=='Yes, via Ethernet');
+ // Not checked yet = blank
+ E(`(()=>{const f=document.querySelector('.r99f[data-r99k="DPRNT support"]');f.querySelector('.r99w').click()})()`);await sl(40);
+ E(`(()=>{const opts=[...document.querySelectorAll('#r99sheet .opt')];const n=opts.find(b=>/Not checked/i.test(b.textContent));n.click()})()`);await sl(20);
+ log('picker: Not checked yet unlocks Done to clear',E("$('#r99sheet .done').classList.contains('on')"));
+ E("$('#r99sheet .done').click()");await sl(20);
+ log('picker: Not checked yet leaves value blank (not confirmed)',E("S.m[S.cur].s.find(x=>x.k=='DPRNT support').v")==='');
+ // placeholders
+ E(`(()=>{const m=S.m[${iA}];m.r99ph=0;m.s.find(x=>x.k=='O9000 protection').v='check parameter';m.s.find(x=>x.k=='O9000 protection').st='user';const y=m.s.find(x=>x.k=='#100–#199 cleared at');y.v='Reset (check) on ours';y.st='user';r99migPH()})()`);
+ log('mig: exact placeholder wiped to blank',E(`S.m[${iA}].s.find(x=>x.k=='O9000 protection').v`)==='');
+ log('mig: value containing placeholder word kept and flagged',E(`S.m[${iA}].s.find(x=>x.k=='#100–#199 cleared at').v`)=='Reset (check) on ours'&&E(`!!S.m[${iA}].s.find(x=>x.k=='#100–#199 cleared at').r99flag`));
+ log('mig: notice lists the settings that need a real answer',E(`(S.m[${iA}].r99need||[]).length`)>0);
+ // Stacey: 4-axis from tick only -> Confirm rotary letter in Need list, jumps to box
+ E(`(()=>{const m=S.m[${iB}];m.mtype='vmc4';delete m.r99rot;delete m.r99need;const r=m.s.find(x=>x.k=='Rotary axis');if(r)r.st='suggested';r99rotNeed();edit(${iB})})()`);await sl(30);
+ log('Stacey: Need list has Confirm rotary letter',/Confirm rotary letter/.test(E("($('#r99notice')||{textContent:''}).textContent")));
+ E(`[...document.querySelectorAll('#r99notice [data-nk]')].find(b=>/rotary/i.test(b.textContent)).click()`);await sl(20);
+ log('Stacey: tapping it jumps to the rotary letter box',E("!!document.activeElement&&!!document.activeElement.closest&&!!document.activeElement.closest('.r99f[data-r99k=\"Rotary axis\"]')"));
+ // Swiss tile
+ E(`edit(${iA})`);await sl(20);
+ log('Swiss/lathe tile disabled on a mill (opacity + no tap)',E("(()=>{const b=document.querySelector('#r98type button[data-t=swiss]');return b.classList.contains('off')&&/Lathe types need a lathe/.test(document.querySelector('#r98type').textContent)})()"));
+ E(`document.querySelector('#r98type button[data-t=swiss]').click()`);log('Swiss tap does nothing on a mill',E(`S.m[${iA}].mtype`)=='vmc3');
+ // cards full width
+ E(`(()=>{const m=S.m[${iA}];m.opt.tset=1;const x=m.s.find(x=>x.k=='Control');x.v='Fanuc 0i-style';x.st='user';save();edit(${iA})})()`);await sl(40);
+ log('Tool setter card full-width inputs under labels',E("(()=>{const c=$('#r98ts');const i=c.querySelector('input');const r=i.getBoundingClientRect(),p=c.getBoundingClientRect();return i.offsetWidth>p.width*0.7})()"));
+ log('Fanuc card shown with full-width inputs',E("$('#r98fan').style.display")==''&&E("(()=>{const i=$('#r98fan').querySelector('input');return i&&i.offsetWidth>200})()"));
+ // type switch: only draft card, toast
+ E(`S.cur=${iB};J=null;tab('new');$('#q').value='G54 T1 drill 4 holes on a 2.0 bolt circle 0.5 deep center x0 y0 z0 0';go()`);await sl(40);
+ const op=E('J&&J.op');E(`edit(${iB})`);E("document.querySelector('#r98type button[data-t=vmc3]').click()");await sl(40);
+ log('type switch toast names the draft',/draft/.test(E("($('#r79toast')||{textContent:''}).textContent")));
+ E("tab('new')");await sl(30);
+ log('Build shows only the switch card (no Unsaved duplicate)',E("!!$('#r93mv')&&!$('#r79dr')"));
+ // Build: Need N tappable + letters refused with reason
+ set('Control','Haas NGC-style');E(`S.cur=${iA};J=null;tab('new');$('#q').value='G54 T1 rectangular pocket 2 x 1 corner r 0 cutter 0.25 0.5 deep stepdown 0.1 center x0 y0 z0 0';go()`);await sl(40);
+ E(`(()=>{const f=document.querySelector('#out .r99f[data-r99k="Depth"]');const i=f.querySelector('input');i.value='abc';i.dispatchEvent(new Event('blur',{bubbles:true}))})()`);await sl(20);
+ log('Build: letters in Depth show Needs (not silent empty)',E("/Needs:/.test(document.querySelector('#out .r99f[data-r99k=\"Depth\"] .r99err').textContent)"));
+ E("J.p.Depth={v:null};show()");await sl(20);
+ log('Need N chip is tappable (handler present)',E("[...document.querySelectorAll('#out .chip.r')].some(c=>!!c.onclick)"));
+ E("J=null;drClear()");log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

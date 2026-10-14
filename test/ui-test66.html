@@ -12,7 +12,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('D21 job list folds to one line showing the job',d.querySelector('#jpbox').classList.contains('r79folded')&&/^▸ .*Bolt circle/.test(d.querySelector('#r79fold').textContent.trim())&&!vis(d.querySelector('#jcwrap')));
  d.querySelector('#r79fold').click();log('D21 tap expands the list again',vis(d.querySelector('#jcwrap')));d.querySelector('#r79fold').click();
  log('D22 legend says red = needed',/red = needed/.test(d.querySelector('#out').textContent));
- log('D22 empty boxes show units',[...d.querySelectorAll('#out input[data-k]')].every(i=>i.placeholder)&&d.querySelector('#out input[data-k="Depth"]').placeholder=='in',d.querySelector('#out input[data-k="Depth"]')&&d.querySelector('#out input[data-k="Depth"]').placeholder);
+ log('D22 empty boxes show units',[...d.querySelectorAll('#out input[data-k]')].every(i=>i.placeholder)&&/(^|\s)in$/.test(d.querySelector('#out input[data-k="Depth"]').placeholder),d.querySelector('#out input[data-k="Depth"]')&&d.querySelector('#out input[data-k="Depth"]').placeholder);
  const hs=[...d.querySelectorAll('#out .s')].map(s=>parseFloat(w.getComputedStyle(s).fontSize)*(parseFloat(w.getComputedStyle(d.querySelector('#v')).zoom)||1));log('D26 hint text at least ~12px',Math.min(...hs)>=10.7,Math.min(...hs));
  E("tab('edit')");await sl(80);const pq=d.querySelector('#pendq');log('D28 Finish-in-Build lists what is missing as links',pq&&/Still needed: Holes/.test(pq.textContent)&&pq.querySelectorAll('a').length>=5,pq&&pq.textContent);
  pq.querySelector('a').click();await sl(80);log('D28 link jumps to that box in Build',E("V.dataset.page")=='build'&&d.activeElement&&d.activeElement.dataset.k=='Holes');

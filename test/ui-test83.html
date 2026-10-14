@@ -21,7 +21,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('C: no “- DEMO” in titles',!/DEMO/.test(code()));
  job('palloop',{'Cycles':'abc','Part program':'0','Count #':'1'});const pe=bad();log('C: all pallet errors listed, not just the first',/Cycles/.test(pe)&&/Part program/.test(pe)&&/Count #/.test(pe),pe);
  E("J=null;tab('new');pickJob('palloop')");const ins=[...d.querySelectorAll('#out input[data-k]')];
- log('C: Need-form hints never look like values (no placeholders)',ins.length&&ins.every(i=>!i.placeholder));
+ log('C: Need-form hints never look like values (only faded e.g. examples)',ins.length&&ins.every(i=>!i.placeholder||/^(e\.g\.|Pick:)/.test(i.placeholder)));
  log('C: number fields get the numeric keypad',ins.every(i=>i.getAttribute('inputmode')=='decimal'));
  ins[0].value='3';ins[0].dispatchEvent(new w.Event('input',{bubbles:true}));log('E9: Need count updates live while typing',/Need 2 more/.test([...d.querySelectorAll('#out .card .t')].map(t=>t.textContent).join('|')));
  job('index',{'Faces':'4','Depth':'0.5','Hole X':'1','Hole Y':'0','Z0':'2','Work offset':'G54','Tool':'5'});
