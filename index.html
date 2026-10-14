@@ -5322,7 +5322,7 @@ const POSG=/^(Tool|Start [XY]|Start°|First angle|First flat angle|Depth|Holes|D
 const GRAYOK=/^(RPM|Feed|Feed\/rev|Plunge feed|SFM|Clear Z|Clearance|Retract|Skip feed|Probe feed|Rough feed|Finish feed|Finish feed\/rev|Peck Q|Drill Ø|Stepover %|Tol|Size check ±)$/;
 function noGuess(p){if(!p)return;for(const [k,x] of Object.entries(p))if(x&&x.g&&x.v!=null&&POSG.test(k)){x.v=null;x.g=false;delete x.lib}}
 function bareJB(J0){if(!J0||!J0.p)return;for(const [k,x] of Object.entries(J0.p)){if(!x||x.v==null)continue;if(x.g){if(POSG.test(k)){x.v=null;x.g=false}continue}
- if(GRAYOK.test(k)){x.g=true;continue}if(typeof x.v=='number'||k=='Work offset'||POSG.test(k)){x.v=null;x.g=false;delete x.lib}}J0.code=null;J0.edits={}}
+ if(GRAYOK.test(k)){x.g=true;continue}if(typeof x.v=='number'||k=='Work offset'||POSG.test(k)){x.v=null;x.g=false;delete x.lib}else x.g=true}J0.code=null;J0.edits={}}
 {const _sh=show;show=function(){if(typeof J!='undefined'&&J&&J.p)noGuess(J.p);return _sh.apply(this,arguments)}}
 {const _pj=pickJob;pickJob=function(op){if(op&&JB[op]&&op!='engrave'&&jAvail(op)){const _show=show;let r;show=function(){};try{r=_pj.apply(this,arguments)}finally{show=_show}
   if(J&&J.p){bareJB(J);const nm=jName(op).replace(/^⚠\s*/,'').replace(/\s*\([^)]*\)/g,'').trim();J.text=nm;const q=$('#q');if(q)q.value=nm;show();const s=$('#jpick');if(s)s.value=op}return r}
@@ -5459,6 +5459,47 @@ new MutationObserver(()=>{document.querySelectorAll('#lo .card').forEach(c=>{if(
 {const _do=mbDo;mbDo=function(){const keep=$('#mbkeep')&&$('#mbkeep').checked&&MBX&&MBX.code,code=keep?MBX.code.slice():null;const r=_do.apply(this,arguments);if(code){const j=S.jobs[0];if(j){j.kept=code;save()}importToEditor(code.join('\n'));tab('new');toast79('Opened the file\'s program with its hand edits — check it in Simulate.')}return r}}
 
 {const _sh=show;show=function(){const r=_sh.apply(this,arguments);try{const o=$('#out');if(o&&typeof J!='undefined'&&J){r79setup(o);if(J.sugg)Object.entries(J.sugg).forEach(([k,x])=>{if(!J.p[k]||J.p[k].v!=null)return;const el=o.querySelector(`[data-k="${CSS.escape(k)}"]`);const row=el&&el.closest('.set');if(row&&!row.querySelector('.r79sug'))row.insertAdjacentHTML('afterend',`<button type="button" class="chip r79sug" style="border:1px dashed #888;background:transparent;color:#aaa" onclick="useSug(${esc(JSON.stringify(k))})">${esc(r79fmt(k,x.v))} · from ${esc(x.from)} · tap to use</button>`)});drSave()}}catch(e){}return r}}
+// ===== D LOOK =====
+document.head.insertAdjacentHTML('beforeend',`<style id="r79look">
+#r79fold{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:44px;margin:0 0 8px;text-align:left}
+#jpbox.r79folded #jcwrap,#jpbox.r79folded label[for=jpick],#jpbox.r79folded #jpick{display:none!important}
+#jcbar{-webkit-mask-image:linear-gradient(90deg,#000 82%,transparent);mask-image:linear-gradient(90deg,#000 82%,transparent)}#jcbar.r79end{-webkit-mask-image:none;mask-image:none}
+#jcjobs .chip b{white-space:normal!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+.r79amb{display:inline-block;width:8px;height:8px;border-radius:50%;background:#f5b83d;margin-left:6px;vertical-align:middle}
+.s{font-size:max(12px,1em*0.8)}html:not([data-theme=light]) .s{color:#b4b4b4}html[data-theme=light] .s{color:#555}
+#jmlink a{color:#9ec5ff!important;font-weight:600}html[data-theme=light] #jmlink a{color:#1559c7!important}
+#v .bar,.card .bar,.bar{height:8px!important;min-height:8px;border-radius:4px}.bar i{border-radius:4px}
+#v{padding-bottom:calc(96px + env(safe-area-inset-bottom))!important}
+#tsz .chip[aria-pressed=true]{outline:2px solid currentColor}
+#pendq a{color:inherit;text-decoration:underline}
+@media (max-width:360px){#ttl{font-size:17px!important;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.card .row .btn,.card .row .chip{white-space:nowrap;min-width:0;padding-left:7px;padding-right:7px;font-size:13px;letter-spacing:-.2px;flex:1 1 auto}.card .row>.chip.y{flex:1.6 1 auto}.tabs button{font-size:12px!important;letter-spacing:-.3px}}
+</style>`);
+function r79name(op){return jName(op).replace(/^⚠\s*/,'').trim()}
+function r79look(){try{const page=V.dataset.page;
+ // 24 amber dot instead of "(amber: verify)"
+ V.querySelectorAll('#jcjobs .chip b').forEach(b=>{if(!b.querySelector('.r79amb')&&/(\(amber: verify\)|●)\s*$/.test(b.textContent)){b.textContent=b.textContent.replace(/\s*(\(amber: verify\)|●)\s*$/,'');b.insertAdjacentHTML('beforeend','<span class="r79amb" title="Amber: verify on your machine" aria-label="verify on your machine"></span>')}});
+ V.querySelectorAll('#jpick option').forEach(o=>{if(/\(amber: verify\)/.test(o.textContent))o.textContent=o.textContent.replace(/\s*\(amber: verify\)/,' ●')});
+ // 23 scroll hint
+ const bar=$('#jcbar');if(bar&&!bar.dataset.r79){bar.dataset.r79=1;const f=()=>bar.classList.toggle('r79end',bar.scrollLeft+bar.clientWidth>=bar.scrollWidth-4);bar.addEventListener('scroll',f,{passive:true});f()}
+ // 21 form right under the job, Process Code at the bottom, job list folds
+ const jb=$('#jpbox'),out=$('#out');if(page=='build'&&jb&&out&&typeof J!='undefined'&&J&&J.op){const pc=[...V.children].find(x=>x.tagName=='BUTTON'&&/Process Code/.test(x.textContent)),imp=[...V.children].find(x=>x.tagName=='LABEL'&&/Import \.nc/.test(x.textContent));
+  if(jb.nextElementSibling!==out&&!$('#r79fold'))jb.after(out);if(pc&&out.nextElementSibling!==pc)out.after(pc);if(imp&&pc&&pc.nextElementSibling!==imp)pc.after(imp);
+  let fb=$('#r79fold');if(!fb){fb=document.createElement('button');fb.type='button';fb.id='r79fold';fb.className='chip gr';fb.setAttribute('aria-expanded','false');fb.onclick=()=>{const o=jb.classList.toggle('r79folded');fb.setAttribute('aria-expanded',String(!o));fb.lastChild.textContent=o?'Change ▾':'Hide ▴'};jb.prepend(fb);jb.classList.add('r79folded')}
+  fb.innerHTML=`<span>Job: <b>${esc(r79name(J.op))}</b></span><span class="s">Change ▾</span>`;if(!jb.classList.contains('r79folded'))fb.lastChild.textContent='Hide ▴'}
+ // 22 legend + unit placeholders
+ V.querySelectorAll('#out .card .s').forEach(s=>{if(/^Yellow = from your words · gray = suggested/.test(s.textContent)&&!/red = needed/.test(s.textContent))s.textContent=s.textContent.replace(/\.?$/,' · red = needed.')});
+ V.querySelectorAll('#out input[data-k]').forEach(el=>{if(!el.placeholder){const u=(typeof UNIT!='undefined'&&UNIT[el.dataset.k])||'';el.placeholder=String(u).split(/[ ,(]/)[0]||'value'}});
+ // 27 text size: highlight the current size
+ const ts=$('#tsz');if(ts&&!ts.dataset.r79){ts.dataset.r79=1;ts.querySelectorAll('.chip').forEach(c=>{c.classList.remove('y');c.classList.add('gr')});const row=document.createElement('div');row.className='row';row.innerHTML=[90,100,115,130,150].map(v=>`<button type="button" class="chip ${v==S.ts?'y':'gr'}" aria-pressed="${v==S.ts}" onclick="S.ts=${v};S.tsUser=1;save();applyTS();more()">${v}%</button>`).join('');ts.appendChild(row)}
+ // 28 Finish-in-Build lists exactly what's missing
+ const pq=$('#pendq');if(pq&&!pq.dataset.r79&&typeof J!='undefined'&&J&&J.p){pq.dataset.r79=1;const miss=Object.entries(J.p).filter(([k,x])=>x&&x.v==null).map(([k])=>k);let sm=[];try{sm=(typeof setupMiss=='function'?setupMiss(J):[]).map(x=>Array.isArray(x)?x[0]:x)}catch(e){}
+  const re=rangeErr(J).map(x=>x[0]);const items=[...new Set([...miss,...re])];const s=pq.querySelector('.s');if(s)s.innerHTML=items.length?'Still needed: '+items.map(k=>`<a href="#" onclick="r79goK(${esc(JSON.stringify(k))});return false">${esc(k)}${(typeof UNIT!='undefined'&&UNIT[k])?' ('+esc(String(UNIT[k]).split(/[ ,(]/)[0])+')':''}</a>`).join(', ')+(sm.length?' · machine setup: '+sm.map(esc).join(', '):'')+'. Nothing is guessed.':(sm.length?'Machine setup still red: '+sm.map(esc).join(', ')+'.':'It still has a confirm waiting (free-variable check or a risk gate) — open Build to see it.')}
+ }catch(e){}}
+function r79goK(k){tab('new');setTimeout(()=>{const el=V.querySelector(`#out [data-k="${CSS.escape(k)}"]`);if(el){el.scrollIntoView({block:'center'});try{el.focus()}catch(e){}}else{try{ed(k)}catch(e){}}},30)}
+{const _sh=show;show=function(){const r=_sh.apply(this,arguments);r79look();return r}}
+{const _tb=tab;tab=function(){const r=_tb.apply(this,arguments);r79look();return r}}
+if(typeof jcRender=='function'){const _jr=jcRender;jcRender=function(){const r=_jr.apply(this,arguments);r79look();return r}}
+{const _mo=more;more=function(){const r=_mo.apply(this,arguments);r79look();return r}}
 
 /* R79-END */</script>
 </body></html>

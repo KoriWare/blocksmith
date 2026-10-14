@@ -32,7 +32,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   log('4th-axis jobs hidden on a 3-axis VMC without 4th',!mh.includes('a4p')&&fx.includes('a4p'));
   // HIGH / amber markers kept
   E('S.cur='+idx['mill Haas']);w.tab('new');const txt=d.querySelector('#jpick').innerText||d.querySelector('#jpick').textContent;
-  log('⚠ HIGH marker kept on job names',/⚠ Wait for an input/.test(txt));log('amber marker shown where a thin note applies',/\(amber: verify\)/.test(d.querySelector('#jpick').textContent));
+  log('⚠ HIGH marker kept on job names',/⚠ Wait for an input/.test(txt));log('amber marker shown where a thin note applies',/ ●/.test(d.querySelector('#jpick').textContent)/* r79: amber dot */);
   // live update: pick mill job, switch to lathe -> cleared with note
   const s=d.querySelector('#jpick');s.value='bolt';s.dispatchEvent(new w.Event('change'));log('choosing from the dropdown opens the job',E('J&&J.op')=='bolt'&&/Bolt/.test(d.querySelector('#out').innerText));
   w.cur(idx['Fanuc lathe']);log('switching machine updates the list',ops().includes('lturn')&&!ops().includes('bolt'));

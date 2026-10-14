@@ -16,7 +16,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  const o1=d.querySelector('#out').innerText;
  log('Bolt circle pick: holes, Ø, start angle, depth, tool, centre, Z0, offset all red needed',['Holes','Dia','Start°','Depth','Tool','Center X','Center Y','Z0','Work offset'].every(k=>E(`J.p[${JSON.stringify(k)}].v==null`))&&/Need \d+ more/.test(o1),o1.slice(0,300));
  log('Bolt circle pick: request box not filled with an example sentence',!/\d/.test(d.querySelector('#q').value),d.querySelector('#q').value);
- log('only RPM / feed / clearance may be gray',E("Object.entries(J.p).filter(([k,x])=>x.g&&x.v!=null).map(([k])=>k)").every(k=>/^(RPM|Feed|Clear Z|Peck Q|Drill Ø)$/.test(k)),E("Object.entries(J.p).filter(([k,x])=>x.g&&x.v!=null).map(([k])=>k).join()"));
+ log('only RPM / feed / clearance may be gray',E("Object.entries(J.p).filter(([k,x])=>x.g&&x.v!=null).map(([k])=>k)").every(k=>/^(RPM|Feed|Clear Z|Peck Q|Drill Ø|Cycle)$/.test(k)),E("Object.entries(J.p).filter(([k,x])=>x.g&&x.v!=null).map(([k])=>k).join()"));
  d.querySelector('#q').value='bolt circle 6 holes 3 dia 0.5 deep g54 center x0 y0 z0 0 start 0';E("go()");await sl(100);
  log('typed request without a tool: tool not guessed, no code',E("J.p.Tool.v==null&&!J.code"),E("JSON.stringify(J.p.Tool)"));
  E("S.cur=2;tab('new')");E("pickJob('lturn')");await sl(100);log('Lathe OD turn pick: bar Ø / finish Ø / length empty',['Bar Ø','Finish Ø','Length'].every(k=>E(`!J.p[${JSON.stringify(k)}]||J.p[${JSON.stringify(k)}].v==null`)),E("JSON.stringify(J.p)"));

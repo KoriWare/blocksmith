@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 79 D21-D28: Build layout, legend, amber dot, scroll hint, contrast, text size, finish-in-Build list --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");
+ E("tab('new')");await sl(100);const bar=d.querySelector('#jcbar');log('D23 category strip has an edge fade',/linear-gradient/.test(w.getComputedStyle(bar).webkitMaskImage||w.getComputedStyle(bar).maskImage||''));
+ E("[...document.querySelectorAll('#jcbar .chip')].find(c=>/Automation/.test(c.textContent)).click()");await sl(50);
+ const rb=[...d.querySelectorAll('#jcjobs .chip b')].find(b=>/Robot/.test(b.textContent));log('D24 "(amber: verify)" replaced by an amber dot',rb&&!/amber: verify/.test(rb.textContent)&&!!rb.querySelector('.r79amb'),rb&&rb.innerHTML);
+ log('D24 long job names wrap to 2 lines',rb&&w.getComputedStyle(rb).webkitLineClamp=='2'&&w.getComputedStyle(rb).whiteSpace!='nowrap');
+ E("pickJob('bolt')");await sl(80);const kids=[...E("V").children];const iJ=kids.indexOf(d.querySelector('#jpbox')),iO=kids.indexOf(d.querySelector('#out')),iP=kids.findIndex(x=>/Process Code/.test(x.textContent)&&x.tagName=='BUTTON');
+ log('D21 form right under the job, Process Code below it',iO==iJ+1&&iP>iO,[iJ,iO,iP].join());
+ log('D21 job list folds to one line showing the job',d.querySelector('#jpbox').classList.contains('r79folded')&&/Job: Bolt circle/.test(d.querySelector('#r79fold').textContent)&&!vis(d.querySelector('#jcwrap')));
+ d.querySelector('#r79fold').click();log('D21 tap expands the list again',vis(d.querySelector('#jcwrap')));d.querySelector('#r79fold').click();
+ log('D22 legend says red = needed',/red = needed/.test(d.querySelector('#out').textContent));
+ log('D22 empty boxes show units',[...d.querySelectorAll('#out input[data-k]')].every(i=>i.placeholder)&&d.querySelector('#out input[data-k="Depth"]').placeholder=='in',d.querySelector('#out input[data-k="Depth"]')&&d.querySelector('#out input[data-k="Depth"]').placeholder);
+ const hs=[...d.querySelectorAll('#out .s')].map(s=>parseFloat(w.getComputedStyle(s).fontSize)*(parseFloat(w.getComputedStyle(d.querySelector('#v')).zoom)||1));log('D26 hint text at least ~12px',Math.min(...hs)>=10.7,Math.min(...hs));
+ E("tab('edit')");await sl(80);const pq=d.querySelector('#pendq');log('D28 Finish-in-Build lists what is missing as links',pq&&/Still needed: Holes/.test(pq.textContent)&&pq.querySelectorAll('a').length>=5,pq&&pq.textContent);
+ pq.querySelector('a').click();await sl(80);log('D28 link jumps to that box in Build',E("V.dataset.page")=='build'&&d.activeElement&&d.activeElement.dataset.k=='Holes');
+ E("more()");await sl(50);const cur=d.querySelector('#tsz .chip[aria-pressed=true]');log('D27 current text size highlighted (not A+)',cur&&cur.textContent==E("S.ts")+'%'&&![...d.querySelectorAll('#tsz .chip.y')].some(c=>c.textContent=='A+'));
+ E("tab('machines')");await sl(50);log('D25 setup bar thicker',parseFloat(w.getComputedStyle(d.querySelector('.bar')).height)>=7.9);
+ log('D25 content padded above the tab bar',parseFloat(w.getComputedStyle(d.querySelector('#v')).paddingBottom)>=90);
+ log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message+e.stack}},1500)};
+function vis(el){return !!el&&el.getClientRects().length>0}
+</script></body></html>
