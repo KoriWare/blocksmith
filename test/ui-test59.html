@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 76: checks bar opens on Editor/Simulate; Simulate canvas draws after hidden load; #pbar not sticky --><iframe id="f" src="../index.html?v=73" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>null;const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+const vis=e=>!!e&&e.getClientRects().length>0&&getComputedStyle(e).display!='none';
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");
+ E("tab('new')");await sl(200);{const q=d.querySelector('#q');if(q){q.value='engrave SN';q.dispatchEvent(new Event('input'))}}await sl(200);const B=[...d.querySelectorAll('#us,#wa,#wau')].filter(vis);log('Build: no parser leftovers (Understood so far / Work-arounds)',!B.length&&!/Understood so far|Work-arounds/.test(d.querySelector('#v').innerText),B.map(e=>e.id).join());
+ E("pickJob('engrave')");await sl(300);log('Build after job open: no Work-arounds card',!/Work-arounds|not built in/.test(d.querySelector('#v').innerText));
+ E("tab('edit')");await sl(300);const ck=d.querySelector('#ck'),cl=()=>d.querySelector('#cl');
+ log('Editor: checks bar visible',vis(ck));ck.click();await sl(100);log('Editor: tap opens checks list',vis(cl())&&cl().querySelectorAll('.s').length>0,cl()&&cl().className);
+ ck.click();await sl(100);log('Editor: tap again closes',!vis(cl()));
+ const rc=ck.getBoundingClientRect(),hit=d.elementFromPoint(rc.left+20,rc.top+rc.height/2);log('Editor: nothing covers the bar',hit&&(hit==ck||ck.contains(hit)),hit&&(hit.id||hit.className));
+ E("tab('sim')");await sl(500);const cv=d.querySelector('#cv');
+ log('Simulate: canvas backing sized',cv.width>100&&cv.height>100,cv.width+'x'+cv.height);
+ const px=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data;let n=0;for(let i=0;i<px.length;i+=16)if(px[i]+px[i+1]+px[i+2]>120)n++;log('Simulate: toolpath drawn',n>50,n);
+ const ck2=d.querySelector('#ck');ck2.click();await sl(100);log('Simulate: tap opens checks list',vis(cl()));
+ const pb=d.querySelector('#pbar');log('#pbar not sticky',pb&&getComputedStyle(pb).position=='static');
+ const tb=d.querySelector('.tabs');if(pb&&tb){const a=pb.getBoundingClientRect(),b=tb.getBoundingClientRect();log('#pbar not under tabs (in view)',a.bottom<=b.top+1||a.top>=b.bottom||a.bottom<0)}
+ f.style.width='360px';f.contentWindow.dispatchEvent(new Event('resize'));await sl(500);log('360 width: canvas resized',Math.abs(cv.width/(w.devicePixelRatio||1)-cv.clientWidth)<2,cv.width+' '+cv.clientWidth);
+ E("S.jobs.unshift(JSON.parse(JSON.stringify(J)));J=null;tab('sim')");await sl(300);const pf=d.querySelector('#pickfirst');log('Simulate no-job card: new text, no plain words',pf&&/Pick a preset job in Build or open one from your Library/.test(pf.textContent)&&!/plain words/.test(pf.textContent),pf&&pf.textContent);
+ [...pf.querySelectorAll('button')].find(b=>/Library/.test(b.textContent)).click();await sl(300);{const cc=d.querySelector('[onclick*="reopen"]');if(!cc)throw Error('lib:'+[...d.querySelectorAll('[onclick]')].map(e=>e.getAttribute('onclick')).slice(0,12).join(' ; '));cc.click()}await sl(600);
+ {const c=d.querySelector('#cv'),x=c&&c.width?c.getContext('2d').getImageData(0,0,c.width,c.height).data:[];let n=0;for(let i=0;i<x.length;i+=16)if(x[i]+x[i+1]+x[i+2]>120)n++;log('Library opened from Simulate returns to Simulate, drawn',E("V.dataset.page")=='sim'&&!d.querySelector('#pickfirst')&&n>50,E("V.dataset.page")+' lit'+n)}
+ E("J=null;tab('edit')");await sl(200);[...d.querySelectorAll('#pickfirst button')].find(b=>/Library/.test(b.textContent)).click();await sl(300);d.querySelector('[onclick*="reopen"]').click();await sl(400);log('Library opened from Editor returns to Editor',E("V.dataset.page")=='edit'&&!!d.querySelector('#ed'),E("V.dataset.page"));
+ E("tab('recent')");await sl(200);d.querySelector('[onclick*="reopen"]').click();await sl(300);log('Library from tab bar still opens in Build',E("V.dataset.page")=='build',E("V.dataset.page"));
+ log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

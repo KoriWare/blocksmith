@@ -35,7 +35,7 @@ textarea,input,select{width:100%;background:#0a0a0a;color:#eee;border:1px solid 
 .chip{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
 .tabs button{padding:14px 2px;font-size:12.5px}.ico{width:18px;height:18px;vertical-align:-3px;margin-right:5px}#mode .ico{width:14px;height:14px;margin-right:3px}
 #out[data-view=edit] .simonly{display:none!important}#out[data-view=sim] .edonly{display:none!important}
-#pbar{position:sticky;bottom:52px;z-index:4;background:#111;padding:6px 0;border-top:1px solid #333}#simcode pre div.cur{background:#3a3200}#simcode{padding:6px 10px}#simcode pre{height:calc(3 * 1.55em + 12px);overflow:hidden;white-space:nowrap;box-sizing:border-box}#simcode pre div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pbar{position:static;background:#111;padding:6px 0;border-top:1px solid #333}#simcode pre div.cur{background:#3a3200}#simcode{padding:6px 10px}#simcode pre{height:calc(3 * 1.55em + 12px);overflow:hidden;white-space:nowrap;box-sizing:border-box}#simcode pre div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #qhelp{position:fixed;right:10px;bottom:66px;z-index:30;width:36px;height:36px;border-radius:50%;border:1px solid #444;background:#1c1c1c;color:#ffd21f;font-weight:800;font-size:16px;opacity:.85}
 .cat-mark{height:1.25em;width:auto;vertical-align:-.25em;margin-right:6px}
 #pmkey{position:fixed;right:10px;bottom:110px;z-index:120;width:44px;height:44px;border-radius:10px;border:1px solid var(--bd2,#444);background:var(--sf,#1c1c1c);color:var(--ac,#ffd21f);font-size:22px;font-weight:800}#pmkey[hidden]{display:none}
@@ -3981,8 +3981,8 @@ function setupLine(m){return `Setup ${pct(m)}% · ${m.s.filter(x=>x.st=='confirm
  details.mchips summary{margin:6px 0 2px;cursor:pointer}details.srcf{display:inline}details.srcf summary{display:inline;cursor:pointer;color:#ffcf70}
  #qsave{display:flex;gap:8px;margin:6px 0}
  #v[data-page=edit]>:not(#out):not(.pgkeep),#v[data-page=sim]>:not(#out):not(.pgkeep){display:none!important}
- #v[data-page=edit] #out>:not(.edonly):not(#ck):not(#ready):not(#qsave):not(.pgkeep){display:none!important}
- #v[data-page=sim] #out>:not(.simonly):not(#ck):not(#qsave):not(.pgkeep){display:none!important}
+ #v[data-page=edit] #out>:not(.edonly):not(#ck):not(#cl):not(#ready):not(#qsave):not(.pgkeep){display:none!important}
+ #v[data-page=sim] #out>:not(.simonly):not(#ck):not(#cl):not(#qsave):not(.pgkeep){display:none!important}
  #v[data-page=build] #out .simonly,#v[data-page=build] #out>.edonly:not(#ed){display:none!important}`;document.head.appendChild(st);
  const sz=()=>document.documentElement.style.setProperty('--hh',h.offsetHeight+'px');sz();addEventListener('resize',sz)})();
 function pageOf(){const t=$('#ttl').textContent;return /^(New job|Build) ·/.test(t)?'build':/^Editor ·/.test(t)?'edit':/^Simulate ·/.test(t)?'sim':''}
@@ -3992,7 +3992,7 @@ helpBtn=function(){let b=$('#qhelp');if(!b){b=document.createElement('button');b
  V.dataset.page=pageOf();
  V.querySelectorAll('button[onclick="more()"],button[onclick="tab(\'machines\')"]').forEach(x=>{if(!/^\s*(‹\s*)?Back\b/.test(x.textContent))return;const fb=/more/.test(x.getAttribute('onclick'))?()=>more():()=>tab('machines');x.removeAttribute('onclick');x.onclick=()=>navBack(fb)});navUI()};
 // ---- Build / Editor / Simulate: three real pages over one shared job (J)
-function noJobCard(t){return `<div class="card pgkeep" id="pickfirst"><div class="t">Pick a job first</div><div class="s">${t=='edit'?'The Editor':'The Simulator'} works on the job you open in Build. Pick a preset job there, type one in plain words, or open one from your Library.</div><button class="btn" onclick="tab('new')">Go to Build</button>${(S.jobs||[]).length?`<button class="btn o" onclick="tab('recent')">Open from Library</button>`:''}</div>`}
+function noJobCard(t){return `<div class="card pgkeep" id="pickfirst"><div class="t">Pick a job first</div><div class="s">${t=='edit'?'The Editor':'The Simulator'} works on the job you open in Build. Pick a preset job in Build or open one from your Library.</div><button class="btn" onclick="tab('new')">Go to Build</button>${(S.jobs||[]).length?`<button class="btn o" onclick="LIBRET='${t}';tab('recent')">Open from Library</button>`:''}</div>`}
 const _tab42=tab;tab=function(t){
  if((t=='edit'||t=='sim')&&!(J&&J.p)){VIEW21=t;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));$('#ttl').textContent=(t=='edit'?'Editor · ':'Simulate · ')+((S.m[S.cur]||{}).name||'');V.innerHTML=noJobCard(t);updMode();helpBtn();scrollTo(0,0);return}
  V.dataset.page=t=='new'?'build':(t=='edit'||t=='sim')?t:'';  // set before render so the sim canvas measures its real width
@@ -5282,4 +5282,17 @@ function chipNum(k){const x=J&&J.p&&J.p[k];if(!x||TXTK.test(k))return null;if(x.
 {const _ed75=ed;ed=function(k){const o=EDK;EDK=k;try{return _ed75.apply(this,arguments)}finally{EDK=o}}}
 </script>
 
+<script>/* Round 76: checks list opens on Editor/Simulate; canvas re-sizes when it becomes visible; #pbar in normal flow */
+(function(){const st=document.createElement('style');st.textContent='#us,#wa,#wau{display:none!important}#ck{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}#cl:not(.hid){max-height:45vh;overflow-y:auto;-webkit-overflow-scrolling:touch}';document.head.appendChild(st);
+let last='';function fitCv(){const c=document.getElementById('cv');if(!c||typeof J=='undefined'||!J||!J.M)return;const w=c.clientWidth,h=c.clientHeight;if(!w||!h)return;const k=w+'x'+h+'x'+(devicePixelRatio||1);if(c===fitCv.c&&k===last&&c.width)return;fitCv.c=c;last=k;const n=(typeof view!='undefined'&&view.n!=null)?view.n:J.M.length;try{initCv();scrub(n)}catch(e){}}
+window.fitCv=fitCv;let ro=null,obs=null;function watch(){const c=document.getElementById('cv');if(c&&c!==obs&&window.ResizeObserver){if(!ro)ro=new ResizeObserver(()=>setTimeout(fitCv,60));if(obs)ro.unobserve(obs);ro.observe(c);obs=c}}
+const _t=tab;tab=function(){const r=_t.apply(this,arguments);watch();setTimeout(fitCv,60);return r};
+const _s=show;show=function(){const r=_s.apply(this,arguments);watch();last='';setTimeout(fitCv,60);return r};
+addEventListener('resize',()=>setTimeout(fitCv,60));addEventListener('orientationchange',()=>setTimeout(fitCv,300));
+document.addEventListener('click',e=>{const ck=e.target.closest&&e.target.closest('#ck');if(!ck)return;e.stopPropagation();e.preventDefault();const cl=document.getElementById('cl');if(cl)cl.classList.toggle('hid')},true);
+})();</script>
+<script>/* Round 76: Library remembers it was opened from Editor/Simulate and returns there with the job loaded */
+var LIBRET=null;{let inRe=0;const _tb=tab;tab=function(t){if(!inRe&&t!='recent')LIBRET=null;return _tb.apply(this,arguments)};
+const wrap=f=>function(){inRe=1;let r;try{r=f.apply(this,arguments)}finally{inRe=0}const to=LIBRET;LIBRET=null;if(to&&(to=='edit'||to=='sim')){tab(to);setTimeout(()=>window.fitCv&&fitCv(),80)}return r};
+reopen=wrap(reopen);reopenV=wrap(reopenV)}</script>
 </body></html>
