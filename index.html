@@ -102,7 +102,7 @@ html[data-theme=light] .y [style*="color:#111"],html[data-theme=light] [style*="
 html[data-theme=light] #theme .chip.on{outline:2px solid #111}
 #theme .chip.on{outline:2px solid #ffd21f}
 </style>
-<script>/* §53 theme: applied before first paint */(function(){var t='dark';try{t=localStorage.getItem('mc_theme')||'dark'}catch(e){}var d=t=='light'||(t=='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches);document.documentElement.dataset.theme=d?'light':'dark';document.documentElement.dataset.themePref=t;window.__themeAtHead=document.documentElement.dataset.theme})();</script>
+<script>/* R102-EARLY */try{window.R102RAW=localStorage.getItem("mc")}catch(e){}</script><script>/* §53 theme: applied before first paint */(function(){var t='dark';try{t=localStorage.getItem('mc_theme')||'dark'}catch(e){}var d=t=='light'||(t=='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches);document.documentElement.dataset.theme=d?'light':'dark';document.documentElement.dataset.themePref=t;window.__themeAtHead=document.documentElement.dataset.theme})();</script>
 </head><body>
 <div class="h"><span id="ttl">My Machines</span><span class="hr"><span class="units" role="group" aria-label="Length units"><button type="button" id="u-in" aria-pressed="true">in</button><span class="sep">|</span><button type="button" id="u-mm" aria-pressed="false">mm</button></span><small>● Offline</small></span></div>
 <div class="c" id="v"></div>
@@ -5581,7 +5581,7 @@ window.addEventListener('change',e=>{const el=e.target;if(!el||el.tagName!='INPU
  if(f=='n'){const n=+v,mx=r82tmax(m);if(!/^\d+$/.test(v)||n<1)err=`“${v}” isn't a tool number — use a whole number from 1.`;else if(n>mx)err=`T${n} is beyond ${m.name}'s ${mx} pockets.`;else if(m.tools.some(x=>x!==t&&+x.n==n))err=`T${n} is already used on ${m.name} — pick a free number.`}
  else if(f=='dia'){if(v===''||!/^\d*\.?\d+$/.test(v)||!(+v>0))err=`Tool Ø must be a number above 0 (got “${v||'blank'}”).`}
  else if(el.dataset.bad)err=`“${v}” isn't a plain number.`;
- r83warn(el,err?err+' Not saved — kept '+(f=='dia'?(t.dia!=null?+(t.dia*KU()).toFixed(4):'blank'):('T'+(t[f]??'')))+'.':null);if(err){e.stopImmediatePropagation();e.preventDefault();el.value=f=='dia'?(t.dia!=null?+(t.dia*KU()).toFixed(4):''):(t[f]??'');el.style.outline='2px solid var(--hi,#ff4d4d)';el.setAttribute('aria-invalid','true');toast79(err+' Not saved.')}else{el.style.outline='';el.removeAttribute('aria-invalid')}},true);
+ r83warn(el,err?err+' Not saved — the tool still has '+(f=='dia'?(t.dia!=null?+(t.dia*KU()).toFixed(4):'blank'):('T'+(t[f]??'')))+'.':null);if(err){e.stopImmediatePropagation();e.preventDefault();/* keep what was typed so it can be fixed */el.style.outline='2px solid var(--hi,#ff4d4d)';el.setAttribute('aria-invalid','true');toast79(err+' Not saved.')}else{el.style.outline='';el.removeAttribute('aria-invalid')}},true);
 {const _ns=tlNewSave;tlNewSave=function(k){const g=id=>String(($('#'+id)||{}).value||'').trim(),er=$('#tn_err'),m=tlCurM();const n=g('tn_n'),d=g('tn_dia');let err=null;if(!/^\d+$/.test(n)||+n<1)err=`“${n}” isn't a tool number — use a whole number from 1.`;else if(+n>r82tmax(m))err=`T${n} is beyond ${m.name}'s ${r82tmax(m)} pockets.`;else if(m.tools.some(x=>+x.n==+n))return _ns.apply(this,arguments);else if(d===''||!/^\d*\.?\d+$/.test(d)||!(+d>0))err=`Tool Ø must be a number above 0 (got “${d||'blank'}”).`;if(err&&er){er.textContent=err;return}return _ns.apply(this,arguments)}}
 // final check: the job's tool must be unique and have a real Ø on this machine (even with old bad data)
 {const _re=rangeErr;rangeErr=function(j){const E=_re.apply(this,arguments);try{const m=S.m[S.cur],T=j&&j.p&&j.p.Tool&&j.p.Tool.v;if(m&&T!=null&&!E.some(x=>x[0]=='Tool')){const hits=(m.tools||[]).filter(x=>+x.n==+T);if(hits.length>1)E.push(['Tool',`T${T} is listed ${hits.length} times on ${esc(m.name)} — fix the Tool Library first.`]);else if(hits.length==1&&!/probe/i.test(hits[0].type||'')&&hits[0].dia!=null&&!(+hits[0].dia>0))E.push(['Tool',`T${T} has Ø ${hits[0].dia} in the Tool Library — set a real Ø first.`])}}catch(e){}return E}}
@@ -5867,7 +5867,7 @@ function r92pickers(i){const m=S.m[i];if(!m)return;V.querySelectorAll('input[dat
  else if(x.k=='Rotary axis'&&!isLT(m.type||''))r92sel(el,['A','B','C'],x,i);
  else if(el.placeholder&&!/^e\.g\./i.test(el.placeholder))el.placeholder='e.g. '+el.placeholder;});
  // E7: hide rotary / brake / pallet / robot rows on 3-axis mills
- if(!isLT(m.type||'')){const o=m.opt||{},ax4=!!(o.ax4||o.ax5)||/4th|5-axis|horizontal|hmc/i.test(m.type||''),pal=!!o.pallet;V.querySelectorAll('.set').forEach(st=>{const t=(st.querySelector('span')||{}).textContent||'';if(!ax4&&/Rotary axis|Rotary direction|4th-axis brake/.test(t))st.style.display='none';if(!pal&&/Pallet change code/.test(t))st.style.display='none';if(/Lathe offset #/.test(t))st.style.display='none'})}}
+ if(!isLT(m.type||'')){const o=m.opt||{},ax4=!!(o.ax4||o.ax5)||/4th|5-axis|horizontal|hmc/i.test(m.type||''),pal=!!o.pallet;V.querySelectorAll('.set').forEach(st=>{const t=(st.querySelector('span')||{}).textContent||'';if(!ax4&&/Rotary axis(?! (?:name|limits|\+ direction|clamp))|Rotary direction|4th-axis brake/.test(t))st.style.display='none';if(!pal&&/Pallet change code/.test(t))st.style.display='none';if(/Lathe offset #/.test(t))st.style.display='none'})}}
 // C: B-axis labels in forms (B turns about Y on an HMC)
 const R92U0={};['Hole X','Hole Y','Z0'].forEach(k=>R92U0[k]=UNIT[k]);
 {const _s=show;show=function(){try{if(J&&J.op=='index'&&!isL()&&r92rot()=='B'){UNIT['Hole X']='in across the face (X)';UNIT['Hole Y']='in along the B axis (Y, B turns about Y)';UNIT.Z0='in, face distance from the B centerline'}else Object.assign(UNIT,R92U0)}catch(e){}return _s.apply(this,arguments)}}
@@ -5992,7 +5992,7 @@ try{r93ctlMig()}catch(e){console.error(e)}
 try{KL.delete('Plunge feed');KF.add('Plunge feed')}catch(e){}
 // (a) rotary / brake rows follow the 4th-axis option; pallet row follows the pallet option
 function r94has4(m){const o=m.opt||{};return !!(o.ax4||o.ax5)||/4th|4-axis|5-axis|horizontal|hmc|trunnion/i.test(m.type||'')}
-{const _ed=edit;edit=function(i){const r=_ed.apply(this,arguments);try{const m=S.m[i];if(m&&!isLT(m.type||'')){const h4=!r94has4(m),hp=!(m.opt||{}).pallet;V.querySelectorAll('.set').forEach(st=>{const t=((st.querySelector('span')||{}).textContent||'').replace(/^[!\s]+/,'');if((h4&&/^(Rotary axis|Rotary direction|4th-axis brake)/.test(t))||(hp&&/^Pallet change code/.test(t)))st.style.display='none'});V.querySelectorAll('.chip').forEach(c=>{const t=c.textContent.replace(/^[!\s]+/,'');if((h4&&/^(Rotary axis|Rotary direction|4th-axis brake)/.test(t))||(hp&&/^Pallet change code/.test(t)))c.style.display='none'})}}catch(e){}return r}}
+{const _ed=edit;edit=function(i){const r=_ed.apply(this,arguments);try{const m=S.m[i];if(m&&!isLT(m.type||'')){const h4=!r94has4(m),hp=!(m.opt||{}).pallet;V.querySelectorAll('.set').forEach(st=>{const t=((st.querySelector('span')||{}).textContent||'').replace(/^[!\s]+/,'');if((h4&&/^(Rotary axis(?! (?:name|limits|\+ direction|clamp))|Rotary direction|4th-axis brake)/.test(t))||(hp&&/^Pallet change code/.test(t)))st.style.display='none'});V.querySelectorAll('.chip').forEach(c=>{const t=c.textContent.replace(/^[!\s]+/,'');if((h4&&/^(Rotary axis(?! (?:name|limits|\+ direction|clamp))|Rotary direction|4th-axis brake)/.test(t))||(hp&&/^Pallet change code/.test(t)))c.style.display='none'})}}catch(e){}return r}}
 // (b) select pickers (Work offset) clear the red '?' on pick
 document.addEventListener('change',e=>{const el=e.target;if(!el||el.tagName!='SELECT'||!el.closest||!el.closest('#out')||!el.dataset.k)return;try{const k=el.dataset.k,ch=[...document.querySelectorAll('#out .chip')].find(c=>(c.getAttribute('onclick')||'')=="ed('"+k+"')");if(ch&&el.value){ch.classList.remove('r');ch.classList.add('y');ch.textContent=k+': '+(k=='Work offset'?offLbl(el.value):el.value)}const lb=el.closest('.set');if(lb&&el.value)lb.querySelectorAll('.r,.bad').forEach(x=>x.classList.remove('r','bad'))}catch(x){}},true);
 // (c) a cleared required value drops the old program
@@ -6005,7 +6005,7 @@ document.head.insertAdjacentHTML('beforeend',`<style id="r94css">@media (max-wid
 // ===== Round 95 (mc-v96) =====
 function r95drop(){J.code=null;J.M=null;J.moves=[];try{if(typeof view=='object'&&view)view.n=0}catch(e){}}
 // one rule for setup page, full settings list and Machines cards: rotary/brake follow 4th axis, pallet follows Pallet changer only
-function r95hideKey(m,t){t=String(t).replace(/^[!\s✓•]+/,'').trim();if(!m||isLT(m.type||''))return false;if(/^(Rotary axis|Rotary direction|4th-axis brake)/.test(t))return !r94has4(m);if(/^Pallet change code/.test(t))return !(m.opt||{}).pallet;return false}
+function r95hideKey(m,t){t=String(t).replace(/^[!\s✓•]+/,'').trim();if(!m||isLT(m.type||''))return false;if(/^(Rotary axis(?! (?:name|limits|\+ direction|clamp))|Rotary direction|4th-axis brake)/.test(t))return !r94has4(m);if(/^Pallet change code/.test(t))return !(m.opt||{}).pallet;return false}
 let R95ed=null;{const _ed=edit;edit=function(i){R95ed=i;const r=_ed.apply(this,arguments);r95apply();return r}}
 {const _t=tab;tab=function(x){R95ed=null;const r=_t.apply(this,arguments);r95apply();return r}}
 function r95apply(){try{const v=document.getElementById('v');if(!v)return;
@@ -6016,7 +6016,7 @@ function r95apply(){try{const v=document.getElementById('v');if(!v)return;
 {const _r=rotAx;rotAx=function(){const m=S.m[S.cur];if(!m)return _r.apply(this,arguments);const n=m.name;m.name='';try{return _r.apply(this,arguments)}finally{m.name=n}}}
 
 // mc-v97: dependent rows also on first render, and live when an option is ticked
-function r95dep(t){return /^(Rotary axis|Rotary direction|4th-axis brake|Pallet change code)/.test(String(t).replace(/^[!\s✓•]+/,'').trim())}
+function r95dep(t){return /^(Rotary axis(?! (?:name|limits|\+ direction|clamp))|Rotary direction|4th-axis brake|Pallet change code)/.test(String(t).replace(/^[!\s✓•]+/,'').trim())}
 document.addEventListener('change',e=>{const el=e.target;if(el&&el.type=='checkbox'&&R95ed!=null)setTimeout(r95apply,0)},false);
 r95apply();document.addEventListener('DOMContentLoaded',r95apply);window.addEventListener('load',r95apply);
 // mc-v97 migration: old machines with a saved rotary letter or an HMC/4th type get the 4th axis option (once); saved letters never rewritten
@@ -6320,7 +6320,7 @@ function r99flagged(x){return !!x&&!!x.r99flag&&!!String(x.v||'').trim()}
 // one-time notice per machine (opens the first item)
 {const _t79=toast79;toast79=function(){const x=document.getElementById('r79toast');if(x){x.classList.remove('r99pin');x.onclick=null;x.style.cursor=''}return _t79.apply(this,arguments)}}
 function r99notices(){const q=(S.m||[]).map((m,i)=>[m,i]).filter(([m])=>m&&m.r99need&&m.r99need.length&&!m.r99told);if(!q.length)return;const [m,i]=q[0];m.r99told=1;save();
- const msg=m.name+': '+m.r99need.length+' setting'+(m.r99need.length==1?'':'s')+' '+(m.r99need.length==1?'needs':'need')+' a real answer — tap to open';
+ const msg=m.name+': '+m.r99need.length+' setting'+(m.r99need.length==1?'':'s')+' '+(m.r99need.length==1?'needs':'need')+' a real answer';
  toast79(msg);const t=$('#r79toast');if(t){t.classList.add('r99pin');t.style.cursor='pointer';t.style.animation='none';t.style.opacity='1';t.style.transition='none';
   // defeat any fade timer by keeping it alive
   const pin=setInterval(()=>{const x=$('#r79toast');if(!x||!x.classList.contains('r99pin')){clearInterval(pin);return}clearTimeout(x._h);x.hidden=false;x.style.opacity='1'},200);clearTimeout(t._h);t.hidden=false;
@@ -6411,15 +6411,15 @@ try{r100mig()}catch(e){console.error(e)}
 {const _p=pick;pick=function(n,g){const r=_p.apply(this,arguments);try{if(g=='5-axis mills'){const m=S.m.at(-1);m.r98mig=1;m.r100mig=1;m.mtype='vmc5';r98opts(m,'vmc5');
   const L=k=>String(((r100sv(m,k)||{}).v)||'').toUpperCase().replace(/[^ABC]/g,'').slice(0,1),ta=L(K5.ta),ra=L(K5.ra);
   const pair=r100ensure(m,'Rotary pair','','confirm');
-  if(ta&&ra&&ta!=ra){pair.v=ta+' + '+ra;pair.st='user';pair.r100preset=1;
-   [ta,ra].forEach(x=>{const d=r100ensure(m,x+' direction','','confirm');if(!(d.st=='user'&&String(d.v||'').trim())){d.v=R100DIR[0];d.st='user';d.r100preset=1}})}
+  if(ta&&ra&&ta!=ra){pair.v=ta+' + '+ra;pair.st='confirm';pair.r100preset=1; // preset value starts neutral: green only after the user confirms
+   [ta,ra].forEach(x=>{const d=r100ensure(m,x+' direction','','confirm');if(!(d.st=='user'&&String(d.v||'').trim())){d.v=R100DIR[0];d.st='confirm';d.r100preset=1}})}
   save();edit(S.m.length-1)}}catch(e){console.error(e)}return r}}
 // setup page: rotary pair + direction rows under the type picker when 5-axis is selected
 {const _pg=r98page;r98page=function(i){const r=_pg.apply(this,arguments);try{r100page(i)}catch(e){console.error(e)}return r}}
 function r100page(i){const m=S.m[i];if(!m)return;const box=$('#r98type');if(!box)return;
  // hide 4th-axis-only rotary rows on 5-axis (kept in data)
  if(r98t(m)=='vmc5'){V.querySelectorAll('.set,.r99f').forEach(st=>{const t=((st.querySelector('.r99lb,span')||{}).textContent||'').replace(/^[!\s✓•]+/,'').trim();
-  if(/^(Rotary axis|Rotary direction|4th-axis brake)/.test(t))st.style.display='none'})}
+  if(/^(Rotary axis|Rotary direction)$|^4th-axis brake/.test(t.replace(/\s*\(.*$/,'')))st.style.display='none'})}
  document.getElementById('r100rot')&&document.getElementById('r100rot').remove();
  document.getElementById('r100lock')&&document.getElementById('r100lock').remove();
  if(r98t(m)!='vmc5')return;
@@ -6427,9 +6427,9 @@ function r100page(i){const m=S.m[i];if(!m)return;const box=$('#r98type');if(!box
  const wrap=document.createElement('div');wrap.id='r100rot';
  const pair=r100ensure(m,'Rotary pair','','confirm');
  const mkSet=(key,sp)=>{ // build a .set row then wrap with r99
-  const st=document.createElement('div');st.className='set';const xv=(r100sv(m,key)||{});st.innerHTML=`<span>${esc(key)}</span><input data-r100k="${esc(key)}" value="${esc(xv.st=='user'?xv.v||'':'')}">`;
+  const st=document.createElement('div');st.className='set';const xv=(r100sv(m,key)||{});st.innerHTML=`<span>${esc(key)}</span><input data-r100k="${esc(key)}" value="${esc(xv.v||'')}">`;
   wrap.appendChild(st);
-  const getV=()=>{const x=r100sv(m,key);return x&&x.st=='user'?x.v:''};
+  const getV=()=>{const x=r100sv(m,key);return x?x.v||'':''};const confd=()=>{const x=r100sv(m,key);return !!x&&x.st=='user'};
   const setV=v=>{const x=r100ensure(m,key,'','confirm');
    if(!v||r99ph(v)||(typeof r99blankChoice=='function'&&r99blankChoice(v))){x.v='';x.st='confirm'}
    else{x.v=v;x.st='user'}
@@ -6438,7 +6438,7 @@ function r100page(i){const m=S.m[i];if(!m)return;const box=$('#r98type');if(!box
    r100sync(m);save();
    // re-render so direction labels follow the pair
    setTimeout(()=>{const y=scrollY;edit(i);scrollTo(0,y)},0)};
-  r99wrap(st,key,getV,setV,sp);
+  r99wrap(st,key,getV,setV,sp,confd);
  };
  mkSet('Rotary pair',{st:'picker+Other',ch:R100PAIR.slice(),fmt:'A + C or B + C',ex:'A + C',err:'Rotary pair: pick A + C or B + C, or type two letters like A + B.',hint:'Which two rotary axes the machine has',
   ok:v=>{const t=String(v||'').trim();if(R100PAIR.some(c=>c.toLowerCase()===t.toLowerCase()))return true;const m2=t.match(/\b([ABC])\b.*\+\s*\b([ABC])\b/i);return !!(m2&&m2[1].toUpperCase()!=m2[2].toUpperCase())}});
@@ -6516,8 +6516,8 @@ try{(S.m||[]).forEach(m=>{if(m&&r98t(m)=='vmc5')r101ensure5(m)})}catch(e){}
 {const _pg=r100page;r100page=function(i){const r=_pg.apply(this,arguments);try{const m=S.m[i];if(m&&r98t(m)=='vmc5'){
   const hideK=new Set(['Rotary pair','Rotary axis','Rotary direction',K5.ta,K5.ra,K5.td,K5.rd]);
   V.querySelectorAll('.set,.r99f').forEach(f=>{if(f.closest('#r100rot'))return;const lb=((f.querySelector('.r99lb')||f.querySelector('span')||{}).textContent||'').replace(/^[!\s✓•~]+/,'').replace(/\s*\(.*$/,'').trim();
-   const key=f.dataset.r99k||lb;if(hideK.has(key)||[...hideK].some(k=>lb.startsWith(k))||/^[ABC] direction$/.test(key)||/^4th-axis brake/.test(lb))f.style.display='none'});
-  V.querySelectorAll('.chip').forEach(c=>{if(c.closest('#r100rot'))return;const t=c.textContent.replace(/^[!\s✓•~]+/,'').split(':')[0].trim();if(t=='Rotary pair'||/^[ABC] direction$/.test(t)||t==K5.ta||t==K5.ra||t==K5.td||t==K5.rd||/^Rotary (axis|direction)\b/.test(t))c.style.display='none'})}}catch(e){console.error(e)}return r}}
+   const key=f.dataset.r99k||lb;if(hideK.has(key)||hideK.has(lb)||/^[ABC] direction$/.test(key)||/^4th-axis brake/.test(lb))f.style.display='none'});
+  V.querySelectorAll('.chip').forEach(c=>{if(c.closest('#r100rot'))return;const t=c.textContent.replace(/^[!\s✓•~]+/,'').split(':')[0].trim();if(t=='Rotary pair'||/^[ABC] direction$/.test(t)||t==K5.ta||t==K5.ra||t==K5.td||t==K5.rd||/^Rotary (axis|direction)$/.test(t))c.style.display='none'})}}catch(e){console.error(e)}return r}}
 // re-run after r99setup wrapped the rows (edit order)
 {const _ed=edit;edit=function(i){const r=_ed.apply(this,arguments);try{const m=S.m[i];if(m&&r98t(m)=='vmc5'&&$('#r100rot'))r100page.__hide&&0;if(m&&r98t(m)=='vmc5'){const hideK=['Rotary pair','Rotary axis','Rotary direction',K5.ta,K5.ra,K5.td,K5.rd];V.querySelectorAll('.r99f,.set').forEach(f=>{if(f.closest('#r100rot'))return;const k=f.dataset.r99k||((f.querySelector('span')||{}).textContent||'').replace(/^[!\s✓•~]+/,'').replace(/\s*\(.*$/,'').trim();if(hideK.includes(k)||/^[ABC] direction$/.test(k)||/^4th-axis brake/.test(k))f.style.display='none'})}}catch(e){}return r}}
 
@@ -6543,7 +6543,7 @@ function r101lprobe(){if(!J||J.op!='lprobe'||!J.p)return null;const w=String((J.
  if(w=='work'&&!face)return'Write to Work needs Face Z mode: an OD touch can’t set a work Z shift. Pick Wear or Geometry, or switch to a face touch.';
  if(w=='work'&&face){const o=normOff((J.p['Work offset']||{}).v||'G54')||'G54';if(!/^G5[4-9]$/.test(o))return'Write to Work: this G10 L2 shift form is only set up for G54–G59 here; '+offLbl(o)+' was not checked — not written.'}
  return null}
-function r101lprobeFix(){if(!J||J.op!='lprobe'||!Array.isArray(J.code))return;const w=String((J.p['Write to']||{}).v||'').toLowerCase();if(w!='work')return;const o=normOff((J.p['Work offset']||{}).v||'G54')||'G54';const P=+o.slice(1)-53;
+function r101lprobeFix(){return;if(!J||J.op!='lprobe'||!Array.isArray(J.code))return;const w=String((J.p['Write to']||{}).v||'').toLowerCase();if(w!='work')return;const o=normOff((J.p['Work offset']||{}).v||'G54')||'G54';const P=+o.slice(1)-53;
  J.code.forEach((l,i)=>{if(/^G10 L2 P1 W#101/.test(l))J.code[i]=l.replace('G10 L2 P1 ','G10 L2 P'+P+' ')})}
 
 {const _sh=show;show=function(){const r=_sh.apply(this,arguments);try{if(!J||!J.op)return r;const m=S.m[S.cur],o=$('#out');if(!o)return r;
@@ -6564,7 +6564,7 @@ function r101lprobeFix(){if(!J||J.op!='lprobe'||!Array.isArray(J.code))return;co
 // --- 3: Build Continue never saves a bad value (Depth 'asdf' stays red, not 'ASDF')
 {const _f=fill;fill=function(){const held=[];document.querySelectorAll('#out .r99f').forEach(f=>{const i=f.querySelector('input[data-k]');if(!i)return;const k=i.dataset.k,v=String(i.value||'').trim();if(!v)return;const sp=(typeof r100bch=='function'&&r100bch(k))||f._r99sp||r99spec(k);let ok=true;try{ok=f._r99sp?r99ok(k,v,f._r99sp):r99ok(k,v,sp||undefined)}catch(e){}
   // only hold what the app's own fill would wrongly keep: placeholders and digit-free junk on a number/choice box
-  if(r99ph(v)||(sp&&!ok&&!/\d/.test(v)&&/number|coord|deg|range|O-number|variable|pick/i.test((sp.st||'')+' '+(sp.fmt||''))))held.push([k,v])});
+  if(r99ph(v)||(sp&&!ok&&sp.strict)||(sp&&!ok&&!/\d/.test(v)&&/number|coord|deg|range|O-number|variable|pick/i.test((sp.st||'')+' '+(sp.fmt||''))))held.push([k,v])});
  const r=_f.apply(this,arguments);try{let nl=0;const cd=J&&Array.isArray(J.code)&&J.code.length;const et=((document.querySelector("#out")||{}).innerText||"");held.forEach(([k,v])=>{if((cd||!et.includes("• "+k))&&J&&J.p&&J.p[k]&&J.p[k].v!=null&&String(J.p[k].v).toUpperCase()==v.toUpperCase()){J.p[k].v=null;J.code=null;nl=1}});if(nl&&typeof show=='function')show();held.forEach(([k,v])=>{const f=document.querySelector('#out .r99f[data-r99k="'+CSS.escape(k)+'"]');const i=f&&f.querySelector('input');if(i){i.value=v;f._r99&&f._r99.mark()}})}catch(e){}return r}}
 // keep the spec a box was wrapped with so fill checks the same rule
 {const _w=r99wrap;r99wrap=function(setEl,key,getV,setV,extra,conf){const f=_w.apply(this,arguments);try{if(f){f._r99sp=extra||r99spec(key)}}catch(e){}return f}}
@@ -6575,11 +6575,11 @@ function r101lprobeFix(){if(!J||J.op!='lprobe'||!Array.isArray(J.code))return;co
  const b=_b.apply(this,arguments);if(!b||!J)return b;
  if(k=='First new offset'){const n=Math.max(1,Math.min(48,(typeof extN=='function'&&extN())||48)),ch=[];for(let i=1;i<=Math.min(n,48);i++)ch.push('P'+i);
   return{st:'picker+Other',ch,fmt:'extra offset P1–P'+n,ex:'P1',err:'First new offset: an extra offset like P1 or G54.1 P1 (1–'+n+').',hint:'pick P1–P'+n+', or type G54.1 P1.',
-   ok:v=>{const m=String(v).trim().match(/^(?:G54\.1\s*|G154\s*)?P\s*(\d+)$/i);return !!m&&+m[1]>=1&&+m[1]<=n},save:v=>'P'+String(v).match(/(\d+)\s*$/)[1]}}
- if(k=='Write to'&&J.op=='lprobe'){const ch=['Wear','Geometry','Work'];return{st:'picker+Other',ch,fmt:'wear / geometry / work',ex:'Wear',err:'Write to: Wear, Geometry or Work.',hint:'what the probe result changes — each writes what it says.',ok:v=>/^(wear|geometry|geo|work)$/i.test(String(v).trim()),save:v=>{const t=String(v).trim().toLowerCase();return t=='geo'?'geometry':t}}}
+   ok:v=>{const m=String(v).trim().match(/^(?:G54\.1\s*|G154\s*)?P\s*(\d+)$/i);return !!m&&+m[1]>=1&&+m[1]<=n}}}
+ if(k=='Write to'&&J.op=='lprobe'){const ch=['Wear','Geometry','Work'];return{st:'picker+Other',ch,fmt:'wear / geometry / work',ex:'Wear',err:'Write to: Wear, Geometry or Work.',hint:'what the probe result changes — each writes what it says.',ok:v=>/^(wear|geometry|geo|work)$/i.test(String(v).trim())}}
  if(k=='Write to'){const ch=b.ch;return{...b,st:'picker+Other',ex:'G54',hint:'pick G54–G59 or External shift, or type G55 / P0.',ok:v=>{const t=String(v).trim();return ch.some(c=>c.toLowerCase()==t.toLowerCase())||/^G5[4-9]$/i.test(t)||/^(P0|external(\s*shift)?)$/i.test(t)},save:v=>{const t=String(v).trim();const c=ch.find(c=>c.toLowerCase()==t.toLowerCase());if(c)return c;if(/^G5[4-9]$/i.test(t))return t.toUpperCase();return'External shift (P0)'}}}
  if(k=='Axis'){const ch=b.ch;return{...b,st:'picker+Other',hint:'pick '+ch.join(' / ')+', or type one of them.',ok:v=>{const t=String(v).trim().toLowerCase();return ch.some(c=>c.toLowerCase()==t||c.toLowerCase().split(' ')[0]==t)},save:v=>{const t=String(v).trim().toLowerCase();return ch.find(c=>c.toLowerCase()==t||c.toLowerCase().split(' ')[0]==t)}}}
- if(k=='Update offset'){const ch=b.ch;return{...b,st:'picker+Other',hint:'pick YES only after you confirm the write, or NO.',ok:v=>/^(yes|no)\b/i.test(String(v).trim()),save:v=>/^yes/i.test(String(v).trim())?'YES':ch[0]}}
+ if(k=='Update offset'){const ch=b.ch;return{...b,st:'picker+Other',ex:'YES',fmt:'YES or NO',hint:'pick YES only after you confirm the write, or NO.',ok:v=>/^(yes|no)\b/i.test(String(v).trim()),save:v=>/^yes/i.test(String(v).trim())?'YES':ch[0]}}
  if(k=='Base offset'||k=='Source offset')return{...b,ex:'G54',hint:'pick an offset, or type G55 / G54.1 P1.'};
  return b}}
 // generic standard for any other silent Build text box (wrapped with a hint; format check where we know one)
@@ -6589,7 +6589,7 @@ function r101lprobeFix(){if(!J||J.op!='lprobe'||!Array.isArray(J.code))return;co
   return{st:'typed text',ch:[],fmt:'plain text, no ( ) or ;',ex:'',err:k+': plain text, 80 characters max, no ( ) or ;.',hint:'plain text — no ( ) or ; (they break the program).'}}return s}}
 
 // --- 5: Tools screen — Name/Material/Notes get hints; Ø / stick-out / flutes / numbers never silently revert
-const R101TNUM={dia:['Ø','number above 0','0.5'],len:['Stick-out','number above 0','2.25'],fl:['Flutes','whole number 1–20','4'],nr:['Nose radius','number 0 or more','0.0312'],H:['Length offset H #','whole number 1–999','1'],D:['Dia offset D #','whole number 1–999','1'],lo:['Lathe offset #','whole number 1–99','1'],rpm:['Suggested RPM','number 1–100000','2500'],feed:['Suggested feed','number above 0','12']};
+const R101TNUM={dia:['Ø','number above 0','0.5'],len:['Stick-out','number above 0','2.25'],fl:['Flutes','whole number 1–20','4'],nr:['Nose radius','number 0 or more','0.0312'],H:['Length offset H #','whole number 1–999','12'],D:['Dia offset D #','whole number 1–999','32'],lo:['Lathe offset #','whole number 1–99','3'],rpm:['Suggested RPM','number 1–100000','2500'],feed:['Suggested feed','number above 0','12']};
 function r101tok(f,v){const t=String(v).trim();if(!t)return true;if(!/^-?\d*\.?\d+$/.test(t))return false;const n=+t;if(f=='fl')return Number.isInteger(n)&&n>=1&&n<=20;if(f=='H'||f=='D')return Number.isInteger(n)&&n>=1&&n<=999;if(f=='lo')return Number.isInteger(n)&&n>=1&&n<=99;if(f=='nr')return n>=0;if(f=='rpm')return n>0&&n<=100000;return n>0}
 function r101tmsg(el,f,bad){let e=el.parentNode.querySelector(':scope > .r101terr');if(!bad){if(e)e.remove();el.style.borderColor='';return}const d=R101TNUM[f];if(!e){e=document.createElement('div');e.className='r99err on r101terr';el.insertAdjacentElement('afterend',e)}e.innerHTML=`Needs: ${esc(d[0])} as a ${esc(d[1])} — not saved<br><i>Example: ${esc(d[2])}</i>`;el.style.borderColor='#ff5a5a'}
 window.addEventListener('change',e=>{const el=e.target;if(!el||el.tagName!='INPUT')return;const f=el.dataset.f||el.dataset.x||(el.dataset.fl!=null?'flen':null);if(!f||!(f in R101TNUM||f=='flen'))return;const ff=f=='flen'?'len':f;
@@ -6597,7 +6597,7 @@ window.addEventListener('change',e=>{const el=e.target;if(!el||el.tagName!='INPU
 document.addEventListener('input',e=>{const el=e.target;if(!el||el.tagName!='INPUT')return;const f=el.dataset.f||el.dataset.x;if(f&&f in R101TNUM&&r101tok(f,el.value))r101tmsg(el,f,false)},true);
 {const _t=tools;tools=function(){const r=_t.apply(this,arguments);try{const H={name:['Name / description','what you call it on the setup sheet, like ½ 3FL carbide'],mat:['Material / coating','like carbide TiAlN or HSS'],notes:['Notes','anything for the operator — plain text']};
   V.querySelectorAll('input[data-x="name"],input[data-x="mat"],input[data-x="notes"]').forEach(i=>{const h=H[i.dataset.x];if(!i.placeholder)i.placeholder='e.g. '+h[1].replace(/^(what you call it on the setup sheet, like |like |anything for the operator — )/,'');i.classList.add('r99ph');if(!i.parentNode.querySelector(':scope > .r101th')){const d=document.createElement('div');d.className='r99hint r101th';d.textContent=h[1];i.insertAdjacentElement('beforebegin',d)}});
-  V.querySelectorAll('input[data-f="dia"],input[data-f="len"],input[data-f="fl"],input[data-x="nr"],input[data-x="H"],input[data-x="D"],input[data-x="lo"],input[data-x="rpm"],input[data-x="feed"]').forEach(i=>{const f=i.dataset.f||i.dataset.x;if(!i.placeholder)i.placeholder='e.g. '+R101TNUM[f][2];i.classList.add('r99ph')})}catch(e){console.error(e)}return r}}
+  V.querySelectorAll('input[data-f="dia"],input[data-f="len"],input[data-f="fl"],input[data-x="nr"],input[data-x="H"],input[data-x="D"],input[data-x="lo"],input[data-x="rpm"],input[data-x="feed"]').forEach(i=>{const f=i.dataset.f||i.dataset.x;if(!i.placeholder||/^(optional|e\.g\. 1|-)$/i.test(i.placeholder.trim())||!/\d/.test(i.placeholder))i.placeholder='e.g. '+R101TNUM[f][2];i.classList.add('r99ph')})}catch(e){console.error(e)}return r}}
 
 {const st=document.createElement('style');st.textContent='.r99lb .r99st,.r99lb .r99st.ok,.r99lb .r99st.bad{width:9px;height:9px;min-width:9px;padding:0;margin:0;border-radius:50%;font-size:0;flex:none}.r99sheet input,.r99sheet input::placeholder{font-style:normal}.r99sheet input::placeholder{font-style:italic}';document.head.appendChild(st)}
 
@@ -6607,7 +6607,7 @@ function r101park(m){if(!m||!m.s)return;const out=m.s.filter(x=>r101is5k(x.k));i
 function r101unpark(m){if(!m||!m.s5park)return;m.s5park.forEach(p=>{if(!m.s.some(x=>x.k==p.k))m.s.push(p)});delete m.s5park}
 function r101stale(){try{if(typeof J!='undefined'&&J&&J.op){J.code=null;['#r101five','#r101rot','#r101lp'].forEach(q=>{const e=$(q);e&&e.remove()});document.querySelectorAll('#out .r99err.on').forEach(e=>{e.classList.remove('on');e.innerHTML=''});J._stale=1}}catch(e){}}
 {const _s=r98set;r98set=function(i,t){const m=S.m[i];try{if(m&&t=='vmc5')r101unpark(m)}catch(e){}const r=_s.apply(this,arguments);try{if(m&&r98t(m)!='vmc5'){r101park(m);try{save()}catch(e){}if($('#r98type'))edit(i)}r101stale()}catch(e){console.error(e)}return r}}
-try{(S.m||[]).forEach(m=>{if(m&&r98t(m)!='vmc5'&&m.s&&m.s.some(x=>x.k=='Rotary pair'||/^[ABC] direction$/.test(x.k)))r101park(m)})}catch(e){}
+try{(S.m||[]).forEach(m=>{if(m&&m.mtype&&m.mtype!='vmc5'&&r98t(m)!='vmc5'&&m.s&&m.s.some(x=>x.k=='Rotary pair'||/^[ABC] direction$/.test(x.k)))r101park(m)})}catch(e){}
 // Need N: 'Confirm rotary letter' clears once a 5-axis pair is set
 function r101rotClear(m){if(m&&r98t(m)=='vmc5'&&r100pairOf(m)&&m.r99need&&m.r99need.includes('Rotary axis')){m.r99need=m.r99need.filter(k=>k!='Rotary axis');if(!m.r99need.length){delete m.r99need;const n=$('#r99notice');n&&n.remove()}try{save()}catch(e){}}}
 {const _e=edit;edit=function(i){try{r101rotClear(S.m[i])}catch(e){}const r=_e.apply(this,arguments);try{V.querySelectorAll('.r99hint').forEach(h=>{const t=h.firstChild;if(t&&t.nodeType==3&&/^[a-z]/.test(t.nodeValue))t.nodeValue=t.nodeValue[0].toUpperCase()+t.nodeValue.slice(1)})}catch(e){}return r}}
@@ -6631,13 +6631,13 @@ function r101tiltBad(j){if(!j||!j.p||!['tp32','tpdrill'].includes(j.op))return n
 {const _g=genJ2;genJ2=function(j){const g=_g.apply(this,arguments);try{const tb=r101tiltBad(j);if(tb&&g){g.code=[];g.moves=[];g.r92bad=(g.r92bad||[]).concat([tb.msg.replace(/<[^>]+>/g,' ')])}}catch(e){}return g}}
 
 // --- Stacey 1+2 / Kori 10: Simulate — G53 Z is a retract to machine top (not a plunge to part Z0); rotary angles tracked per line and shown as dials
-function r101rotScan(lines){let abs=1,s={A:0,B:0,C:0},pl=null;const out=[];const num=x=>+x;
+function r101rotScan(lines){let unk=0,abs=1,s={A:0,B:0,C:0},pl=null;const out=[];const num=x=>+x;
  (lines||[]).forEach(l=>{const u=String(l).replace(/\([^)]*\)/g,'').toUpperCase().replace(/\s+/g,' ');if(/\bG90\b/.test(u))abs=1;if(/\bG91\b/.test(u))abs=0;
   const home=/\bG28\b/.test(u)||/\bG53(?!\.)\b/.test(u);
   [...u.matchAll(/\b([ABC])\s*(-?\d*\.?\d+)/g)].forEach(([,L,v])=>{s[L]=home?(/\bG28\b/.test(u)?0:num(v)):abs?num(v):s[L]+num(v)});
   if(/\bG68\.2\b/.test(u)){const g=k=>{const m=u.match(new RegExp('\\b'+k+'\\s*(-?\\d*\\.?\\d+)'));return m?+m[1]:0};pl={I:g('I'),J:g('J'),K:g('K')}}
-  else if(/\bG268\b/.test(u))pl={haas:1};if(pl&&/\bG53\.1\b/.test(u))pl={...pl,solve:1};if(/\bG69\b|\bG269\b/.test(u))pl=null;
-  out.push({A:s.A,B:s.B,C:s.C,pl,has:/\b[ABC]\s*-?\d*\.?\d/.test(u)||/G68\.2|G268|G53\.1/.test(u)})});return out}
+  else if(/\bG268\b/.test(u))pl={haas:1};if(pl&&/\bG68\.2\b/.test(u))pl={...pl,solve:1};if(/\bG69\b|\bG269\b/.test(u))pl=null;
+  if(/\bG68\.2\b/.test(u))unk=1;else if(/\b[ABC]\s*-?\d*\.?\d/.test(u))unk=0;out.push({A:s.A,B:s.B,C:s.C,unk,pl:pl||(unk?{unk:1,solve:1}:null),has:/\b[ABC]\s*-?\d*\.?\d/.test(u)||/G68\.2|G268|G53\.1/.test(u)})});return out}
 function r101g53(lines){return(lines||[]).map(l=>{if(typeof l!='string')return l;const u=l.replace(/\([^)]*\)/g,'').toUpperCase();if(!/\bG53(?!\.)\b/.test(u))return l;
  const rot=[...u.matchAll(/\b([ABC])\s*(-?\d*\.?\d+)/g)].map(m=>m[1]+m[2]).join(' ');
  if(/\bZ\s*-?\d*\.?\d/.test(u))return'G28'+(rot?' '+rot:'')+' (G53 Z = RETRACT TO MACHINE TOP)';
@@ -6646,15 +6646,90 @@ function r101g53(lines){return(lines||[]).map(l=>{if(typeof l!='string')return l
 function r101simNote(){if(!J||!J.M)return'';const any=J.M.some(m=>m.rot5);if(!any)return'';return'Rotary moves not shown in the path — XYZ is drawn flat in part coordinates. The dials show the commanded rotary angles.'}
 function r101rotCur(){const M=J&&J.M||[];const n=Math.min((typeof view!='undefined'&&view.n)||M.length,M.length);for(let k=n-1;k>=0;k--)if(M[k]&&M[k].rot5)return M[k].rot5;return M.find(m=>m.rot5)?{A:0,B:0,C:0,pl:null}:null}
 {const _dr=draw;draw=function(){const r=_dr.apply(this,arguments);try{if(!ctx||!cv||!J||!J.M)return r;const st=r101rotCur();if(!st)return r;const m=S.m[S.cur];
-  const p=(m&&typeof r100pairOf=='function'&&r100pairOf(m))||['B','C'];const tl=p[0],rl=p[1];const dpr=cv.width/(cv.clientWidth||cv.width)||1,R=18*dpr,pad=8*dpr;
-  ctx.save();ctx.font=(11*dpr)+'px sans-serif';ctx.textBaseline='top';
-  const dial=(x,y,L,deg,half)=>{ctx.textAlign='center';ctx.strokeStyle='#888';ctx.lineWidth=1.5*dpr;ctx.beginPath();half?ctx.arc(x,y,R,Math.PI,2*Math.PI):ctx.arc(x,y,R,0,2*Math.PI);ctx.stroke();const a=(half?-Math.PI/2:-Math.PI/2)+deg*Math.PI/180;if(!(st.pl&&st.pl.solve)){ctx.strokeStyle='#ffd23f';ctx.lineWidth=2.5*dpr;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+R*Math.cos(a),y+R*Math.sin(a));ctx.stroke();}ctx.fillStyle='#eee';ctx.fillText(L+' '+(st.pl&&st.pl.solve?'set by G53.1':(+deg).toFixed(1)+'°'),x,y+R*(half?0.2:1)+3*dpr)};
-  const bw=R*6.4,bh=R*3.6,bx=cv.width-bw-pad,by=cv.height-bh-pad;ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(bx,by,bw,bh);
-  dial(bx+R*1.4,by+R*1.4,'Tilt '+tl,st[tl]||0,1);dial(bx+R*4.6,by+R*1.3,'Table '+rl,st[rl]||0,0);
-  ctx.textAlign='left';if(st.pl){ctx.fillStyle='#ffd23f';ctx.fillText(st.pl.haas?'G268 plane on':'G68.2 I'+st.pl.I+' J'+st.pl.J+' K'+st.pl.K,bx+3*dpr,by+R*3.0)}
-  ctx.textAlign='left';const t='Rotary moves not shown — path drawn flat';ctx.fillStyle='rgba(120,20,20,.85)';const w=ctx.measureText(t).width+12*dpr;ctx.fillRect(cv.width-w-pad,pad,w,18*dpr);ctx.fillStyle='#fff';ctx.fillText(t,cv.width-w-pad+6*dpr,pad+3*dpr);ctx.restore()}catch(e){console.error(e)}return r}}
+  const p=(m&&typeof r100pairOf=='function'&&r100pairOf(m))||['B','C'];const tl=p[0],rl=p[1];
+  // the canvas context is already scaled for the device pixel ratio: draw in CSS pixels
+  const T=ctx.getTransform?ctx.getTransform():{a:1,d:1};const W=cv.width/(T.a||1),H=cv.height/(T.d||1),R=16,pad=8;
+  ctx.save();ctx.font='11px sans-serif';ctx.textBaseline='top';
+  const dial=(x,y,L,deg,half)=>{ctx.textAlign='center';ctx.strokeStyle='#999';ctx.lineWidth=1.5;ctx.beginPath();half?ctx.arc(x,y,R,Math.PI,2*Math.PI):ctx.arc(x,y,R,0,2*Math.PI);ctx.stroke();const a=-Math.PI/2+deg*Math.PI/180;if(!st.unk){ctx.strokeStyle='#ffd23f';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+R*Math.cos(a),y+R*Math.sin(a));ctx.stroke()}ctx.fillStyle='#eee';ctx.fillText(L+' '+(st.unk?'set by G68.2':(+deg).toFixed(1)+'°'),x,y+(half?4:R+3))};
+  const bw=Math.min(W-2*pad,190),bh=58,bx=W-bw-pad,by=H-bh-pad;ctx.fillStyle='rgba(0,0,0,.75)';ctx.fillRect(bx,by,bw,bh);
+  dial(bx+bw*0.27,by+R+6,'Tilt '+tl,st[tl]||0,1);dial(bx+bw*0.73,by+R+4,'Table '+rl,st[rl]||0,0);
+  ctx.textAlign='left';if(st.pl&&!st.pl.unk){ctx.fillStyle='#ffd23f';ctx.fillText(st.pl.haas?'G268 plane on':'G68.2 I'+st.pl.I+' J'+st.pl.J+' K'+st.pl.K,bx+4,by+bh-13)}
+  // banner: short, below the app's 'Rotary:' label at the top right, wraps on narrow screens
+  const t='Rotary moves not shown',tw=ctx.measureText(t).width,lines=tw+12>W*0.55?['Rotary moves','not shown']:[t];const lw=Math.max(...lines.map(x=>ctx.measureText(x).width))+12,lh=15,y0=pad+20;
+  ctx.fillStyle='rgba(140,20,20,.9)';ctx.fillRect(W-lw-pad,y0,lw,lines.length*lh+6);ctx.fillStyle='#fff';lines.forEach((x,i)=>ctx.fillText(x,W-lw-pad+6,y0+3+i*lh));ctx.restore()}catch(e){console.error(e)}return r}}
 // text banner under the canvas too (screen readers / tests)
-{const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);try{const t=r101simNote();let b=$('#r101simb');const cvs=$('#cv');if(t&&cvs){if(!b){b=document.createElement('div');b.id='r101simb';b.className='ok bad';cvs.insertAdjacentElement('afterend',b)}b.textContent='⚠ '+t}else if(b)b.remove()}catch(e){}return r}}
+{const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);try{const t=r101simNote();let b=$('#r101simb');const cvs=$('#cv');if(t&&cvs){if(!b){b=document.createElement('div');b.id='r101simb';b.className='ok bad';cvs.insertAdjacentElement('afterend',b)}b.textContent='⚠ Rotary moves not shown — the path is drawn flat in XYZ; the dials show the commanded rotary angles.'}else if(b)b.remove()}catch(e){}return r}}
+
+// ===== mc-v102 =====
+// 1: lathe probe Write to — each choice writes its own public G10 form. Fanuc T: wear G10 P<n> U/W (incremental), geometry G10 P<10000+n>, work G10 L2 P<1–6>. Haas lathe: wear G10 L11 P<n>, geometry G10 L10 P<n>, work G10 L2 P<1–6>
+{const _gl=genL;genL=function(j){/* r82guard stays inside: this only normalises lprobe Write to, then calls the guarded genL */if(j&&j.op=='lprobe'&&j.p&&j.p['Write to']&&typeof j.p['Write to'].v=='string'){const raw=j.p['Write to'].v;const t=raw.trim().toLowerCase();const k=t=='geo'?'geometry':t;j.p['Write to'].v=k;let r;try{r=_gl.apply(this,arguments)}finally{j.p['Write to'].v=raw}
+  try{if(r&&Array.isArray(r.code)){const hk=hkC();const o=normOff((j.p['Work offset']||{}).v||'G54')||'G54',P=/^G5[4-9]$/.test(o)?+o.slice(1)-53:1;
+   r.code=r.code.map(l=>{if(typeof l!='string')return l;if(/^G10 L2 P\d+ /.test(l))return l.replace(/^G10 L2 P\d+ /,'G10 L2 P'+P+' ');const m=l.match(/^G10 P(\d+) /);if(m&&hk){const n=+m[1];return l.replace(/^G10 P\d+ /,n>=10000?'G10 L10 P'+(n-10000)+' ':'G10 L11 P'+n+' ')}return l})}}catch(e){console.error(e)}return r}return _gl.apply(this,arguments)}}
+
+// 6: input standard for the remaining Build text boxes (strict: junk never saves)
+const R102SP={
+ 'Text':{st:'typed text',fmt:'engraving text',ex:'PART 12-A',err:'Text: letters A–Z, 0–9 and - . , / : # + & ( ) only.',hint:'Letters, digits and - . , / : # + & ( ) only.',ok:v=>/^[A-Za-z0-9 \-.,\/:#+&()]+$/.test(String(v).trim())&&/[A-Za-z0-9]/.test(v)},
+ 'Message':{st:'typed text',fmt:'operator message',ex:'CHECK CLAMP',err:'Message: up to 40 letters/digits, no ( ) — it goes inside a comment.',hint:'Short operator message, no brackets.',ok:v=>{const t=String(v).trim();return t.length<=40&&/[A-Za-z]/.test(t)&&/^[A-Za-z0-9 \-.,\/:#+&!?'=]+$/.test(t)}},
+ 'RPM steps':{st:'typed number list',fmt:'rpm list',ex:'2000 4000 6000',err:'RPM steps: whole rpm numbers separated by spaces or commas.',hint:'Rpm numbers, like 2000 4000 6000.',ok:v=>/^\d{2,6}(\s*[,\s]\s*\d{2,6})*$/.test(String(v).trim())&&String(v).trim().split(/[\s,]+/).every(x=>+x>0)},
+ 'Expected fixture ID':{st:'typed number',fmt:'whole number 1–9999',ex:'3',err:'Expected fixture ID: a whole number from your ladder, like 3.',hint:'Whole number from your ladder, like 3.',ok:v=>/^\d{1,4}$/.test(String(v).trim())&&+v>=1},
+ 'Report title':{st:'typed text',fmt:'one word',ex:'BORE1',err:'Report title: one word, letters and digits, up to 20.',hint:'One word, like BORE1.',ok:v=>/^[A-Za-z][A-Za-z0-9_]{0,19}$/.test(String(v).trim())},
+ 'Group ID':{st:'typed number',fmt:'whole number 1–9999',ex:'1',err:'Group ID: a whole tool-life group number, like 1.',hint:'Tool-life group number, like 1.',ok:v=>/^\d{1,4}$/.test(String(v).trim())&&+v>=1}};
+Object.values(R102SP).forEach(x=>x.strict=1);
+{const _sp=r99spec;r99spec=function(k){if(typeof J!='undefined'&&J&&J.p&&k in J.p&&R102SP[k])return R102SP[k];return _sp.apply(this,arguments)}}
+// Tools Name / Material / Notes: no brackets or control characters (they go into ( ) comments) — keep the box, say what's needed
+const R102TT={name:['Name','letters/digits, no ( )','1/2 FLAT EM'],mat:['Material','letters/digits, no ( )','CARBIDE'],notes:['Notes','letters/digits, no ( )','STICK OUT 1.5']};
+function r102tok(v){const t=String(v||'');return !/[()\u0000-\u001f]/.test(t)&&t.length<=60}
+window.addEventListener('change',e=>{const el=e.target;if(!el||el.tagName!='INPUT')return;const f=el.dataset.x;if(!R102TT[f])return;let er=el.parentNode.querySelector(':scope > .r102terr');
+ if(!r102tok(el.value)){e.stopImmediatePropagation();e.preventDefault();if(!er){er=document.createElement('div');er.className='r99err on r102terr';el.insertAdjacentElement('afterend',er)}const d=R102TT[f];er.innerHTML=`Needs: ${esc(d[0])} as ${esc(d[1])}, up to 60 characters — not saved<br><i>Example: ${esc(d[2])}</i>`;el.style.borderColor='#ff5a5a';el.setAttribute('aria-invalid','true')}
+ else{if(er)er.remove();el.style.borderColor='';el.removeAttribute('aria-invalid')}},true);
+// 7: a refused job clears the old program preview; one 'Confirm rotary letter' chip only
+{const _sh=show;show=function(){const r=_sh.apply(this,arguments);try{if(J&&J.op&&(!Array.isArray(J.code)||!J.code.length)){J.M=null;if(J.lathe!==undefined||1)J.moves=J.moves&&J.moves.length&&J._keepMoves?J.moves:[];document.querySelectorAll('#out pre.code,#out .codepv,#out #pv,#out .pv').forEach(e=>e.remove())}
+ const seen=new Set();document.querySelectorAll('#out .chip,#out [data-k101],#out [data-nk]').forEach(c=>{const t=c.textContent.replace(/^[!\s✓•~]+/,'').trim();if(t!='Confirm rotary letter')return;if(seen.size){c.remove()}else seen.add(t)})}catch(e){console.error(e)}return r}}
+// 4: the saved First new offset keeps exactly what was typed ('G54.1 P7'); the generator reads its P number
+{const _g=genJ2;genJ2=function(j){const x=j&&j.op=='tomb'&&j.p&&j.p['First new offset'];const raw=x&&x.v;if(x&&typeof raw=='string'&&/^\s*(G54\.1|G154)\s*P\s*\d+\s*$/i.test(raw)){x.v='P'+raw.match(/(\d+)\s*$/)[1];try{return _g.apply(this,arguments)}finally{x.v=raw}}return _g.apply(this,arguments)}}
+// Casey (a): Setup % must not move on reload. The load-time park (5-axis rows on a non-5-axis machine) also runs on every save and before every Setup render, so the live % and the reloaded % count the same rows
+function r102norm(){let ch=0;(S.m||[]).forEach(m=>{if(m&&m.s&&m.mtype&&m.mtype!='vmc5'&&r98t(m)!='vmc5'&&m.s.some(x=>r101is5k(x.k))){r101park(m);ch=1}});return ch}
+{const _h=home;home=function(){try{if(r102norm())_sv0()}catch(e){}return _h.apply(this,arguments)}}
+try{if(r102norm())setTimeout(_sv0,0)}catch(e){}
+{const _e=edit;edit=function(i){try{if(r102norm())_sv0()}catch(e){}return _e.apply(this,arguments)}}
+function _sv0(){try{save()}catch(e){}}
+// Casey (b): Build Need N starts with 'Machine: N to confirm ›' whenever machine settings would block code (existing Need-row chip style, one class to restyle later)
+function r102machItems(){const m=S.m[S.cur];if(!m)return[];const L=new Set();try{(setupMiss()||[]).forEach(x=>L.add(String(x)))}catch(e){}
+ try{if(r98t(m)=='vmc5'&&J&&J.op){const k=jKind(J.op),five=k=='five'||(typeof R35!='undefined'&&R35.includes(J.op));if(five||!r100ready(m)){const p=r100pairOf(m);if(!p)L.add('Rotary pair');else p.forEach(Lt=>{if(!r100dirOf(m,Lt))L.add(Lt+' direction')});r101k5miss(m).forEach(k=>L.add(k));[K5.ta,K5.ra].forEach(k=>{const x=r100sv(m,k);if(x&&x.st!='user')L.add(k)})}}}catch(e){}
+ try{if(r101isRot(J.op)&&r101rotUnconf(m))L.add('Rotary axis')}catch(e){}return [...L]}
+{const _sh=show;show=function(){const r=_sh.apply(this,arguments);try{const o=$('#out');if(!o||!J||!J.op)return r;o.querySelectorAll('.r102mach,.r102machc').forEach(e=>e.remove());if(Array.isArray(J.code)&&J.code.length)return r;const it=r102machItems();if(!it.length)return r;
+  const b=document.createElement('button');b.type='button';b.className='chip r r102mach';b.textContent='Machine: '+it.length+' to confirm ›';b.title=it.join(', ');b.onclick=()=>{edit(S.cur)};
+  const nc=[...o.querySelectorAll('.card')].find(c=>/^Need \d+ more/.test((c.querySelector('.t')||{}).textContent||'')&&!/^r101/.test(c.id||''));
+  if(nc){const t=nc.querySelector('.t');(t||nc.firstChild).insertAdjacentElement('afterend',b)}else{const c=document.createElement('div');c.className='card r102machc';c.appendChild(b);o.prepend(c)}}catch(e){console.error(e)}return r}}
+{const st=document.createElement('style');st.textContent='.r102mach{display:inline-flex;margin:4px 0 6px}';document.head.appendChild(st)}
+// Maria 3/4: per-control examples (codes checked against Haas / Fanuc public docs), Fanuc card text per control
+function r102haas(m){m=m||S.m[S.cur];const c=m&&(m.s||[]).find(x=>x.k=='Control');return /haas/i.test(String(c&&c.v||''))}
+let r102m=null;
+const R102CODE=v=>/^\s*[GM]\d+(\.\d)?(\s*P\d+)?\s*\/\s*[GM]\d+(\.\d)?(\s*P\d+)?\s*$/i.test(String(v||''));
+{const _sp=r99spec;r99spec=function(k){const s=_sp.apply(this,arguments);if(!s||typeof K5=='undefined')return s;const m=r102m||S.m[S.cur],hk=r102haas(m);
+ if(k==K5.tc){const ex=hk?'G234 / G49':'G43.4 / G49';return{...s,ex,ok:R102CODE,hint:'On / off codes, like '+ex+'.',err:k+': type both codes, on first then off, like '+ex+'.'}}
+ if(k==K5.tw){const ex=hk?'G268 / G269':'G68.2 / G69';return{...s,ex,ok:R102CODE,hint:'On / off codes, like '+ex+'.',err:k+': type both codes, on first then off, like '+ex+'.'}}
+ if(k==K5.dw)return{...s,ex:'G254 / G255',ok:R102CODE,hint:'On / off codes, like G254 / G255 (Haas DWO).',err:k+': type both codes, on first then off, like G254 / G255.'};
+ if(k=='Parameter write OK')return{...s,ph:'Type the sentence above'};
+ if(k=='Param 6000 bit 3 V15 (Fanuc)')return{...s,ex:'0',fmt:'0 or 1',hint:'Type 0 or 1 — bit 3 (V15) of parameter 6000.',err:k+': type 0 or 1.',ok:v=>/^\s*[01]\s*$/.test(String(v))};
+ if(k=='Setter diameter call')return{...s,ex:'G65 P9853 B2. T<T> D20.',hint:'Your diameter call, like G65 P9853 B2. T<T> D20. (B2. = diameter).',err:k+': type the call like G65 P9853 B2. T<T> D20.'};
+ if(k=='Tool setter type'&&!hk){const ch=(s.ch||[]).filter(c=>!/haas/i.test(c));return{...s,ch,hint:'Pick contact or laser.',ex:ch[0]||s.ex}}
+ return s}}
+{const _e=edit;edit=function(i){r102m=S.m[i]||null;const r=_e.apply(this,arguments);try{const m=S.m[i];if(m&&!r102haas(m))V.querySelectorAll('.r99f,.set').forEach(f=>{const k=f.dataset.r99k||'';if(/\(Haas\)\s*$/.test(k))f.style.display='none'})}catch(e){}r102m=null;return r}}
+// Maria 7: the placeholder sweep covers every saved field (Units included) on every load: reset to blank, needs a real answer, Build blocked
+const R102PH=v=>{const t=String(v||'').trim();return !!t&&(R99EXACT.includes(t)||/^\(?\s*check\b/i.test(t)||/\((check|check manual|typical)\)\s*$/i.test(t))};
+function r102sweep(){let ch=0;let raw=null;try{raw=JSON.parse(window.R102RAW||'null')}catch(e){}const RM=raw&&(raw.m||raw.machines)||[];
+ (S.m||[]).forEach((m,mi)=>{if(!m||!m.s)return;const need=[];
+  // fields the app rewrites at load (Units follows the header switch) are checked against the stored value
+  const rm=RM.find(z=>z&&z.name==m.name)||RM[mi];if(rm&&rm.s)rm.s.forEach(z=>{if(z&&R102PH(z.v)){const x=m.s.find(y=>y.k==z.k);if(x&&!R102PH(x.v)&&x.st!='confirm'){x.st='confirm';x.v='';need.push(x.k);ch=1}}});m.s.forEach(x=>{if(R102PH(x.v)&&!(x.r99flag&&x.st=='confirm')){x.v='';x.st='confirm';delete x.r99flag;need.push(x.k);ch=1}});if(need.length){m.r99need=[...new Set([...(m.r99need||[]),...need])];delete m.r99told}});if(ch)try{save()}catch(e){}return ch}
+try{r102sweep()}catch(e){console.error(e)}
+// Maria 6: Build — one setup card per machine, capitalised hints; lock box lines up with the tiles
+{const _sh=show;show=function(){const r=_sh.apply(this,arguments);try{const o=$('#out');if(!o)return r;const cards=[...o.querySelectorAll('.card')].filter(c=>/^Machine setup still red/.test((c.querySelector('.t')||{}).textContent||''));
+  if(cards.length>1){const keep=cards.find(c=>c.id=='r101five')||cards[0];cards.filter(c=>c!==keep).forEach(c=>{c.querySelectorAll('button,.chip').forEach(b=>{if(/^Open /.test(b.textContent.trim()))return;keep.appendChild(b)});c.remove()});const n=keep.querySelectorAll('[data-k101],.chip.r').length;const t=keep.querySelector('.t');if(t)t.textContent='Machine setup still red — '+n+' item'+(n==1?'':'s')}
+  o.querySelectorAll('.card .s,.r99hint').forEach(h=>{const t=h.firstChild;if(t&&t.nodeType==3&&/^\s*[a-z]/.test(t.nodeValue))t.nodeValue=t.nodeValue.replace(/^(\s*)([a-z])/,(a,b,c)=>b+c.toUpperCase())})}catch(e){console.error(e)}return r}}
+{const st=document.createElement('style');st.textContent='#r100lock{margin-left:0!important;margin-right:0!important}#r100rot{margin-left:0;margin-right:0}#r79toast.r99pin{display:flex!important;align-items:center!important;justify-content:space-between;gap:10px;text-align:left}#r79toast.r99pin #r99tdismiss{margin-left:auto!important;flex:none}';document.head.appendChild(st)}
+
+{const _mc=machines;machines=function(){const r=_mc.apply(this,arguments);try{document.querySelectorAll('details.mchips').forEach(d=>{const card=d.closest('.card');const m=S.m.find(m=>card&&card.textContent.includes(m.name));if(m&&!r102haas(m))d.querySelectorAll('.chip').forEach(c=>{if(/\(Haas\)/.test(c.textContent))c.style.display='none'})})}catch(e){}return r}}
 
 /* R79-END */</script>
 </body></html>

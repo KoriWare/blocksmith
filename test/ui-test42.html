@@ -41,7 +41,7 @@ d.querySelectorAll('.dxpk')[pi].click();log('pocket job opens, all red',E('J.op'
   // refused: HELIX still refused; Fanuc mill fine
   E(`dxLoad("0\\nSECTION\\n2\\nENTITIES\\n0\\nHELIX\\n8\\n0\\n0\\nENDSEC\\n0\\nEOF\\n","h.dxf")`);log('HELIX refused',/not read yet|refused/.test(d.querySelector('#dxsum').textContent));
   // ---- 5-axis: 3+2 face
-  w.pick('Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills');w.cur(E('S.m.length')-1);setv('Control','Haas NGC');
+  w.pick('Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills');w.cur(E('S.m.length')-1);w.eval("(()=>{const m=S.m[S.cur];m.s.forEach(x=>{if(x.r100preset)x.st='user'});r100sync(m);save()})()");/* v102: preset pair/dirs start neutral — the user confirms them */setv('Control','Haas NGC');
   L('plate_r12.dxf');conf('in','w','4',10,5,0,'none');log('5-axis: 3+2 face buttons on holes and shapes',d.querySelectorAll('.dx32h').length==2&&d.querySelectorAll('.dx32s').length==2);
   d.querySelectorAll('.dx32h')[1].click();log('3+2 face job opens (red program number, depth, feed)',E('J.op')=='dx32'&&E("J.p['Feature program'].v")==null&&E('J.p.Depth.v')==null);
   fill({'Feature program':5101,'Cycle':'Drill G81','Z0':0,'Depth':0.3,'R plane (above Z0)':0.1,'Feed':8});c=code();

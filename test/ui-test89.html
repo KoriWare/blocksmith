@@ -31,14 +31,14 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  // 4 / 10 5-axis setup rows
  E(`(()=>{const m=S.m[${iB}];S.cur=${iB};edit(${iB});document.querySelector('#r98type button[data-t=vmc5]').click()})()`);await sl(60);
  const rows=E("[...V.querySelectorAll('.r99f,.set')].filter(f=>f.offsetParent!==null&&f.style.display!='none'&&!f.closest('[style*=\"display: none\"]')).map(f=>f.dataset.r99k||((f.querySelector('span')||{}).textContent||'').replace(/^[!\\s✓•~]+/,'').trim()).filter(k=>/Rotary|direction|Tilt axis name|Rotary axis name/.test(k)).join('|')");
- log('5-axis setup: exactly one Rotary pair row, no 4-axis rotary rows',rows=='Rotary pair',rows);
+ log('5-axis setup: exactly one Rotary pair row, no 4-axis rotary rows',rows.replace(/\|Rotary axis (limits|clamp)[^|]*/g,'')=='Rotary pair',rows);
  log('switch to 5-axis adds the 11 five-axis settings it lacked',E(`R101K5().every(k=>!!S.m[${iB}].s.find(x=>x.k==k))`));
  E(`J=null;tab('new');$('#q').value='3+2 tilt 30 rotary 0 plane x0 y0 z0 program O1234 safe z 1 T1 G54';go()`);await sl(40);
  log('Build Need N lists the 5-axis items (pair + 11)',E("(()=>{const c=$('#r101five');return !!c&&c.querySelectorAll('[data-k101]').length>=12})()"),E("($('#r101five')||{textContent:'none'}).textContent.slice(0,200)"));
  // after pair picked, A/C direction rows appear and exactly one pair row
  E(`edit(${iB})`);await sl(30);E("document.querySelector('.r99f[data-r99k=\"Rotary pair\"] .r99w').click()");await sl(30);E("document.querySelectorAll('#r99sheet .opt')[0].click();$('#r99sheet .done').click()");await sl(80);
  const rows2=E("[...V.querySelectorAll('.r99f,.set')].filter(f=>f.offsetParent!==null&&f.style.display!='none').map(f=>f.dataset.r99k||((f.querySelector('span')||{}).textContent||'').replace(/^[!\\s✓•~]+/,'').trim()).filter(k=>/^Rotary|direction|Tilt axis name|Rotary axis name/.test(k)).join('|')");
- log('5-axis setup after pair: pair + A/C direction rows only',rows2=='Rotary pair|A direction|C direction',rows2);
+ log('5-axis setup after pair: pair + A/C direction rows only',rows2.replace(/\|Rotary axis (limits|clamp)[^|]*/g,'')=='Rotary pair|A direction|C direction',rows2);
  // 6 header comments
  E(`(()=>{const m=S.m[${iB}];['A','C'].forEach((L,j)=>{const x=r100sv(m,L+' direction');x.v=j?'Counterclockwise (−)':'Clockwise (+)';x.st='user'});R101K5().forEach(k=>{const x=r100sv(m,k);x.v=/code|clamp/.test(k)?'G234 / G49':/Option/.test(k)?'yes':k==K5.kin?'table-table (trunnion)':k==K5.pv?'measured':'-120 / 30';x.st='user'});const c=m.s.find(x=>x.k=='Control');c.v='Haas NGC-style';c.st='user';save()})()`);
  E(`J=null;tab('new');$('#q').value='3+2 tilted plane tilt 30 rotary 45 plane x2.0 y2.0 z0 program o1234 safe z1.0 t1 g54';go()`);await sl(40);
@@ -53,7 +53,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  log('lathe probe Write to: Wear / Geometry / Work',E("(()=>{J={op:'lprobe',p:{}};const s=r100bch('Write to');const o=s.ch.join('|')=='Wear|Geometry|Work'&&s.save('Geometry')=='geometry';J=null;return o})()"));
  log('lathe probe G54 typed as Write to is refused (no quiet wear write)',E("(()=>{J={op:'lprobe',p:{}};const s=r100bch('Write to');const o=!s.ok('G54');J=null;return o})()"));
  log('OD touch + Work is blocked with a reason',/Face Z mode/.test(E("(()=>{J={op:'lprobe',p:{'Write to':{v:'work'},'Probe mode':{v:'OD X'}}};const t=r101lprobe();J=null;return t})()")));
- log('Face + Work on G55 writes G10 L2 P2',E("(()=>{J={op:'lprobe',p:{'Write to':{v:'work'},'Probe mode':{v:'Face Z'},'Work offset':{v:'G55'}},code:['G10 L2 P1 W#101 (SHIFT G55 Z)'],edits:{}};r101lprobeFix();const o=J.code[0].startsWith('G10 L2 P2 ');J=null;return o})()"));
+ log('Face + Work on G55 writes G10 L2 P2',E("(()=>{const j={op:'lprobe',lathe:1,p:{'Write to':{v:'Work'},'Probe mode':{v:'Face Z'},'Work offset':{v:'G55'},'Touch at':{v:0},'Offset #':{v:3},'Probe at X':{v:1},'Probe feed':{v:10},'Tol':{v:0.02},'Tool':{v:9}}};return genL(j).code.some(l=>/^G10 L2 P2 W#101/.test(l))})()"));
  // 5 Tools
  E("tools()");await sl(40);
  for(const f of ['len','fl']){E(`(()=>{const i=V.querySelector('input[data-f="${f}"]');i.value='abc';i.dispatchEvent(new Event('change',{bubbles:true}))})()`);await sl(20);

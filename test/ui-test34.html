@@ -62,12 +62,12 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
     log(`${nm} ${op}: sim runs`,!sim[0]&&!sim[1],JSON.stringify(sim));const ck=E('checks(J).filter(c=>!c[1]).map(c=>c[0])');log(`${nm} ${op}: checks pass`,!ck.length,ck.join(' | '));
     log(`${nm} ${op}: codes`,CODE[op].test(code),code.split('\n').join(' / ').slice(0,1500));
     if(/THIN SOURCE/.test(code))log(`${nm} ${op}: amber caution in code`,true)});
-  const mach=(p,g,hk,lathe)=>{w.pick(p,g);w.cur(E('S.m.length')-1);base(hk,lathe)};
+  const mach=(p,g,hk,lathe)=>{w.pick(p,g);w.cur(E('S.m.length')-1);if(g=='5-axis mills')w.eval("(()=>{const m=S.m[S.cur];m.s.forEach(x=>{if(x.r100preset)x.st='user'});r100sync(m);save()})()");base(hk,lathe)};
   [[1,'Haas'],[0,'Fanuc']].forEach(([hk,cn])=>{
    mach(hk?'Haas ST-style lathe (generic)':'Generic 2-axis lathe','Lathes',hk,1);run(cn+' lathe',LJ,hk);run(cn+' lathe',BJ.filter(x=>x[0]!='wocopy'),hk);
    w.tab('new');d.querySelector('#q').value='copy work offset g54 to g55';w.go();log(cn+' lathe wocopy refused',/Not written/.test(d.querySelector('#out').innerText));
    mach(hk?'Haas VF-style VMC (generic)':'Generic 3-axis VMC','Vertical mills',hk,0);run(cn+' mill',BJ,hk);run(cn+' mill',MJ,hk);
-   w.pick('Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills');w.cur(E('S.m.length')-1);base(hk,0);
+   w.pick('Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills');w.cur(E('S.m.length')-1);w.eval("(()=>{const m=S.m[S.cur];m.s.forEach(x=>{if(x.r100preset)x.st='user'});r100sync(m);save()})()");/* v102: preset pair/dirs start neutral — the user confirms them */base(hk,0);
    [['Kinematics type','table-table (trunnion)'],['Tilt axis name','B'],['Rotary axis name','C'],['Tilt axis limits (min / max deg)','-35 / 120'],['Rotary axis limits (min / max deg, or continuous)','continuous'],['Pivot / rotary center offsets (MRZP)','measured'],['TCPC code on / off',hk?'G234 H_ / G49':'G43.4 H_ / G49'],['Tilted plane code on / off / cancel',hk?'G268 / G269':'G68.2 / G69'],['DWO code on / off','G254 / G255'],['Tilt axis clamp on / off','M10 / M11'],['Rotary axis clamp on / off','M12 / M13'],['Option: TCPC / TCP','yes'],['Option: tilted plane / DWO','yes']].forEach(([k,v])=>setv(k,v));
    run(cn+' 5-axis',FJ,hk)});
   // gate checks: wrong I/O range, sign test not done, lathe job not on mill

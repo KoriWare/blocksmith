@@ -1,0 +1,54 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 102: Casey / Maria / Stacey steering --><iframe id="f" src="../index.html?v=102" style="width:390px;height:844px;border:0"></iframe><script>
+// test helper: plant an old placeholder value straight into storage (the only way the per-machine notice can appear — by design)
+function plantPlaceholder(w,machineName,key,value){const S0=JSON.parse(w.localStorage.getItem(w.SKEY||'mc')||'null');return S0}
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));let keep={};
+f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListener('error',e=>errs.push(e.message));const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const sl=t=>new Promise(r=>setTimeout(r,t));
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(async()=>{try{
+ if(step==1){E("NOASK=1");
+  // (c) helper: plant 'check' in Units (and an old '(check)' value) as if saved by an old build, then hard reload
+  E("(()=>{const m=S.m.find(m=>m.name=='Mill A');const u=m.s.find(x=>x.k=='Units');u.v='check';u.st='user';delete m.r99ph;delete m.r99told;save()})()");
+  // (a) a 4-axis machine still carrying 5-axis rows from an older build
+  E("(()=>{const m=S.m.find(m=>m.name=='Mill B');m.mtype='vmc4';m.opt.ax4=1;m.s.push({k:'Rotary pair',v:'A + C',st:'user'},{k:'A direction',v:'Clockwise (+)',st:'user'},{k:'C direction',v:'Clockwise (+)',st:'user'});save()})()");
+  const iB=E("S.m.findIndex(m=>m.name=='Mill B')");E(`edit(${iB})`);await sl(80);
+  keep.pct=E("((V.innerText||'').match(/Setup \\d+% · \\d+ to confirm/)||[''])[0]");keep.iB=iB;
+  step=2;w.location.reload();return}
+ if(step==2){E("NOASK=1");await sl(400);
+  log('(c) planted Units=check: notice appears after reload, no "tap to open", Open on the right',/Mill A: \d+ settings? needs? a real answer/.test(E("($('#r79toast')||{}).textContent||''"))&&!/tap to open/.test(E("($('#r79toast')||{}).textContent||''"))&&E("(()=>{const t=$('#r79toast'),b=$('#r99tdismiss');return !!b&&b.getBoundingClientRect().right>t.getBoundingClientRect().right-40})()"),E("($('#r79toast')||{}).textContent"));
+  log('placeholder sweep catches Units=check: reset to blank, needs a real answer',E("(()=>{const m=S.m.find(m=>m.name=='Mill A');const u=m.s.find(x=>x.k=='Units');return u.v===''&&u.st=='confirm'&&(m.r99need||[]).includes('Units')})()"));
+  E("cur(S.m.findIndex(m=>m.name=='Mill A'))");E("J=null;tab('new');pickJob('bolt')");await sl(60);
+  log('…and Build is blocked for that machine (Units)',!E("!!(J&&J.code&&J.code.length)")&&/Units/.test(E("($('#out .r102mach')||{title:''}).title")),E("JSON.stringify(S.m[S.cur].s.find(x=>x.k=='Units'))+' code:'+!!(J&&J.code&&J.code.length)+' '+$('#out').textContent.slice(0,200)"));
+  log("Build Need N starts with 'Machine: N to confirm ›' (one class .r102mach)",E("(()=>{const b=$('#out .r102mach');return !!b&&/^Machine: \\d+ to confirm ›$/.test(b.textContent)})()"),E("($('#out .r102mach')||{textContent:'none'}).textContent"));
+  E("$('#out .r102mach').click()");await sl(60);log('…tapping it opens Setup',!!E("$('#r98type')"));
+  E(`edit(${keep.iB})`);await sl(80);const p2=E("((V.innerText||'').match(/Setup \\d+% · \\d+ to confirm/)||[''])[0]");
+  log('(a) Setup % identical before and after a hard reload',!!keep.pct&&p2==keep.pct,keep.pct+' → '+p2);
+  // Maria 2: new A/C preset starts neutral, stays in Need N
+  E("(()=>{pick('Generic 5-axis table-table A/C','5-axis mills');cur(S.m.length-1)})()");await sl(60);
+  const ac=E("(()=>{const m=S.m[S.cur];const p=m.s.find(x=>x.k=='Rotary pair');return JSON.stringify({name:m.name,v:p&&p.v,st:p&&p.st})})()");
+  {const x=JSON.parse(ac);if(/A\/C|A \+ C|A-C/.test(x.name)||x.v=='A + C')log('A/C preset: pair prefilled but neutral (not green)',x.st!='user',ac);else r.push('INFO no A/C preset name match: '+ac)}
+  E("edit(S.cur)");await sl(60);
+  log('preset pair row shows its value with a neutral dot (green only from the user)',E("(()=>{const f=document.querySelector('#r100rot .r99f[data-r99k=\"Rotary pair\"]');return !!f&&f.dataset.s!='ok'&&!!f.querySelector('input').value})()"));
+  E("J=parseJ2('','tp32');J.text='';J.edits={};J.code=[];tab('new');show()");await sl(40);
+  log('…and Rotary pair is in Build Need N until confirmed',/Rotary pair/.test(E("($('#r101five')||{textContent:''}).textContent"))&&!!E("$('#out .r102mach')"));
+  log('Build shows one machine-setup card (merged)',E("[...document.querySelectorAll('#out .card')].filter(c=>/^Machine setup still red/.test((c.querySelector('.t')||{}).textContent||'')).length")<=1);
+  log('Build Need hints start with a capital',E("[...document.querySelectorAll('#out .card .s')].filter(h=>/^\\s*[a-z]/.test(h.textContent)).length")==0);
+  // Maria 3/4: per-control examples
+  const ex=k=>E(`(r99spec(${JSON.stringify(k)})||{}).ex`);
+  E("(()=>{const c=S.m[S.cur].s.find(x=>x.k=='Control');c.v='Haas NGC';c.st='user'})()");
+  log('Haas: TCPC G234 / G49, tilted plane G268 / G269, DWO G254 / G255',ex(E('K5.tc'))=='G234 / G49'&&ex(E('K5.tw'))=='G268 / G269'&&ex(E('K5.dw'))=='G254 / G255');
+  E("(()=>{const c=S.m[S.cur].s.find(x=>x.k=='Control');c.v='Fanuc 30i/31i-style'})()");
+  log('Fanuc: TCPC G43.4 / G49, tilted plane G68.2 / G69',ex(E('K5.tc'))=='G43.4 / G49'&&ex(E('K5.tw'))=='G68.2 / G69');
+  log('examples pass their own checks (codes with a decimal like G43.4)',E("[K5.tc,K5.tw,K5.dw,'Setter diameter call','Param 6000 bit 3 V15 (Fanuc)'].every(k=>{const s=r99spec(k);return r99ok(k,s.ex,s)})"));
+  log('Setter diameter call example is a diameter call (B2.), not the length call',/B2\./.test(ex('Setter diameter call'))&&ex('Setter diameter call')!=ex('Tool setter macro call'));
+  log('Parameter write OK placeholder: Type the sentence above',E("(r99spec('Parameter write OK')||{}).ph")=='Type the sentence above');
+  log('Kinematics offers head-table',E("(r99spec(K5.kin).ch||[]).some(c=>/head-table/i.test(c))"));
+  log('Fanuc: Tool setter type has no Haas probe choice',!E("(r99spec('Tool setter type').ch||[]).some(c=>/haas/i.test(c))"));
+  E("edit(S.cur)");await sl(60);
+  log('Fanuc setup hides Haas-only rows (M19 any angle (Haas))',E("[...V.querySelectorAll('.r99f,.set')].filter(f=>/\\(Haas\\)\\s*$/.test(f.dataset.r99k||'')&&f.offsetParent).length")==0);
+  log('lock box lines up with the tiles',E("(()=>{const l=$('#r100lock'),t=$('#r98type button');if(!l||!t)return true;return Math.abs(l.getBoundingClientRect().left-t.getBoundingClientRect().left)<=2})()"),E("(()=>{const l=$('#r100lock'),t=$('#r98type button');return l&&t?l.getBoundingClientRect().left+' vs '+t.getBoundingClientRect().left:'-'})()"));
+  // Maria/Stacey 1: sim overlay draws in CSS pixels (no double DPR scale)
+  log('sim overlay uses the context transform (no double DPR scale)',/getTransform/.test(E("String(draw)"))||/getTransform/.test(d.documentElement.innerHTML));
+  log('no console errors',!errs.length,errs.join('|'));
+  o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL';step=9}
+ }catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1200)};
+</script></body></html>

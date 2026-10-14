@@ -21,7 +21,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
      if(op=='tpdrill')log(nm+' tpdrill faces',(code.match(hk?/G268/g:/G68\.2/g)||[]).length==(hk?3:2));
      if(op=='rcchk')log(nm+' rcchk never writes',!/G10|#2\d{4}=|#5\d{3}=/.test(code)&&/C180\./.test(code));
      if(op=='runw')log(nm+' runw order',/M05[\s\S]*G53 Z0\.[\s\S]*G49[\s\S]*(G269|G69)[\s\S]*(G53 B0\. C0\.|G28 A0\. C0\.)/.test(code),code)}});
-  [['Generic 5-axis table-table B/C (Haas UMC-style)','Haas NGC','Haas',HJ],['Generic 5-axis table-table A/C (trunnion)','Fanuc 0i','Fanuc',FJ]].forEach(([nm,ctl,tag,jobs])=>{const hk=tag=='Haas';w.pick(nm,'5-axis mills');w.cur(E('S.m.length')-1);setv('Control',ctl);
+  [['Generic 5-axis table-table B/C (Haas UMC-style)','Haas NGC','Haas',HJ],['Generic 5-axis table-table A/C (trunnion)','Fanuc 0i','Fanuc',FJ]].forEach(([nm,ctl,tag,jobs])=>{const hk=tag=='Haas';w.pick(nm,'5-axis mills');w.cur(E('S.m.length')-1);w.eval("(()=>{const m=S.m[S.cur];m.s.forEach(x=>{if(x.r100preset)x.st='user'});r100sync(m);save()})()");/* v102: preset pair/dirs start neutral — the user confirms them */setv('Control',ctl);
    log(tag+' axes prefilled red',E("S.m[S.cur].s.find(x=>x.k=='Tilt axis name').st")=='confirm');
    log(tag+' MRZP empty red',E("(()=>{const x=S.m[S.cur].s.find(x=>x.k=='Pivot / rotary center offsets (MRZP)');return !x.v&&x.st=='confirm'})()"));
    w.tab('new');d.querySelector('#q').value=jobs[0][1];w.go();log(tag+' tp32 red before setup',!E('J.code'));

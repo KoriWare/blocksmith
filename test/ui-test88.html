@@ -15,14 +15,14 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  E("pick('Generic 5-axis table-table B/C (Haas UMC-style)','5-axis mills')");await sl(40);
  const i5=E("S.m.length-1");
  log('5-axis preset starts as 5-axis VMC (not Pick a type)',E(`S.m[${i5}].mtype`)=='vmc5'&&!/Pick a type/.test(E("$('#r98type').textContent")));
- log('5-axis preset: pair + both dirs from its letters, Build unlocked',E(`r100ready(S.m[${i5}])`)&&E(`S.m[${i5}].s.find(x=>x.k=='Rotary pair').v`)=='B + C');
+ log('5-axis preset: pair + dirs prefilled from its letters but neutral (Build waits for the user to confirm)',!E(`r100ready(S.m[${i5}])`)&&E(`S.m[${i5}].s.find(x=>x.k=='Rotary pair').v`)=='B + C'&&E(`S.m[${i5}].s.find(x=>x.k=='Rotary pair').st`)!='user');
  log('5-axis preset: existing letters left as the preset set them',E(`S.m[${i5}].s.find(x=>x.k==K5.ta).v`)=='B'&&E(`S.m[${i5}].s.find(x=>x.k==K5.ra).v`)=='C');
  E(`S.m.splice(${i5},1);save();S.cur=${iA};edit(${iA})`);await sl(20);
  log('Pick a type still the blank default',/Pick a type/.test(E("$('#r98type').textContent"))&&!E("!!$('#r98type button.on')"));
  // 2 select 5-axis
  E("document.querySelector('#r98type button[data-t=vmc5]').click()");await sl(40);
  log('5-axis: type saved, Rotary pair row via picker',E(`S.m[${iA}].mtype`)=='vmc5'&&E("!!document.querySelector('#r100rot .r99f[data-r99k=\"Rotary pair\"]')"));
- log('5-axis: 4th-axis rows hidden (no borrowed 4-axis path)',E("[...document.querySelectorAll('.r99f,.set')].filter(f=>f.style.display!='none'&&/^\\W*Rotary axis\\b/.test(((f.querySelector('.r99lb,span')||{}).textContent||'').trim())).length")==0);
+ log('5-axis: 4th-axis rows hidden (no borrowed 4-axis path)',E("[...document.querySelectorAll('.r99f,.set')].filter(f=>f.style.display!='none'&&/^\\W*Rotary axis(?! (limits|clamp))\\b/.test(((f.querySelector('.r99lb,span')||{}).textContent||'').trim())).length")==0);
  log('5-axis: lock chip on setup',/Build locks until both rotaries and directions are set/.test(E("($('#r100lock')||{textContent:''}).textContent")));
  E("document.querySelector('.r99f[data-r99k=\"Rotary pair\"] .r99w').click()");await sl(40);
  log('pair sheet: A + C / B + C / Other…',E("[...document.querySelectorAll('#r99sheet .opt')].map(b=>b.textContent).join('|')")=='A + C|B + C'&&E("!!$('#r99othi')"));
