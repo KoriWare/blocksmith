@@ -1,0 +1,34 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 82 safety: zero steps, macro step guards, engrave samples, back bore, tap pitch, tool library validation, kept lines, export gate/labels, share names, origin, draft --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
+ const t0=Date.now();q('G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0 stepover 70 z0 0');log('1 face stepdown 0: refused fast, nothing written',Date.now()-t0<3000&&/Stepdown must be above 0/.test(msg())&&!E("J.code"),msg());
+ log('1 bad stepdown stays red (not kept)',E("J.p.Stepdown.v")==null);log('1 gen never hangs on a 0 step',(()=>{const t=Date.now();E("const j=JSON.parse(JSON.stringify(J));j.p.Stepdown={v:0,g:false};gen(j)");return Date.now()-t<3000})());
+ log('1 levels() is capped',E("JSON.stringify(levels(0,0.5,0))")=='[-0.5]');
+ q('G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 250 z0 0');log('4 stepover 250% refused',/wider than the cutter/.test(msg()));
+ q('G54 T1 face 4 x 3 with 2 cutter take off 0.06 stepdown 0.02 stepover 70 z0 0');const c=E("J.code").join('\n');log('2 face macro alarms on 0 step args',/IF\[#8LE0\]GOTO97/.test(c)&&/IF\[#6LE0\]GOTO97/.test(c)&&/N97 #3000=2 \(STEP MUST BE ABOVE 0\)/.test(c));
+ E("tab('new')");E("exE(0)");log('3 engrave shaft sample: positions/tool/offset/depth empty',E("['Letter height','Depth','Tool','Work offset','Shaft Ø','Start along axis','Start angle'].every(k=>J.p[k]&&J.p[k].v==null)"));
+ E("exE(1)");log('3 text in a circle: center/radius empty',E("['Arc radius','Arc center X','Arc center Y','Depth','Tool','Work offset'].every(k=>J.p[k]&&J.p[k].v==null)"));
+ E("tab('new');pickJob('bback')");log('5 back bore Start Z needed (not gray)',E("J.p['Start Z']&&J.p['Start Z'].v==null"));
+ E("S.cur=2");q('G54 T1 turn 1.0 bar to 0.75 dia 1.5 long z0 0 rpm 5000');log('5 lathe rpm under G96 is noted',!!d.querySelector('.r82rpm'));E("S.cur=0");
+ q('6 hole bolt circle 3 dia tap pitch 0.05');log('6 inch pitch 0.05 → 20 TPI',E("J.p.TPI.v")==20);E("J.p.TPI.v=0;show()");log('6 TPI 0 refused (no FInfinity)',/TPI must be above 0/.test(msg())&&!/Infinity/.test(JSON.stringify(E("J.code"))));
+ // 14 tool library
+ E("tools()");await sl(100);const tn=d.querySelector('input[data-f="n"][data-i="0"]');const was=E("tlCurM().tools[0].n");for(const v of ['1.5','-3','1e9','0']){tn.value=v;tn.dispatchEvent(new Event('change'))}log('14 T number: 1.5 / -3 / 1e9 / 0 refused, not stripped',E("tlCurM().tools[0].n")==was);
+ tn.value=String(E("tlCurM().tools[1].n"));tn.dispatchEvent(new Event('change'));log('14 duplicate T refused',E("tlCurM().tools[0].n")==was);
+ const td=d.querySelector('input[data-f="dia"][data-i="0"]');const dw=E("tlCurM().tools[0].dia");td.value='0';td.dispatchEvent(new Event('change'));log('14 tool Ø 0 refused',E("tlCurM().tools[0].dia")==dw);
+ const ni=d.createElement('input');ni.setAttribute('inputmode','numeric');d.body.appendChild(ni);ni.value='1.5';ni.dispatchEvent(new Event('input',{bubbles:true}));log('14 number filter keeps what you typed and flags it',ni.value=='1.5'&&ni.dataset.bad=='x');ni.remove();
+ E("tlCurM().tools.push(Object.assign({},tlCurM().tools[0],{id:'dupx'}));save()");q(E("JB.bolt[1]").replace(/\bT2\b/,'T'+was));log('14 job refused when its T is duplicated in the Tool Library',/listed 2 times/.test(msg()),msg());E("tlCurM().tools=tlCurM().tools.filter(t=>t.id!='dupx');save()");
+ // 15-17,19,20
+ const f={app:'koriware-blocksmith',format:1,job:{type:'bolt',name:'X',values:{},code:['%','O1000','(A<B>C)','#1=[#2<3]','M30','%']},from:{machineType:'demo VMC',control:'Fanuc'}};
+ E("tab('recent')");await sl(100);E("mbPreview("+JSON.stringify(JSON.stringify(f))+")");await sl(80);d.querySelector('#mbkeep').click();d.querySelector('#mbgo').click();await sl(500);log('15 kept lines with < > kept verbatim',E("JSON.stringify(txt())").includes('#1=[#2<3]'));
+ E("J.override=1;refresh()");E("tab('new')");await sl(150);const vf=d.querySelector('#vf');vf.checked=true;vf.dispatchEvent(new Event('change'));await sl(50);log('16 override + I\'ll verify enables every export',[...d.querySelectorAll('#v .gate')].filter(b=>b.style.display!='none').every(b=>!b.disabled&&!b.getAttribute('aria-disabled')));
+ const kj=E("S.jobs.findIndex(j=>j.kept)");log('20 re-shared kept program keeps its origin',E("mbFile(S.jobs["+kj+"]).from.control")=='Fanuc');
+ E("S.m[0].ext='.EIA';save()");q(E("JB.bolt[1]"));await sl(50);log('17 export label follows the machine extension',[...d.querySelectorAll('#v .gate')].some(b=>b.textContent.includes('.EIA'))&&[...d.querySelectorAll('#v .s')].some(x=>/File: .*\.EIA/.test(x.textContent))&&![...d.querySelectorAll('#v .gate')].some(b=>b.style.display!='none'&&/\.eia/.test(b.textContent)));E("delete S.m[0].ext;save()");
+ log('19 safe share names',E("mbFname('..')").startsWith('job-2')&&E("mbFname('CON')")=='job-CON.mbjob'&&E("mbFname('日本語')").startsWith('job-2'));
+ // 18 typed Need values are in the draft
+ q('G54 T2 6 hole bolt circle');await sl(50);const inp=d.querySelector('#out input[data-k="Dia"]');if(inp){inp.value='2.5';inp.dispatchEvent(new Event('input',{bubbles:true}))}await sl(300);log('18 typed Need value saved to the draft',/"Dia":"2.5"/.test(w.localStorage.getItem(E("DRK"))||''),!!inp);
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

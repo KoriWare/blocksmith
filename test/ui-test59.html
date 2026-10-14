@@ -6,7 +6,7 @@ const vis=e=>!!e&&e.getClientRects().length>0&&getComputedStyle(e).display!='non
 setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");
  E("tab('new')");await sl(200);{const q=d.querySelector('#q');if(q){q.value='engrave SN';q.dispatchEvent(new Event('input'))}}await sl(200);const B=[...d.querySelectorAll('#us,#wa,#wau')].filter(vis);log('Build: no parser leftovers (Understood so far / Work-arounds)',!B.length&&!/Understood so far|Work-arounds/.test(d.querySelector('#v').innerText),B.map(e=>e.id).join());
  E("pickJob('engrave')");await sl(300);log('Build after job open: no Work-arounds card',!/Work-arounds|not built in/.test(d.querySelector('#v').innerText));
- E("tab('edit')");await sl(300);const ck=d.querySelector('#ck'),cl=()=>d.querySelector('#cl');
+ E("exEFull(0);tab('edit')");await sl(300);const ck=d.querySelector('#ck'),cl=()=>d.querySelector('#cl');
  log('Editor: checks bar visible',vis(ck));ck.click();await sl(100);log('Editor: tap opens checks list',vis(cl())&&cl().querySelectorAll('.s').length>0,cl()&&cl().className);
  ck.click();await sl(100);log('Editor: tap again closes',!vis(cl()));
  const rc=ck.getBoundingClientRect(),hit=d.elementFromPoint(rc.left+20,rc.top+rc.height/2);log('Editor: nothing covers the bar',hit&&(hit==ck||ck.contains(hit)),hit&&(hit.id||hit.className));

@@ -56,7 +56,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   E("view.n=J.M.length;simCode()");ls=L();log('near end: no blank padding',ls.length>=2&&ls.every(x=>x.textContent.trim()));
   E("step()");ls=L();log('step keeps 3-line window',ls.length<=3&&ls.length>=2);
   // 9 quick chip edit (engrave)
-  E("tab('new');exE(0)");const chips=()=>[...d.querySelectorAll('#out .card .chip')];
+  E("tab('new');exEFull(0)");const chips=()=>[...d.querySelectorAll('#out .card .chip')];
   const chipBy=re=>chips().find(c=>re.test(c.textContent));
   const rd=chipBy(/^Reading|Reading/);if(rd){rd.click();const pk=d.querySelector('#dlgpk');log('choice chip (Reading) opens an in-app pick list',!!pk&&pk.querySelectorAll('button').length>=2&&nat==0);[...pk.querySelectorAll('button')].find(b=>/around/.test(b.textContent)).click();log('pick saves + regenerates code',E("J.p.Reading.v")=='AROUND'&&!d.querySelector('#dlg')&&E("!!(J.code&&J.code.length)"))}else log('Reading chip present',false,chips().map(c=>c.textContent).join('|'));
   const lh=chipBy(/Letter height/);lh.click();const li=d.querySelector('#dlgin');log('number chip opens in-app editor with number pad + units',!!li&&li.getAttribute('inputmode')=='decimal'&&/\((in|mm)/.test(d.querySelector('#dlg').textContent),d.querySelector('#dlg')&&d.querySelector('#dlg').textContent);

@@ -5,7 +5,7 @@ const MJ=[['hsm','high speed mode wrapper program o2000 safe z1.0 t4 g54'],
 ['g150','g150 pocket contour x0,y0; x3,y0; x3,y2; x0,y2 start x1.5 y1 depth z-0.5 per pass 0.25 stepover 0.15 finish 0.01 r plane 0.1 step axis i n1000 t5 g54'],
 ['plunge','plunge roughing from x0 y0 to x2 y0.5 z top 0 1.0 deep 0.75 cutter row step 0.5 t6 g54'],
 ['peel','peel milling x-0.5 to x3.5 wall y0 stock +y 0.5 of stock z top 0 0.75 deep 0.5 end mill t7 g54'],
-['bback','back bore holes x1 y1; x3 y1 bottom z-1.0 cut to z-0.8 r plane -1.2 shift 0.1 shift dir +x t8 g54'],
+['bback','back bore holes x1 y1; x3 y1 bottom z-1.0 cut to z-0.8 r plane -1.2 shift 0.1 shift dir +x start z 0.1 t8 g54'],
 ['hpat','haas native bolt circle center x0 y0 radius 1.5 6 holes start 0 deg z0 0 0.5 deep t9 g54']];
 const LJ=[['g71','g71 rough and finish profile x0.5,z0; x0.5,z-1; x1.1,z-1.2 1.0 bar start z0.1 doc 0.06 t1 finish t2'],
 ['g72','g72 face rough profile x1.9,z-0.3; x1,z-0.3; x0.6,z0; x-0.06,z0 1.9 bar start z0.1 doc 0.05 t1 finish t2']];
