@@ -10,7 +10,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   log('faq last',ids[ids.length-1]=='faq');
   log('ready + lwo merged away',!ids.includes('ready')&&!ids.includes('lwo'));
   const all=E("HELP.map(h=>h[1]+' '+h[2]()).join(' ')");
-  log('no stale labels',!/New job ·|Round 58|Or tap a sample|under the Build box|More → Tool library shows|Batch 6|Batch 7|Round 4 jobs/.test(all));
+  log('no stale labels',!/New job ·|Round 58|Or tap a sample|under the Build box|More → Tool Library shows|Batch 6|Batch 7|Round 4 jobs/.test(all));
   const off=E("HELP.find(h=>h[0]=='offsets')[2]()");log('offsets: required + optional + lathe in one topic',/X0 Y0 Z0 at/.test(off)&&/X0 Z0 at/.test(off)&&/Add a work offset line/.test(off)&&/spindle centerline/.test(off));
   log('editor has Ready badge',/Ready badge/.test(E("HELP.find(h=>h[0]=='editor')[2]()")));
   const fq=E("HELP.find(h=>h[0]=='faq')[2]()");log('troubleshooting covers new features',['Preset job list','🔧 Pick','⧉ Copy','Job manager','out of date','25.4×','Import job','Theme','Work offset'].every(k=>fq.includes(k)));

@@ -67,11 +67,11 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   log('no native dialogs used at all',nat==0,nat);
   // 10 tool access
   E("S.m.push(mk('Tool VMC','vmc'));S.m.at(-1).tools=[{id:'t9',n:9,type:'drill',name:'nine'}];save();S.cur=0;machines()");
-  const mb=[...d.querySelectorAll('.mtl')];log('each machine card has 🔧 Tools (n)',mb.length==E("S.m.length")&&mb.some(b=>/Tools \(1\)/.test(b.textContent)));
-  mb.find(b=>/Tools \(1\)/.test(b.textContent)).click();log('card button opens that machine\'s tool list (current machine unchanged)',/T9|nine/.test(d.querySelector('#v').textContent)&&E("S.cur")==0&&/Tool VMC/.test(d.querySelector('#ttl').textContent));
+  const mb=[...d.querySelectorAll('.mtl')];log('each machine card has 🔧 Tool Library (n)',mb.length==E("S.m.length")&&mb.some(b=>/Tool Library \(1\)/.test(b.textContent)));
+  mb.find(b=>/Tool Library \(1\)/.test(b.textContent)).click();log('card button opens that machine\'s tool list (current machine unchanged)',/T9|nine/.test(d.querySelector('#v').textContent)&&E("S.cur")==0&&/Tool VMC/.test(d.querySelector('#ttl').textContent));
   E("tab('new');ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1')");const op0=E("J.op"),code0=E("J.code.join('|')");const bt=d.querySelector('#bldtl');
   log('Build has a 🔧 Tools button inside the width',!!bt&&bt.getBoundingClientRect().right<=w.innerWidth+1);
-  bt.click();log('Build 🔧 opens the current machine\'s tools',/Tool library|Tools/.test(d.querySelector('#ttl').textContent)&&E("tlCurM()===S.m[S.cur]"));
+  bt.click();log('Build 🔧 opens the current machine\'s tools',/Tool Library|Tools/.test(d.querySelector('#ttl').textContent)&&E("tlCurM()===S.m[S.cur]"));
   E("tab('new')");log('back in Build the same job and code are kept',E("J&&J.op")==op0&&E("J.code.join('|')")==code0&&!!d.querySelector('#out .card'));
   E("S.m.pop();save()");
   // 11 tool picker on every tool-using job (mill + lathe), only this machine's tools
