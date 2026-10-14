@@ -5899,5 +5899,92 @@ function r92trav(){const out={};['X','Y','Z'].forEach(a=>{const x=sv(a+' travel'
 // E8: 'Change' never wraps
 document.head.insertAdjacentHTML('beforeend','<style>#r88bar button{white-space:nowrap}#r92bad{white-space:normal}</style>');
 
+// ===================== R93 remaining batch =====================
+// Casey: Editor Undo / Redo covers inserted snippets (edits + inserted lines together)
+const r93st=()=>JSON.stringify({r93:1,e:J.edits||{},i:J.ins||[]});
+function r93set(s){const o=JSON.parse(s);if(o&&o.r93){J.edits=o.e||{};J.ins=o.i||[]}else J.edits=o||{}}
+edSnap=function(){if(!J)return;J.undo=J.undo||[];const s=r93st();if(J.undo.at(-1)!==s){J.undo.push(s);if(J.undo.length>60)J.undo.shift()}J.redo=[]};
+undoEd=function(){if(!J||!J.undo||!J.undo.length)return;const cur=r93st();let s=J.undo.pop();if(s===cur&&J.undo.length)s=J.undo.pop();if(s===cur)return;(J.redo=J.redo||[]).push(cur);r93set(s);show()};
+redoEd=function(){if(!J||!J.redo||!J.redo.length)return;(J.undo=J.undo||[]).push(r93st());r93set(J.redo.pop());show()};
+{const _is=insSnip;insSnip=function(){if(J)edSnap();const r=_is.apply(this,arguments);return r}}
+// Casey: holes-on-face check limits the across-face axis (Y for A, X for B) to the face half-width
+{const _ck=checks;checks=function(j){const c=_ck.apply(this,arguments);try{if(j.op=='index'){const v=k=>j.p[k]?+j.p[k].v||0:0,N=v('Faces'),H=v('Z0'),ax=String(j.rot||r92rot()),k=ax=='B'?'Hole X':'Hole Y',hw=N>=3?H*Math.tan(Math.PI/N):H,i=c.findIndex(x=>/^Hole lies on the face/.test(x[0]));const it=['Hole lies on the face (|'+k.slice(-1)+'| + drill radius ≤ face half-width '+f4(hw)+')',Math.abs(v(k))+(v('Drill Ø')||0)/2<=hw+1e-9];if(i>=0)c[i]=it;else c.push(it)}}catch(e){}return c}}
+// generic: G107 / G187 / G05.1 Q1 only when the option is ticked; wrap engraving only on an A axis
+function r93opt(j,g){if(!g||!Array.isArray(g.code)||j.lathe)return;const t=g.code.map(l=>String(l).replace(/\([^)]*\)/g,'')).join('\n'),e=[];
+ if(/\bG107\b/.test(t)&&!opt('cyl'))e.push('G107 cylindrical mapping is in this program — tick Cylindrical interpolation in Machines → Options first.');
+ if(/\bG187\b|G05\.1\s*Q1/.test(t)&&!opt('look')&&!TV(HSO))e.push('G187 / G05.1 Q1 smoothing is in this program — tick High-speed look-ahead / smoothing in Machines → Options (or confirm the high-speed mode option) first.');
+ if(j.op=='engrave'&&typeof eMeth=='function'&&eMeth(j)=='awrap'&&r92rot()!='A')e.push('Wrapped engraving is written for an A axis (turning about X). '+(S.m[S.cur]||{}).name+' has a '+r92rot()+' axis — not adapted, so nothing is written.');
+ if(e.length)g.r92bad=e.concat(g.r92bad||[])}
+// regenerating over Editor edits warns
+{const _sz=shiftZero;shiftZero=function(j,g){const before=j&&Array.isArray(j.code)?j.code.length:null;const r=_sz.apply(this,arguments);try{r93opt(j,g);if(j&&j.edits&&Object.keys(j.edits).length&&before!=null&&g&&g.code&&g.code.length!=before&&!(j.ins&&j.ins.length))setTimeout(()=>toast79('⚠ The program changed length — your Editor edits are kept by line number. Check them before you run it.'),50)}catch(e){}return r}}
+// E4: mm peck Q gray suggestion converted (0.1 in → 2.5 mm, 0.05 in → 1.25 mm)
+{const _s=show;show=function(){try{if(J&&J.p&&r92mm()){const q=J.p['Peck Q'];if(q&&q.g&&q.v!=null){const mmv=q.v*25.4;if(Math.abs(mmv-0.1)<1e-6)q.v=2.5/25.4;else if(Math.abs(mmv-0.05)<1e-6)q.v=1.25/25.4}}}catch(e){}return _s.apply(this,arguments)}}
+// E6: the Engrave chip opens flat-face mode on a 3-axis mill (no shaft example with made-up values)
+{const _pj=pickJob;pickJob=function(op){try{if(op=='engrave'&&!isL()&&!opt('ax4')&&jAvail(op)){$('#q').value='engrave text on a flat face';return go()}}catch(e){}return _pj.apply(this,arguments)}}
+// simulator: rotary words follow the machine's axis letter for imported / edited programs
+{const _ip=interp;interp=function(lines,o){o=o||{};try{if(J&&J.op=='import'&&!o.rot&&!isL()&&opt('ax4'))o.rot=r92rot()}catch(e){}return _ip.call(this,lines,o)}}
+// E2: Editor / import check — axis words and codes this machine doesn't have, F0 feeds
+{const _ll=lintLine;lintLine=function(l){const w=_ll.apply(this,arguments);try{const s=String(l).replace(/\([^)]*\)/g,'').toUpperCase();if(!s.trim()||/G6[56]\b|^\s*#|\bIF\b|WHILE|DPRNT/.test(s))return w;
+ const L=isL(),sw=isSw(),ax4=opt('ax4')||/4th|5-axis|horizontal|hmc/i.test(((S.m[S.cur]||{}).type||'')+' '+((S.m[S.cur]||{}).name||'')),rot=r92rot(),five=/5-axis/i.test((S.m[S.cur]||{}).type||'');
+ const ws=(s.match(/(?:^|[^A-Z#\[])([A-Z])(?=[-+]?[\d.\[#])/g)||[]).map(x=>x.slice(-1));
+ if(!L&&!five)['A','B','C'].forEach(a=>{if(ws.includes(a)&&(!ax4||a!=rot))w.push(a+' axis word — this machine has '+(ax4?'a '+rot+' rotary axis, not '+a:'no rotary axis'))});
+ if(L&&!sw)['A','B'].forEach(a=>{if(ws.includes(a))w.push(a+' axis word — not a lathe axis on this machine')});
+ if(!L&&/\bG96\b/.test(s))w.push('G96 constant surface speed is a lathe code');
+ if(L&&!sw&&/\bG4[349]\b/.test(s))w.push((s.match(/\bG4[349]\b/)[0])+' tool length offset is a mill code');
+ if(/\bF0*(?:\.0*)?(?![\d.#\[])/.test(s)&&/\bF/.test(s))w.push('F0 feed — the axes would not move');}catch(e){}return w}}
+// E2: hide lathe snippets on mills and mill snippets on lathes
+{const _s=show;show=function(){const r=_s.apply(this,arguments);try{const sel=$('#snp');if(sel){const L=isL();[...sel.options].forEach(o=>{if(L?/\(mill\)/i.test(o.textContent):/\(lathe\)/i.test(o.textContent))o.remove()})}}catch(e){}return r}}
+// Casey: Haas NGC rigid tap is G84 alone (no M29) unless you set it
+function r93rt(m){try{const c=m.s.find(x=>x.k=='Control'),r=m.s.find(x=>x.k=='Rigid tap style');if(c&&r&&/haas/i.test(c.v)&&r.st!='user'&&/^M29/.test(r.v))r.v='G84 alone (Haas: rigid tap with no M29)'}catch(e){}}
+S.m.forEach(r93rt);{const _pk=pick;pick=function(){const r=_pk.apply(this,arguments);try{r93rt(S.m[S.m.length-1]);save()}catch(e){}return r}}
+// ---- retest round on mc-v93 ----
+// (2) an empty / blank value is missing, never 0
+{const _s=show;show=function(){try{if(J&&J.p)Object.values(J.p).forEach(x=>{if(x&&typeof x.v=='string'&&!x.v.trim())x.v=null;if(x&&typeof x.v=='number'&&!isFinite(x.v))x.v=null})}catch(e){}return _s.apply(this,arguments)}}
+// (5) swiss: typed 'T1' fills Turn tool;  (6) 'cutter 0.25' / 'end mill 0.25' after other numbers
+{const _s=show;show=function(){try{if(J&&J.p&&J.text&&!J.r93p){J.r93p=1;const t=String(J.text).toLowerCase();
+ if(J.op=='swiss'){const m=t.match(/\bt\s*(\d{1,2})\b/);if(m&&(!J.p['Turn tool']||J.p['Turn tool'].v==null))J.p['Turn tool']={v:+m[1],g:false};delete J.p.Tool}
+ if(J.p.Cutter){const m=t.match(/\b(?:cutter|end\s*mill|em)\s*(?:dia(?:meter)?\s*)?(?:of\s*)?(\d*\.?\d+)/);if(m)J.p.Cutter={v:+m[1],g:false}}}}catch(e){}return _s.apply(this,arguments)}}
+{const _p=r92swPrep;r92swPrep=function(){const r=_p.apply(this,arguments);try{if(J&&J.op=='swiss'&&J.text){const m=String(J.text).toLowerCase().match(/\bt\s*(\d{1,2})\b/);if(m&&J.p['Turn tool']&&J.p['Turn tool'].v==null)J.p['Turn tool']={v:+m[1],g:false}}}catch(e){}return r}}
+// (4) inch bar > 3 in is flagged, shown even when other values are refused
+r92swWarn=function(j){const v=k=>j.p[k]?j.p[k].v:null,mm=r92mm(),b=v('Bar Ø');if(b==null)return'';if(!mm&&b>3)return'⚠ Bar Ø '+b+' in is far too big for a Swiss machine (most take 1.25 in or less) — did you mean mm? Switch the header to mm or check the value.';if(mm&&b<1)return'⚠ Bar Ø '+b+' mm is very small — did you mean inches?';if(mm&&b>80)return'⚠ Bar Ø '+b+' mm is far too big for a Swiss machine — check the value.';return''};
+{const _a=r92after;r92after=function(){try{if(J&&J.op=='swiss')J.r92warn=r92swWarn(J)}catch(e){}return _a.apply(this,arguments)}}
+// (7)/E3 line-count estimate: layers × passes per layer, message names the line count
+r92est=function(j){const v=k=>j.p&&j.p[k]&&j.p[k].v;const d=Math.abs(+v('Depth')||+v('Total depth')||0),st=['Stepdown','Step down','Depth per pass','Depth of cut','DOC','Peck','First peck'].map(v).find(x=>+x>0);if(!d||!st)return 0;const layers=Math.ceil(d/st);
+ const cut=+v('Cutter')||0,so=(+v('Stepover %')||50)/100,size=Math.max(+v('Pocket L')||0,+v('Pocket W')||0,+v('Dia')||0,+v('Length')||0,+v('Width')||0);const passes=cut>0&&size>0?Math.ceil(size/(cut*so))+1:1;return layers*passes*4};
+{const _s=show;show=function(){try{if(J&&J.p){const n=r92est(J),lim=+((sv('Program memory (lines)')||{}).v)||0,memOK=(sv('Program memory (lines)')||{}).st=='user'&&lim>0,cap=200000;
+ if(n>cap||(memOK&&n>lim)){J.code=null;$('#out').innerHTML=`<div class="card"><div class="t">${OPN[J.op]||''}</div><div class="ok bad" id="r92bad">⛔ Not written: this would be about ${n.toLocaleString()} program lines (depth ÷ stepdown × passes per layer) — over ${n>cap?'the '+cap.toLocaleString()+'-line safety cap':'this machine’s program memory ('+lim+' lines)'}. Use a bigger stepdown or stepover, or split the job. (Line count, not units.)</div></div>`;try{r92form()}catch(e){}return}}}catch(e){}return _s.apply(this,arguments)}}
+// (9) typed values clear the red '?' chip live
+document.addEventListener('input',e=>{const el=e.target;if(!el||!el.closest||!el.closest('#out')||!el.dataset||!el.dataset.k)return;try{const k=el.dataset.k,ch=[...document.querySelectorAll('#out .chip')].find(c=>(c.getAttribute('onclick')||'')=="ed('"+k+"')");if(!ch)return;if(String(el.value).trim()!==''){ch.classList.remove('r');ch.classList.add('y');ch.textContent=k+': '+el.value}else{ch.classList.remove('y');ch.classList.add('r');ch.textContent=k+': ?'}}catch(x){}},true);
+// (3) machine switch: a notice on Build stays until you open a job or restore
+{const _c=cur;cur=function(i){const had=typeof J!='undefined'&&J&&J.op&&hasUser(J)&&i!=S.cur?J:null,from=(S.m[S.cur]||{}).name;if(had)R92.moved={op:had.op,from,to:(S.m[i]||{}).name};return _c.apply(this,arguments)}}
+{const _nw=nw;nw=function(){const r=_nw.apply(this,arguments);try{const m=R92.moved;if(m&&!(typeof J!='undefined'&&J&&J.op)&&!$('#r93mv')){const o=$('#out');if(o)o.insertAdjacentHTML('beforebegin',`<div class="card" id="r93mv"><div class="t">Your ${esc((OPN[m.op]||'job').replace(/^⚠\s*/,''))} moved to a draft</div><div class="s">It was on ${esc(m.from||'')}. Values are not carried to ${esc(m.to||'this machine')} — Restore it to go back, or start a new job here.</div><button class="chip y" onclick="R92.moved=null;drRestore()">Restore it</button> <button class="chip gr" onclick="R92.moved=null;this.closest('#r93mv').remove()">OK</button></div>`)}}catch(e){}return r}}
+{const _s=show;show=function(){if(typeof J!='undefined'&&J&&J.op)R92.moved=null;return _s.apply(this,arguments)}}
+// (1) X/Y/Z travel as real inputs on the machine screen;  (10) Control picker full width;  (8) 3-axis hides
+function r93is3(m){if(!m||isLT(m.type||''))return false;const o=m.opt||{};return !(o.ax4||o.ax5)&&!/4th|5-axis|horizontal|hmc|4-axis/i.test((m.type||'')+' '+(m.name||''))}
+{const _ed=edit;edit=function(i){const r=_ed.apply(this,arguments);try{const m=S.m[i];if(!m)return r;
+ if(!isLT(m.type||'')&&!$('#r93trv')){r92travel(m);const c=document.createElement('div');c.className='card';c.id='r93trv';const u=(()=>{try{return UL()}catch(e){return'in'}})();
+  c.innerHTML=`<div class="t">Machine travel</div><div class="s">From your machine’s manual. Blank = travel not checked (never guessed).</div>`+['X','Y','Z'].map(a=>{const j=m.s.findIndex(x=>x.k==a+' travel'),x=m.s[j];return `<div class="set"><span>${a} travel <span class="s">(${u})</span></span><input style="width:45%" data-r93t="${j}" inputmode="decimal" value="${esc(x&&x.v||'')}"></div>`}).join('');
+  const pe=$('#pextc');(pe?pe:V.lastElementChild).insertAdjacentElement(pe?'beforebegin':'afterend',c);
+  c.querySelectorAll('input[data-r93t]').forEach(el=>el.onchange=()=>{const x=m.s[+el.dataset.r93t];const t=String(el.value).trim(),n=+t.replace(',','.');if(t===''){x.v='';x.st='suggested';save();return}if(!(n>0&&n<100000)){el.setAttribute('aria-invalid','true');toast79('⚠ Travel must be a positive number — not saved.');return}x.v=String(n);x.st='user';save()})}
+ V.querySelectorAll('select.r92pick').forEach(s=>{s.style.width='100%';s.style.maxWidth='100%';s.style.minWidth='0';const row=s.closest('.set');if(row){row.style.flexWrap='wrap';row.style.rowGap='4px'}});
+ if(r93is3(m))V.querySelectorAll('label.set').forEach(l=>{const t=l.textContent;if(/^\s*(4th axis|Cylindrical interpolation|Full 5-axis|5-axis|Pallet changer|Tombstone \/ multi-fixture)\b/.test(t)&&!(l.querySelector('input')||{}).checked)l.style.display='none'})}catch(e){console.error(e)}return r}}
+{const _ja=jAvail;jAvail=function(op){const r=_ja.apply(this,arguments);if(!r)return r;try{if(op=='tomb'&&r93is3(S.m[S.cur])&&!(S.m[S.cur].opt||{}).tomb)return false}catch(e){}return r}}
+{const _f=r92form;r92form=function(){const r=_f.apply(this,arguments);try{if(J&&!isL()&&J.op!='index'){const u=r92mm()?'mm':'in';document.querySelectorAll('#out .set').forEach(st=>{const i=st.querySelector('[data-k="Z0"]'),sp=st.querySelector('span .s');if(i&&sp&&/4th axis/.test(sp.textContent))sp.textContent='('+u+', top of part)'})}}catch(e){}return r}}
+// (8) lathe snippets also hidden on the Snippets page of a mill (and mill ones on a lathe)
+{const _sn=snips;snips=function(){const r=_sn.apply(this,arguments);try{const L=isL();V.querySelectorAll('.card').forEach(c=>{const t=(c.querySelector('.t')||{}).textContent||'';if(L?/\(mill\)/i.test(t):/\(lathe\)/i.test(t))c.style.display='none'})}catch(e){}return r}}
+// (11) Haas: G65 face count H written with a decimal point so 4th-axis holes export
+{const _c=r92code;r92code=function(j,g){const r=_c.apply(this,arguments);try{if(g&&Array.isArray(g.code)&&/haas/i.test(String(ctrlKey()||'')+String((sv('Control')||{}).v||'')))g.code=g.code.map(l=>typeof l=='string'&&/^\s*N?\d*\s*G65\b/.test(l)?l.replace(/(\bH)(-?\d+)(?![\d.])/g,'$1$2.'):l);
+ // (14) name the field behind a non-number word
+ if(g&&g.r92bad&&j&&j.p){const bf=Object.entries(j.p).filter(([k,x])=>x&&k!='Work offset'&&((typeof x.v=='number'&&!isFinite(x.v))||(typeof x.v=='string'&&x.v.trim()&&isNaN(+x.v)&&!/^[A-Z]?\d*$/i.test(x.v)))).map(([k,x])=>k+' = “'+x.v+'”');if(bf.length)g.r92bad=g.r92bad.map(m=>/no valid number/.test(m)?m.replace(/\. Check the values you typed\./,'')+' — from field '+bf.join(', ')+'. Fix that field.':m)}}catch(e){}return r}}
+{const _l=lintLine;lintLine=function(s,n){const r=_l.apply(this,arguments)||[];try{const m=String(s).replace(/\(.*?\)/g,'').match(/\b([A-Z])\s*(NaN|Infinity|undefined|null)\b/i);if(m)r.push([n,'“'+m[1]+m[2]+'” is not a number — the value for '+m[1]+' was missing or mistyped when this line was made.','NAN'])}catch(e){}return r}}
+// (12) never show -0.0000 in calculator tables/outputs
+new MutationObserver(()=>{document.querySelectorAll('#bo td,#v td').forEach(td=>{if(/^-0(\.0+)?$/.test(td.textContent.trim()))td.textContent=td.textContent.replace('-','')})}).observe(document.body,{childList:true,subtree:true});
+// (13) restore refusal says why
+function r93why(op,m){if(!m)return'';const need=[['ax4','4th axis'],['cyl','Cylindrical interpolation'],['ax5','Full 5-axis'],['pallet','Pallet changer'],['tomb','Tombstone / multi-fixture'],['cax','C-axis'],['yax','Y-axis'],['look','High-speed look-ahead / smoothing']];const o=m.opt=m.opt||{},c=S.cur;try{S.cur=S.m.indexOf(m);for(const [k,n] of need){if(o[k])continue;o[k]=true;const ok=jAvail(op);delete o[k];if(ok)return'it needs '+n+', and “'+n+'” is unticked in this machine’s Options'}}finally{S.cur=c}return isLT(m.type||'')!=(jKind(op)=='lathe')?'it is a '+(jKind(op)||'different')+' job and this machine is a '+(isLT(m.type||'')?'lathe':'mill'):''}
+{const _t=toast79;toast79=function(s){try{if(/can’t open on/.test(s)&&!/ — /.test(s)){const d=drGet(),m=d&&(S.m[d.cur]||S.m[S.cur]);const w=d&&d.J&&r93why(d.J.op,m);if(w)s=s.replace(/\.$/,' — '+w+'. Tick it in Machine setup, then Restore again.')}}catch(e){}return _t.call(this,s)}}
+// (15) old free-text Control names map to the confirmed picker values
+function r93ctlMig(){let ch=0;(S.m||[]).forEach(m=>(m.s||[]).forEach(x=>{if(x.k!='Control'||typeof x.v!='string')return;const t=x.v.trim();let n=null;if(/^haas\s*ngc$/i.test(t))n='Haas NGC-style';else if(/^fanuc\s*0i(-?[a-z]{0,2})?$/i.test(t))n='Fanuc 0i-style';if(n&&n!=x.v){x.v=n;ch=1}}));if(ch)try{save()}catch(e){}return ch}
+try{r93ctlMig()}catch(e){console.error(e)}
+
 /* R79-END */</script>
 </body></html>

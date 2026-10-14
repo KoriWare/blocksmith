@@ -1,0 +1,61 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 93: editor undo after snippet, 4-axis option guards, holes-on-face check axis, engrave flat on 3-axis, mm peck Q, sim axis letter, editor/import checks, snippets by machine, Haas rigid tap, regen warning --><iframe id="f" src="../index.html?v=93" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const add=(n,g)=>{E(`pick(${JSON.stringify(n)},${JSON.stringify(g)})`);return E('S.cur=S.m.length-1')};
+ const set=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(x){x.v=${JSON.stringify(v)};x.st='user'}else S.m[S.cur].s.push({k:${JSON.stringify(k)},v:${JSON.stringify(v)},st:'user'});save()})()`);
+ const job=(op,vals)=>{E(`J=null;tab('new');pickJob('${op}')`);for(const [k,v] of Object.entries(vals||{})){const el=d.querySelector(`#out [data-k="${k}"]`);if(el)el.value=v}E('fill()')};
+ const code=()=>E("J&&J.code?txt().join('\\n'):''");const bad=()=>(d.querySelector('#r92bad')||{}).textContent||'';
+ const vm=add('Generic 3-axis VMC','Vertical mills');set('Control','Fanuc 0i-style');
+ const bolt={'Holes':'4','Dia':'2','Start°':'0','Depth':'0.25','Tool':'1','Center X':'0','Center Y':'0','Z0':'0','Work offset':'G54'};
+ job('bolt',bolt);const n0=E('txt().length'),t0=E("txt().join('\\n')");E("J.focus=2");E("insSnip(S.snips.findIndex(s=>/Count loop/.test(s.n)))");const n1=E('txt().length');
+ log('snippet inserted (setup)',n1>n0,n0+'→'+n1);E('undoEd()');log('Editor Undo after a snippet insert restores the program exactly',E("txt().join('\\n')")==t0,E('txt().length')+' lines');
+ E('redoEd()');log('Redo puts the snippet back',E('txt().length')==n1);E('undoEd()');
+ log('E2: lathe snippets hidden on a mill',![...d.querySelectorAll('#snp option')].some(o=>/\(lathe\)/.test(o.textContent)));
+ log('E2: B word flagged on a 3-axis mill',E("lintLine('G00 X1. B90.').join()").includes('no rotary axis'));
+ log('E2: G96 flagged on a mill',/G96/.test(E("lintLine('G96 S300 M03').join()")));
+ log('E2: F0 feed flagged',/F0 feed/.test(E("lintLine('G01 X1. F0').join()"))&&!/F0 feed/.test(E("lintLine('G01 X1. F0.5').join()")));
+ log('E2: macro call arguments not flagged',!/axis word/.test(E("lintLine('G65 P9100 A1. B2. C3.').join()")));
+ log('E6: Engrave chip opens flat-face mode on a 3-axis mill (no shaft sample values)',(E("J=null;tab('new');pickJob('engrave');J.emode"))=='face'&&!/SN-1024/.test(E('J.text')),E('J.emode')+' '+E('J.text'));
+ d.querySelector('#u-mm').click();E("J=null;tab('new');pickJob('bolt')");log('E4: mm peck Q gray suggestion is 2.5 mm',Math.abs(E("J.p['Peck Q'].v*25.4")-2.5)<1e-6,E("J.p['Peck Q'].v*25.4"));d.querySelector('#u-in').click();
+ const v4=add('Generic VMC w/ 4th axis','Vertical mills');set('Control','Fanuc 0i-style');
+ log('E2: A word fine on an A machine, B flagged',!/axis word/.test(E("lintLine('G00 A90.').join()"))&&/not B/.test(E("lintLine('G00 B90.').join()")));
+ E("S.m[S.cur].opt.cyl=0;S.m[S.cur].opt.look=0;save()");
+ const idx={'Faces':'4','Depth':'0.5','Hole X':'1','Hole Y':'0.2','Z0':'1','Work offset':'G54','Tool':'5'};set('4th-axis brake on / off','M10 / M11');
+ job('index',idx);E('refresh()');const it=E("checks(J).find(c=>/^Hole lies on the face/.test(c[0]))");log('Casey: A machine holes-on-face check limits Y (across the face), not X',it&&/\|Y\|/.test(it[0])&&it[1]===true,JSON.stringify(it));
+ job('index',Object.assign({},idx,{'Hole Y':'1.5'}));E('refresh()');log('…Y beyond the face half-width fails',E("checks(J).find(c=>/^Hole lies on the face/.test(c[0]))[1]")===false);
+ job('index',Object.assign({},idx,{'Hole X':'9'}));E('refresh()');log('…a long X along the axis is fine',E("checks(J).find(c=>/^Hole lies on the face/.test(c[0]))[1]")===true);
+ const hm=add('Generic HMC w/ pallet','Horizontal mills');set('Control','Fanuc 0i-style');set('4th-axis brake on / off','M10 / M11');
+ job('index',Object.assign({},idx,{'Hole X':'0.2','Hole Y':'5'}));E('refresh()');log('Casey: B machine check limits X (across the face)',/\|X\|/.test(E("checks(J).find(c=>/^Hole lies on the face/.test(c[0]))[0]"))&&E("checks(J).find(c=>/^Hole lies on the face/.test(c[0]))[1]")===true);
+ log('sim: imported program rotates on the machine letter (B)',E("(()=>{const o={};const j0=J;J={op:'import',p:{},edits:{},text:'x'};try{interp(['G90 G00 X1. B90.'],o)}catch(e){}J=j0;return o.rot})()")=='B');
+ // G107 / G187 guards outside G47: via an imported-like J2 check on code text
+ log('G187 refused unless smoothing ticked',(()=>{const g={code:['G187 P3','G01 X1. F10.']};E("1");w.r93opt({op:'x',p:{}},g);return !!(g.r92bad&&/G187/.test(g.r92bad.join()))})());
+ log('G107 refused unless Cylindrical interpolation ticked',(()=>{const g={code:['G107 A0. R1.','G01 X1. F10.']};w.r93opt({op:'x',p:{}},g);return !!(g.r92bad&&/G107/.test(g.r92bad.join()))})());
+ E("S.m[S.cur].opt.cyl=1;S.m[S.cur].opt.look=1;save()");log('…and allowed once ticked',(()=>{const g={code:['G107 A0. R1.','G187 P3']};w.r93opt({op:'x',p:{}},g);return !g.r92bad})());
+ E("J=null;tab('new');$('#q').value='G54 T7 engrave \"AB\" 0.125 tall 0.004 deep on 1.0 dia shaft start x0.5 centered on 0 deg along axis rotate 0 not mirrored zero on centerline';go()");
+ log('wrapped engrave refused on a B machine (written for A)',!code()&&/written for an A axis/.test(bad()),bad()+' meth='+E('eMeth(J)'));
+ add('Haas VF-style VMC (generic)','Vertical mills');log('Casey: Haas rigid tap default is G84 alone (no M29)',!/^M29/.test(E("S.m[S.cur].s.find(x=>x.k=='Rigid tap style').v")));
+
+ // ---- retest on mc-v93 ----
+ add('Haas VF-style VMC (generic)','Vertical mills');set('Control','Haas NGC-style');
+ E("J=null;tab('new');$('#q').value='G54 T1 rectangular pocket 2 x 1 corner r 0 cutter 0.25 0.5 deep stepdown 0.1 center x0 y0 z0 0';go()");log('R6 cutter after corner r 0',E('J.p.Cutter.v')==0.25,E('JSON.stringify(J.p.Cutter)'));
+ E("J=null;tab('new');$('#q').value='G54 T1 rectangular pocket 2 x 1 0.5 deep cutter 0.25 stepdown 0.1 center x0 y0 z0 0';go()");log('R6 cutter after deep',E('J.p.Cutter.v')==0.25);
+ E("J.p['Center X']={v:'  ',g:false};show()");log('R2 blank Center X refused, never G52 X0',!code()&&!/G52 X0/.test(E("String(J.code||'')")));
+ E("J.p['Center X']={v:0,g:false};J.p['Corner R']={v:0,g:false};show()");log('R2 back to written once filled',!!code(),bad()+' :: '+E("$('#out').innerText.slice(-300)"));
+ E("J.p['Pocket L']={v:200,g:false};J.p['Pocket W']={v:100,g:false};J.p.Depth={v:50,g:false};J.p.Stepdown={v:0.001,g:false};show()");log('R7 huge pocket names line count',/program lines|depth layers/.test(bad())&&!/mm/.test(bad()),bad());
+ E("tab('new');$('#q').value='G54 T1 rectangular pocket 2 x 1 corner r 0 cutter 0.25 0.5 deep stepdown 0.1 center x0 y0 z0 0';go();J.p.Depth={v:'x1',g:false};show()");log('R14 bad value names the field',/Depth/.test(E("$('#out').innerText")));
+ log('R14 editor lint flags XNaN',E("lintLine('G01 XNaN Y1.',0).some(x=>/not a number/.test(x[1]))"));
+ E("edit(S.cur)");log('R1 travel inputs on machine screen',E("!!document.querySelector('#r93trv input[data-r93t]')"));
+ E("(()=>{const i=document.querySelector('#r93trv input');i.value='30';i.onchange()})()");log('R1 travel saved as yours',E("S.m[S.cur].s.find(x=>x.k=='X travel').st")=='user');
+ log('R8 3-axis hides 5-axis/pallet rows',E("[...V.querySelectorAll('label.set')].filter(l=>/Pallet changer|Full 5-axis/.test(l.textContent)).every(l=>l.style.display=='none')"));
+ log('R10 control picker full width',E("[...V.querySelectorAll('select.r92pick')].every(s=>s.style.width=='100%')"));
+ log('R8 tombstone job hidden on 3-axis',!E("jAvail('tomb')"));
+ E("calc()");E("[['b1','4'],['b2','2'],['b3','0'],['b4','0'],['b5','0']].forEach(([i,v])=>{const e=$('#'+i);e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}))})");await sl(50);log('R12 bolt calc shows no -0.0000',!/-0\.0000/.test(E("$('#bo').innerText")));
+ E("S.m.push({name:'Old',type:'Vertical mill',opt:{},s:[{k:'Control',v:'Haas NGC',st:'user'}]})");E("r93ctlMig()");log('R15 old Haas NGC control maps to Haas NGC-style',E("S.m.at(-1).s[0].v")=='Haas NGC-style');E("S.m.pop();save()");
+ log('R11 Haas G65 H gets a decimal point',E("(()=>{const g={code:['G65 P9001 H4 A1.']};r92code({op:'x',p:{}},g);return g.code[0]})()")=='G65 P9001 H4. A1.');
+ log('R13 restore reason names the option',/4th axis/.test(E("r93why('index',S.m[S.cur])")),E("r93why('index',S.m[S.cur])"));
+ log('R4 inch Swiss 12 in bar warned',/far too big/.test(E("r92swWarn({p:{'Bar Ø':{v:12}}})")));
+ E("J=null;drClear()");log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>
