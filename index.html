@@ -5985,6 +5985,22 @@ function r93why(op,m){if(!m)return'';const need=[['ax4','4th axis'],['cyl','Cyli
 // (15) old free-text Control names map to the confirmed picker values
 function r93ctlMig(){let ch=0;(S.m||[]).forEach(m=>(m.s||[]).forEach(x=>{if(x.k!='Control'||typeof x.v!='string')return;const t=x.v.trim();let n=null;if(/^haas\s*ngc$/i.test(t))n='Haas NGC-style';else if(/^fanuc\s*0i(-?[a-z]{0,2})?$/i.test(t))n='Fanuc 0i-style';if(n&&n!=x.v){x.v=n;ch=1}}));if(ch)try{save()}catch(e){}return ch}
 try{r93ctlMig()}catch(e){console.error(e)}
+// ===== Round 94 (mc-v95) =====
+// E10 peck vs depth: compare magnitudes (depth may be written negative)
+{const _r=rangeErr;rangeErr=function(j){const E=_r.apply(this,arguments);try{const v=k=>j.p[k]&&j.p[k].v!=null&&j.p[k].v!==''?+j.p[k].v:null,P=v('Peck Q'),D=v('Depth');const i=E.findIndex(e=>e[0]=='Peck Q'&&/deeper than the hole depth/.test(e[1]));if(i>=0)E.splice(i,1);if(P!=null&&D!=null&&isFinite(P)&&isFinite(D)&&D!=0&&Math.abs(P)>Math.abs(D))E.push(['Peck Q',`Peck Q ${Math.abs(P)} is more than the hole depth ${Math.abs(D)} — each peck must be smaller than the depth (or leave Peck Q out for one plunge).`])}catch(e){}return E}}
+// Plunge feed is a feed (mm/min in mm, ipm in inch)
+try{KL.delete('Plunge feed');KF.add('Plunge feed')}catch(e){}
+// (a) rotary / brake rows follow the 4th-axis option; pallet row follows the pallet option
+function r94has4(m){const o=m.opt||{};return !!(o.ax4||o.ax5)||/4th|4-axis|5-axis|horizontal|hmc|trunnion/i.test((m.type||'')+' '+(m.name||''))}
+{const _ed=edit;edit=function(i){const r=_ed.apply(this,arguments);try{const m=S.m[i];if(m&&!isLT(m.type||'')){const h4=!r94has4(m),hp=!(m.opt||{}).pallet;V.querySelectorAll('.set').forEach(st=>{const t=((st.querySelector('span')||{}).textContent||'').replace(/^[!\s]+/,'');if((h4&&/^(Rotary axis|Rotary direction|4th-axis brake)/.test(t))||(hp&&/^Pallet change code/.test(t)))st.style.display='none'});V.querySelectorAll('.chip').forEach(c=>{const t=c.textContent.replace(/^[!\s]+/,'');if((h4&&/^(Rotary axis|Rotary direction|4th-axis brake)/.test(t))||(hp&&/^Pallet change code/.test(t)))c.style.display='none'})}}catch(e){}return r}}
+// (b) select pickers (Work offset) clear the red '?' on pick
+document.addEventListener('change',e=>{const el=e.target;if(!el||el.tagName!='SELECT'||!el.closest||!el.closest('#out')||!el.dataset.k)return;try{const k=el.dataset.k,ch=[...document.querySelectorAll('#out .chip')].find(c=>(c.getAttribute('onclick')||'')=="ed('"+k+"')");if(ch&&el.value){ch.classList.remove('r');ch.classList.add('y');ch.textContent=k+': '+(k=='Work offset'?offLbl(el.value):el.value)}const lb=el.closest('.set');if(lb&&el.value)lb.querySelectorAll('.r,.bad').forEach(x=>x.classList.remove('r','bad'))}catch(x){}},true);
+// (c) a cleared required value drops the old program
+{const _s=show;show=function(){const r=_s.apply(this,arguments);try{if(J&&J.op&&REQ[J.op]&&REQ[J.op].some(k=>!J.p[k]||J.p[k].v==null||J.p[k].v===''))J.code=null}catch(e){}return r}}
+// (d) Swiss: 'Tool number given' passes with Turn tool
+{const _c=checks;checks=function(j){const r=_c.apply(this,arguments);try{if(j&&j.op=='swiss'&&Array.isArray(r)){const ok=['Turn tool','Tool'].some(k=>j.p[k]&&j.p[k].v!=null);r.forEach(x=>{if(Array.isArray(x)&&x[0]=='Tool number given')x[1]=ok})}}catch(e){}return r}}
+// layout at 320px / 150% / light: tabs scroll instead of clipping, no mid-word wraps, issues bar does not cover code
+document.head.insertAdjacentHTML('beforeend',`<style id="r94css">@media (max-width:360px){.tabs{grid-template-columns:repeat(6,max-content);justify-content:space-between;column-gap:10px;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tabs button{overflow:visible;padding-left:2px;padding-right:2px}#ttl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}}.s,.t,button,.chip{overflow-wrap:normal;word-break:normal}#simbar,.simchips,#out .row{flex-wrap:wrap}@media (max-width:340px){#ck{position:static}}</style>`);
 
 /* R79-END */</script>
 </body></html>

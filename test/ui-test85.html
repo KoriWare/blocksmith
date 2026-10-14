@@ -1,0 +1,30 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 94 (E10, plunge unit, retest a-d):  editor undo after snippet, 4-axis option guards, holes-on-face check axis, engrave flat on 3-axis, mm peck Q, sim axis letter, editor/import checks, snippets by machine, Haas rigid tap, regen warning --><iframe id="f" src="../index.html?v=94" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const add=(n,g)=>{E(`pick(${JSON.stringify(n)},${JSON.stringify(g)})`);return E('S.cur=S.m.length-1')};
+ const set=(k,v)=>E(`(()=>{const x=S.m[S.cur].s.find(x=>x.k==${JSON.stringify(k)});if(x){x.v=${JSON.stringify(v)};x.st='user'}else S.m[S.cur].s.push({k:${JSON.stringify(k)},v:${JSON.stringify(v)},st:'user'});save()})()`);
+ const job=(op,vals)=>{E(`J=null;tab('new');pickJob('${op}')`);for(const [k,v] of Object.entries(vals||{})){const el=d.querySelector(`#out [data-k="${k}"]`);if(el)el.value=v}E('fill()')};
+ const code=()=>E("J&&J.code?txt().join('\\n'):''");const bad=()=>(d.querySelector('#r92bad')||{}).textContent||'';
+
+ add('Haas VF-style VMC (generic)','Vertical mills');set('Control','Haas NGC-style');
+ E("J=null;tab('new');$('#q').value='G54 T1 peck drill at x0 y0 0.5 deep peck 0.1 z0 0';go()");
+ log('E10 peck vs negative depth compares sizes',E("(()=>{const e=rangeErr({p:{'Peck Q':{v:0.1},Depth:{v:-0.5}}});return !e.some(x=>x[0]=='Peck Q')})()"));
+ log('E10 too-big peck refused with sizes',E("rangeErr({p:{'Peck Q':{v:0.8},Depth:{v:-0.5}}}).some(x=>x[0]=='Peck Q'&&/0.8 is more than the hole depth 0.5/.test(x[1]))"));
+ log('Plunge feed is a feed unit',E("unitSfx('Plunge feed')").trim()=='ipm');
+ E("J=null;tab('new');$('#q').value='G54 T1 rectangular pocket 2 x 1 corner r 0 cutter 0.25 0.5 deep stepdown 0.1 center x0 y0 z0 0';go()");log('pocket written',!!code());
+ E("J.p.Depth={v:null};show()");log('(c) cleared required value drops old program',E('J.code')==null);
+ E("J=null;tab('new');$('#q').value='T1 rectangular pocket 2 x 1 corner r 0 cutter 0.25 0.5 deep stepdown 0.1 center x0 y0 z0 0';go()");
+ E("(()=>{const s=document.querySelector('#out select[data-k=\"Work offset\"]');s.value='G54';s.dispatchEvent(new Event('change',{bubbles:true}))})()");
+ log('(b) Work offset pick clears red ?',E("(()=>{const c=[...document.querySelectorAll('#out .chip')].find(c=>/^Work offset/.test(c.textContent));return !c||!c.classList.contains('r')})()"));
+ const rows=i=>E(`(()=>{edit(${i});return [...V.querySelectorAll('.set')].filter(s=>s.style.display!='none').map(s=>(s.querySelector('span')||{}).textContent||'').filter(t=>/Rotary axis|Rotary direction|4th-axis brake|Pallet change code/.test(t)).join('|')})()`);
+ const A=E("S.m.findIndex(m=>m.name=='Mill A')"),B=E("S.m.findIndex(m=>m.name=='Mill B')");
+ log('(a) Mill A hides rotary/brake/pallet rows',rows(A)==='',rows(A));
+ log('(a) Mill B keeps rotary + brake, hides pallet',/Rotary axis/.test(rows(B))&&/brake/.test(rows(B))&&!/Pallet change/.test(rows(B)),rows(B));
+ E("J=null;tab('new');$('#q').value='G54 T1 rectangular pocket 2 x 1 corner r 0 cutter 0.25 0.5 deep stepdown 0.1 center x0 y0 z0 0';go()");log('(d) Swiss Tool number given with Turn tool',E("(()=>{const j=Object.assign({},J,{op:'swiss',p:Object.assign({},J.p,{'Turn tool':{v:1}}),code:J.code||['%']});try{return checks(j).find(x=>x[0]=='Tool number given')[1]===true}catch(e){return 'ERR '+e.message}})()")===true,E("(()=>{const j=Object.assign({},J,{op:'swiss',p:Object.assign({},J.p,{'Turn tool':{v:1}}),code:J.code||['%']});try{return JSON.stringify(checks(j).find(x=>x[0]=='Tool number given'))}catch(e){return 'ERR '+e.stack}})()"));
+ log('(e) only Tombstone hidden on 3-axis Mill A',E(`(()=>{S.cur=${A};return !jAvail('tomb')})()`));
+ log('layout: tabs scroll at narrow widths (CSS present)',/max-width:360px/.test(E("$('#r94css').textContent")));
+ E("J=null;drClear()");log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>

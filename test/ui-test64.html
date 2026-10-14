@@ -17,7 +17,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  x=await run(BC('6 hole','1 hole'));log('B9 1-hole bolt circle blocks code',!x.code&&/at least 2 holes/.test(x.out));
  x=await run(BC('6 hole','0 hole'));log('B9 0 holes blocks code',!x.code);
  x=await run(BC('6 hole','5000 hole'));log('B9 huge hole count blocks code',!x.code&&/max 360/.test(x.out));
- x=await run(BC('0.5 deep','0.5 deep peck 0.8'));log('B9 peck deeper than hole blocks code',!x.code&&/Peck 0\.8 is deeper/.test(x.out));
+ x=await run(BC('0.5 deep','0.5 deep peck 0.8'));log('B9 peck deeper than hole blocks code',!x.code&&/Peck Q 0\.8 is more than the hole depth 0\.5/.test(x.out));
  log('B9 range error links to the box',!!d.querySelector('.r79msg a[onclick^="ed("]'));
  log('B9 bar smaller than finish Ø blocks code',E("rangeErr({op:'lturn',lathe:1,p:{'Bar Ø':{v:1},'Finish Ø':{v:1.5}}}).some(e=>/smaller than the finish/.test(e[1]))"));
  log('B9 dia 0 blocks code',E("rangeErr({op:'bolt',p:{Dia:{v:0}}}).length")==1);
