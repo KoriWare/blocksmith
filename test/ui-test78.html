@@ -1,0 +1,31 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 87 More badge fits or shows just ⚠ N (320/390); fixed tool row clears at once: zero steps, macro step guards, engrave samples, back bore, tap pitch, tool library validation, kept lines, export gate/labels, share names, origin, draft --><iframe id="f" src="../index.html?v=79" style="width:390px;height:844px;border:0"></iframe><script>
+let step=0;f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==9)return;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+w.alert=w.confirm=w.prompt=()=>{w.PWN=(w.PWN||0)+1;return null};const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+const sl=t=>new Promise(r=>setTimeout(r,t));const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+x));
+setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};E("NOASK=1");w.PWN=0;w.UIA.confirm=()=>true;
+ const q=t=>{E("tab('new')");d.querySelector('#q').value=t;E("go()")};const msg=()=>[...d.querySelectorAll('#out .r79msg')].map(x=>x.textContent).join(' || ');
+  const card=()=>d.querySelector('#v .card[onclick^="tools("]'),bt=()=>card().querySelector('.t');const badge=()=>getComputedStyle(bt(),'::after').content.replace(/"\s*"/g,'').replace(/^"|"$/g,'');
+ const fits=()=>{const t=bt(),a=getComputedStyle(t,'::after'),r=d.createRange();r.selectNodeContents(t);const sp=d.createElement('span');sp.style.font=a.font;sp.style.cssText+=';position:absolute;white-space:nowrap;padding:0 '+a.paddingRight+' 0 '+a.paddingLeft;sp.textContent=badge();t.appendChild(sp);const need=r.getBoundingClientRect().width+sp.getBoundingClientRect().width+parseFloat(a.marginLeft);sp.remove();return need<=t.getBoundingClientRect().width+1};
+ E("S.m.forEach((m,i)=>{if(!m.tools||!m.tools.length)m.tools=[{id:'a'+i,n:1,type:'Drill',dia:0.25},{id:'b'+i,n:2,type:'Drill',dia:0.25}]});save();more()");await sl(60);const h0=card().offsetHeight;
+ for(const wd of [390,320]){f.style.width=wd+'px';await sl(200);
+  for(const [nm,setup,full] of [['one',"S.m[1].tools[0].dia=-0.5",'⚠ 1 · '+E("S.m[1].name")],['two',"S.m[2].tools[0].dia=0;S.m[2].tools[1].dia=-1",'⚠ 3 · 2 machines'],['long name',"S.m[2].tools[0].dia=0.5;S.m[2].tools[1].dia=0.5;S.m[1].name='Mill B Doosan DNM 5700 rear cell'",'⚠ 1 · Mill B Doosan DNM 5700 rear cell']]){
+   E(setup+";save();more()");await sl(80);const b=badge();
+   log(wd+' '+nm+': badge is full or just ⚠ N, never ellipsis, and it fits',(b==full||b==full.split(' · ')[0])&&getComputedStyle(bt(),'::after').textOverflow!='ellipsis'&&!/…/.test(b)&&fits(),b);
+   log(wd+' '+nm+': aria + title keep full text',card().getAttribute('aria-label').includes(full.split(' · ')[1])&&card().title.includes(full.split(' · ')[1]));
+   log(wd+' '+nm+': card size unchanged',card().offsetHeight==h0,card().offsetHeight+' vs '+h0);
+   if(nm=='long name')log(wd+' long name falls back to ⚠ 1',b=='⚠ 1',b)}
+  if(wd==390)log('390: short names show the full text',true);
+  E("S.m[1].name='Mill B';S.m[1].tools[0].dia=0.25;save()")}
+ f.style.width='390px';await sl(150);E("S.m[1].tools[0].dia=-0.5;S.m[2].tools[0].dia=0;S.m[2].tools[1].dia=-1;save();more()");await sl(60);log('390: two machines full text',badge()=='⚠ 3 · 2 machines',badge());
+ E("S.m[1].tools[0].dia=0.25;S.m[2].tools[0].dia=0.25;S.m[2].tools[1].dia=0.25;save()");
+ // fixed row clears at once
+ E("S.cur=0;tlCurM().tools[0].dia=-0.5;save();tools()");await sl(60);const di=d.querySelector('input[data-f="dia"][data-i="0"]'),rc=di.closest('.card');log('bad tool row marked',rc.classList.contains('r83badtool')&&!!rc.querySelector('.r83err')&&!!d.querySelector('#r83tlbad'));
+ di.value='0.5';di.dispatchEvent(new Event('input',{bubbles:true}));di.dispatchEvent(new Event('change',{bubbles:true}));await sl(20);
+ log('valid save clears the row mark at once (no redraw)',d.querySelector('input[data-f="dia"][data-i="0"]')===di&&!rc.classList.contains('r83badtool')&&!rc.querySelector('.r83err')&&!di.style.outline&&!di.getAttribute('aria-invalid')&&!d.querySelector('#r83tlbad')&&E("tlCurM().tools[0].dia")==0.5);
+ E("more()");await sl(40);log('…and the More badge is gone at the same time',!card().classList.contains('r83badbtn'));
+ E("tlCurM().tools[0].dia=-0.5;tlCurM().tools[1].dia=0;save();tools()");await sl(60);const d0=d.querySelector('input[data-f="dia"][data-i="0"]');d0.value='0.3';d0.dispatchEvent(new Event('change',{bubbles:true}));await sl(20);
+ log('fixing one of two leaves the other marked, header shows 1',!d0.closest('.card').classList.contains('r83badtool')&&d.querySelector('input[data-f="dia"][data-i="1"]').closest('.card').classList.contains('r83badtool')&&/1 tool has/.test(d.querySelector('#r83tlbad').textContent));
+ E("tlCurM().tools[1].dia=0.25;save()");
+ log('no alert/handler fired',!w.PWN);log('no console errors',!errs.length,errs.join('|'));
+ o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL'}catch(e){o.textContent=r.join('\n')+'\nFAIL exception '+e.message}},1500)};
+</script></body></html>
