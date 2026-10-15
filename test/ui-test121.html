@@ -34,5 +34,15 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  x=G('cpock',P,{fl:0.02});log('floor stock 0.02: rough stops at Z-0.23, finish at Z-0.25',/Z-0\.23\b/.test(x.c)&&!/Z-0\.2[4-9]/.test(x.c.split('FINISH PASS')[0])&&/G01 Z-0\.25/.test(x.c.split('FINISH PASS')[1]||''),x.c.slice(-800));
  x=G('cpock',Object.assign({},P,{Output:'Haas native cycle'}));log('Haas native cycle output untouched: no arc lead-in, no finish stock',!/ARC LEAD-IN|FINISH STOCK/.test(x.c),x.c.slice(-500));
  [['cboss',{}],['rpock',{}],['slot',{}],['polyb',{}]].forEach(([op,ps])=>{x=G(op,ps);const cc=x.c.split('\n');const i=cc.findIndex(l=>/^G01 G41 D1/.test(l)),o=cc.findIndex(l=>/ARC LEAD-OUT/.test(l));log(op+': finish with G41 linear, G03 arc, overlap, exit arc, G40 linear',!x.hold&&i>0&&/^G03 /.test(cc[i+1])&&/OVERLAP/.test(cc[o-1])&&/^G40 G01/.test(cc[o+1])&&/FINISH STOCK 0\.01/.test(x.c),x.hold+x.c.slice(-600))});
- }catch(e){log('exception',false,e.stack)}fin()},400)};
+ x=G('cpock',P);log('loops chip hidden with the empty allowlist',E("R113LOOPS.length===0&&!$('#r113chip')"),'');
+ log('Build code shows the G41 and G40 lines (not elided)',E("[...document.querySelectorAll('#ed .ln')].some(e=>/G41 D1/.test(e.textContent)&&!/^\\(/.test(e.textContent))&&[...document.querySelectorAll('#ed .ln')].some(e=>/^G40 G01/.test(e.textContent))"),'');
+ E("R113LOOPS.push('cpock');show()");log('chip shows once cpock is on the list: "↻ Loops available for this job · Switch ›" right under the code',E("!!$('#r113chip')&&/Loops available for this job · Switch ›/.test($('#r113chip').textContent)&&$('#ed').nextElementSibling===$('#r113chip')"),E("($('#r113chip')||{}).outerHTML"));
+ E("$('#r113sw').click()");log('Switch outlines the Output control in teal but does not switch (app moves stays)',E("!!document.querySelector('#out .r113pulse')&&J.p.Output.v=='app moves'"),E("J.p.Output.v"));
+ E("$('#r113x').click();show()");log('× dismisses and it stays dismissed for this job',E("!$('#r113chip')&&J.r113noLoops===1"),'');
+ x=G('rpock',{});log('not on the list (rpock): no chip',E("!$('#r113chip')"),'');E("R113LOOPS.length=0");
+ x=G('cpock',{'Center X':1,Dia:1.25,Cutter:0.75,Z0:0});E("tab('sim')");
+ const ST=()=>E("J.stock?J.stock[5]:r112top()");
+ E("view.n=0;draw()");let a=R("window.R113IDLE");log('idle tool before Play sits at the first G43 Z (Z0.1), at or above the stock top',a&&a.at=='start'&&Math.abs(a.z-0.1)<1e-6&&a.z>=ST()-1e-9,JSON.stringify(a)+' top '+ST());
+ E("scrub(J.M.length)");a=R("window.R113IDLE");log('after the run (ends G91 G28): tool drawn at the top edge with Home ↑, Z at or above the stock top',a&&a.home==1&&a.z>=ST()-1e-9,JSON.stringify(a)+' top '+ST());
+  }catch(e){log('exception',false,e.stack)}fin()},400)};
 </script>

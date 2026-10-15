@@ -7718,5 +7718,16 @@ function r112bBack(g){try{if(!g||!Array.isArray(g.code))return g;const c=g.code;
  for(let q=ends.length-1;q>=0;q--){const e=ends[q],s0=q?ends[q-1]+1:0;if(c.slice(s0,e).some(l=>R111HOME.test(String(l))&&!/BEFORE THE FIRST CUT/.test(String(l))))continue;c.splice(e,0,bk)}}catch(e){}return g}
 ['gen','genL','genP','genJ2'].forEach(fn=>{const f=window[fn];if(typeof f!='function')return;const w=function(){return r112bBack(f.apply(this,arguments))};w.toString=()=>f.toString();window[fn]=w});
 
+
+/* v113: Maria's loops chip - teal chip under the code preview; Switch scrolls to Output and outlines the Macro loop tile (never switches); x dismisses per job. Gated by this allowlist - starts EMPTY, add job types (e.g. 'cpock') to turn it on */
+const R113LOOPS=[];
+{const st=document.createElement('style');st.textContent='.r113chip{display:flex;align-items:center;gap:8px;margin:8px 0;padding:8px 10px;border-radius:999px;background:#0d1f1c;border:1.5px solid #14b8a6;color:#14b8a6;font-size:12px;font-weight:700;cursor:pointer}.r113chip .x{margin-left:auto;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#5eead4;font-weight:400;font-size:14px;opacity:.85;background:none;border:0}.r113pulse{border-color:#14b8a6!important;color:#5eead4!important;box-shadow:0 0 0 3px rgba(20,184,166,.35)}';document.head.appendChild(st)}
+function r113loopsOn(j){return !!(j&&j.op&&!j.lathe&&R113LOOPS.includes(j.op)&&!j.r113noLoops&&Array.isArray(j.code)&&j.code.length)}
+function r113switch(){const o=[...document.querySelectorAll('#out [onclick*="ed(\'Output\')"],#out [data-st="Output"],#out [data-k="Output"]')];const tile=[...document.querySelectorAll('#out span,#out button')].find(x=>/^\s*Macro loop\s*$/.test(x.textContent));const t=tile||o[0];if(t){t.scrollIntoView({block:'center'});t.classList.add('r113pulse')}return !!t}
+function r113chip(){try{let c=$('#r113chip');const ed=$('#ed');if(!r113loopsOn(typeof J!='undefined'?J:null)||!ed){if(c)c.remove();return}
+ if(!c){c=document.createElement('div');c.id='r113chip';c.className='r113chip';c.innerHTML='<span id="r113sw">↻ Loops available for this job · Switch ›</span><button type="button" class="x" id="r113x" aria-label="Dismiss">×</button>';c.querySelector('#r113sw').onclick=()=>r113switch();c.querySelector('#r113x').onclick=e=>{e.stopPropagation();J.r113noLoops=1;try{save()}catch(_){}c.remove()}}
+ if(ed.nextElementSibling!==c)ed.after(c)}catch(e){}}
+{const _s113=show;show=function(){const r=_s113.apply(this,arguments);r113chip();return r}}
+
 /* R79-END */</script>
 </body></html>
