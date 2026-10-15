@@ -68,4 +68,10 @@ T114.push(async E=>{const c=E(`cur(1);J=null;tab('new');pickJob('rotcl');__FILL(
 // ---- #9 cpock: pocket smaller than the cutter holds AND clears the program
 T114.push(async E=>{const x=JSON.parse(E(`(()=>{const r=RUN114(1,'cpock',0);const b=Array.isArray(J.code);J.p.Dia={v:0.2,g:false};J.p.Cutter={v:0.25,g:false};show();return JSON.stringify({b,a:Array.isArray(J.code),ed:!!$('#ed'),cp:!!$('#cp'),bad:($('#out .bad')||{}).textContent||''})})()`));
  log('#9 cpock with pocket < cutter: held with the reason, program cleared (no editor, no Copy)',x.b&&!x.a&&!x.ed&&!x.cp&&/smaller than the pocket/.test(x.bad),JSON.stringify(x))});
+// ---- #10 tlen: alarm lines name the rotary left at the job angle (comment only)
+T114.push(async E=>{const a=JSON.parse(E(`JSON.stringify(RUN114(1,'tlen',36))`)).code||'',z=JSON.parse(E(`JSON.stringify(RUN114(1,'tlen',0))`)).code||'';
+ const A=a.split('\n'),Z=z.split('\n');const al=A.filter(l=>/#3000\s*=/.test(l));
+ const strip=L=>L.map(l=>l.replace(/ \(ROTARY LEFT AT JOB ANGLE\)/,'')).filter(l=>!/\(JOB ANGLE\)/.test(l)).join('\n');
+ log('#10 tlen at A36: every #3000 alarm line carries (ROTARY LEFT AT JOB ANGLE); at 0 none do',al.length>0&&al.every(l=>/\(ROTARY LEFT AT JOB ANGLE\)$/.test(l))&&!/ROTARY LEFT/.test(z),al.join(' | '));
+ log('#10 no motion added: A36 program minus the note and the job-angle line equals the 0 program',strip(A)==strip(Z),'')});
 </script>
