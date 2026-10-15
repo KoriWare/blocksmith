@@ -75,7 +75,7 @@ setTimeout(async()=>{try{const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '
  E("J=null;tab('new');ex('G54 swiss turn 0.5 bar to 0.375 dia 0.8 long z0 0 part off 0.062')");const zs=[...d.querySelectorAll('#out .set')].find(s=>s.querySelector('[data-k="Z0"]'));log('B: lathe Z0 hint has no 4th-axis text',!zs||!/4th/.test(zs.textContent));
  E("J=null;tab('new');pickJob('subxfer')");const rs=[...d.querySelectorAll('#out .set')].find(s=>s.querySelector('[data-k="Retract"]')),rp=[...d.querySelectorAll('#out .set')].find(s=>s.querySelector('[data-k="RPM"]'));
  log('B: sub-spindle Retract / RPM hints fixed',rs&&!/G71/.test(rs.textContent)&&rp&&/rpm/.test(rp.textContent),(rs||{}).textContent+' / '+(rp||{}).textContent);
- E("J=null;tab('new');pickJob('swiss')");const bi=d.querySelector('#out [data-k="Bar Ø"]');if(bi){bi.value='-0.5';E('fill()')}log('B: form shows the reason for a refused value',/wasn’t accepted/.test(d.querySelector('#out').textContent));
+ E("J=null;tab('new');pickJob('swiss')");const bi=d.querySelector('#out [data-k="Bar Ø"]');if(bi){bi.value='abc';E('fill()')}log('B: form shows the reason for a refused value (typed in this job; v112b: no stale reasons from earlier jobs)',/wasn’t accepted/.test(d.querySelector('#out').textContent));
  w.UIA.prompt=()=>'';E("lcyc('g71')");await sl(50);log('B: ~lc sample writes nothing without a tool number',/type a tool number/.test((d.querySelector('#r79toast')||{}).textContent||''));
  w.UIA.prompt=()=>'7';E("lcyc('g71')");log('B: ~lc sample uses the typed tool',/T0707/.test(E("txt().join('\\n')"))&&!/T0101/.test(E("txt().join('\\n')")));delete w.UIA.prompt;
  // D: Haas G47 wrapped engrave
