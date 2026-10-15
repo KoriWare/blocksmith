@@ -27,6 +27,12 @@ S(()=>{const code=ev('(J.code||[]).join("\\n")'),hold=ev('J.r112eHold||""');wind
  const ck=[...d.querySelectorAll('#ck li,#ck .ck,#ck div')].map(e=>e.textContent);log('all code checks pass',/(\d+) of \1 pass/.test((Q('#out')||{}).innerText),((Q('#out')||{}).innerText.match(/Code checks: \d+ of \d+ pass/)||[''])[0]+' '+[...d.querySelectorAll('#ck .bad,#ck .no,#ck .r113fl')].map(e=>e.textContent).join(' | '));
  log('sim stock is the Stock card bar: length 6, Ø1.5',ev('JSON.stringify(J.stock)')=='[0,-0.75,-0.75,6,0.75,0.75]',ev('JSON.stringify(J.stock)'));
  log('no exceptions',errs.length==0,errs.join(' || '))},300);
-if(/shot=1/.test(location.search))S(()=>{T('Simulate').click()},1500);else S(()=>{fin()});
+S(()=>{T('Simulate').click()},1200);
+ const PX=()=>ev('(()=>{const q=P([Math.max(0.3,38/view.s),0,0]);const dpr=cv.width/cv.clientWidth;const d=ctx.getImageData(Math.round(q[0]*dpr)-3,Math.round(q[1]*dpr)-3,7,7).data;let red=0;for(let i=0;i<d.length;i+=4)if(d[i]>200&&d[i+1]<120)red++;return red})()');
+ if(!/shot=1/.test(location.search)){
+ S(()=>{const res=['Top','Front','Iso','Fit'].map(v=>{const b=T(v);b&&b.click();return v+':'+PX()});log('Simulate: X axis arrow drawn at part zero in Top / Front / Iso / Fit (XYZ on)',res.every(x=>+x.split(':')[1]>0)&&/\by\b/.test(Q('#tri').className),res.join(' '))},600);
+ S(()=>{Q('#tri').click()},300);S(()=>{const res=['Top','Iso'].map(v=>{T(v).click();return v+':'+PX()});log('XYZ tapped off: arrows hidden, button gray',res.every(x=>+x.split(':')[1]==0)&&/\bgr\b/.test(Q('#tri').className),res.join(' ')+' '+Q('#tri').className)},300);
+ S(()=>{Q('#tri').click()},300);S(()=>{T('Fit').click();log('XYZ tapped on again: arrows back',PX()>0,PX())},300);
+ S(()=>{fin()})}
 const run=i=>{if(i>=seq.length)return;try{seq[i][0]()}catch(e){log('step'+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),800)}
 </script>
