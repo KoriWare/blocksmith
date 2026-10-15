@@ -1670,7 +1670,7 @@ function eFlatErr(g){let ang=0,err=0;const t=eTool(),half=(eWidth(t,EV('Depth'))
 // ---- code generation (inch values via f4; genU converts for mm)
 function genE(j){J=j;const g=eGeom(j),v=k=>j.p[k].v,d=v('Depth'),clr=v('Clearance'),fd=v('Feed'),pf=v('Plunge feed'),rpm=v('RPM'),T=v('Tool'),off=offCode(v('Work offset')),hk=ctrlKey()=='haas',K=GENMM?25.4:1,C=[],mv=[];
  const g93=eYes('G93 inverse time'),cyl=eYes('Cylindrical interp (G07.1/G107)'),pol=eYes('Polar interp (G12.1/G112)'),fr=x=>f4(x/K);
- const pre=(x,lim)=>Math.max(lim,x);C.push('%',`O${j.lathe?6100:6000} (ENGRAVE TEXT - MACRO BUILDER)`,`(TEXT: ${v('Text')})`,`(METHOD: ${EMN[g.meth].toUpperCase()})`,`(ZERO: ${v('Zero point')})`);
+ const pre=(x,lim)=>Math.max(lim,x);C.push('%',`O${j.lathe?6100:6000} (ENGRAVE TEXT - BLOCKSMITH)`,`(TEXT: ${v('Text')})`,`(METHOD: ${EMN[g.meth].toUpperCase()})`,`(ZERO: ${v('Zero point')})`);
  if(!j.lathe){C.push('G17 G20 G40 G49 G80 G90 G94 (SAFE START)',`T${T} M06 (ENGRAVING TOOL)`);
   const zc=g.meth=='mface'?clr:g.R+clr;const P=g.uv.map(q=>q.map(([a,b])=>{if(g.meth=='mface')return{x:a,y:b,z:-d};if(g.meth=='flat'){const y=b;return{x:g.ax0+a,y,z:Math.sqrt(Math.max(0,g.R*g.R-y*y))-d}}return{x:g.ax0+a,a:ED(b/g.R),z:g.R-d}}));
   const w=g.meth=='awrap',st=P[0][0];C.push(`${off} G00 X${f4(st.x)} ${w?'A'+st.a.toFixed(3):'Y'+f4(st.y)} S${rpm} M03`,`G43 H${T} Z${f4(zc)}`);if(w&&g93)C.push('(G93 INVERSE TIME - F = 1 / MINUTES PER MOVE)');if(w&&!g93)C.push('(INVERSE TIME NOT CONFIRMED - COMBINED X/A FEED, CHECK ON CONTROL)');
@@ -1928,7 +1928,7 @@ function genT(j){const v=k=>(j.p[k]||{}).v,T=v('Tool'),H=v('Offset no. (H)')||T,
  const br=v('Mode')=='Broken-tool check',upd=v('Update offset')=='YES',tol=v('Tolerance'),ex=v('Expected length'),geoOnly=v('Offset page value')=='Geometry only';
  const page=vr.single?`#${vr.single}`:geoOnly?`#${vr.geo}`:`#${vr.geo}+#${vr.wear}`,call=TV('Tool setter macro call').replace(/<T>/gi,T+'.').replace(/<H>/gi,H+'.');
  const tgt=reg.kind=='off'?reg.n:(vr.single||vr.geo),K=UN()=='mm'?25.4:1,num=s=>{const x=parseFloat(s);return isNaN(x)?null:x/K};
- L('%');L(`O7000 (TOOL LENGTH ${br?'BROKEN-TOOL CHECK':'CHECK'} - MACRO BUILDER)`);L(`(T${T} H${H} - ${ctrlLbl()}${hk?'':' MEMORY '+vr.mem+(vr.v15?' V15=1':'')} - VERIFY ON CONTROL)`);
+ L('%');L(`O7000 (TOOL LENGTH ${br?'BROKEN-TOOL CHECK':'CHECK'} - BLOCKSMITH)`);L(`(T${T} H${H} - ${ctrlLbl()}${hk?'':' MEMORY '+vr.mem+(vr.v15?' V15=1':'')} - VERIFY ON CONTROL)`);
  L(vr.single?`(H${H} OFFSET #${vr.single} - MEMORY A HAS ONE VALUE)`:`(H${H} GEOMETRY #${vr.geo} WEAR #${vr.wear})`);
  L(br?'(BROKEN-TOOL: MEASURED VS OFFSET BEFORE MEASURING)':'(EXPECTED LENGTH AND TOLERANCE ARE FROM YOUR PROGRAM)');
  L('G17 G20 G40 G49 G80 G90 (SAFE START)');L('G91 G28 Z0.');L('G90');L(`T${T} M06`);
@@ -2005,7 +2005,7 @@ Object.assign(UNIT,{'Counter #':'#, a free common variable kept at power off','T
  'RPM steps':'rpm list, e.g. 2000 4000 6000','Passes per step':'count','X min':'in, G53 machine','X max':'in, G53 machine','Y min':'in, G53 machine','Y max':'in, G53 machine','Z clear':'in, G53 machine'});
 // ---- shared helpers
 const jv=(j,k)=>(j.p[k]||{}).v,hkC=()=>ctrlKey()=='haas';
-function hdr(L,o,name){L('%');L(`O${o} (${name} - MACRO BUILDER)`);L(ctrlHdr());L('G17 G20 G40 G49 G80 G90 (SAFE START)')}
+function hdr(L,o,name){L('%');L(`O${o} (${name} - BLOCKSMITH)`);L(ctrlHdr());L('G17 G20 G40 G49 G80 G90 (SAFE START)')}
 function endP(L){L('G91 G28 Z0.');L('G90');L('M30')}
 function tstart(L,j,x,y,z){const T=jv(j,'Tool');L(`T${T} M06`);L(`${offCode(jv(j,'Work offset'))} G00 X${f4(x)} Y${f4(y)}`);if(jv(j,'RPM'))L(`S${jv(j,'RPM')} M03`);L(`G43 H${T} Z${f4(z)}`)}
 function varOK(n){n=+n;const k=ctrlKey();if(!(n>0))return'a variable number like #500';if(k=='haas'){if(n==3901||n==3902)return null;if((n>=600&&n<=699)||(n>=800&&n<=999)||(n>=10600&&n<=10699)||(n>=10800&&n<=10999)||(n>=10200&&n<=10499))return null;if((n>=100&&n<=199)||(n>=500&&n<=599)||(n>=10100&&n<=10199)||(n>=10500&&n<=10599))return'#'+n+' is in the Haas range kept for probes / pallets — use #600–#699 or #800–#999';return'#'+n+' is not a Haas variable kept at power off (use #600–#699 or #800–#999)'}
@@ -2285,7 +2285,7 @@ defJ('mgroove',{name:'Multi-groove pattern (lathe)',lathe:1,re:/(?:multi(?:ple)?
  parse:(l,G,n)=>{G('Bar Ø',n(/([\d.]+)\s*(?:"|in)?\s*(?:dia\s*)?(?:bar|stock)/));G('Groove Ø',n(/(?:to|bottom|groove\s*dia(?:meter)?)\s*([\d.]+)/));const z=n(/(?:first\s*(?:groove)?\s*(?:at)?\s*z|at\s*z)\s*(-?[\d.]+)/);G('First groove Z',z);G('Groove pitch',n(/(?:pitch|apart|spacing)\s*([\d.]+)/)??n(/([\d.]+)\s*(?:"|in)?\s*(?:pitch|apart)/));G('Count',n(/(\d+)\s*grooves?/));G('Groove width',n(/([\d.]+)\s*(?:"|in)?\s*wide/));G('Insert W',n(/insert\s*([\d.]+)/));if(/left\s*corner/.test(l))G('Insert reference','left corner (-Z side)');if(/right\s*corner/.test(l))G('Insert reference','right corner (+Z side)')},
  block:j=>{if(sp(j,'Groove Ø')>=sp(j,'Bar Ø'))return'Groove Ø must be smaller than the bar.';if(sp(j,'Insert W')>sp(j,'Groove width')+1e-9)return'Insert is wider than the groove.';if(sp(j,'Groove pitch')<sp(j,'Groove width')-1e-9)return'Pitch is smaller than the groove width — grooves would overlap.';if(!(sp(j,'Count')>=1))return'Count must be 1 or more.';return null},
  gen:(j,L)=>{const T=sp(j,'Tool'),tt='T'+String(T).padStart(2,'0')+String(T).padStart(2,'0'),B=sp(j,'Bar Ø'),Gd=sp(j,'Groove Ø'),z1=sp(j,'First groove Z'),P=sp(j,'Groove pitch'),N=sp(j,'Count'),W=sp(j,'Groove width'),iw=sp(j,'Insert W'),left=/left/.test(sp(j,'Insert reference')),xc=B+0.1,f=sp(j,'Feed/rev');
-  L('%');L('O2100 (MULTI-GROOVE PATTERN - MACRO BUILDER)');L(ctrlHdr(' LATHE - X IN DIAMETER'));L(`G18 ${GU()} G40 G80 G99 (SAFE START)`);L(`${tt} (GROOVE TOOL, Z SET TO ${left?'LEFT':'RIGHT'} CORNER)`);L(`G97 S${sp(j,'RPM')} M03`);L(`G00 X${f4(xc)} Z${f4(sp(j,'Clear Z'))}`);
+  L('%');L('O2100 (MULTI-GROOVE PATTERN - BLOCKSMITH)');L(ctrlHdr(' LATHE - X IN DIAMETER'));L(`G18 ${GU()} G40 G80 G99 (SAFE START)`);L(`${tt} (GROOVE TOOL, Z SET TO ${left?'LEFT':'RIGHT'} CORNER)`);L(`G97 S${sp(j,'RPM')} M03`);L(`G00 X${f4(xc)} Z${f4(sp(j,'Clear Z'))}`);
   for(let g=0;g<N;g++){const zr=z1-g*P;L(`(GROOVE ${g+1} - WALLS Z${f4(zr)} TO Z${f4(zr-W)})`);const pl=[];let e=zr;for(;;){pl.push(e);if(e-iw<=zr-W+1e-9)break;e=Math.max(zr-W+iw,e-iw*0.8)}
    pl.forEach(e=>{const zt=left?e-iw:e;L(`G00 Z${f4(zt)}`);L(`G01 X${f4(Gd)} F${f4(f)}`);L(`G00 X${f4(xc)}`)})}
   L(`G00 Z${f4(sp(j,'Clear Z'))}`);L('M05');L('G28 U0. W0.');L('M30');L('%');return 1},
@@ -2337,7 +2337,7 @@ if(!OPTS.find(o=>o[0]=='rot'))OPTS.push(['rot','Coordinate rotation (G68)','Axes
 const pair=k=>{const x=sv(k);if(!x||x.st!='user'||!String(x.v).trim())return null;const p=String(x.v).split('/').map(s=>s.trim());return p.length>=2&&p[0]&&p[1]?{on:p[0],off:p[1]}:null};
 const vnum=(l,re)=>{const m=l.match(re);return m?+m[1]:null};
 const lt2=T=>'T'+String(T).padStart(2,'0')+String(T).padStart(2,'0');
-function lhdr(L,o,name){L('%');L(`O${o} (${name} - MACRO BUILDER)`);L(ctrlHdr(' LATHE - X IN DIAMETER'));L(`G18 ${GU()} G40 G80 G99 (SAFE START)`)}
+function lhdr(L,o,name){L('%');L(`O${o} (${name} - BLOCKSMITH)`);L(ctrlHdr(' LATHE - X IN DIAMETER'));L(`G18 ${GU()} G40 G80 G99 (SAFE START)`)}
 function lend(L){L('M05');L('G28 U0. W0.');L('M30');L('%')}
 // day number from a YYYYMMDD variable (plain calendar math, our own) -> #out
 function jdn(L,src,out,tag){L(`#26=${src} (${tag} YYYYMMDD)`);L('#27=FIX[#26/10000]');L('#28=FIX[#26/100]-#27*100');L('#29=#26-FIX[#26/100]*100');L('#30=FIX[[14-#28]/12]');L('#31=#27+4800-#30');L('#32=#28+12*#30-3');L(`${out}=#29+FIX[[153*#32+2]/5]+365*#31+FIX[#31/4]-FIX[#31/100]+FIX[#31/400]-32045 (${tag} DAY NUMBER)`)}
@@ -4581,7 +4581,7 @@ defJ('dx32',{name:'3+2 face feature from a drawing (subprogram for the 3+2 wrapp
  extra:j=>j.dx&&j.dx.pts?['Cycle','Depth','R plane (above Z0)',...(jv(j,'Cycle')=='Peck G83'?['Peck Q']:[])]:['Side','Side OK','Cut direction','Cutter','Lead-in','Lead-in OK','Depth','Stepdown','Clear Z','Plunge feed','Tool'],
  block:j=>{if(!dxHas(j))return'This job needs its drawing: import the DXF again (drawing geometry is not kept in shared files).';const pn=jv(j,'Feature program');if(!(pn>=1&&pn<=99999&&Math.round(pn)==pn))return'Feature program: a program number like 5101.';
   if(j.dx.pts)return J2.dxdrill.block({...j,p:{...j.p,RPM:{v:1},Tool:{v:1},'Work offset':{v:'G54'}}});const b=J2.dxprof.block({...j,p:{...j.p,RPM:{v:1},'Work offset':{v:'G54'}}});return b},
- gen:(j,L)=>{const pn=Math.round(jv(j,'Feature program')),z0=jv(j,'Z0');L('%');L(`O${pn} (3+2 FACE FEATURE FROM DRAWING - MACRO BUILDER)`);L('(SUBPROGRAM - RUN IT FROM THE 3+2 TILTED-PLANE WRAPPER WITH M98 P'+pn+')');L('(X Y Z ARE IN THE TILTED PLANE - THE WRAPPER SETS PLANE, TOOL, LENGTH COMP AND SPINDLE)');dxHdr(L,j,j.dx.pts?j.dx.pts.length+' HOLES':'SHAPE '+j.dx.shape);
+ gen:(j,L)=>{const pn=Math.round(jv(j,'Feature program')),z0=jv(j,'Z0');L('%');L(`O${pn} (3+2 FACE FEATURE FROM DRAWING - BLOCKSMITH)`);L('(SUBPROGRAM - RUN IT FROM THE 3+2 TILTED-PLANE WRAPPER WITH M98 P'+pn+')');L('(X Y Z ARE IN THE TILTED PLANE - THE WRAPPER SETS PLANE, TOOL, LENGTH COMP AND SPINDLE)');dxHdr(L,j,j.dx.pts?j.dx.pts.length+' HOLES':'SHAPE '+j.dx.shape);
   if(j.dx.pts){const zb=z0-jv(j,'Depth'),zr=z0+jv(j,'R plane (above Z0)'),c=jv(j,'Cycle'),P=j.dx.pts;L(`(DRAWING HOLE DIA ${f4(j.dx.d)} - A HINT ONLY)`);L(`G00 X${f4(P[0][0])} Y${f4(P[0][1])}`);L(`G00 Z${f4(zr)}`);
    P.forEach((p,i)=>{if(i==0)L(`G98 ${c=='Peck G83'?'G83':'G81'} X${f4(p[0])} Y${f4(p[1])} Z${f4(zb)} R${f4(zr)}${c=='Peck G83'?' Q'+f4(jv(j,'Peck Q')):''} F${f4(jv(j,'Feed'))}`);else L(`X${f4(p[0])} Y${f4(p[1])}`)});L('G80');const b=dxBox(P);j.stock=[b[0]-0.5,b[1]-0.5,zb-0.25,b[2]+0.5,b[3]+0.5,z0]}
   else{const P=dxPlan(j),dep=jv(j,'Depth'),sd=jv(j,'Stepdown'),zc=z0+jv(j,'Clear Z'),T=jv(j,'Tool'),n=Math.ceil(dep/sd-1e-9);L(`(PART LINE WITH ${P.g} D${T} IN THE TILTED PLANE - CHECK YOUR CONTROL ALLOWS CUTTER COMP UNDER THE PLANE COMMAND)`);L(`G00 X${f4(P.S0[0])} Y${f4(P.S0[1])}`);L(`G00 Z${f4(zc)}`);
@@ -7148,7 +7148,7 @@ const R111FC=new Map();
 function r111flat(){if(R111OFF||typeof J=='undefined'||!J||!J.op)return false;if(R111NOT.test(J.op))return false;try{const k=String(jKind(J.op)||'');if(/five|ax4|swonly/.test(k))return false;if(typeof JNEED!='undefined'&&JNEED[J.op]=='ax4')return false;if(typeof OPN2!='undefined'&&OPN2[J.op])return false}catch(e){}
  const m=S.m[S.cur];const ax=r111axes(m);if(!ax.length)return false;const key=J.op+'|'+S.cur+'|'+JSON.stringify(J.p);if(R111FC.has(key)&&Array.isArray(J.code)&&J.code.length){const v=R111FC.get(key);J.r111f={k:J.op+'|'+S.cur,v};return v}
  let c=Array.isArray(J.code)&&J.code.length?J.code:null;if(!c)return J.r111f&&J.r111f.k==J.op+'|'+S.cur?J.r111f.v:false; // never call gen() on unvalidated params (it can loop); use the last validated result
- let r=!!(c&&r111tc(c,!!ax[0].lathe).length);if(r){const Ls=ax.map(a=>a.L).join('');const re=new RegExp('(^|\\s)['+Ls+'](?!-?0\\.?0*(\\s|$))-?[\\d.]','i');if(c.some(l=>re.test(String(l).replace(/\(.*?\)/g,'').replace(/^\s*N\d+/,''))))r=false} /* a job that already moves its rotary is not a flat job */if(r&&ax[0].lathe){const lv=String((r111sv(m,'Live tool start / stop')||{}).v||'').split('/')[0].trim();r=!!lv&&c.some(l=>String(l).includes(lv))}
+ let r=!!(c&&r111tc(c,!!ax[0].lathe).length);if(r){const Ls=ax.map(a=>a.L).join('');const re=new RegExp('(^|\\s)['+Ls+'](?!-?0\\.?0*(\\s|$))-?[\\d.]','i');if(c.some(l=>!/\((JOB ANGLE|ROTARY BACK TO ZERO|ROTARIES BACK TO ZERO)\)/.test(String(l))&&re.test(String(l).replace(/\(.*?\)/g,'').replace(/^\s*N\d+/,''))))r=false} /* a job that already moves its rotary is not a flat job */if(r&&ax[0].lathe){const lv=String((r111sv(m,'Live tool start / stop')||{}).v||'').split('/')[0].trim();r=!!lv&&c.some(l=>String(l).includes(lv))}
  if(R111FC.size>300)R111FC.clear();R111FC.set(key,r);J.r111f={k:J.op+'|'+S.cur,v:r};return r}
 function r111state(ax){J.rang=J.rang&&typeof J.rang=='object'?J.rang:{};if(J.rang.sig!==r111sig(ax)){J.rang={sig:r111sig(ax),v:{}}}return J.rang} // rule 4: letter change clears
 function r111num(v){const t=String(v==null?'':v).trim();return /^-?\d+(\.\d+)?$/.test(t)?+t:null}
@@ -7162,18 +7162,18 @@ function r111lines(ax,st){const nz=ax.map(a=>[a,r111num(st.v[a.id])]).filter(([a
 {const _h=hasUser;hasUser=function(j){return _h.apply(this,arguments)||!!(j&&j.rang&&j.rang.v&&Object.values(j.rang.v).some(v=>String(v||'').trim()))}}
 function r111focus(id){const i=document.querySelector('#r111ang input[data-a="'+id+'"]')||document.querySelector('#r111ang input');if(i){i.scrollIntoView({block:'center'});i.focus()}}
 {const _sh=show;show=function(){const r=_sh.apply(this,arguments);try{if(J&&Array.isArray(J.code)&&J.code.length&&!J.lathe)try{J.r111S=!!r110S(J.code).length}catch(e){}const o=$('#out');if(o)o.querySelectorAll('#r111ang').forEach(e=>e.remove());if(!o||!r111flat())return r;const ax=r111axes(),st=r111state(ax);const P=r111problems(ax,st);
-  let add=[];if(!P.length&&Array.isArray(J.code)&&J.code.length){add=r111lines(ax,st);if(add.length&&!window.R111IN&&!(J.r111ins&&J.r111code===J.code)){const tc=r111tc(J.code,!!ax[0].lathe);for(let k=tc.length-1;k>=0;k--){let at=tc[k]+1;while(at<J.code.length&&/^\s*(N\d+\s*)?G0?0\s+([ABC]-?0\.?0*\s*)+(\(.*\))?\s*$/i.test(String(J.code[at])))at++;J.code.splice(at,0,...add)}J.r111ins=add.slice();J.r111code=J.code;window.R111IN=1;try{refresh()}catch(e){}window.R111IN=0;}}
-  const tcl=Array.isArray(J.code)&&J.code.length?J.code[r111tc(J.code,!!ax[0].lathe)[0]]:null;
+  const add=r111pv(ax); /* v111c: lines read back from the program itself (the angle is written by r111post inside gen) */
+  const tcl=null;
   const card=document.createElement('div');card.id='r111ang';
   card.innerHTML=ax.map(a=>{const v=st.v[a.id],n=r111num(v),pb=P.find(p=>p.a===a);const ok=n!=null&&!pb;return `<div class="r111c"><div class="r111l"><span class="r111d" style="background:${ok?'#3c6':'#e44'}"></span>${esc(a.lab)}</div><div class="r111s">${esc(a.sub)}</div>
    <div class="r111r"><div class="r111b${ok?' ok':' bad'}"><input data-a="${a.id}" inputmode="decimal" enterkeyhint="done" placeholder="e.g. 90" value="${v!=null?esc(String(v)):''}"><span class="r111k">${ok?'✓':''}</span></div><div class="r111u">deg</div></div>
-   ${pb?`<div class="r111n">Needs: ${esc(pb.need)}</div>${pb.ex?`<div class="r111e">Example: ${pb.ex}</div>`:''}<div class="r111p">⛔ Not written: ${esc(pb.msg)}</div>`:`<div class="r111p">${esc(tcl||'T# M06')}${add.length?'<br>'+add.map(esc).join('<br>'):'<br>(no rotary move — stays at home)'}</div>`}</div>`}).join('');
+   ${pb?`<div class="r111n">Needs: ${esc(pb.need)}</div>${pb.ex?`<div class="r111e">Example: ${pb.ex}</div>`:''}<div class="r111p">⛔ Not written: ${esc(pb.msg)}</div>`:`<div class="r111p">${add.length?add.map(esc).join('<br>'):'T# M06'}</div>`}</div>`}).join('');
   const anchor=o.querySelector('#ck')||o.querySelector('#r110hold')||o.querySelector('#r104hold')||null;if(anchor)anchor.insertAdjacentElement('beforebegin',card);else o.appendChild(card);
   card.querySelectorAll('input[data-a]').forEach(inp=>{let typed=false;inp.addEventListener('input',()=>{typed=true;const t=inp.value.trim();st.v[inp.dataset.a]=t===''?null:t;try{drSave()}catch(e){}});
    const go=()=>{if(!typed)return;typed=false;const y=scrollY,id=inp.dataset.a;show();scrollTo(0,y);setTimeout(()=>{const i=document.querySelector('#r111ang input[data-a="'+id+'"]');if(i&&!r111num(st.v[id])&&st.v[id]==null)i.focus()},0)};
    inp.addEventListener('keydown',e=>{if(e.key=='Enter'){e.preventDefault();go()}else if(e.key=='Escape'){e.preventDefault();typed=false;inp.blur()}});inp.addEventListener('change',go)}); // rule 2: only typing sets it; Tab/Esc/blur alone never confirm
   if(P.length){r110hold('⛔ Not written: '+P.map(p=>p.msg).join('; '));const h=$('#r110hold');if(h&&card.nextSibling!==h)card.insertAdjacentElement('afterend',h)}
-  let mc=o.querySelector('.r102mach');if(!mc&&ax.some(a=>r111num(st.v[a.id])==null)){const it=r102machItems();const c=document.createElement('div');c.className='card r102machc';mc=document.createElement('button');mc.type='button';mc.className='chip r r102mach';mc.textContent='Machine: '+it.length+' to confirm ›';mc.title=it.join(', ');c.appendChild(mc);card.insertAdjacentElement('beforebegin',c)}if(mc&&ax.some(a=>r111num(st.v[a.id])==null)){mc.onclick=e=>{e.preventDefault();const a=ax.find(a=>r111num(st.v[a.id])==null);r111focus(a.id)}}
+  let mc=o.querySelector('.r102mach');if(!mc&&ax.some(a=>r111num(st.v[a.id])==null)){const it=r102machItems();const c=document.createElement('div');c.className='card r102machc';mc=document.createElement('button');mc.type='button';mc.className='chip r r102mach';mc.textContent='Machine: '+it.length+' to confirm ›';mc.title=it.join(', ');c.appendChild(mc);card.insertAdjacentElement('beforebegin',c)}if(mc&&ax.some(a=>r111num(st.v[a.id])==null)){const prev=mc.r111prev||mc.onclick;mc.r111prev=prev;mc.onclick=e=>{let mb=[];try{mb=r103block()}catch(x){}if(mb.length&&prev){return prev.call(mc,e)} /* machine settings first; the angle when it is the only blocker */e.preventDefault();const a=ax.find(a=>r111num(st.v[a.id])==null);r111focus(a.id)}}
  }catch(e){console.error(e)}return r}}
 // rule 4 (sim): the part is drawn at the commanded angle
 function r111simRot(){if(R111OFF||typeof J=='undefined'||!J||!J.rang||!J.r111ins||!J.r111ins.length)return null;const ax=r111axes();const st=J.rang;if(st.sig!==r111sig(ax))return null;const R=[];ax.forEach(a=>{const n=r111num(st.v[a.id]);if(n)R.push([a.L,n*Math.PI/180])});return R.length?R:null}
@@ -7211,6 +7211,19 @@ function r111stars(i){try{const m=S.m[i];if(!m)return;V.querySelectorAll('.r111s
 
 try{HELP.splice(Math.max(0,HELP.findIndex(h=>h[0]=='faq')<0?HELP.length:HELP.findIndex(h=>h[0]=='faq')),0,['r111why','Why some fields have a *',()=>'<p>A * after a label means the job you have open reads that field (from Home: some job on this machine reads it). Red = still blank or unconfirmed, gray = confirmed. Tap the * for the reason.</p>'+R111WHYL.map(([l,k,v])=>`<p><b>${esc(l)}</b>: ${esc(v)}</p>`).join('')])}catch(e){}
 try{if(document.querySelector('#hPct')&&typeof home=='function')home()}catch(e){} /* v111: Home was drawn before the shared Setup line loaded; redraw so cold load matches */
+
+// ===== mc-v111c hotfix: the job angle is written inside the generated program (before it is shown, copied, simulated or saved) =====
+const R111HOME=/^\s*(N\d+\s*)?G0?0\s+([ABC]-?0\.?0*\s*)+(\(.*\))?\s*$/i;
+const R111END=/^\s*(N\d+\s*)?M0?(30|2)\b/i;
+function r111back(ax,st){if(ax[0].lathe){const n=r111num(st.v[ax[0].id]);return n?['G00 C0. (ROTARY BACK TO ZERO)']:[]}return['G00 '+ax.map(a=>a.L+'0.').join(' ')+' (ROTAR'+(ax.length>1?'IES':'Y')+' BACK TO ZERO)']}
+function r111post(j,g){if(R111OFF||!j||!j.op||!g||!Array.isArray(g.code)||!g.code.length)return g;const J0=J,c0=j.code;try{J=j;j.code=g.code;if(!r111flat())return g;const ax=r111axes(),st=r111state(ax);if(r111problems(ax,st).length)return g;
+ const add=r111lines(ax,st).map((l,i,a)=>i==a.length-1?l+' (JOB ANGLE)':l);const code=g.code.slice();
+ if(add.length){const tc=r111tc(code,!!ax[0].lathe);for(let k=tc.length-1;k>=0;k--){let at=tc[k]+1;while(at<code.length&&R111HOME.test(String(code[at])))at++;code.splice(at,0,...add)}}
+ const bk=r111back(ax,st);if(bk.length){let e=-1;code.forEach((l,i)=>{if(R111END.test(String(l)))e=i});if(e<0)code.forEach((l,i)=>{if(/^\s*(N\d+\s*)?M99\b/i.test(String(l)))e=i});if(e>=0)code.splice(e,0,...bk)}
+ j.r111ins=add;return Object.assign({},g,{code})}catch(e){console.error(e);return g}finally{j.code=c0;J=J0}}
+['gen','genL','genP'].forEach(fn=>{const f=window[fn];if(typeof f!='function')return;const w=function(j){return r111post(j,f.apply(this,arguments))};w.toString=()=>f.toString()+' /* + r111post: job angle and return to 0 */';window[fn]=w});
+// preview lines straight from the program: tool change, safe-start zero, job angle, and the return before the end
+function r111pv(ax){const c=Array.isArray(J&&J.code)?J.code:[];if(!c.length)return[];const tc=r111tc(c,!!ax[0].lathe)[0];if(tc==null)return[];const out=[String(c[tc])];for(let i=tc+1;i<c.length;i++){const l=String(c[i]);if(R111HOME.test(l)||/\(JOB ANGLE\)|\(C-AXIS ON\)/.test(l))out.push(l);else break}const b=c.find(l=>/\(ROTAR(Y|IES) BACK TO ZERO\)/.test(String(l)));if(b)out.push('…',String(b));return out}
 
 /* R79-END */</script>
 </body></html>

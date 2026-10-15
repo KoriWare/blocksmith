@@ -16,20 +16,20 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  log("Casey 1: Machine row shows the angle blocker; tapping it focuses the angle field (not Setup)",E("(()=>{const c=$('.r102mach');if(!c||!/Machine: \\d+ to confirm/.test(c.textContent))return 'nochip';c.click();return document.activeElement&&document.activeElement.closest('#r111ang')?true:'nofocus:'+$('#ttl').textContent})()")===true,E("($('.r102mach')||{}).textContent"));
  log("Casey 2: Tab/blur without typing never confirms",E("(()=>{const i=document.querySelector('#r111ang input');i.focus();i.dispatchEvent(new Event('change'));i.blur();return !J.code&&!(J.rang.v.r)})()")===true);
  E("SET('r','90')");
- log("typed 90: G00 A90. after T# M06 and after the home line",E("(()=>{const c=J.code||[];const t=c.findIndex(l=>/T1 M06/.test(l)),h=c.findIndex(l=>/A0\\. \\(ROTARIES/.test(l)),a=c.indexOf('G00 A90.');return t>=0&&a>t&&(h<0||a>h)})()")===true,E("JSON.stringify((J.code||[]).slice(4,9))"));
+ log("typed 90: G00 A90. after T# M06 and after the home line",E("(()=>{const c=J.code||[];const t=c.findIndex(l=>/T1 M06/.test(l)),h=c.findIndex(l=>/A0\\. \\(ROTARIES/.test(l)),a=c.indexOf('G00 A90. (JOB ANGLE)');return t>=0&&a>t&&(h<0||a>h)})()")===true,E("JSON.stringify((J.code||[]).slice(4,9))"));
  E("tab('sim')");log("sim shows the part at the angle",E("JSON.stringify(r111simRot())")==JSON.stringify([["A",Math.PI/2]]));E("tab('new')");
  // Casey 3: 3-axis draft and restore
  E("HB(1);SET('r','45');r98set(1,'vmc3')");log("Casey 3: switching to 3-axis parks the job in a draft",E("!!localStorage.getItem(DRK)&&/45/.test(localStorage.getItem(DRK))")===true);
- E("r98set(1,'vmc4');const d=JSON.parse(localStorage.getItem(DRK));J=d.J;cur(d.cur);tab('new');show()");log("Casey 3: back on 4-axis, Restore brings the angle back",E("J.rang&&J.rang.v.r=='45'&&(J.code||[]).includes('G00 A45.')")===true,E("JSON.stringify(J.rang)"));
+ E("r98set(1,'vmc4');const d=JSON.parse(localStorage.getItem(DRK));J=d.J;cur(d.cur);tab('new');show()");log("Casey 3: back on 4-axis, Restore brings the angle back",E("J.rang&&J.rang.v.r=='45'&&(J.code||[]).includes('G00 A45. (JOB ANGLE)')")===true,E("JSON.stringify(J.rang)"));
  // Casey 4: letter change clears
  E("(()=>{const x=S.m[1].s.find(y=>y.k=='Rotary axis');x.v='B';x.st='user';save();show()})()");log("Casey 4: changing the rotary letter clears the angle",E("!J.code&&r111num(J.rang.v.r)==null&&/B angle not set/.test($('#r110hold').textContent)")===true,E("JSON.stringify(J.rang)"));
  E("(()=>{const x=S.m[1].s.find(y=>y.k=='Rotary axis');x.v='A';save()})()");
  // HMC B
- E("HB(3)");log("HMC: B angle field",E("/Rotary angle \\(B\\)/.test($('#r111ang').textContent)")===true);E("SET('r','90')");log("HMC: G00 B90.",E("(J.code||[]).includes('G00 B90.')")===true);
+ E("HB(3)");log("HMC: B angle field",E("/Rotary angle \\(B\\)/.test($('#r111ang').textContent)")===true);E("SET('r','90')");log("HMC: G00 B90.",E("(J.code||[]).includes('G00 B90. (JOB ANGLE)')")===true);
  // 5-axis limits
  E("HB(I5)");log("5-axis: tilt and table fields",E("$('#r111ang').querySelectorAll('input').length")==2);
  E("SET('t','135');SET('c','0')");log("5-axis: B 135 past the -30..110 limit is held",E("!J.code&&/B 135 is past the tilt limit/.test($('#r110hold').textContent)")===true,E("($('#r110hold')||{}).textContent"));
- E("SET('t','30');SET('c','45')");log("5-axis: within limits writes G00 B30. C45.",E("(J.code||[]).includes('G00 B30. C45.')")===true,E("JSON.stringify((J.code||[]).slice(3,9))"));
+ E("SET('t','30');SET('c','45')");log("5-axis: within limits writes G00 B30. C45.",E("(J.code||[]).includes('G00 B30. C45. (JOB ANGLE)')")===true,E("JSON.stringify((J.code||[]).slice(3,9))"));
  // flat-0 byte-identical vs v110 behaviour, every machine type, every flat job
  /*DIFF*/
  // stars: agree with holds and count, both entry points

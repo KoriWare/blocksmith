@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v111c hotfix: every flat job x every rotary machine x angle 0 / 36 / 90 — full program read --><iframe id="f0" src="../index.html?v=111c&a=0" style="width:390px;height:700px;border:0"></iframe><iframe id="f1" src="../index.html?v=111c&a=36" style="width:390px;height:700px;border:0"></iframe><iframe id="f2" src="../index.html?v=111c&a=90" style="width:390px;height:700px;border:0"></iframe><script src="gen104.js"></script><script>
+const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,900)));const R={};let left=3;
+const fin=()=>{try{check()}catch(e){log('exception '+e.message,false)}o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length};
+[[f0,0],[f1,36],[f2,90]].forEach(([f,A],i)=>{let step=0;f.onload=()=>{const w=f.contentWindow;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(()=>{try{R104GEN(w,out=>{R[A]=out;if(--left==0)fin()},A)}catch(e){R[A]={};log('gen '+A+' '+e.message,false);if(--left==0)fin()}},800*(i+1))}});
+const HOME=/^\s*(N\d+\s*)?G0?0\s+([ABC]-?0\.?0*\s*)+(\(.*\))?\s*$/i,TC=/(^|\s)T\d+\s*M0?6\b/i,END=/^\s*(N\d+\s*)?M0?(30|2)\b/i;
+function check(){const P=k=>{const v=R[0][k];return v?JSON.parse(v):null};const keys=Object.keys(R[0]).filter(k=>R[0][k]);const types=new Set(),bad={0:[],36:[],90:[]};let runs=0;const held=new Set();
+ for(const k of keys){for(const A of [0,36,90]){const v=R[A][k];if(!v){bad[A].push(k+' missing');continue}const d=JSON.parse(v);types.add(d.t);if(!d.code){const z=P(k);if(z&&z.code||A==0&&/angle/i.test(d.hold))bad[A].push(k+' held: '+d.hold.slice(0,80));else held.add(k);continue}runs++;const c=d.code;
+  const fmt=n=>Number.isInteger(n)?n+'.':String(n);
+  const want=d.lathe?'G00 C'+fmt(A)+' (JOB ANGLE)':'G00 '+d.L.map(L=>L+fmt(A)).join(' ')+' (JOB ANGLE)';
+  const tcs=d.lathe?[c.findIndex(l=>/^\s*(N\d+\s*)?T\d{2,4}\b/.test(l))]:c.map((l,i)=>TC.test(String(l).replace(/\(.*?\)/g,''))?i:-1).filter(i=>i>=0);
+  const ja=c.filter(l=>/\(JOB ANGLE\)/.test(l));
+  if(A==0){if(ja.length)bad[A].push(k+' angle 0 wrote '+ja[0])}
+  else{tcs.forEach(t=>{let i=t+1;while(i<c.length&&(HOME.test(c[i])||/\(C-AXIS ON\)/.test(c[i])))i++;if(c[i]!==want)bad[A].push(k+' after '+c[t]+' got "'+c[i]+'" want "'+want+'"')});if(ja.length!=tcs.length)bad[A].push(k+' JOB ANGLE lines '+ja.length+' vs tool changes '+tcs.length);
+   if(!d.ins.length)bad[A].push(k+' sim not told (r111ins empty)');if(!d.card.includes(want))bad[A].push(k+' card preview lacks the program line')}
+  const e=c.map((l,i)=>END.test(l)?i:-1).filter(i=>i>=0).pop();const backOK=d.lathe?(A==0?!c.some(l=>/BACK TO ZERO/.test(l)):c[e-1]=='G00 C0. (ROTARY BACK TO ZERO)'):(e>0&&/^G00 ([ABC]0\. ?)+\(ROTAR(Y|IES) BACK TO ZERO\)$/.test(c[e-1])&&d.L.every(L=>c[e-1].includes(L+'0.')));if(!backOK)bad[A].push(k+' return before M30: "'+c[e-1]+'"');
+  const z0=P(k);if(z0&&z0.code){const h0=z0.code.filter(l=>HOME.test(l)&&!/BACK TO ZERO/.test(l)).length,h=c.filter(l=>HOME.test(l)&&!/BACK TO ZERO/.test(l)).length;if(h0!==h)bad[A].push(k+' safe-start zero lines changed '+h0+'->'+h)}
+  const strip=c.filter(l=>!/\((JOB ANGLE|C-AXIS ON|ROTARY BACK TO ZERO|ROTARIES BACK TO ZERO)\)/.test(l));if(z0&&z0.code&&A){const s0=z0.code.filter(l=>!/\((ROTARY|ROTARIES) BACK TO ZERO\)/.test(l));if(strip.join('\n')!==s0.join('\n'))bad[A].push(k+' other lines differ from angle 0')}}}
+ log('covers 4-axis, HMC and 5-axis ('+[...types].join(',')+')',['vmc4','hmc','vmc5'].every(t=>types.has(t)),[...types]);
+ log('flat jobs found: '+keys.length+' per angle, '+runs+' programs read ('+held.size+' held for other reasons at every angle, as in v111)',keys.length>=30&&runs>=80);
+ [0,36,90].forEach(A=>log('angle '+A+': '+(A?'G00 <axis>'+A+'. (JOB ANGLE) after every T# M06, safe-start zero kept, ':'no job-angle line, ')+'return to 0 just before M30; preview = program lines',bad[A].length==0,bad[A].slice(0,4).join(' || ')+(bad[A].length>4?' … +'+(bad[A].length-4):'')))}
+</script>

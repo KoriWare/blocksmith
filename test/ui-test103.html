@@ -2,7 +2,7 @@
 let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
 f.onload=()=>{const w=f.contentWindow;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
 setTimeout(async()=>{try{const fx=await (await fetch('fx/v110-gcode.json')).json();
-R103GEN(w,n=>{const ks=Object.keys(fx);const bad=ks.filter(k=>fx[k]!==n[k]);const types=new Set(ks.filter(k=>fx[k]&&fx[k][0]=='%').map(k=>k.split('|')[0]));
+R103GEN(w,n=>{const ks=Object.keys(fx);const nf=v=>v==null?v:String(v).split('- MACRO BUILDER)').join('- BLOCKSMITH)'),nn=v=>v==null?v:String(v).split('\n').filter(l=>!/^G00 ([ABC]0\. ?)+\(ROTAR(Y|IES) BACK TO ZERO\)$/.test(l)).join('\n');const bad=ks.filter(k=>nf(fx[k])!==nn(n[k]));const backOff=ks.filter(k=>/BACK TO ZERO/.test(String(n[k]))&&!['1','3','5'].includes(k.split('|')[0]));log('v111c: the return-to-0 line appears only on rotary machines (4-axis, HMC, 5-axis)',backOff.length==0,backOff.slice(0,3));const types=new Set(ks.filter(k=>fx[k]&&fx[k][0]=='%').map(k=>k.split('|')[0]));
 log('fixture covers every machine type (3-axis, 4-axis, HMC, 5-axis, lathe, live lathe)',types.size==6,[...types]);
-log('angle 0: '+ks.length+' runs ('+ks.filter(k=>fx[k]&&fx[k][0]=='%').length+' with code) byte-identical to v110',bad.length==0,bad.slice(0,3).map(k=>k+' => '+String(n[k]).slice(0,200)).join(' || '));
+log('angle 0: '+ks.length+' runs ('+ks.filter(k=>fx[k]&&fx[k][0]=='%').length+' with code) byte-identical to v110 apart from the v111c changes (BLOCKSMITH header comment, rotary return to 0 before M30)',bad.length==0,bad.slice(0,3).map(k=>k+' => '+String(n[k]).slice(0,200)).join(' || '));
 o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},false)}catch(e){o.textContent='ERR '+e.message}},1500)}</script>
