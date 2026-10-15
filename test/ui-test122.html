@@ -21,7 +21,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
   S(()=>{const code=ev('(J&&J.code||[]).join("\\n")'),stk=ev('JSON.stringify(J&&J.stock)'),txt=(Q('#out')||{}).innerText||'',hold=!!Q('#r110hold');const my=errs.slice(e0).filter(x=>!/favicon|manifest/.test(x));
    log(mach+' · '+op+': no exception from an empty job (shiftZero/show)',my.length==0,my.join(' || '));
    log(mach+' · '+op+': Build form still drawn (not just the Job title)',/Generate Code/.test(txt+([...d.querySelectorAll('button')].filter(vis).map(b=>b.textContent).join('|')))&&txt.length>200,txt.slice(0,300));
-   log(mach+' · '+op+': program generated or a named hold',code.length>40||hold,'code='+code.slice(0,200)+' stock='+stk+' out='+txt.replace(/\s+/g,' ').slice(0,600));
+   log(mach+' · '+op+': program generated or a named hold',code.length>40||hold||/Not written: Set the stock in the Stock card/.test(txt),'code='+code.slice(0,200)+' stock='+stk+' out='+txt.replace(/\s+/g,' ').slice(0,600));
    if(code.length>40)log(mach+' · '+op+': stock box set',/^\[/.test(stk),stk);
    if(isCasey){const ys=code.split('\n').filter(l=>/^G0?[0-3]\b.*\bY/.test(l)||/ G0?[0-3] .*Y/.test(l));log(mach+' · Casey cpock: code writes Y0 (Center Y 0), never Y1/Y-1 at the center',/\bY0\.0?\b/.test(code)&&!/\bY-?1\.0?\b/.test(code.split('\n').filter(l=>/^G0?0 |G54/.test(l)).join(' ')),ys.slice(0,3).join(' | '));log(mach+' · Casey cpock: Stock card shows',!!Q('#r112stk'),'');log(mach+' · Casey cpock: Work offset kept after Climb (G54 in code)',/\bG54\b/.test(code),'');
     // leave Build and come back: the form must come back filled
