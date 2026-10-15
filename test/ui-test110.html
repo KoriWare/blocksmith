@@ -34,7 +34,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  const next=()=>{const c=combos.shift();if(!c)return flip();const [mi,ang,nl]=c;w.R112NOLOOP=nl;const held=[],bad=[];let n=0,types=new Set();
   E('OPS110').forEach(op=>{if(DXF.test(op)||(SKIP[mi]||[]).includes(op))return;let x;try{x=w.RUN110(mi,op,ang)}catch(e){x={err:e.message}}if(x.na)return;n++;
    if(!x.code){held.push(op+': '+(x.held||x.err));return}if(!nl&&ang==36)ON[mi+'|'+op]=x.code;
-   const e=chk(x.code,ang,mi);if(e.length)bad.push(op+': '+e[0])});
+   const e=chk(x.code,ang,mi);if(+ang&&w.OPN2&&w.OPN2[op]&&!/\(JOB ANGLE\)/.test(x.code))e.push('probing job does not index to the job angle');if(e.length)bad.push(op+': '+e[0])});
   const nm={1:'4-axis',3:'HMC',5:'5-axis'}[mi]+' at '+ang+'°, loops '+(nl?'off':'on');
   log(nm+': every job writes with Stacey-style fills ('+n+' jobs)',n>60&&!held.length,held.slice(0,4).join(' || '));
   log(nm+': safe start before the job angle after every tool change, only this machine\'s rotary letters anywhere in the program, and every rotary back to 0 before every M30',!bad.length,bad.slice(0,4).join(' || '));

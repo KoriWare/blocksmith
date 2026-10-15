@@ -40,4 +40,9 @@ T114.push(async E=>{const g=`[...document.querySelectorAll('#r111ang .r111p')].m
 // ---- #4 rotary head hint = shared tip text
 T114.push(async E=>{const h=E(`tab('machines');edit(1);[...document.querySelectorAll('.r99hint')].map(e=>e.textContent).filter(t=>/which end of the table/.test(t)).join('||')`);const why=E(`R111WHY[R104SIDE]`);
  log('#4 Rotary head field hint on the machine page includes the shared tip ("face and engrave jobs")',/face and engrave jobs/.test(h)&&h.includes(why),h);E(`tab('new');1`)});
+// ---- #5 probing indexes to the job angle; angle starts blank and holds
+T114.push(async E=>{const o=[];for(const mi of [1,3,5]){const x=E(`(()=>{J=null;cur(${mi});tab('new');pickJob('pbore');__FILL('pbore');show();__FILL('pbore');show();for(let i=0;i<3;i++){eval(__MACH);show()}return JSON.stringify({code:Array.isArray(J.code),inp:[...document.querySelectorAll('#r111ang input')].map(i=>i.value),msg:($('#r111ang')||{}).textContent||''})})()`);o.push(mi+':'+x)}
+ log('#5 fresh probing job: angle field starts blank and the job is held until it is confirmed',o.every(x=>/"code":false/.test(x)&&/"inp":\[""(,"")*\]/.test(x)&&/not set/.test(x)),o.join(' || '));
+ const p=[];for(const mi of [1,3,5]){const c=JSON.parse(E(`JSON.stringify(RUN114(${mi},'pbore',36))`)).code||'';const L=c.split('\n');const tc=L.findIndex(l=>/T\d+ M0?6/.test(l));const sz=L.findIndex(l=>/ROTARIES TO ZERO BEFORE THE FIRST CUT/.test(l)),ja=L.findIndex(l=>/\(JOB ANGLE\)/.test(l)),pr=L.findIndex(l=>/G65 P9|G31/.test(l.replace(/\(.*?\)/g,""))),m30=L.findIndex(l=>/^M30/.test(l)),bk=L.findIndex(l=>/BACK TO ZERO/.test(l));if(!(tc>=0&&tc<sz&&sz<ja&&ja<pr&&pr<bk&&bk<m30))p.push(mi+': '+[tc,sz,ja,pr,bk,m30].join(','))}
+ log('#5 probing at 36 on 4-axis/HMC/5-axis: T# M06, safe-start 0, job angle, probe, back to 0, M30',!p.length,p.join(' || '))});
 </script>
