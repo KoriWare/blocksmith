@@ -1,0 +1,32 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112: scanner arcs (O4600), macros by default, Show expanded, cutter comp --><iframe id="f" src="../index.html?v=111" style="width:320px;height:760px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(async()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Lathe w/ live tooling','Lathes');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();
+ var FJ=(mi)=>{cur(mi);J=null;tab('new');pickJob('face');Object.keys(J.p).forEach(k=>{if(J.p[k].v==null){const sp=r99spec(k)||{};const ch=J2.face&&J2.face.choices&&J2.face.choices[k];J.p[k]={v:ch?ch[0]:/Cutter|Tool dia/.test(k)?0.5:/Tool/.test(k)?1:/Work offset/.test(k)?'G54':/Step/.test(k)?0.05:/Z0|X0|Y0|Start/.test(k)?0:2,g:false}}});show();r111fill0();show()};var HB=(mi)=>{cur(mi);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show()};
+ var SET=(id,v)=>{const i=document.querySelector('#r111ang input[data-a="'+id+'"]');i.value=v;i.dispatchEvent(new Event('input'));i.dispatchEvent(new Event('change'))};1`);
+
+ const O4600="%\nO4600 (HELICAL BORE 1.000 DIA X 0.4 DEEP - LONGHAND)\nG17 G20 G40 G49 G80 G90\nT5 M06\nG54 G00 X0. Y0. S4500 M03\nG43 H5 Z0.1 M08\nG00 X0.25 Y0.\nG01 Z0. F10.\nG03 X-0.25 Y0. I-0.25 J0. Z-0.025 F20.\nG03 X0.25 Y0. I0.25 J0. Z-0.05\nG03 X-0.25 Y0. I-0.25 J0. Z-0.075\nG03 X0.25 Y0. I0.25 J0. Z-0.1\nG03 X-0.25 Y0. I-0.25 J0. Z-0.125\nG03 X0.25 Y0. I0.25 J0. Z-0.15\nG03 X-0.25 Y0. I-0.25 J0. Z-0.175\nG03 X0.25 Y0. I0.25 J0. Z-0.2\nG03 X-0.25 Y0. I-0.25 J0. Z-0.225\nG03 X0.25 Y0. I0.25 J0. Z-0.25\nG03 X-0.25 Y0. I-0.25 J0. Z-0.275\nG03 X0.25 Y0. I0.25 J0. Z-0.3\nG03 X-0.25 Y0. I-0.25 J0. Z-0.325\nG03 X0.25 Y0. I0.25 J0. Z-0.35\nG03 X-0.25 Y0. I-0.25 J0. Z-0.375\nG03 X0.25 Y0. I0.25 J0. Z-0.4\nG03 X-0.25 Y0. I-0.25 J0.\nG03 X0.25 Y0. I0.25 J0.\nG01 X0. Y0.\nG00 Z0.1 M09\nG91 G28 Z0. M05\nG90\nM30\n%\n";
+ E("cur(1);S.m[1].opt=S.m[1].opt||{};S.m[1].opt.macroB=1;save()");
+ E("scanner("+JSON.stringify(O4600)+")");
+ const L=E("SUG.filter(s=>/WHILE loop/.test(s.t)).map(s=>({a:s.a,b:s.b,after:s.after}))");
+ log("O4600: helical G03 passes → one WHILE loop suggestion",L.length==1&&L[0].after.some(l=>/^G03 .*Z#100/.test(l)),JSON.stringify(L));
+ log("O4600: loop expands back to exactly the original G03 lines",E("(()=>{const s=SUG.find(s=>/WHILE loop/.test(s.t));const ex=r112expand(s.after);const o=$('#sq').value.split('\\n').slice(s.a,s.b).map(l=>l.trim().toUpperCase());return ex.length==o.length&&ex.every((l,i)=>{const n=x=>(x.match(/-?\\d*\\.?\\d+/g)||[]).map(Number);const a=n(l),b=n(o[i]);return a.length==b.length&&a.every((v,j)=>Math.abs(v-b[j])<5e-5)})})()")===true);
+ log("O4600: suggestion says arc moves included and that it was checked line by line",/arc moves included/.test(E("$('#sug').textContent"))&&/checked line by line/.test(E("$('#sug').textContent")));
+ E("[...document.querySelectorAll('#sug .chip.y')][0].click()");log("Accept writes the loop into the scanner text",/WHILE\[#101GT0\]DO1/.test(E("$('#sq').value"))&&/END1/.test(E("$('#sq').value")));
+ // Macro B off: no loop, gray reason
+ E("S.m[1].opt.macroB=0;save();scanner("+JSON.stringify(O4600)+")");
+ log("Macro B off: no loop offered, gray line says why",!E("SUG.some(s=>/WHILE loop/.test(s.t))")&&/No WHILE loop suggested: Custom Macro B is not confirmed/.test(E("($('.r112why')||{}).textContent")),E("[opt('macroB'),S.cur,window.R112WHY,SUG.map(s=>s.t)].join('|')"));
+ // two values stepping differently: refused with reason
+ E("S.m[1].opt.macroB=1;save();scanner('G01 X1. Z-0.1\\nG01 X1.2 Z-0.2\\nG01 X1.4 Z-0.3\\nG01 X1.6 Z-0.4')");
+ log("different steps: no loop, gray reason",!E("SUG.some(s=>/WHILE loop/.test(s.t))")&&/different steps/.test(E("($('.r112why')||{}).textContent")),E("($('#sug')||{}).textContent"));
+ // the expander catches a loop that does not reproduce the lines
+ log("expander mismatch is caught (bad loop not offered)",E("JSON.stringify(r112expand(['#100=0 (START)','#101=2 (PASSES)','WHILE[#101GT0]DO1','G01 Z#100','#100=#100-0.1','#101=#101-1','END1']))")=='["G01 Z0","G01 Z-0.1"]');
+
+ }catch(e){log('crash',false,e.message)}
+ document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
+</script>

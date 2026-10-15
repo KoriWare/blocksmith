@@ -7282,6 +7282,38 @@ function r112labs(L){const cvs=$('#cv');let b=$('#r112lab');if(!cvs||!L.length){
   if(s.trim().length>=6&&sy<62&&sx<W*0.62&&ctx.textAlign!='center'&&ctx.textAlign!='right'&&ctx.textAlign!='end'){if(!got.includes(s))got.push(s);return}}catch(e){}return ft.call(this,t,x,y,...rest)};
  let r;try{r=_d.apply(this,arguments)}finally{ctx.fillText=ft}try{r112labs(got);r112dials()}catch(e){}return r}}
 {const st=document.createElement('style');st.textContent='#r112lab{background:#0b0b0b;border:1px solid #2a2a2a;border-bottom:0;border-radius:12px 12px 0 0;padding:5px 9px;font:12px/1.35 -apple-system,system-ui,sans-serif;color:#e8e8e8}#r112lab div:nth-child(3){color:#ffd21f}#r112dial{display:flex;gap:18px;align-items:flex-end;justify-content:center;background:#0b0b0b;border:1px solid #2a2a2a;border-top:0;border-radius:0 0 12px 12px;padding:4px 8px 6px;font:12px -apple-system,system-ui,sans-serif;color:#eee}.r112d{display:flex;flex-direction:column;align-items:center;gap:2px}.r112pl{color:#ffd23f;align-self:center}';document.head.appendChild(st)}
+// ===== v112 scanner: repeated passes → WHILE loop now include G02/G03 (helical passes); every loop is expanded and compared with the original lines before it is offered; a gray line says why no loop was offered
+function r112fmt(v){const s=(+v.toFixed(4)).toString();return s}
+function r112loops(L){const U=l=>l.replace(/\([^)]*\)/g,'').trim().toUpperCase();const out=[],why=new Set();let seen=0;const NUM=/-?\d*\.?\d+/g;
+ for(let k=1;k<=4;k++){for(let i=0;i+3*k<=L.length;i++){const blk=n=>L.slice(i+n*k,i+n*k+k).map(U);const sh=x=>x.join('|').replace(/(?<=[A-Z])-?\d*\.?\d+/g,'#');const b0=blk(0);
+  if(!b0.every(x=>/^G0?[0-3](?!\d)/.test(x)))continue;let n=1;while(i+(n+1)*k<=L.length&&sh(blk(n))==sh(b0)&&blk(n).join('|')!=b0.join('|'))n++;if(n<3)continue;seen=1;
+  // numbers are the values after each address letter (G/M codes stay fixed by the shape)
+  const nums=t=>[...t.join('|').matchAll(/([A-Z])(-?\d*\.?\d+)/g)].map(m=>({a:m[1],v:+m[2]}));const N=[...Array(n)].map((_,q)=>nums(blk(q)));
+  if(N.some(r=>r.length!=N[0].length)){why.add('the repeated lines do not have the same words');continue}
+  const dif=N[0].map((x,c)=>N[1][c].v-x.v);const idx=dif.map((d,c)=>Math.abs(d)>1e-9?c:-1).filter(c=>c>=0);
+  if(!idx.length)continue;if(idx.some(c=>/[GMTHD]/.test(N[0][c].a))){why.add('a G/M/T code changes between the repeats');continue}
+  const stp=dif[idx[0]];if(idx.some(c=>Math.abs(dif[c]-stp)>1e-9)){why.add('more than one value changes, by different steps');continue}
+  if(!N.every((r,q)=>r.every((x,c)=>idx.includes(c)?Math.abs(x.v-(N[0][c].v+q*stp))<1e-6:Math.abs(x.v-N[0][c].v)<1e-9))){why.add('the step is not the same every pass');continue}
+  const c0=idx[0],base=N[0][c0].v;let cnt=-1;
+  const body=L.slice(i,i+k).map(l=>U(l).replace(/([A-Z])(-?\d*\.?\d+)/g,(mm,a,v)=>{cnt++;if(!idx.includes(cnt))return mm;const dl=N[0][cnt].v-base;return a+(Math.abs(dl)<1e-12?'#100':'[#100'+(dl>0?'+':'-')+r112fmt(Math.abs(dl))+']')}));
+  const after=[`#100=${r112fmt(base)} (START)`,`#101=${n} (PASSES)`,'WHILE[#101GT0]DO1',...body,`#100=#100+${r112fmt(stp)}`.replace('+-','-'),'#101=#101-1','END1'];
+  // expand the loop exactly as the control would and compare with the original lines, number by number
+  const ex=r112expand(after);const orig=L.slice(i,i+n*k).map(U);const same=ex&&ex.length==orig.length&&ex.every((l,q)=>{const a=nums([l]),b=nums([orig[q]]);return l.replace(/-?\d*\.?\d+/g,'#')==orig[q].replace(/-?\d*\.?\d+/g,'#')&&a.length==b.length&&a.every((x,c)=>x.a==b[c].a&&Math.abs(x.v-b[c].v)<5e-5)});
+  if(!same){why.add('the expanded loop did not match the original lines');continue}
+  out.push({t:`${n} repeated passes → WHILE loop`,why:`${n} copies of the same ${k}-line pass${body.some(l=>/^G0?[23](?!\d)/.test(l))?' (arc moves included)':''}, one value stepping by ${r112fmt(stp)}. Expanded and checked line by line against the original. A loop keeps it to one copy; change the count or step in one place.`,src:'WHILE[…]DOn / ENDn, Fanuc Custom Macro B (public references); uses #100–#101 — confirm they are free',a:i,b:i+n*k,after,r112ok:1});i+=n*k-1}}
+ // keep the loops that cover the most lines; drop any that overlap a bigger one
+ const keep=[];out.slice().sort((x,y)=>(y.b-y.a)-(x.b-x.a)).forEach(o=>{if(!keep.some(q=>o.a<q.b&&q.a<o.b))keep.push(o)});keep.sort((x,y)=>x.a-y.a);
+ return {out:keep,why:[...why],seen}}
+// tiny evaluator for the loops written above (#100/#101, WHILE GT0, +/- steps, [#100±d])
+function r112expand(P){try{const V={};const out=[];const ev=s=>{s=s.replace(/#(\d+)/g,(m,k)=>'('+(V[k]??0)+')').replace(/\[/g,'(').replace(/\]/g,')');if(!/^[\d.()+\-*\/ ]+$/.test(s))throw 0;return Function('return '+s)()};
+ const fmt=l=>l.replace(/\[([^\]]+)\]|#(\d+)/g,(m,e,k)=>r112fmt(e?ev(e):(V[k]??0)));let i=0,g=0;const w=P.findIndex(l=>/^WHILE/.test(l)),e=P.findIndex(l=>/^END1/.test(l));
+ for(;i<w;i++){const m=P[i].match(/^#(\d+)=(-?[\d.]+)/);if(m)V[m[1]]=+m[2]}
+ while(V[101]>0&&g++<10000){for(let j=w+1;j<e;j++){const m=P[j].match(/^#(\d+)=(.+?)(\s*\(|$)/);if(m)V[m[1]]=ev(m[2]);else out.push(fmt(P[j]))}}return out}catch(x){return null}}
+{const _s=scanSug;scanSug=function(src){const r=_s.apply(this,arguments).filter(s=>!/repeated passes → WHILE loop/.test(s.t));const L=String(src||'').split('\n');window.R112WHY='';
+ const macro=opt('macroB');const R=r112loops(L);if(macro)r.splice(r.findIndex(s=>s.a<0)<0?r.length:r.findIndex(s=>s.a<0),0,...R.out);
+ if(!macro&&R.out.length)window.R112WHY='No WHILE loop suggested: Custom Macro B is not confirmed on this machine.';else if(!R.out.length&&R.seen&&R.why.length)window.R112WHY='No WHILE loop suggested: '+R.why.join('; ')+'.';
+ return r}}
+{const _sc=scan;scan=function(){const r=_sc.apply(this,arguments);try{const d=$('#sug');if(d&&window.R112WHY){const g=document.createElement('div');g.className='s r112why';g.style.color='#9a9a9a';g.textContent=window.R112WHY;d.appendChild(g)}}catch(e){}return r}}
 
 /* R79-END */</script>
 </body></html>
