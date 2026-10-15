@@ -6912,7 +6912,7 @@ function r104tiles(f,mi){const m=S.m[mi];if(!f||!m)return;const cur=r104side(m);
  t.querySelectorAll('.r104t').forEach(b=>b.onclick=()=>{const x=(m.s||[]).find(y=>y.k==R104SIDE);if(!x)return;x.v=b.dataset.side;x.st='user';save();edit(mi)})}
 {const _e=edit;edit=function(i){const r=_e.apply(this,arguments);try{const f=V.querySelector('.r99f[data-r99k="'+R104SIDE+'"]');if(f)r104tiles(f,i)}catch(e){}return r}}
 // 14: 'Control: <name> ›' pill in the Build job header — name only once confirmed; otherwise 'Control: not set ›' (gray outline, red dot), counted in Need N
-function r104ctlGo(){try{fill()}catch(e){}r103rt={J:J,y:scrollY,cur:S.cur,sig:r103sig(S.m[S.cur]),seen:r103block().length};try{drSave()}catch(e){}tab('machines');edit(S.cur);r103hl('Control')}
+function r104ctlGo(){try{fill()}catch(e){}r103rt={J:J,y:scrollY,cur:S.cur,sig:r103sig(S.m[S.cur]),seen:r103block().length,ctl:1};try{drSave()}catch(e){}tab('machines');edit(S.cur);r103hl('Control')}
 {const _sh=show;show=function(){const r=_sh.apply(this,arguments);try{const o=$('#out');if(!o||typeof J=='undefined'||!J||!J.op)return r;o.querySelectorAll('.r104ctl').forEach(e=>e.remove());
   const card=[...o.querySelectorAll('.card')].find(c=>{const t=c.querySelector(':scope > .t');return t&&t.textContent.trim().startsWith(String(OPN[J.op]||'').replace(/^⚠\s*/,'').slice(0,12))});const t=card&&card.querySelector(':scope > .t');if(!t)return r;
   const c=(S.m[S.cur]&&S.m[S.cur].s||[]).find(x=>x.k=='Control');const ok=c&&c.st=='user'&&String(c.v||'').trim()&&!r99ph(c.v);
@@ -6928,6 +6928,8 @@ document.addEventListener('change',e=>{const el=e.target;if(!el||!/^(INPUT|TEXTA
  setTimeout(()=>{if(typed||Date.now()-r104pickTs<800||st=='user')return;if(x.st=='user'){x.st=st;x.v=v;save();try{f._r99&&f._r99.paint()}catch(e){}try{r103bars()}catch(e){}}},0)},true);
 // v105 #1: a Control/type change from the round trip (pill or chip) always parks the job as a Restore draft
 {const _b=r103back;r103back=function(){const rt=r103rt;try{if(rt&&rt.J&&rt.J.op&&r103sig(S.m[rt.cur])!=rt.sig){localStorage.setItem(DRK,JSON.stringify({J:jClone(rt.J),cur:rt.cur,t:Date.now()}));const r=_b.apply(this,arguments);setTimeout(()=>{try{toast79((OPN[rt.J.op]||'Job').replace(/^⚠\s*/,'')+' moved to a draft — Restore in Build.')}catch(e){}},50);return r}}catch(e){}return _b.apply(this,arguments)}}
+/* v112c: a Control pick started from the job's Control pill keeps the job on every machine type (HMC matched to VMC) - fields stay, code is rebuilt for the new control */
+{const _b0=r103back;r103back=function(){const rt=r103rt;try{if(rt&&rt.ctl&&rt.J&&rt.J.op){const m=S.m[rt.cur];if(m&&String(rt.sig).split('|')[0]==r98t(m))rt.sig=r103sig(m)}}catch(e){}return _b0.apply(this,arguments)}}
 
 // ===== mc-v105 =====
 // 3: a cleared box is red with the Needs styling (never the gray dot / plain 'Pick:')
@@ -7128,6 +7130,19 @@ function r112cPv(n,add){try{if(typeof J=='undefined'||!J||!Array.isArray(J.code)
  if(n===0)return `<div class="r111p r112pv0">0 = home: no angle line. The rotary goes to 0 after each tool change and back to 0 before M30.</div>`;
  const L=J.code.filter(l=>/\bM0?6\b|\((ROTARIES TO ZERO BEFORE THE FIRST CUT|JOB ANGLE)\)/.test(l)).slice(0,4);return `<div class="r111p">${L.length?L.map(esc).join('<br>'):'No rotary lines in this program.'}</div>`}catch(e){return ''}}
 {const st=document.createElement('style');st.textContent='.r111p.r112pv0{color:#9a9a9a!important;font-family:inherit!important;white-space:normal}';document.head.appendChild(st)}
+
+/* v112c: a blank Stock shape (new jobs) or an unpicked Cutter comp is a failing check - Not ready, never guessed */
+{const _c112c=checks;checks=function(j){const c=_c112c.apply(this,arguments);try{if(j&&!j.lathe&&j.r112stk&&!j.r112old&&!j.r112stk.shape&&typeof r111flat=='function'&&r111flat())c.push(['Stock shape picked (Round bar or Square block)',false]);if(j&&!j.lathe&&j.op&&R112CMP.test(j.op)&&!(j.r112comp&&j.r112comp.m))c.push(['Cutter comp picked (Off, Climb G41 or Conventional G42)',false])}catch(e){}return c}}
+{const st=document.createElement('style');st.textContent='.r112need{color:#ff6b6b;font-size:12px;margin:2px 0 6px}#r112cmp .r111star:not(.r111y){color:#ff4d4d}';document.head.appendChild(st)}
+
+/* v112c: Max RPM field state updates live as you type: empty = gray star, junk = red !, valid = ✓; the Clear line stays visible */
+function r112cRpmLive(f){try{const i=f.querySelector('input');if(!i)return;const k='Max RPM',v=String(i.value||'').trim(),sp=r99spec(k);const ok=v!==''&&(!sp||r99ok(k,v,sp));const e=f.querySelector('.r99end'),w=f.querySelector('.r99w'),st=f.querySelector('.r111star');
+ if(e){const t=v===''?'':ok?'✓':'!';if(e.textContent!==t)e.textContent=t;e.classList.toggle('r112bang',v!==''&&!ok)}if(w){w.classList.toggle('ok',ok);w.classList.toggle('bad',v!==''&&!ok);w.classList.toggle('r112empty',v==='')}
+ if(st){st.classList.toggle('r111y',ok);st.classList.toggle('r112gs',v==='');st.classList.toggle('r112rs',v!==''&&!ok)}
+ const c=[...f.querySelectorAll('.r104clr,button,a,span,div')].find(x=>/^\s*Clear/.test(x.textContent)&&!x.children.length);if(c&&c.style.display=='none')c.style.display=''}catch(e){}}
+document.addEventListener('input',ev=>{const f=ev.target&&ev.target.closest&&ev.target.closest('.r99f[data-r99k="Max RPM"]');if(f)r112cRpmLive(f)},true);
+document.addEventListener('input',ev=>{const f=ev.target&&ev.target.closest&&ev.target.closest('.r99f[data-r99k="Max RPM"]');if(f)setTimeout(()=>r112cRpmLive(f),0)});
+{const st=document.createElement('style');st.textContent='.r99end.r112bang{color:#ff4d4d!important;font-weight:700}.r111star.r112gs{color:#8a8a8a!important}.r111star.r112rs{color:#ff4d4d!important}';document.head.appendChild(st)}
 function r111setupN(m){try{return r103vis(m).filter(z=>z.st!='user').length}catch(e){return 0}}
 function r111ck(){try{const ck=$('#ck'),cl=$('#cl');if(!ck||!cl)return;if($('#jmsimck')||/Job manager/.test(ck.textContent)){const l2=$('#r111ms');if(l2)l2.remove();return} /* whole-program checks keep their own label */const L=[...cl.querySelectorAll('.s')];if(!L.length&&!/checks/.test(ck.textContent))return;const T=L.length,F=L.filter(x=>/❌/.test(x.textContent)).length,P=T-F;
  const ov=!!(typeof J!='undefined'&&J&&J.override);const t1=(F?(ov?`⚠ ${F} overridden · `:'⛔ '):'')+`Code checks: ${P} of ${T} pass${F&&!ov?` · fix ${F}`:''}`;if(ck.classList.contains('r112amb')!==(F>0&&ov))ck.classList.toggle('r112amb',F>0&&ov); /* v112: never green while failing; amber when overridden */let a=ck.querySelector('.r111l1');if(!a||ck.firstChild!==a){ck.textContent='';a=document.createElement('span');a.className='r111l1';ck.appendChild(a)}if(a.textContent!==t1)a.textContent=t1;r112cSync(F,ov);
@@ -7377,10 +7392,10 @@ function r112latheSide(od){const t=r112turret();if(!t)return null;return (od!==(
 {const _sh=show;show=function(){const r=_sh.apply(this,arguments);try{if(typeof J!='undefined'&&J&&J.r112cmpHold)r110hold('⛔ Not written: '+J.r112cmpHold+'.',true)}catch(e){}return r}}
 // comp card (Off / Climb (G41) / Conventional (G42) + D#), sim offset path + programmed path
 function r112cmpUI(){try{let c=$('#r112cmp');const on=typeof J!='undefined'&&J&&J.op&&!J.lathe&&R112CMP.test(J.op)&&(V.dataset.page!='sim');const host=$('#r111ang')||($('#out')&&$('#out').querySelector('.card'));
- if(!on||!host){if(c)c.remove();return}const cm=J.r112comp||{m:'off',d:null};const {d,t}=r112cmpD(J);
+ if(!on||!host){if(c)c.remove();return}const cm=J.r112comp||{m:null,d:null};const {d,t}=r112cmpD(J); /* v112c: fresh job starts unpicked */
  if(!c){c=document.createElement('div');c.id='r112cmp';c.className='card'}if(host.nextElementSibling!==c)host.after(c);
- const b=(m,l)=>`<button type="button" class="r112cb${(cm.m||'off')==m?' on':''}" data-m="${m}">${l}</button>`;const hand=cm.d!=null&&String(cm.d).trim()!==''&&+cm.d!==t;
- const h=`<div class="t">Cutter comp<span class="r111star r111y" title="Off is a valid answer">*</span></div><div class="r112seg">${b('off','Off')}${b('G41','Climb (G41)')}${b('G42','Conventional (G42)')}</div>`+(cm.m&&cm.m!='off'?`<div class="r112drow"><b>D#</b><input id="r112d" inputmode="numeric" value="${d}"><span class="r112dt">${hand?'':'= T'+t}</span>${hand?`<span class="r112hand">(hand-typed: D${d} ≠ T${t} · <a href="#" id="r112match">Match T${t}</a>)</span>`:''}</div>`:'');
+ const b=(m,l)=>`<button type="button" class="r112cb${cm.m==m?' on':''}" data-m="${m}">${l}</button>`;const hand=cm.d!=null&&String(cm.d).trim()!==''&&+cm.d!==t;
+ const h=`<div class="t">Cutter comp<span class="r111star${cm.m?' r111y':''}" title="Off is a valid answer">*</span></div>${cm.m?'':'<div class="r112need">Needs a pick: Off, Climb (G41) or Conventional (G42).</div>'}<div class="r112seg">${b('off','Off')}${b('G41','Climb (G41)')}${b('G42','Conventional (G42)')}</div>`+(cm.m&&cm.m!='off'?`<div class="r112drow"><b>D#</b><input id="r112d" inputmode="numeric" value="${d}"><span class="r112dt">${hand?'':'= T'+t}</span>${hand?`<span class="r112hand">(hand-typed: D${d} ≠ T${t} · <a href="#" id="r112match">Match T${t}</a>)</span>`:''}</div>`:'');
  if(c.dataset.h!==h){c.innerHTML=h;c.dataset.h=h;c.querySelectorAll('.r112cb').forEach(x=>x.onclick=()=>{J.r112comp={m:x.dataset.m,d:(J.r112comp||{}).d??null};show()});const i=$('#r112d');if(i)i.onchange=()=>{const v=String(i.value).trim();J.r112comp={...J.r112comp,d:/^\d{1,3}$/.test(v)?+v:null};show()};const a=$('#r112match');if(a)a.onclick=e=>{e.preventDefault();J.r112comp={...J.r112comp,d:null};show()}}}catch(e){console.error(e)}}
 function r112cmpSim(){try{if(!J||!J.M||!J.code)return;const C=J.code;const on=C.findIndex(l=>/\(COMP ON - STRAIGHT LEAD-IN/.test(l)),off=C.findIndex(l=>/\(COMP OFF - STRAIGHT LEAD-OUT/.test(l));if(on<0||off<0||J.M.r112done)return;J.M.r112done=1;
  const g41=/\bG41\b/.test(C[on]);const {d}=r112cmpD(J);const r=(+((J.p.Cutter||{}).v)||0)/2;const mv=J.M;const idx=[];mv.forEach((m,i)=>{if(m.l>on&&m.l<off)idx.push(i)});

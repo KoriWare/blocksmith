@@ -74,4 +74,18 @@ T114.push(async E=>{const a=JSON.parse(E(`JSON.stringify(RUN114(1,'tlen',36))`))
  const strip=L=>L.map(l=>l.replace(/ \(ROTARY LEFT AT JOB ANGLE\)/,'')).filter(l=>!/\(JOB ANGLE\)/.test(l)).join('\n');
  log('#10 tlen at A36: every #3000 alarm line carries (ROTARY LEFT AT JOB ANGLE); at 0 none do',al.length>0&&al.every(l=>/\(ROTARY LEFT AT JOB ANGLE\)$/.test(l))&&!/ROTARY LEFT/.test(z),al.join(' | '));
  log('#10 no motion added: A36 program minus the note and the job-angle line equals the 0 program',strip(A)==strip(Z),'')});
+// ---- #11 Casey fresh-job items
+T114.push(async E=>{
+ const a=JSON.parse(E(`(()=>{HB(1);r111fill0();show();return JSON.stringify({ck:$('#ck').textContent,ready:($('#ready')||{}).textContent,bad:$('#ck').classList.contains('bad'),row:[...$('#cl').querySelectorAll('.s')].some(x=>/❌.*Stock shape picked/.test(x.textContent))})})()`));
+ log('#11 new job with a blank Stock shape: failing row "Stock shape picked", red card, Not ready',a.bad&&a.row&&/Not ready/.test(a.ready),JSON.stringify(a));
+ const b=JSON.parse(E(`(()=>{SQ(2,2,1,'bl');J.p['Center X'].v=1;J.p['Center Y'].v=1;show();return JSON.stringify({ck:$('#ck').textContent,bad:$('#ck').classList.contains('bad')})})()`));
+ log('#11 picking the shape clears it',!b.bad,JSON.stringify(b));
+ const c=JSON.parse(E(`(()=>{RUN114(1,'cpock',0);return JSON.stringify({sel:[...document.querySelectorAll('#r112cmp .r112cb.on')].map(e=>e.textContent),star:($('#r112cmp .r111star')||{}).className,need:($('#r112cmp .r112need')||{}).textContent||'',row:[...$('#cl').querySelectorAll('.s')].some(x=>/❌.*Cutter comp picked/.test(x.textContent)),ready:($('#ready')||{}).textContent})})()`));
+ log('#11 Cutter comp on a fresh job: no tile selected, red star, "Needs a pick", Not ready',!c.sel.length&&!/r111y/.test(c.star)&&/Needs a pick/.test(c.need)&&c.row&&/Not ready/.test(c.ready),JSON.stringify(c));
+ const c2=JSON.parse(E(`(()=>{J.r112comp={m:'G41',d:null};show();RUN114(1,'cpock',0);return JSON.stringify({sel:[...document.querySelectorAll('#r112cmp .r112cb.on')].map(e=>e.textContent)})})()`));
+ log('#11 Cutter comp: no carry-over into the next fresh job',!c2.sel.length,JSON.stringify(c2));
+ const d=[];for(const mi of [1,3]){d.push(mi+':'+E(`(()=>{const c=S.m[${mi}].s.find(x=>x.k=='Control');const was=[c.v,c.st];c.v='';c.st='suggested';save();HB(${mi});J.p.Dia={v:1.25,g:false};show();r104ctlGo();c.v='Fanuc 0i-style';c.st='user';save();r103back();const r=JSON.stringify({op:J&&J.op,dia:J&&J.p&&J.p.Dia&&J.p.Dia.v,t:(document.querySelector('.tabs button.on')||{}).dataset.t});return r})()`))}
+ log('#11 Control picked from the job pill on VMC and HMC: back on the same job with its fields',d.every(x=>/"op":"hbore","dia":1.25,"t":"new"/.test(x)),d.join(' || '));
+ const r=[];E(`tab('machines');edit(1);1`);for(const v of ['','abc','8000']){E(`(()=>{const f=document.querySelector('.r99f[data-r99k="Max RPM"]');const i=f.querySelector('input');i.value=${JSON.stringify(v)};i.dispatchEvent(new Event('input',{bubbles:true}))})()`);await sl(40);r.push(v+'>'+E(`(()=>{const f=document.querySelector('.r99f[data-r99k="Max RPM"]');return JSON.stringify({end:f.querySelector('.r99end').textContent,bang:f.querySelector('.r99end').classList.contains('r112bang'),gs:f.querySelector('.r111star').classList.contains('r112gs'),clear:[...f.querySelectorAll('*')].some(e=>/^\\s*Clear/.test(e.textContent)&&!e.children.length&&e.offsetParent)})})()`))}
+ log('#11 Max RPM updates live as typed: empty gray star, junk red !, valid ✓; Clear line visible',/^>.*"end":"".*"gs":true.*"clear":true/.test(r[0])&&/^abc>.*"end":"!","bang":true.*"clear":true/.test(r[1])&&/^8000>.*"end":"✓","bang":false.*"clear":true/.test(r[2]),r.join(' || '));E(`tab('new');1`)});
 </script>
