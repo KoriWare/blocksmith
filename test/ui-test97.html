@@ -32,7 +32,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListe
   const tt=E("($('#r79toast')||{}).textContent||''");E("tab('new')");await sl(60);
   log('1: Control Done from Setup (no pill) → draft + toast + Restore card',E("(drGet()||{J:{}}).J.op")=='ctr'&&/moved to a draft/.test(tt)&&!!E("$('#r79dr')")&&!E("J&&J.op"),tt);
   // 6: Machine row → actual blocker; side tiles
-  E("(()=>{const m=S.m[1];const sd=m.s.find(x=>x.k=='Rotary head on');sd.v='';sd.st='confirm';save();J=null;tab('new');pickJob('grid')})()");E(fillJ);E(fillJ);await sl(30);
+  E("(()=>{const m=S.m[1];const sd=m.s.find(x=>x.k=='Rotary head on');sd.v='';sd.st='confirm';save();J=null;tab('new');pickJob('face')})()");E(fillJ);E(fillJ);await sl(30);
   const bl=E("r103block()");E("$('#out .r102mach')&&$('#out .r102mach').click()");await sl(80);
   log('6: Machine row jumps to the blocking setting (rotary side tiles highlighted)',bl[0]=='Rotary head on'&&E("(()=>{const h=document.querySelector('.r103hl');return !!h&&h.classList.contains('r104side')&&!!h.querySelector('.r104tiles')&&h.getBoundingClientRect().top>=0&&h.getBoundingClientRect().top<400})()"),JSON.stringify(bl));
   E("r103rt=null");

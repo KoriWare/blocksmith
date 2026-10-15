@@ -1,0 +1,59 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112: Stacey/Casey/Maria logic + design items --><iframe id="f" src="../index.html?v=111" style="width:320px;height:760px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(async()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Lathe w/ live tooling','Lathes');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();
+ var FJ=(mi)=>{cur(mi);J=null;tab('new');pickJob('face');Object.keys(J.p).forEach(k=>{if(J.p[k].v==null){const sp=r99spec(k)||{};const ch=J2.face&&J2.face.choices&&J2.face.choices[k];J.p[k]={v:ch?ch[0]:/Cutter|Tool dia/.test(k)?0.5:/Tool/.test(k)?1:/Work offset/.test(k)?'G54':/Step/.test(k)?0.05:/Z0|X0|Y0|Start/.test(k)?0:2,g:false}}});show();r111fill0();show()};var HB=(mi)=>{cur(mi);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show()};
+ var SET=(id,v)=>{const i=document.querySelector('#r111ang input[data-a="'+id+'"]');i.value=v;i.dispatchEvent(new Event('input'));i.dispatchEvent(new Event('change'))};1`);
+ // 3-axis: hidden
+
+ const m=(k,mi)=>`S.m[${mi}].s.find(y=>y.k==${JSON.stringify(k)})`;
+ // Stacey 1: Rotary head blocks face/engrave only
+ E(`(()=>{const x=${m('Rotary head on',1)};x.v='';x.st='confirm';save()})()`);E("HB(1);r111fill0();show()");const hb=E("!!J.code");E("FJ(1)");const fc=E("!J.code");
+ log("Stacey 1: blank Rotary head holds Face, not Helical bore",hb===true&&fc===true,JSON.stringify([hb,fc]));
+ E(`(()=>{const x=${m('Rotary head on',1)};x.v='Right';x.st='user';save()})()`);
+ // Stacey 2: cleared Control holds every job, lathes too
+ const LI=E("S.m.findIndex(m=>r98t(m)=='swiss')");
+ var LT=`cur(${LI});J=null;tab('new');pickJob('lturn');for(let i=0;i<3;i++){Object.keys(J.p).forEach(k=>{const q=J.p[k];if(q.v==null){const sp=r99spec(k)||{};const ch=J2.lturn&&J2.lturn.choices&&J2.lturn.choices[k];const ex=sp.ex!=null?String(sp.ex).replace(/^e\\.g\\.\\s*/,''):null;q.v=ch?ch[0]:sp.ch&&sp.ch.length?sp.ch[0]:ex&&!isNaN(parseFloat(ex))?parseFloat(ex):1;q.g=false}});show()}`;
+ E(LT);const lok=E("!!J.code&&J.code.some(l=>/G50 S\\d/.test(l))");
+ E(`(()=>{const x=${m('Control',LI)};window.__c=x.v;x.v='';x.st='confirm';save()})()`);E(LT);
+ log("Stacey 2: a cleared Control holds a lathe job (was written as CONTROL NOT SET)",lok===true&&E("!J.code&&/Control is not set/.test(($('#r110hold')||{}).textContent)")===true);
+ E(`(()=>{const x=${m('Control',LI)};x.v=window.__c;x.st='user';save()})()`);
+ // Stacey 5: G50 reads Max RPM (G50): blank never writes G50 S0
+ E(`(()=>{const x=${m('Max RPM (G50)',LI)};window.__g=x.v;x.v='';x.st='confirm';save()})()`);E(LT);
+ log("Stacey 5: blank Max RPM (G50) holds (no G50 S0)",E("!J.code&&/Max RPM \\(G50\\)/.test(($('#r110hold')||{}).textContent)")===true);
+ E(`(()=>{const x=${m('Max RPM (G50)',LI)};x.v='abc';x.st='confirm';x.r106bad=1;save()})()`);E(LT);
+ log("Stacey 5: junk Max RPM (G50) holds with the plain line (no SNaN)",E("!J.code&&/Max RPM \\(G50\\)/.test(($('#r110hold')||{}).textContent)")===true);
+ E(`(()=>{const x=${m('Max RPM (G50)',LI)};x.v=window.__g;x.st='user';delete x.r106bad;save()})()`);E(LT);log("Stacey 5: confirmed value writes G50 S<value>",E("!!J.code&&J.code.some(l=>l.startsWith('G50 S'+window.__g))")===true);
+ // Stacey 6
+ log("Stacey 6: reads lists include what the code really reads (probe, clamp codes)",E("R110READS.insp.includes('Spindle probe on / off')&&R110READS.runw.includes('Rotary axis clamp on / off')&&R110READS.tp32.includes('Tilt axis clamp on / off')")===true);
+ // Casey 1/2: Max RPM junk → Clear line; fix in place clears ! and error
+ E("HB(1);r111fill0();show();edit(1)");
+ E(`(()=>{const f=V.querySelector('.r99f[data-r99k="Max RPM"]');const i=f.querySelector('input');i.value='abc';i.dispatchEvent(new Event('input'));i.dispatchEvent(new Event('change'))})()`);
+ await new Promise(r=>setTimeout(r,60));
+ log("Casey 1: Clear (not set) shows right after junk is typed",E(`(()=>{const f=V.querySelector('.r99f[data-r99k="Max RPM"]');return !!f.querySelector('.r111clr')&&${m('Max RPM',1)}.v=='abc'})()`)===true);
+ E(`(()=>{const f=V.querySelector('.r99f[data-r99k="Max RPM"]');const i=f.querySelector('input');i.value='8000';i.dispatchEvent(new Event('input'));i.dispatchEvent(new Event('change'))})()`);
+ await new Promise(r=>setTimeout(r,60));
+ log("Casey 2: fixing junk to 8000 in place clears the flag and the error",E(`(()=>{const x=${m('Max RPM',1)};const f=V.querySelector('.r99f[data-r99k="Max RPM"]');return x.v=='8000'&&x.st=='user'&&!x.r106bad&&!/saved as junk|abc/.test(f.textContent)})()`)===true,E(`JSON.stringify(${m('Max RPM',1)})`));
+ // Casey 3
+ E("home();tab('machines');edit(1)");const ht=E("(()=>{const s=V.querySelector('.r111star');s.click();return (document.querySelector('.r111tip')||{}).textContent})()");
+ log("Casey 3: Home star tips say 'Some job on this machine reads it'",/^Some job on this machine reads it\./.test(ht),ht);
+ // Maria: star right after the label text; Table box same width as Tilt
+ log("Maria: the Control star sits right after the label text",E(`(()=>{const s=V.querySelector('.r99f[data-r99k="Control"] .r111star');return !!s&&s.previousSibling&&s.previousSibling.nodeType==3&&!/\\s$/.test(s.previousSibling.textContent)})()`)===true);
+ E("HB(I5);SET('t','30');SET('c','45')");log("Maria: Table angle box is the same width as Tilt",E("(()=>{const b=[...document.querySelectorAll('#r111ang .r111b')].map(x=>Math.round(x.getBoundingClientRect().width));return b.length==2&&b[0]==b[1]})()")===true,E("[...document.querySelectorAll('#r111ang .r111b')].map(x=>x.getBoundingClientRect().width).join(',')"));
+ // failing card ⛔, amber when overridden, Overridden chip
+ E("HB(1);r111fill0();show();J.p.Tool={v:99,g:false};show()");
+ log("Maria: failing count card starts with ⛔",E("/^⛔ Code checks: \\d+ of \\d+ pass · fix \\d+/.test(($('#ck .r111l1')||{}).textContent)")===true,E("($('#ck')||{}).textContent"));
+ E("J.override=1;refresh()");log("overridden: amber '⚠ N overridden', Overridden chip amber outline",E("$('#ck').classList.contains('r112amb')&&/^⚠ \\d+ overridden/.test($('#ck .r111l1').textContent)&&/⚠ Overridden/.test(($('#ready')||{}).textContent)")===true,E("($('#ck')||{}).textContent+' | '+(($('#ready')||{}).textContent)"));
+ E("J.override=0;refresh()");
+ // duplicate rapid after G54.1 Pn
+ E("HB(1);r111fill0();J.p['Work offset']={v:'G54.1 P2',g:false};S.m[1].opt.ext=1;show()");
+ log("no duplicate rapid after 'G54.1 Pn G00 X Y'",E("(()=>{const c=J.code||[];const i=c.findIndex(l=>/^G54\\.1 P2 G00 X/.test(l));if(i<0)return 'no G54.1 line';const xy=c[i].replace(/^G54\\.1 P2 /,'');return !c.slice(i+1,i+6).includes(xy)})()")===true,E("JSON.stringify((J.code||[]).slice(5,12))"));
+
+ }catch(e){log('crash',false,e.message)}
+ document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
+</script>
