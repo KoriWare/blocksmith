@@ -44,7 +44,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  log("tapping a star opens one why-line naming the line it feeds; tapping again closes",E("(()=>{const s=[...V.querySelectorAll('.r111star')].find(s=>s.dataset.k=='Max RPM');s.click();const t=s.closest('.r99f').querySelector('.r111tip');const ok=t&&/This job writes S\\. Any S above Max RPM is held, never lowered quietly\./.test(t.textContent);s.click();return ok&&!s.closest('.r99f').querySelector('.r111tip')})()")===true);
  log("Help 'Why some fields have a *' uses the same lines",E("(()=>{const h=HELP.find(x=>x[1]=='Why some fields have a *');return !!h&&Object.values(R111WHY).every(v=>h[2]().includes(esc(v)))})()")===true);
  // v111b: Rotary head on gets its star (job + Home), exact tip, gray once confirmed
- {const TIP="Required for face and engrave jobs. It shows the 4th axis on the correct end of the table in the simulation, and doesn't change the code yet.";
+ {const TIP="Required for mill jobs on this machine. It shows the 4th axis on the correct end of the table in the simulation, and doesn't change the code yet.";
   E("(()=>{const x=S.m[1].s.find(y=>y.k==R104SIDE);x.v='';x.st='confirm';save()})()");E("HB(1);r111fill0();show();edit(1)");
   const sj=E("(()=>{const s=[...V.querySelectorAll('.r111star')].find(s=>s.dataset.k==R104SIDE);if(!s)return 'none';const red=!s.classList.contains('r111y');s.click();const tp=s.closest('*').parentElement.parentElement.querySelector('.r111tip')||document.querySelector('.r111tip');return JSON.stringify([red,tp&&tp.textContent])})()");
   log("side star from the job: red while blank, tap tip reads the exact line",sj==JSON.stringify([true,TIP]),sj);
