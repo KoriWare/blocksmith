@@ -1,0 +1,53 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112: stock & work zero (STOCK-SPEC.md) --><iframe id="f" src="../index.html?v=111" style="width:320px;height:760px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(async()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Lathe w/ live tooling','Lathes');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();
+ var FJ=(mi)=>{cur(mi);J=null;tab('new');pickJob('face');Object.keys(J.p).forEach(k=>{if(J.p[k].v==null){const sp=r99spec(k)||{};const ch=J2.face&&J2.face.choices&&J2.face.choices[k];J.p[k]={v:ch?ch[0]:/Cutter|Tool dia/.test(k)?0.5:/Tool/.test(k)?1:/Work offset/.test(k)?'G54':/Step/.test(k)?0.05:/Z0|X0|Y0|Start/.test(k)?0:2,g:false}}});show();r111fill0();show()};var HB=(mi)=>{cur(mi);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show()};
+ var SET=(id,v)=>{const i=document.querySelector('#r111ang input[data-a="'+id+'"]');i.value=v;i.dispatchEvent(new Event('input'));i.dispatchEvent(new Event('change'))};1`);
+ const I3=0,IA=1,IB=3;
+ E(`var SQ=(L,W,H,zp,z)=>{const s=r112stk();s.shape='square';s.square={L,W,H};s.zp=zp;s.z=z;r112after()};var RD=(d,len)=>{const s=r112stk();s.shape='round';s.round={d,len};r112after()};var DUMP=()=>{tab('sim');scrub(J.M.length);r112outMark();const n=J.M.filter(m=>m.out==1&&!m.r).length;return n}`);
+ // 3-axis: 9 zero points x top/bottom; the program bytes never change, only the stock moves
+ const base3=E("HB("+I3+");r111fill0();show();progText()");
+ let okB=0,okS=0,bad=[];const want={bl:[0,0],bc:[-1,0],br:[-2,0],ml:[0,-0.5],mc:[-1,-0.5],mr:[-2,-0.5],tl:[0,-1],tc:[-1,-1],tr:[-2,-1]};
+ for(const zp of Object.keys(want))for(const z of ['top','bottom']){const r=E(`HB(${I3});r111fill0();show();SQ(2,1,1,'${zp}','${z}');JSON.stringify([progText(),r112solid().b])`);const [t,b]=JSON.parse(r);if(t===base3)okB++;else bad.push(zp+z);const w=want[zp];if(Math.abs(b[0]-w[0])<1e-9&&Math.abs(b[1]-w[1])<1e-9&&Math.abs(b[2]-(z=='top'?-1:0))<1e-9)okS++;else bad.push('S'+zp+z+b)}
+ log("3-axis: 18 zero picks leave the program byte-identical",okB==18,bad);
+ log("3-axis: stock box placed from each of 9 points x top/bottom",okS==18,bad);
+ const zr=JSON.parse(E(`HB(${I3});r111fill0();show();SQ(2,1,1,'bl','top');const a=DUMP();tab('new');SQ(2,2,1,'mc','top');const b=DUMP();tab('new');JSON.stringify([a,b])`));
+ log("red off-stock cuts: bore at X0 Y0 with zero at bottom-left cuts outside; centred zero cuts none",zr[0]>0&&zr[1]==0,zr);
+ E("tab('new')");
+ // A round
+ const baseA=E(`HB(${IA});r111fill0();show();progText()`);
+ const ar=JSON.parse(E(`RD(2,3);JSON.stringify([progText(),r112solid(),r112swing(),r112rotC(),checks(J).map(c=>c[0]).join('|')])`));
+ log("A round: program unchanged, cylinder along X R1, centerline at zero",ar[0]===baseA&&ar[1].k=='cylX'&&ar[2]==1&&ar[3].join()=='0,0,0',JSON.stringify(ar.slice(1,4)));
+ log("A round: corner-swing check listed",/corner swing \(R1(\.0+)?\b/.test(ar[4]),ar[4]);
+ // A square in a vise: offsets to the centerline; rotation about the real centerline at 0 / 36 / 90
+ const as=JSON.parse(E(`SQ(2,1,1,'bl','top');const s=r112stk();s.off={y:-0.5,z:0.5};r112after();const c=r112rotC();const pc=[];const pz=[];['0','36','90'].forEach(a=>{SET('r',a);tab('sim');pc.push(P(c));pz.push(P([0,0,0]));tab('new')});SET('r','0');JSON.stringify([progText()===${JSON.stringify(baseA)},c,pc,pz,r112swing()])`));
+ const same=(a,b)=>Math.abs(a[0]-b[0])<1e-6&&Math.abs(a[1]-b[1])<1e-6;
+ log("A square: centerline from vise offsets is the block centre (0,0.5,-0.5)",as[1].join()=='0,0.5,-0.5',as[1]);
+ log("A square: centerline stays fixed at 0/36/90 while the work zero swings",same(as[2][0],as[2][1])&&same(as[2][0],as[2][2])&&!same(as[3][0],as[3][2]),JSON.stringify(as.slice(2)));
+ log("A square: program unchanged; swing radius = farthest corner from centerline",as[0]===true&&Math.abs(as[4]-Math.hypot(0.5,0.5))<1e-9,as);
+ // corner swing failure: low clearance Z before a rotary move
+ const cs=E(`const s=r112stk();s.square={L:2,W:6,H:6};r112after();const k=J.code;J.code=['%','O1','G00 G90 X0 Y0','G00 Z1.','G00 A90.','M30','%'];const q=checks(J);J.code=k;q.filter(c=>/corner swing/.test(c[0])).map(c=>c[0]+':'+c[1]).join('|')`);
+ log("corner-swing check fails when the swing exceeds the Z clearance",/inside the corner swing.*:false/.test(cs),cs);
+ // HMC B round and square
+ const baseB=E(`HB(${IB});r111fill0();show();progText()`);
+ const br=JSON.parse(E(`RD(3,2);const a=[progText(),r112solid().k,r112swing()];SQ(2,1.5,0,'bl','top');const s=r112stk();s.fp='bc';s.off={x:0,z:0};r112after();a.push(progText(),JSON.stringify(r112solid().b));JSON.stringify(a)`));
+ log("HMC B round: cylinder along Y, program unchanged",br[0]===baseB&&br[1]=='cylY'&&br[2]==1.5,br.slice(1,3));
+ log("HMC B square (bottom-centre): box -0.75..0.75 x 0..2, program unchanged",br[3]===baseB&&br[4]==JSON.stringify([-0.75,0,-0.75,0.75,2,0.75]),br[4]);
+ // DWO hold
+ const dw=E(`J.code=(J.code||[]).concat(['G254']);r112dwo();[r112rotOK(),!J.code||($('#out')||{}).textContent.includes('G254 / G54.4')].join()`);
+ log("G254/G54.4 held until the DWO option is confirmed",dw=="false,true",dw);
+ // old rotary job hold
+ const ol=E(`HB(${IA});show();delete J.r112stk;J.r112old=1;show();const a=!!$('#r112held')&&!J.code;const s=r112stk();s.shape='round';s.round={d:2,len:3};s.top=1;r112after();[a,!$('#r112held')||!document.body.contains($('#r112held'))||!!J.code].join()`);
+ log("old rotary job held until top of stock entered, then writes",ol=='true,true',ol);
+ // Job manager red marker: two entries on G54 with different zeros
+ const jm=E(`try{const a={op:'hbore',r112stk:{shape:'square',zp:'bl',z:'top',off:{}},p:{'Work offset':{v:'G54'}}},b={op:'hbore',r112stk:{shape:'square',zp:'mc',z:'top',off:{}},p:{'Work offset':{v:'G54'}}};[r112zsig(a)!==r112zsig(b),r112zsig({})===null].join()}catch(e){'ERR '+e.message}`);
+ log("Job manager: different zeros on one work offset differ (red marker signature)",jm=='true,true',jm);
+ }catch(e){log('crash',false,e.message)}
+ document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
+</script>
