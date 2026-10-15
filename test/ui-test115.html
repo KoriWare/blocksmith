@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112d: rotp (probe edge angle + G68) indexes to the job angle on 4-axis A, HMC B, 5-axis B+C; G69 before every return to 0 and every M30 --><iframe id="f" src="../index.html?v=115" style="width:390px;height:760px;border:0"></iframe><script src="fill110.js"></script><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length};
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();1`);
+ w.F110OV=F110OV;w.F110MACH=F110MACH;E(F110SETUP);w.__FILL=E(F110FILL);
+ E(`var RP=(mi,ang)=>{cur(mi);eval(F110MACH);J=null;tab('new');pickJob('rotp');if(!J||J.op!='rotp')return {err:'no job'};__FILL('rotp');show();__FILL('rotp');show();const ax=r111axes();const st=r111state(ax);ax.forEach(a=>st.v[a.id]=String(ang));show();return {code:Array.isArray(J.code)?J.code:null,L:ax.map(a=>a.L),name:S.m[S.cur].name,t:r98t(S.m[S.cur])}};1`);
+ const idx=JSON.parse(E(`JSON.stringify(S.m.map((m,i)=>[i,r98t(m),r111axes(m).map(a=>a.L).join('')]))`));
+ const want=[['4-axis A','A'],['HMC B','B'],['5-axis B+C','BC']];
+ want.forEach(([nm,lt])=>{const m=idx.find(x=>x[2]==lt);if(!m){log(nm+': machine found',false,JSON.stringify(idx));return}
+  [0,36,90].forEach(ang=>{const x=JSON.parse(E(`JSON.stringify(RP(${m[0]},${ang}))`));const k=nm+' at '+ang+'°';
+   if(!x.code){log(k+': code written',false,JSON.stringify(x));return}
+   const c=x.code,L=x.L,bad=[];const zero='G00 '+L.map(l=>l+'0.').join(' ');
+   const used=new Set();c.forEach(l=>{const s=l.replace(/\([^)]*\)/g,'').replace(/#\d+=.*|IF\[.*|G65.*|G10.*/,'');(s.match(/(?:^|\s)([ABC])-?[\d.#\[]/g)||[]).forEach(t=>used.add(t.trim()[0]))});
+   [...used].forEach(u=>{if(!L.includes(u))bad.push('letter '+u+' not on machine')});
+   const tc=c.findIndex(l=>/T\d+ M0?6/.test(l));
+   if(!(c[tc+1]||'').startsWith(zero))bad.push('after T M06 want "'+zero+'" got "'+c[tc+1]+'"');
+   const ja=c.filter(l=>/\(JOB ANGLE\)/.test(l));
+   if(ang==0){if(ja.length)bad.push('angle 0 wrote '+ja[0])}
+   else{const w2='G00 '+L.map(l=>l+ang+'.').join(' ')+' (JOB ANGLE)';if(c[tc+2]!==w2)bad.push('line after safe start want "'+w2+'" got "'+c[tc+2]+'"');if(ja.length!=1)bad.push('JOB ANGLE lines '+ja.length)
+    const pr=c.findIndex(l=>/^M10|G31/.test(l));if(!(pr>tc+2))bad.push('probe not after the job angle')}
+   const g68=c.findIndex(l=>/^G68/.test(l));if(g68<0)bad.push('no G68');
+   const m30=c.map((l,i)=>/^M30/.test(l)?i:-1).filter(i=>i>=0);if(m30.length<2)bad.push('expected main + alarm M30, got '+m30.length);
+   m30.forEach(e=>{const r0=c[e-1];if(!(r0&&r0.startsWith(zero)&&/BACK TO ZERO/.test(r0)))bad.push('before M30 line '+e+' want return "'+zero+'" got "'+r0+'"');
+    let i=e-2;while(i>=0&&/^(G91 G28|G90$)/.test(c[i]))i--;if(!/^G69/.test(c[i]||''))bad.push('no G69 right before the return at M30 line '+e+' (got "'+c[i]+'")')});
+   const al=c.find(l=>/#3000/.test(l));if(ang&&al&&!/\(ROTARY LEFT AT JOB ANGLE\)/.test(al))bad.push('alarm line lacks ROTARY LEFT comment');
+   log(k+': safe start 0, JOB ANGLE, probe, G69 then '+zero+' before every M30, only '+L.join('+')+' letters',!bad.length,bad.join(' | ')+' || '+c.join(' / '));
+  })});
+ }catch(e){log('exception',false,e.stack)}fin()},400)};
+</script>
