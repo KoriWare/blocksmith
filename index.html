@@ -7259,7 +7259,7 @@ body:has(#r79toast:not(.r111hide)) #v,body:has(#r79toast:not(.r111hide)) #out{pa
 #ttl{white-space:normal!important;text-overflow:clip!important;display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden!important;line-height:1.15;font-size:clamp(14px,4.4vw,19px);overflow-wrap:anywhere;min-width:0}
 #bldtl{color:#f4f4f4!important;background:#2f2f2f!important;border:1px solid #6a6a6a!important;font-weight:600}
 #jcjobs>button.chip{color:#f4f4f4!important;background:#2f2f2f!important;border:1px solid #5e5e5e!important;height:auto!important;min-height:44px}
-#jcjobs>button.chip b{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;display:block;-webkit-line-clamp:unset!important;color:#f4f4f4}
+#jcjobs>button.chip b{color:#f4f4f4}
 pre.code,#cv,.code{white-space:pre-wrap!important;overflow-wrap:anywhere}
 `;document.head.appendChild(st)}
 {const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);r112card();return r}}
@@ -7273,7 +7273,7 @@ function r112dials(){const cvs=$('#cv');let d=$('#r112dial');const D=window.R112
  if(!d){d=document.createElement('div');d.id='r112dial';d.className='simonly';d.setAttribute('aria-label','Rotary dials')}const after=cvs.closest('.r112cvw')||cvs;if(after.nextElementSibling!==d)after.insertAdjacentElement('afterend',d);
  const dial=([L,deg,half])=>{const R=15,a=-Math.PI/2+deg*Math.PI/180,x=R*Math.cos(a),y=R*Math.sin(a);const arc=half?`<path d="M${-R} 0 A${R} ${R} 0 0 1 ${R} 0" fill="none" stroke="#999" stroke-width="1.5"/>`:`<circle r="${R}" fill="none" stroke="#999" stroke-width="1.5"/>`;
   return `<div class="r112d" data-ax="${L}"><svg width="40" height="${half?24:40}" viewBox="${-20} ${half?-20:-20} 40 ${half?24:40}">${arc}${D.UK?'':`<line x1="0" y1="0" x2="${x.toFixed(2)}" y2="${y.toFixed(2)}" stroke="#ffd23f" stroke-width="2.5"/>`}</svg><span>${L} ${D.UK?'set by G68.2':(+deg).toFixed(1)+'°'}</span></div>`};
- const h=D.ax.map(dial).join('')+(D.pl?`<div class="r112pl">${D.pl}</div>`:'');if(d.innerHTML!==h)d.innerHTML=h}
+ const h=D.ax.map(dial).join('')+(D.pl?`<div class="r112pl">${D.pl}</div>`:'')+(D.UK?'<div class="r112pl r112uk">Rotary: set by G68.2</div>':'');if(d.innerHTML!==h)d.innerHTML=h}
 function r112labs(L){const cvs=$('#cv');let b=$('#r112lab');if(!cvs||!L.length){if(b)b.remove();return}if(!b){b=document.createElement('div');b.id='r112lab';b.className='simonly'}const host=cvs.closest('.r112cvw')||cvs;if(host.previousElementSibling!==b)host.insertAdjacentElement('beforebegin',b);
  const h=L.map(t=>`<div>${t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</div>`).join('');if(b.innerHTML!==h)b.innerHTML=h}
 {const _d=draw;draw=function(){if(typeof ctx=='undefined'||!ctx||typeof cv=='undefined'||!cv||!J)return _d.apply(this,arguments);window.R112DIAL=null;
@@ -7314,6 +7314,73 @@ function r112expand(P){try{const V={};const out=[];const ev=s=>{s=s.replace(/#(\
  if(!macro&&R.out.length)window.R112WHY='No WHILE loop suggested: Custom Macro B is not confirmed on this machine.';else if(!R.out.length&&R.seen&&R.why.length)window.R112WHY='No WHILE loop suggested: '+R.why.join('; ')+'.';
  return r}}
 {const _sc=scan;scan=function(){const r=_sc.apply(this,arguments);try{const d=$('#sug');if(d&&window.R112WHY){const g=document.createElement('div');g.className='s r112why';g.style.color='#9a9a9a';g.textContent=window.R112WHY;d.appendChild(g)}}catch(e){}return r}}
+// ===== v112 macros by default: with Custom Macro B confirmed, repeated plain passes are written as one WHILE loop with a whole-number counter (#100–#199).
+// Every loop is run through r112run (a small macro interpreter) and compared with the plain lines it replaces; any difference keeps the plain lines and says why in a gray line.
+function r112run(P){// returns expanded motion lines, or null if the program uses anything this checker does not understand
+ try{const V={};const out=[];const ev=s=>{let t=String(s).replace(/#(\d+)/g,(m,k)=>'('+(V[k]??0)+')').replace(/\[/g,'(').replace(/\]/g,')');if(!/^[\d.()+\-*\/ ]+$/.test(t))throw 0;const v=Function('return '+t)();if(!isFinite(v))throw 0;return v};
+  const cond=s=>{const m=s.match(/^\[(.+?)(LT|LE|GT|GE|EQ|NE)(.+)\]$/);if(!m)throw 0;const a=ev(m[1]),b=ev(m[3]);return {LT:a<b,LE:a<=b,GT:a>b,GE:a>=b,EQ:a==b,NE:a!=b}[m[2]]};
+  const fmt=l=>l.replace(/\[(?:[^\[\]]|\[[^\[\]]*\])*\]|#(\d+)/g,m=>r112fmt(m[0]=='#'?(V[m.slice(1)]??0):ev(m)));
+  const L=P.map(l=>String(l).replace(/\([^)]*\)/g,'').trim().toUpperCase());let pc=0,g=0;const stack=[];
+  while(pc<L.length){if(g++>200000)throw 0;const l=L[pc];let m;
+   if(!l){pc++;continue}
+   if((m=l.match(/^WHILE(\[.+\])DO(\d)$/))){if(cond(m[1])){stack.push(pc);pc++}else{let d=0;for(pc++;pc<L.length;pc++){if(/^WHILE/.test(L[pc]))d++;else if(/^END\d/.test(L[pc])){if(!d)break;d--}}pc++}continue}
+   if(/^END\d$/.test(l)){pc=stack.pop();continue}
+   if((m=l.match(/^#(\d+)=(.+)$/))){V[m[1]]=ev(m[2]);pc++;continue}
+   out.push(fmt(l));pc++}return out}catch(x){return null}}
+function r112same(a,b){const n=x=>[...String(x).matchAll(/([A-Z])(-?\d*\.?\d+)/g)].map(m=>[m[1],+m[2]]);const N=l=>String(l).replace(/\([^)]*\)/g,'').trim().toUpperCase();
+ if(!a||a.length!=b.length)return false;return a.every((l,i)=>{const x=n(N(l)),y=n(N(b[i]));return N(l).replace(/-?\d*\.?\d+/g,'#').replace(/\s+/g,'')==N(b[i]).replace(/-?\d*\.?\d+/g,'#').replace(/\s+/g,'')&&x.length==y.length&&x.every((p,j)=>p[0]==y[j][0]&&Math.abs(p[1]-y[j][1])<5e-5)})}
+function r112pickVar(code){const used=new Set();code.forEach(l=>[...String(l).matchAll(/#(\d+)/g)].forEach(m=>used.add(+m[1])));let fr=[];try{const x=sv('Free common variables');if(x&&x.st=='user')String(x.v).split(',').forEach(r=>{const m=r.match(/#?(\d+)\s*-\s*#?(\d+)/);if(m)for(let k=+m[1];k<=+m[2];k++)fr.push(k)})}catch(e){}
+ const cand=[...fr.filter(k=>k>=100&&k<=199),...Array.from({length:100},(_,i)=>100+i)];return cand.find(k=>!used.has(k))||null}
+function r112loopify(code){const L=code.slice();const res={code:L,loops:[],fb:[]};const N=l=>String(l).trim().toUpperCase();
+ // only plain motion lines outside any existing WHILE…END and outside comp changes
+ const depth=[];let d=0;L.forEach((l,i)=>{const u=N(l);if(/^WHILE/.test(u))d++;depth[i]=d;if(/^END\d/.test(u))d=Math.max(0,d-1)});
+ const ok=i=>{const l=String(L[i]||'');return depth[i]==0&&/^G0?[0-3](?!\d)/i.test(l.trim())&&!/[#(\[;]/.test(l)&&!/G4[0-2]\b|G4[3-9]|G5|G6|G8|G9[0-9]|M\d|T\d|S\d/i.test(l.replace(/^G0?[0-3]/i,''))};
+ const words=l=>[...N(l).matchAll(/([A-Z])(-?\d*\.?\d+)/g)].map(m=>({a:m[1],v:+m[2],s:m[2]}));const shape=l=>N(l).replace(/(?<=[A-Z])-?\d*\.?\d+/g,'#').replace(/\s+/g,' ');
+ const cands=[];
+ for(let k=1;k<=4;k++)for(let i=0;i+3*k<=L.length;i++){let good=true;for(let q=0;q<k;q++)if(!ok(i+q)){good=false;break}if(!good)continue;
+  const blk=n=>L.slice(i+n*k,i+n*k+k);const sh=b=>b.map(shape).join('|');const s0=sh(blk(0));let n=1;
+  while(i+(n+1)*k<=L.length&&[...Array(k)].every((_,q)=>ok(i+n*k+q))&&sh(blk(n))==s0&&blk(n).map(N).join('|')!=blk(0).map(N).join('|'))n++;if(n<3)continue;
+  const W=[...Array(n)].map((_,q)=>blk(q).flatMap(words));const dif=W[0].map((w,c)=>W[1][c].v-w.v);const idx=dif.map((x,c)=>Math.abs(x)>1e-9?c:-1).filter(c=>c>=0);if(!idx.length)continue;
+  if(idx.some(c=>/[GMTHDSF]/.test(W[0][c].a)))continue;
+  const lin=W.every((r,q)=>r.every((w,c)=>idx.includes(c)?Math.abs(w.v-(W[0][c].v+q*dif[c]))<1e-6:Math.abs(w.v-W[0][c].v)<1e-9));if(!lin)continue;
+  if(k+4>=n*k)continue;// a loop must make the program shorter
+  cands.push({i,k,n,idx,dif,W})}
+ // biggest first, no overlaps
+ const keep=[];cands.sort((x,y)=>y.n*y.k-x.n*x.k||x.i-y.i).forEach(c=>{if(!keep.some(q=>c.i<q.i+q.n*q.k&&q.i<c.i+c.n*c.k))keep.push(c)});keep.sort((x,y)=>y.i-x.i);
+ if(!keep.length)return res;const v=r112pickVar(L);if(!v){res.fb.push('no free common variable between #100 and #199');return res}
+ keep.forEach(c=>{const C='#'+v;let cnt=-1;const ex=(base,st)=>{const b=r112fmt(base),s=r112fmt(st);if(Math.abs(base-st)<1e-12)return '['+s+'*['+C+'+1]]';return '['+b+(st<0?'-':'+')+r112fmt(Math.abs(st))+'*'+C+']'};
+  const body=L.slice(c.i,c.i+c.k).map(l=>String(l).trim().replace(/([A-Za-z])(-?\d*\.?\d+)/g,(m,a,x)=>{cnt++;return c.idx.includes(cnt)?a+ex(c.W[0][cnt].v,c.dif[cnt]):m}));
+  const loop=[C+'=0 (PASS COUNT)','WHILE['+C+'LT'+c.n+']DO1',...body,C+'='+C+'+1','END1'];const orig=L.slice(c.i,c.i+c.n*c.k);
+  const e=r112run(loop);if(!r112same(e,orig)){res.fb.push('the loop for lines '+(c.i+1)+'–'+(c.i+c.n*c.k)+' did not expand back to the same moves');return}
+  L.splice(c.i,c.n*c.k,...loop);res.loops.push({i:c.i,len:loop.length,olen:c.n*c.k,exp:e,n:c.n})});
+ // indices were applied bottom-up; report top-down positions in the final code
+ res.loops.sort((x,y)=>x.i-y.i);let sh=0;res.loops.forEach(o=>{o.i+=sh;sh+=o.len-o.olen;delete o.olen});return res}
+function r112macroOn(){return opt('macroB')}
+['gen','genL','genP'].forEach(fn=>{if(typeof window[fn]!='function'&&typeof eval(fn)!='function')return;const _g=eval(fn);const w=function(){const g=_g.apply(this,arguments);try{if(!g||!Array.isArray(g.code)||!r112macroOn()||window.R112NOLOOP)return g;const r=r112loopify(g.code);
+  if(r.loops.length){g.code.splice(0,g.code.length,...r.code)}g.r112loops=r.loops;g.r112fb=r.fb;if(typeof J!='undefined'&&J){J.r112loops=r.loops;J.r112fb=r.fb}}catch(e){console.error(e)}return g};w.toString=()=>_g.toString();
+  if(fn=='gen')gen=w;else if(fn=='genL')genL=w;else genP=w});
+// gray fallback line (only when a job had repeated passes it could not write as a loop) + 'Show expanded' preview toggle (mock: bs/mock/expand.html)
+let R112EXP=false,R112EXPK=null;
+function r112expKey(){return [typeof J!='undefined'&&J?(J.r112id||(J.r112id=Math.random().toString(36).slice(2))):'',(typeof VIEW21!='undefined'?VIEW21:''),(V&&V.dataset&&V.dataset.page)||'',S.cur].join('|')}
+function r112expPaint(){const ed=$('#ed');if(!ed)return;ed.querySelectorAll('.r112x').forEach(e=>e.remove());ed.querySelectorAll('.ln.r112hid').forEach(e=>e.classList.remove('r112hid'));const note=$('#r112xnote');if(note)note.style.display=R112EXP?'':'none';
+ if(!R112EXP||!J||!J.r112loops)return;J.r112loops.forEach(o=>{const rows=[];for(let i=o.i;i<o.i+o.len;i++){const el=ed.querySelector('.ln[data-i="'+i+'"]');if(el)rows.push(el)}if(!rows.length)return;rows.forEach(e=>e.classList.add('r112hid'));const at=rows[rows.length-1];
+  const frag=document.createDocumentFragment();o.exp.forEach(l=>{const d=document.createElement('div');d.className='r112x';d.textContent=l;frag.appendChild(d)});at.after(frag)})}
+function r112expUI(){try{const ed=$('#ed');let t=$('#r112xt');const has=typeof J!='undefined'&&J&&J.r112loops&&J.r112loops.length&&ed;
+ const k=r112expKey();if(k!==R112EXPK){R112EXP=false;R112EXPK=k}
+ if(!has){if(t)t.remove();const n=$('#r112xnote');if(n)n.remove();return}
+ if(!t){t=document.createElement('div');t.id='r112xt';t.className='r112tog';t.innerHTML='<span class="lbl">Show expanded</span><button type="button" role="switch" class="r112sw" aria-label="Show expanded"><i></i></button>';t.querySelector('button').onclick=()=>{R112EXP=!R112EXP;R112EXPK=r112expKey();r112expUI()}}
+ if(ed.previousElementSibling!==t)ed.before(t);const b=t.querySelector('button');b.classList.toggle('on',R112EXP);b.setAttribute('aria-checked',R112EXP?'true':'false');
+ let n=$('#r112xnote');if(!n){n=document.createElement('div');n.id='r112xnote';n.className='s r112xn';n.textContent='Preview only. The program still saves with the loop.'}if(ed.nextElementSibling!==n)ed.after(n);
+ r112expPaint()}catch(e){console.error(e)}}
+function r112fbUI(){try{let g=$('#r112fb');const fb=typeof J!='undefined'&&J&&J.r112fb&&J.r112fb.length&&J.code&&r112macroOn();const ck=$('#ck');if(!fb||!ck){if(g)g.remove();return}
+ if(!g){g=document.createElement('div');g.id='r112fb';g.className='s r112fbl'}const t='Written as plain lines: '+J.r112fb.join('; ')+'.';if(g.textContent!==t)g.textContent=t;if(ck.nextElementSibling!==g)ck.after(g)}catch(e){}}
+{const _sh=show;show=function(){const r=_sh.apply(this,arguments);r112fbUI();r112expUI();return r}}
+{const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);r112fbUI();r112expUI();return r}}
+{const _tb=tab;tab=function(){R112EXP=false;return _tb.apply(this,arguments)}}
+{const st=document.createElement('style');st.textContent='[data-view=sim] #r112xt,[data-view=sim] #r112xnote{display:none!important}.r112tog{display:flex;align-items:center;justify-content:space-between;margin:8px 2px}.r112tog .lbl{font-weight:700;font-size:14px}.r112sw{width:46px!important;height:26px!important;min-height:0!important;min-width:0!important;border-radius:13px!important;position:relative;flex:none;background:#333!important;border:1.5px solid #555!important;padding:0!important;margin:0!important;box-shadow:none!important}.r112sw i{position:absolute;top:2px;left:3px;width:18px;height:18px;border-radius:50%;background:#999;display:block}.r112sw.on{background:#ffd21f!important;border-color:#ffd21f!important}.r112sw.on i{left:auto;right:3px;background:#111}#ed .ln.r112hid{display:none!important}#ed .r112x{color:#999;font-style:italic;font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;padding-left:8px;border-left:3px solid #333}.r112xn{color:#888;font-size:11px;margin-top:6px}.r112fbl{color:#9a9a9a!important;margin:4px 2px}';document.head.appendChild(st)}
+// a loop counter set to 0 right before its WHILE is scratch: it is meant to be cleared at power off, so the Fanuc 0i '#100–#199 cleared' warning skips it
+{const _c=checks;checks=function(j){const c=_c.apply(this,arguments);try{const t=txt();const cnt=new Set(t.map(l=>(String(l).match(/^#(1\d\d)=0 \(PASS COUNT\)$/)||[])[1]).filter(Boolean).map(Number));if(!cnt.size)return c;
+ return c.map(x=>{if(!/^Fanuc 0i clears #100–#199 at power off/.test(x[0]))return x;const used=new Set();t.forEach(l=>[...String(l).replace(/\([^)]*\)/g,'').matchAll(/#(\d+)/g)].forEach(m=>used.add(+m[1])));const v=[...used].filter(n=>n>=100&&n<=199&&!cnt.has(n)).sort((a,b)=>a-b);return v.length?[`Fanuc 0i clears #100–#199 at power off (${v.slice(0,4).map(n=>'#'+n).join(', ')}) — use #500+ if it must be kept`,false]:null}).filter(Boolean)}catch(e){return c}}}
 
 /* R79-END */</script>
 </body></html>

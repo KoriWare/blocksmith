@@ -83,7 +83,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListe
   log('12: tapping the back bar returns to the same job with values kept',x.a.op=='tlen'&&x.a.el==3.25&&x.a.tab=='new',rt2);
   log('12: type changed in Setup: return runs the type-switch rules (draft + Restore card, not the old job)',!x.b.J&&x.b.dr&&x.b.draft=='tlen'&&x.b.tab=='new',rt2)}
  // ---- 9 sim
- log('9: Fanuc sim draws a top-right "Rotary: set by G68.2" line and labels under each dial',/Rotary: set by G68\.2/.test(d.documentElement.innerHTML)&&/'set by G68\.2',x,ly\+13/.test(d.documentElement.innerHTML));
+ log('9: Fanuc sim draws a top-right "Rotary: set by G68.2" line and labels under each dial',/Rotary: set by G68\.2/.test(d.documentElement.innerHTML)&&/D\.UK\?'set by G68\.2'/.test(d.documentElement.innerHTML));
  log('Machine chip has the machine icon and › arrow',/R103ICO\+'<span>Machine: /.test(d.documentElement.innerHTML));
  log('no console errors',!errs.length,errs.join('|'));
  o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL';step=9

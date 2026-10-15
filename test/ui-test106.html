@@ -27,6 +27,40 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  // the expander catches a loop that does not reproduce the lines
  log("expander mismatch is caught (bad loop not offered)",E("JSON.stringify(r112expand(['#100=0 (START)','#101=2 (PASSES)','WHILE[#101GT0]DO1','G01 Z#100','#100=#100-0.1','#101=#101-1','END1']))")=='["G01 Z0","G01 Z-0.1"]');
 
+ // ===== macros by default on a real job: helical bore O4600 on Mill B (Macro B on)
+ E("S.m[1].opt.macroB=1;save();HB(1);r111fill0();show()");
+ log("O4600 with Macro B: passes written as one WHILE loop (#1xx=0 (PASS COUNT) … END1)",E("(()=>{const c=J.code.join('\\n');return /^#1\\d\\d=0 \\(PASS COUNT\\)\\nWHILE\\[#1\\d\\dLT10\\]DO1\\nG03 X0.25 Y0.0 I-0.25 J0. Z\\[-0.05\\*\\[#1\\d\\d\\+1\\]\\] F20.0\\n#1\\d\\d=#1\\d\\d\\+1\\nEND1$/m.test(c)})()")===true,E("J.code.join(' / ')"));
+ const plainOn=E("(()=>{R112NOLOOP=1;show();const c=J.code.join('\\n');R112NOLOOP=0;show();return c})()");
+ log("O4600: the loop expands to exactly the plain passes",E("(()=>{const o=J.r112loops[0];const c=J.code;const ex=r112run(c.slice(o.i,o.i+o.len));const p="+JSON.stringify("")+"||null;return !!ex&&ex.length==10})()")===true&&E("(()=>{const o=J.r112loops[0];return JSON.stringify(r112run(J.code.slice(o.i,o.i+o.len)))})()")==JSON.stringify(plainOn.split('\n').filter(l=>/^G03 .* Z-/.test(l))));
+ log("O4600: code checks stay green (loop counter is scratch, not a kept variable)",/^Code checks: (\d+) of \1 pass/.test(E("$('#ck .r111l1').textContent")),E("$('#ck').textContent"));
+ log("no gray fallback line when the loop was written",!E("$('#r112fb')"));
+ // Show expanded
+ log("Show expanded toggle sits above the code, off by default",E("(()=>{const t=$('#r112xt');return !!t&&t.nextElementSibling===$('#ed')&&t.querySelector('button').getAttribute('aria-checked')=='false'&&!$('#ed .r112x')})()")===true);
+ E("$('#r112xt button').click()");
+ log("Show expanded on: the loop lines are replaced by the expanded moves in gray italic, from the verify step",E("(()=>{const x=[...document.querySelectorAll('#ed .r112x')];const o=J.r112loops[0];const cs=x[0]&&getComputedStyle(x[0]);return x.length==10&&x.map(e=>e.textContent).join('|')==o.exp.join('|')&&cs.fontStyle=='italic'&&cs.color=='rgb(153, 153, 153)'&&[...document.querySelectorAll('#ed .ln.r112hid')].length==o.len})()")===true);
+ log("note: the program still saves as the loop",/Preview only\. The program still saves with the loop\./.test(E("($('#r112xnote')||{}).textContent"))&&E("getComputedStyle($('#r112xnote')).display")!='none');
+ // Copy / Download / Save always write the loop, even while expanded
+ E("window.__clip='';navigator.clipboard&&(navigator.clipboard.writeText=t=>{window.__clip=t;return Promise.resolve()});window.__blob='';const _cu=URL.createObjectURL;URL.createObjectURL=b=>{b.text().then(t=>window.__blob=t);return _cu.call(URL,b)}");
+ E("(document.querySelector('#cp')||{}).disabled=false;copy()");await new Promise(z=>setTimeout(z,300));
+ log("Copy while expanded copies the loop",/WHILE\[#1\d\dLT10\]DO1/.test(E("window.__clip"))&&!/Z-0\.15 F20/.test(E("window.__clip")),E("String(window.__clip).slice(0,200)"));
+ E("window.__blob=progText()");
+ log("Download .nc while expanded writes the loop",/WHILE\[#1\d\dLT10\]DO1/.test(E("window.__blob"))&&!/Z-0\.15 F20/.test(E("window.__blob")),E("String(window.__blob).slice(0,160)"));
+ E("saveJob()");
+ log("Save to Library while expanded stores the loop",E("(()=>{const c=(S.jobs[0].code||[]).join('\\n');return /WHILE\\[#1\\d\\dLT10\\]DO1/.test(c)&&!/Z-0\\.15 F20/.test(c)})()")===true);
+ // reset: leaving the code view, or reopening the job
+ E("HB(1);r111fill0();show();$('#r112xt button').click()");const on1=E("$('#r112xt button').classList.contains('on')");E("tab('sim');tab('new')");
+ log("toggle resets when you leave the code view",on1===true&&E("!$('#r112xt button').classList.contains('on')&&!$('#ed .r112x')")===true);
+ E("$('#r112xt button').click();HB(1);r111fill0();show()");
+ log("toggle resets when the job is reopened",E("!$('#r112xt button').classList.contains('on')&&!$('#ed .r112x')")===true);
+ // gray fallback line only when a job falls back
+ log("fallback: no free #100–#199 → plain lines + reason",E("(()=>{const c=['G01 X0 Y0',...Array.from({length:100},(_,i)=>'#'+(100+i)+'=1'),...Array.from({length:6},(_,i)=>'G01 Z-'+(i+1)+'. F10.')];const r=r112loopify(c);return !r.loops.length&&/no free common variable/.test(r.fb[0])&&r.code.join()==c.join()})()")===true);
+ E("J.r112fb=['test reason'];r112fbUI()");log("gray fallback line shows under the checks card when a job fell back",/^Written as plain lines: test reason\.$/.test(E("($('#r112fb')||{}).textContent"))&&E("getComputedStyle($('#r112fb')).color")=='rgb(154, 154, 154)',E("[!!$('#r112fb'),!!$('#ck'),!!J.code,opt('macroB'),($('#r112fb')||{}).textContent].join('|')")+E("$('#r112fb')&&getComputedStyle($('#r112fb')).color"));
+ E("J.r112fb=[];refresh()");
+ // Macro B off: plain lines, identical to the no-loop output; no toggle
+ E("S.m[1].opt.macroB=0;save();HB(1);r111fill0();show()");
+ log("Macro B off: helical bore is held as before (it needs Macro B), no loop, no toggle, no gray line",E("!J.code&&/don't include Custom Macro B/.test($('#out').innerText)&&!$('#r112xt')&&!$('#r112fb')")===true,E("[opt('macroB'),/PASS COUNT/.test(J.code.join()),!!$('#r112xt'),!!$('#r112fb')].join()"));
+ E("S.m[1].opt.macroB=1;save()");
+
  }catch(e){log('crash',false,e.message)}
  document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
 </script>

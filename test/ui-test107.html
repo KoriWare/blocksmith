@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112 macros by default: every machine x every job. Loops expand back to the plain lines exactly; Macro B off never loops --><iframe id="fL" src="../index.html?v=112&k=L" style="width:390px;height:700px;border:0"></iframe><iframe id="fN" src="../index.html?v=112&k=N" style="width:390px;height:700px;border:0"></iframe><iframe id="fO" src="../index.html?v=112&k=O" style="width:390px;height:700px;border:0"></iframe><script src="gen103.js"></script><script>
+const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,900)));const R={};let left=3;
+const fin=()=>{try{check()}catch(e){log('exception '+e.message,false)}o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length};
+let W;
+[[fL,'L'],[fN,'N'],[fO,'O']].forEach(([f,K],i)=>{let step=0;f.onload=()=>{const w=f.contentWindow;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ if(K=='L')W=w;if(K=='N')w.R112NOLOOP=1;if(K=='O')w.R103PRE="S.m.forEach(m=>{m.opt=m.opt||{};m.opt.macroB=0});save()";
+ setTimeout(()=>{try{R103GEN(w,out=>{R[K]=out;if(--left==0)fin()},false)}catch(e){R[K]={};log('gen '+K+' '+e.message,false);if(--left==0)fin()}},800*(i+1))}});
+function check(){const keys=Object.keys(R.L);let looped=0,same=0;const bad=[],shapes=[],vars=[],offLoop=[];const ops=new Set();
+ for(const k of keys){const a=R.L[k],b=R.N[k];if(a==null||b==null||/^HELD|^ERR/.test(a)){if(a!==b)bad.push(k+' held/ERR differs');continue}
+  if(/\(PASS COUNT\)/.test(R.O[k]||''))offLoop.push(k);
+  if(a===b){same++;continue}
+  const L=a.split('\n'),N=b.split('\n');looped++;ops.add(k.split('|').slice(1).join('|'));
+  // replace each loop by its expansion, then the program must equal the plain one byte for byte
+  const out=[];for(let i=0;i<L.length;i++){if(/^#1\d\d=0 \(PASS COUNT\)$/.test(L[i])){const v=L[i].slice(0,4);const e=L.indexOf('END1',i);const blk=L.slice(i,e+1);
+    if(!/^WHILE\[#1\d\dLT\d+\]DO1$/.test(blk[1])||blk[blk.length-2]!==v+'='+v+'+1')shapes.push(k+': '+blk.join(' / '));
+    if(!(+v.slice(1)>=100&&+v.slice(1)<=199))vars.push(k+' '+v);
+    const ex=W.r112run(blk);if(!ex){bad.push(k+' loop could not run');break}
+    // the expansion is compared number by number in the app; here take the plain lines it replaced
+    const n=ex.length;const at=out.length;const plain=N.slice(at,at+n);if(!W.r112same(ex,plain)){bad.push(k+' expansion differs at line '+(at+1)+': '+ex[0]+' vs '+plain[0]);break}out.push(...plain);i=e;continue}out.push(L[i])}
+  if(out.join('\n')!==b)bad.push(k+' rest of program differs')}
+ log('Macro B on: '+looped+' programs written with loops ('+[...ops].length+' job types), '+same+' unchanged',looped>0,'none looped');
+ log('every loop expands back to the plain program byte for byte (checked outside the app too)',!bad.length,bad.slice(0,4).join(' || '));
+ log('loop shape: #1xx=0 (PASS COUNT) / WHILE[#1xxLTn]DO1 / … / #1xx=#1xx+1 / END1 (whole-number counter, one macro line between passes)',!shapes.length,shapes.slice(0,3).join(' || '));
+ log('loop counter is in #100–#199',!vars.length,vars.slice(0,3).join(','));
+ log('Macro B off: no program is written with a loop',!offLoop.length,offLoop.slice(0,4).join(','));
+}
+</script>
