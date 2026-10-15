@@ -16,13 +16,15 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  E(`var RUN110=(mi,op,ang)=>{J=null;cur(mi);try{tab('new')}catch(e){};try{pickJob(op)}catch(e){return {err:'pick '+e.message}}if(!J||J.op!=op)return {na:1};__FILL(op);show();__FILL(op);show();for(let i=0;i<3;i++){eval(__MACH);show()}r111fill0();show();document.querySelectorAll('#r111ang input').forEach(x=>{x.value=String(ang);x.dispatchEvent(new Event('input'));x.dispatchEvent(new Event('change'))});show();return {code:Array.isArray(J.code)?J.code.join('\\n'):null,held:(($('#out')||{}).textContent||'').slice(0,160)}};
  var OPS110=Object.keys(OPN).filter(op=>typeof jAvail!='function'||jAvail(op));1`);
  }catch(e){log('setup '+e.message,false);fin();return}
- const AX={1:'A',3:'B',5:null};
+ const AX={1:'A',3:'B',5:null};const AXL={1:['A'],3:['B'],5:['B','C']};
  // check one program: safe start after every tool change before any cut / job angle; a return before every M30
  const chk=(code,ang,mi)=>{const L=code.split('\n');const end=L.findIndex((l,i)=>i>2&&/^O9\d{3}/.test(l));const M=end>0?L.slice(0,end):L;const errs=[];const nc=l=>l.replace(/\([^)]*\)/g,'');
   const RW=/(^|\s)([ABC])(-?[\d.]+|#\d+|\[)/g;const words=l=>/\bG10\b|\bG6[56]\b|\bM98\b/.test(l)?[]:[...nc(l).matchAll(RW)].map(m=>m[3]);
   const mark=l=>/\((ROTARIES TO ZERO BEFORE THE FIRST CUT|JOB ANGLE|ROTARY BACK TO ZERO|ROTARIES BACK TO ZERO)\)/.test(l);
   const drives=M.some(l=>!mark(l)&&words(l).length);const angled=M.some(l=>/\(JOB ANGLE\)/.test(l));
   let last=null;M.forEach((l,i)=>{const w=words(l);if(w.length)last=w[w.length-1];if(/\bM30\b/.test(nc(l))&&!(last!=null&&/^-?0\.?0*$/.test(last)))errs.push('rotary not at 0 before M30 at line '+(i+1)+' (last '+last+')')});
+  // v112c: every rotary letter in the main program must be one this machine has, and every letter used must be back at 0 before each M30
+  const OK=AXL[mi]||[];const lastL={};M.forEach((l,i)=>{if(/\bG10\b|\bG6[56]\b|\bM98\b/.test(l))return;for(const m of nc(l).matchAll(RW)){if(!OK.includes(m[2]))errs.push('rotary letter '+m[2]+' not on this machine ('+OK.join('+')+') at line '+(i+1)+': '+l.slice(0,60));lastL[m[2]]=m[3]}if(/\bM30\b/.test(nc(l)))Object.keys(lastL).forEach(k=>{if(!/^-?0\.?0*$/.test(lastL[k]))errs.push(k+' not at 0 before M30 at line '+(i+1)+' (last '+lastL[k]+')')})});
   if(!/\bM30\b/.test(M.map(nc).join('\n')))errs.push('no M30');
   if(!drives)M.forEach((l,i)=>{if(!/\bM0?6\b/.test(nc(l)))return;let s=-1,a=-1;for(let k=i+1;k<M.length;k++){const x=M[k];if(/ROTARIES TO ZERO BEFORE THE FIRST CUT/.test(x)&&s<0)s=k;if(/\(JOB ANGLE\)/.test(x)&&a<0)a=k;if(/^(N\d+ )?(G0?[123] |G65|G8[1-9]|G7[346]|G31)/.test(x)||/\bM0?6\b/.test(nc(x)))break}
    if(s<0)errs.push('no safe start after '+l);if(angled&&+ang&&a<0)errs.push('no job angle after '+l);if(s>=0&&a>=0&&a<s)errs.push('job angle before safe start after '+l)});
@@ -35,7 +37,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
    const e=chk(x.code,ang,mi);if(e.length)bad.push(op+': '+e[0])});
   const nm={1:'4-axis',3:'HMC',5:'5-axis'}[mi]+' at '+ang+'°, loops '+(nl?'off':'on');
   log(nm+': every job writes with Stacey-style fills ('+n+' jobs)',n>60&&!held.length,held.slice(0,4).join(' || '));
-  log(nm+': safe start before the job angle after every tool change, and a return before every M30',!bad.length,bad.slice(0,4).join(' || '));
+  log(nm+': safe start before the job angle after every tool change, only this machine\'s rotary letters anywhere in the program, and every rotary back to 0 before every M30',!bad.length,bad.slice(0,4).join(' || '));
   setTimeout(next,0)};
  const flip=()=>{
   // Macro B off: each job that now writes plain must equal the macro-on program with its loops expanded, line for line
