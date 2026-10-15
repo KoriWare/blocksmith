@@ -13,7 +13,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  var FJ=(mi)=>{cur(mi);J=null;tab('new');pickJob('face');Object.keys(J.p).forEach(k=>{if(J.p[k].v==null){const sp=r99spec(k)||{};const ch=J2.face&&J2.face.choices&&J2.face.choices[k];J.p[k]={v:ch?ch[0]:/Cutter|Tool dia/.test(k)?0.5:/Tool/.test(k)?1:/Work offset/.test(k)?'G54':/Step/.test(k)?0.05:/Z0|X0|Y0|Start/.test(k)?0:2,g:false}}});show();r111fill0();show()};var HB=(mi)=>{cur(mi);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show()};
  var SET=(id,v)=>{const i=document.querySelector('#r111ang input[data-a="'+id+'"]');i.value=v;i.dispatchEvent(new Event('input'));i.dispatchEvent(new Event('change'))};1`);
  w.F110OV=F110OV;E(F110SETUP);w.__FILL=E(F110FILL);w.__MACH=F110MACH;
- E(`var RUN110=(mi,op,ang)=>{J=null;cur(mi);try{tab('new')}catch(e){};try{pickJob(op)}catch(e){return {err:'pick '+e.message}}if(!J||J.op!=op)return {na:1};__FILL(op);show();__FILL(op);show();for(let i=0;i<3;i++){eval(__MACH);show()}r111fill0();show();document.querySelectorAll('#r111ang input').forEach(x=>{x.value=String(ang);x.dispatchEvent(new Event('input'));x.dispatchEvent(new Event('change'))});show();return {code:Array.isArray(J.code)?J.code.join('\\n'):null,held:(($('#out')||{}).textContent||'').slice(0,160)}};
+ E(`var RUN110=(mi,op,ang)=>{J=null;cur(mi);try{tab('new')}catch(e){};try{pickJob(op)}catch(e){return {err:'pick '+e.message}}if(!J||J.op!=op)return {na:1};__FILL(op);show();__FILL(op);show();for(let i=0;i<3;i++){eval(__MACH);show()}r111fill0();show();document.querySelectorAll('#r111ang input').forEach(x=>{x.value=String(ang);x.dispatchEvent(new Event('input'));x.dispatchEvent(new Event('change'))});show();return {code:Array.isArray(J.code)?J.code.join('\\n'):null,held:(()=>{const t=(($('#out')||{}).textContent||'');const b=t.match(/Wrapped engraving is written for an A axis/);return b?b[0]:t.slice(0,160)})()}};
  var OPS110=Object.keys(OPN).filter(op=>typeof jAvail!='function'||jAvail(op));1`);
  }catch(e){log('setup '+e.message,false);fin();return}
  const AX={1:'A',3:'B',5:null};const AXL={1:['A'],3:['B'],5:['B','C']};
@@ -33,7 +33,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  const ON={};
  const next=()=>{const c=combos.shift();if(!c)return flip();const [mi,ang,nl]=c;w.R112NOLOOP=nl;const held=[],bad=[];let n=0,types=new Set();
   E('OPS110').forEach(op=>{if(DXF.test(op)||(SKIP[mi]||[]).includes(op))return;let x;try{x=w.RUN110(mi,op,ang)}catch(e){x={err:e.message}}if(x.na)return;n++;
-   if(!x.code){held.push(op+': '+(x.held||x.err));return}if(!nl&&ang==36)ON[mi+'|'+op]=x.code;
+   if(!x.code){if(op=='engrave'&&/Wrapped engraving is written for an A axis/.test(x.held||''))return; /* v112c: wrapped engrave is held on machines with no A axis (refusal, no A words) */held.push(op+': '+(x.held||x.err));return}if(!nl&&ang==36)ON[mi+'|'+op]=x.code;
    const e=chk(x.code,ang,mi);if(+ang&&w.OPN2&&w.OPN2[op]&&!/\(JOB ANGLE\)/.test(x.code))e.push('probing job does not index to the job angle');if(e.length)bad.push(op+': '+e[0])});
   const nm={1:'4-axis',3:'HMC',5:'5-axis'}[mi]+' at '+ang+'°, loops '+(nl?'off':'on');
   log(nm+': every job writes with Stacey-style fills ('+n+' jobs)',n>60&&!held.length,held.slice(0,4).join(' || '));
