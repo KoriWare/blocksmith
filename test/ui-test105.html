@@ -54,6 +54,14 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  E("HB(1);r111fill0();J.p['Work offset']={v:'G54.1 P2',g:false};S.m[1].opt.ext=1;show()");
  log("no duplicate rapid after 'G54.1 Pn G00 X Y'",E("(()=>{const c=J.code||[];const i=c.findIndex(l=>/^G54\\.1 P2 G00 X/.test(l));if(i<0)return 'no G54.1 line';const xy=c[i].replace(/^G54\\.1 P2 /,'');return !c.slice(i+1,i+6).includes(xy)})()")===true,E("JSON.stringify((J.code||[]).slice(5,12))"));
 
+ // star hugs the label (gap <= 4px)
+ E("edit(1)");log("star sits right after the label text (<=4px)",E("(()=>{const lb=document.querySelector('.r99f[data-r99k=\"Control\"] .r99lb');const st=lb&&lb.querySelector('.r111star');if(!st)return 'no star';const rg=document.createRange();const tn=[...lb.childNodes].find(n=>n.nodeType==3&&/Control/.test(n.textContent));rg.selectNodeContents(tn);return st.getBoundingClientRect().left-rg.getBoundingClientRect().right<=4})()")===true);
+ // long header title wraps to 2 lines instead of one-line ellipsis
+ E("S.m[1].name='Okuma Genos M560-V Second Shift Cell Number Three';save();tab('new')");log("long title wraps (2 lines, not cut on one line)",E("(()=>{const t=$('#ttl'),cs=getComputedStyle(t);return cs.whiteSpace=='normal'&&t.getBoundingClientRect().height>parseFloat(cs.lineHeight)*1.5})()")===true,E("$('#ttl').getBoundingClientRect().height"));
+ // job tiles + Tool Library tile: light text on solid dark, long names wrap
+ log("tile contrast: Tool Library and job tiles use #f4f4f4 on solid #2f2f2f",E("(()=>{const a=[$('#bldtl'),document.querySelector('#jcjobs>button.chip')].filter(Boolean);return a.length>=1&&a.every(e=>{const c=getComputedStyle(e);return c.color=='rgb(244, 244, 244)'&&c.backgroundColor=='rgb(47, 47, 47)'})})()")===true);
+ E("S.m[1].name='Mill B';save()");
+
  }catch(e){log('crash',false,e.message)}
  document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
 </script>
