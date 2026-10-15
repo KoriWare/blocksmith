@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112e: square block on HMC B / 4-axis A - top of stock and corner swing from the face point + Zero from centerline; blank zero holds with a link; off-center block --><iframe id="f" src="../index.html?v=120" style="width:390px;height:760px;border:0"></iframe><script src="fill110.js"></script><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length};
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();1`);
+ w.F110OV=F110OV;w.F110MACH=F110MACH;E(F110SETUP);w.__FILL=E(F110FILL);
+
+ E(`var A0=S.m.findIndex(m=>r98t(m)=='vmc4');var SQB=(mi,cz,ang,off,H)=>{cur(mi);eval(F110MACH);J=null;tab('new');pickJob('cpock');__FILL('cpock');show();__FILL('cpock');J.p.Z0={v:7,g:false};J.p['Clear Z']={v:cz,g:false};if(J.p['Center X'])J.p['Center X']={v:mi==A0?10:0,g:false};if(J.p['Center Y'])J.p['Center Y']={v:mi==A0?-1:10,g:false};J.r112comp={m:'off',d:null};J.r112eZ0ok=1;const s=r112stk();s.shape='square';s.square={L:20,W:9.875,H:H||null};s.fp='bc';s.zp='bl';s.off=off;r111fill0();const ax=r111axes();const st=r111state(ax);ax.forEach(a=>st.v[a.id]=String(ang));r112after();show();return {code:!!(J.code&&J.code.length),hold:J.r112eHold||'',top:(($('.r112etop')||{}).textContent||''),link:!!$('#r112eOffGo'),held:!!$('#r112held')}};1`);
+ const idx=JSON.parse(E(`JSON.stringify(S.m.map((m,i)=>[i,r98t(m)]))`));const A=idx.find(x=>x[1]=='vmc4')[0],B=idx.find(x=>x[1]=='hmc')[0];const R=s=>JSON.parse(E('JSON.stringify('+s+')'));
+ let x=R(`SQB(${B},0.1,30,{x:'0',z:'0'})`);log('HMC square L20 W9.875, Circular pocket, Z0 7, Clear Z 0.1 at B30: Rapid-into-stock hold naming the 6.983 (~7.0) corner swing',!x.code&&/^Rapid into stock: Clear Z must be above the top of stock \(6\.983 above centerline\)/.test(x.hold),JSON.stringify(x));
+ log('no "Rotary jobs now measure Z from the centerline" hold for the square block',!x.held,JSON.stringify(x));
+ log('Stock card shows "Top of stock: 4.9375 above centerline" read-only with its source',/Top of stock: 4\.9375 above centerline, from the face point and Zero from centerline Z/.test(x.top),x.top);
+ x=R(`SQB(${B},7.1,30,{x:'0',z:'0'})`);log('Clear Z 7.1 writes',x.code&&!x.hold,JSON.stringify(x));
+ x=R(`SQB(${B},0.1,0,{x:'0',z:'0'})`);log('at B0 the hold names the top of stock 4.938',!x.code&&/\(4\.938 above centerline\)/.test(x.hold),JSON.stringify(x));
+ x=R(`SQB(${B},0.1,0,{})`);log('Zero from centerline blank: held with a link to the empty zero field',!x.code&&/^Square block: enter Zero from centerline X and Z/.test(x.hold)&&x.link,JSON.stringify(x));
+ E("$('#r112eOffGo').click()");log('the link focuses an empty Zero from centerline field',E("(document.activeElement&&document.activeElement.dataset.sk)||''").startsWith('off.'),E("(document.activeElement&&document.activeElement.dataset.sk)||''"));
+ x=R(`SQB(${B},6.9,0,{x:'0',z:'1'})`);log('off-center block (zero 1 above centerline): top 5.9375 marked "block off center", Clear Z 6.9 under it... (program Z 5.9375) passes',/Top of stock: 5\.9375 above centerline.*block off center/.test(x.top)&&x.code,JSON.stringify(x));
+ x=R(`SQB(${B},4.5,0,{x:'0',z:'1'})`);log('off-center block: Clear Z 4.5 is under the top face (program Z 4.9375) -> held naming 5.938 above centerline',!x.code&&/^Rapid into stock: Clear Z must be above the top of stock \(5\.938 above centerline, Z4\.938 in the program\)/.test(x.hold),JSON.stringify(x));
+ x=R(`SQB(${A},0.1,30,{y:'-1',z:'4.9375'},9.875)`);log('4-axis A square block (zero on top, 4.9375 above centerline) at A30, Clear Z 0.1: held under the corner swing, no centerline-height hold',!x.code&&/^Rapid into stock/.test(x.hold)&&!x.held,JSON.stringify(x));
+ x=R(`SQB(${A},12,30,{y:'-1',z:'4.9375'},9.875)`);log('4-axis A square block: Clear Z above the top and swing writes',x.code&&!x.hold,JSON.stringify(x));
+ }catch(e){log('exception',false,e.stack)}fin()},400)};
+</script>
