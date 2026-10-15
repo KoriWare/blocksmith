@@ -56,5 +56,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  E("$('#r112eFix').click()");log('tapping Fix sets Clear Z 1.6 and clears the rapid hold',E("J.p['Clear Z'].v")==1.6&&!/Rapid into stock/.test(E("J.r112eHold||''")),E("J.r112eHold||''"));
  q=R(`SW(${A},'bback','round')`);log('4-axis A bback: R plane 0.5 in G87 under the top (1.0) is held, Fix names the R plane',!q.code&&/^Rapid into stock/.test(q.hold)&&/R plane 0\.5 → 1\.1/.test(q.fix),JSON.stringify(q));
  if(F5){q=R(`SW(${F5[0]},'bolt','square')`);log('5-axis: gray "Stock clearance not checked on 5-axis", no hold',q.n5&&!/Rapid into stock/.test(q.hold),JSON.stringify(q))}
+ const th=R(`(()=>{cur(${V0});J=null;tab('new');pickJob('thmill');__FILL('thmill');J.r112comp={m:'G41',d:null};show();return {code:!!(J.code&&J.code.length),hold:J.r112cmpHold||'',txt:($('#r112cmp')||{}).textContent||'',m:J.r112comp.m,g41:Array.isArray(J.code)&&J.code.some(l=>/G4[12]/.test(String(l).replace(/\\(.*?\\)/g,'')))}})()`);
+ log('thmill: comp tile gray "Comp coming soon", a saved Climb loads as Off with "Comp removed for this job type, coming soon", no hold, no G41/G42',/Comp coming soon/.test(th.txt)&&/Comp removed for this job type, coming soon/.test(th.txt)&&th.m=='off'&&!th.hold&&!th.g41,JSON.stringify(th));
  }catch(e){log('exception',false,e.stack)}fin()},400)};
 </script>

@@ -7134,7 +7134,7 @@ function r112cPv(n,add){try{if(typeof J=='undefined'||!J||!Array.isArray(J.code)
 {const st=document.createElement('style');st.textContent='.r111p.r112pv0{color:#9a9a9a!important;font-family:inherit!important;white-space:normal}';document.head.appendChild(st)}
 
 /* v112c: a blank Stock shape (new jobs) or an unpicked Cutter comp is a failing check - Not ready, never guessed */
-{const _c112c=checks;checks=function(j){const c=_c112c.apply(this,arguments);try{if(j&&!j.lathe&&j.r112stk&&!j.r112old&&!j.r112stk.shape&&typeof r111flat=='function'&&r111flat())c.push(['Stock shape picked (Round bar or Square block)',false]);if(j&&!j.lathe&&j.op&&R112CMP.test(j.op)&&!(j.r112comp&&j.r112comp.m))c.push(['Cutter comp picked (Off, Climb G41 or Conventional G42)',false])}catch(e){}return c}}
+{const _c112c=checks;checks=function(j){const c=_c112c.apply(this,arguments);try{if(j&&!j.lathe&&j.r112stk&&!j.r112old&&!j.r112stk.shape&&typeof r111flat=='function'&&r111flat())c.push(['Stock shape picked (Round bar or Square block)',false]);if(j&&!j.lathe&&j.op&&R112CMP.test(j.op)&&j.op!='thmill'&&!(j.r112comp&&j.r112comp.m))c.push(['Cutter comp picked (Off, Climb G41 or Conventional G42)',false])}catch(e){}return c}}
 {const st=document.createElement('style');st.textContent='.r112need{color:#ff6b6b;font-size:12px;margin:2px 0 6px}#r112cmp .r111star:not(.r111y){color:#ff4d4d}';document.head.appendChild(st)}
 
 /* v112c: Max RPM field state updates live as you type: empty = gray star, junk = red !, valid = ✓; the Clear line stays visible */
@@ -7352,7 +7352,7 @@ function r112expand(P){try{const V={};const out=[];const ev=s=>{s=s.replace(/#(\
 // Profile-type jobs get one finish pass on the part line after the roughing: straight lead-in ≥ one tool radius with G41/G42, the contour, G40 on a straight lead-out.
 // Roughing stays a tool-centre path. An inside arc smaller than the tool radius holds the job. Lathe: side from OD/ID + the confirmed turret side, never G42 = OD by default.
 const R112CMP=/^(cpock|cboss|rpock|slot|polyb|thmill)$/;
-function r112cmpOf(j){j=j||J;const c=j&&j.r112comp;return c&&/^G4[12]$/.test(c.m)?c:null}
+function r112cmpOf(j){j=j||J;const c=j&&j.r112comp;if(j&&j.op=='thmill')return null;return c&&/^G4[12]$/.test(c.m)?c:null}
 function r112cmpD(j){const c=r112cmpOf(j)||{};const t=+((j.p.Tool||{}).v);const d=c.d!=null&&String(c.d).trim()!==''?+c.d:t;return {d,t}}
 function r112f(v){return f4(Math.abs(v)<5e-10?0:v)}
 // closed contour as a list of segments from S back to S, built counter-clockwise; reversed for clockwise
@@ -7382,7 +7382,7 @@ function r112cmpBlock(j,c){const g=r112geo(j);if(!g)return null;if(g.hold||g.why
  L.push(`G40 G01 X${r112f(Q[0])} Y${r112f(Q[1])} (COMP OFF - STRAIGHT LEAD-OUT)`,`G00 Z${r112f(z0+cz)}`);return {lines:L,Q,S:g.S,r,Lin,m:c.m,d}}
 function r112cmpApply(g,j){j.r112cmpHold=null;j.r112cmpInfo=null;const c=r112cmpOf(j);if(!c||!g||!Array.isArray(g.code))return g;
  if(j.lathe){if(j.op!='dxlathe')return g;return g}
- if(!R112CMP.test(j.op))return g;if(j.op=='thmill'){j.r112cmpHold='cutter comp for thread milling is not written yet — pick Off';return g}
+ if(!R112CMP.test(j.op))return g;if(j.op=='thmill'){return g} /* v112e: thmill comp coming soon - Off, no hold */
  const b=r112cmpBlock(j,c);if(!b)return g;if(b.hold||b.why){j.r112cmpHold=b.hold||b.why;return g}
  // insert after the last cutting move, before the final retract / end
  const C=g.code;let end=C.findIndex(l=>/^\s*(G91\s+G28|G28|M30|M0?2\b|M99)/.test(String(l)));if(end<0)end=C.length;let k=end-1;while(k>0&&!/^\s*(G0?[123]\b|X|Y)/.test(String(C[k])))k--;
@@ -7394,7 +7394,7 @@ function r112latheSide(od){const t=r112turret();if(!t)return null;return (od!==(
 {const _sh=show;show=function(){const r=_sh.apply(this,arguments);try{if(typeof J!='undefined'&&J&&J.r112cmpHold)r110hold('⛔ Not written: '+J.r112cmpHold+'.',true)}catch(e){}return r}}
 // comp card (Off / Climb (G41) / Conventional (G42) + D#), sim offset path + programmed path
 function r112cmpUI(){try{let c=$('#r112cmp');const on=typeof J!='undefined'&&J&&J.op&&!J.lathe&&R112CMP.test(J.op)&&(V.dataset.page!='sim');const host=$('#r111ang')||($('#out')&&$('#out').querySelector('.card'));
- if(!on||!host){if(c)c.remove();return}const cm=J.r112comp||{m:null,d:null};const {d,t}=r112cmpD(J); /* v112c: fresh job starts unpicked */
+ if(!on||!host){if(c)c.remove();return}if(J.op=='thmill'){const had=J.r112comp&&/^G4[12]$/.test(J.r112comp.m);if(had)J.r112cRem=1;J.r112comp={m:'off',d:null};if(!c){c=document.createElement('div');c.id='r112cmp';c.className='card'}if(host.nextElementSibling!==c)host.after(c);const hh=`<div class="t" style="color:#9a9a9a">Cutter comp</div><div class="note" style="color:#9a9a9a">Comp coming soon${J.r112cRem?' · Comp removed for this job type, coming soon':''}</div>`;if(c.dataset.h!==hh){c.innerHTML=hh;c.dataset.h=hh}return}const cm=J.r112comp||{m:null,d:null};const {d,t}=r112cmpD(J); /* v112c: fresh job starts unpicked */
  if(!c){c=document.createElement('div');c.id='r112cmp';c.className='card'}if(host.nextElementSibling!==c)host.after(c);
  const b=(m,l)=>`<button type="button" class="r112cb${cm.m==m?' on':''}" data-m="${m}">${l}</button>`;const hand=cm.d!=null&&String(cm.d).trim()!==''&&+cm.d!==t;
  const h=`<div class="t">Cutter comp<span class="r111star${cm.m?' r111y':''}" title="Off is a valid answer">*</span></div>${cm.m?'':'<div class="r112need">Needs a pick: Off, Climb (G41) or Conventional (G42).</div>'}<div class="r112seg">${b('off','Off')}${b('G41','Climb (G41)')}${b('G42','Conventional (G42)')}</div>`+(cm.m&&cm.m!='off'?`<div class="r112drow"><b>D#</b><input id="r112d" inputmode="numeric" value="${d}"><span class="r112dt">${hand?'':'= T'+t}</span>${hand?`<span class="r112hand">(hand-typed: D${d} ≠ T${t} · <a href="#" id="r112match">Match T${t}</a>)</span>`:''}</div>`:'');
