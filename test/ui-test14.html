@@ -1,5 +1,5 @@
 <!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=28" style="width:390px;height:844px"></iframe><script>
-const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let first=1;
+const out=[],log=(n,ok,x)=>out.push((ok?"PASS ":"FAIL ")+n+(ok||x===undefined?"":" :: "+x));let first=1;
 f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w.location.reload();return}
  setTimeout(()=>{w.eval('NOASK=1');const d=w.document,E=x=>w.eval(x);try{
   const code=()=>E("txt().join('\\n')"),cl=()=>d.querySelector('#cl').textContent,chips=()=>d.querySelector('#out .card').textContent;
@@ -18,8 +18,9 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   log('mismatch flagged (G20 program on mm machine)',/❌ Program units G20 \(inch\) match this machine \(mm, G21\)/.test(cl()));
   TY('G54 T2 4 hole bolt circle 100 dia center x0 y0 z0 0 start 0 10 deep');
   log('typed mm values stored correctly',Math.abs(E('J.p.Dia.v')-100/25.4)<1e-9&&/D100\.0* /.test(code())&&/Z10\.0* /.test(code()));
+  E("S.m[S.cur].opt=S.m[S.cur].opt||{};S.m[S.cur].opt.rigid=1;save()"); /* v112c #9: a held job has no code, so turn rigid tapping on */
   TY('G54 T6 rigid tap m6x1 4 hole bolt circle 50 dia center x0 y0 z0 0 start 45 12 deep 600 rpm');
-  log('thread: pitch in mm, feed = RPM x pitch',/Pitch: 1 mm/.test(chips())&&/Feed: 600 mm\/min/.test(chips())&&/PITCH 1\.000 MM/.test(code())&&/G84/.test(code()));
+  log('thread: pitch in mm, feed = RPM x pitch',/Pitch: 1 mm/.test(chips())&&/Feed: 600 mm\/min/.test(chips())&&/PITCH 1\.000 MM/.test(code())&&/G84/.test(code()),E("JSON.stringify({c:J.code&&J.code.length,m:S.m[S.cur].name,o:$('#out').innerText.slice(-400)})"));
   d.querySelector('#u-in').click();w.ex(BC);
   log('back to in: G20, Dia 3 in, Clear Z 0.1 in',/G17 G20/.test(code())&&/Dia: 3 in/.test(chips())&&/Clear Z: 0\.1 in/.test(chips()));
   d.querySelector('#u-mm').click();log('switching converts the open job (Dia 76.2 mm)',/Dia: 76\.2 mm/.test(chips())&&/D76\.2/.test(code()));
