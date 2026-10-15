@@ -58,7 +58,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  E("J.r112fb=[];refresh()");
  // Macro B off: plain lines, identical to the no-loop output; no toggle
  E("S.m[1].opt.macroB=0;save();HB(1);r111fill0();show()");
- log("Macro B off: helical bore is held as before (it needs Macro B), no loop, no toggle, no gray line",E("!J.code&&/don't include Custom Macro B/.test($('#out').innerText)&&!$('#r112xt')&&!$('#r112fb')")===true,E("[opt('macroB'),/PASS COUNT/.test(J.code.join()),!!$('#r112xt'),!!$('#r112fb')].join()"));
+ log("Macro B off (v112b): helical bore has no macro lines, so it is written as plain lines with the gray note; no loop, no toggle",E("Array.isArray(J.code)&&!J.code.some(l=>/WHILE|#1\\d\\d/.test(l))&&($('#r112bpl')||{}).textContent=='Written as plain lines: Custom Macro B is not confirmed.'&&!$('#r112xt')&&!/don't include Custom Macro B/.test($('#out').innerText)")===true,E("[opt('macroB'),/PASS COUNT/.test(J.code.join()),!!$('#r112xt'),!!$('#r112fb')].join()"));
  E("S.m[1].opt.macroB=1;save()");
 
  }catch(e){log('crash',false,e.message)}
