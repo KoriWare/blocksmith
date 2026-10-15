@@ -7614,6 +7614,18 @@ function r112bHeldLink(){try{const b=$('#r112held');if(!b)return;const a=b.query
 {if(typeof jmOpen=='function'){const _jo=jmOpen;jmOpen=function(){const r=_jo.apply(this,arguments);try{const bad=[...document.querySelectorAll('.jme.r112zbad')];bad.forEach(el=>{el.querySelectorAll('.chip.g,.chip.y').forEach(c=>{if(/ready|amber/.test(c.textContent)){c.className='chip r';c.textContent='● zero mismatch'}})});if(bad.length){[...document.querySelectorAll('#v button,button')].forEach(b=>{if(/^\s*Build one program/.test(b.textContent))b.disabled=true});if(!$('#r112jmblk')){const l=$('#jmlist');if(l)l.insertAdjacentHTML('afterend','<div class="s" id="r112jmblk" style="color:#ff8a8a">Zeros differ on a shared work offset. Match the zero or give each job its own offset first.</div>')}}}catch(e){console.error(e)}return r}}}
 {const _sh=show;show=function(){const r=_sh.apply(this,arguments);r112bMach();r112bMoved();r112bHeldLink();return r}}
 {const st=document.createElement('style');st.textContent='#r112bmz{color:#9a9a9a;font-size:12px;margin:6px 2px}#r112bmz a{color:#ffd21f;font-weight:700;text-decoration:none}.r103back.r112ok{background:#1f3d2a!important;color:#7be3a0!important}';document.head.appendChild(st)}
+// v112b: a zero return before every M30 path whenever the program zeroes its rotaries at the start (jobs the angle step skips, like probing, too)
+function r112bBack(g){try{if(!g||!Array.isArray(g.code))return g;const c=g.code;let sl=c.find(l=>/\(ROTARIES TO ZERO BEFORE THE FIRST CUT\)/.test(String(l)));
+ if(!sl){/* HMC: jobs the angle step skips (probing etc.) get the same safe start, like r104zero gives the 4/5-axis VMC */let t='';try{t=r98t(S.m[S.cur])}catch(e){}
+  if(t=='hmc'&&!c.some(l=>!/\bG10\b|\bG6[56]\b|\bM98\b/.test(String(l))&&/(^|\s)B[-\d.#\[]/.test(String(l).replace(/\([^)]*\)/g,'')))){let endM=c.findIndex((l,i)=>i>2&&/^O9\d{3}\b/.test(String(l)));if(endM<0)endM=c.length;
+   for(let i=endM-1;i>=0;i--)if(/\bM0?6\b/.test(String(c[i]).replace(/\([^)]*\)/g,''))){let at=i+1;while(at<c.length&&R111HOME.test(String(c[at])))at++;c.splice(at,0,'G00 B0. (ROTARIES TO ZERO BEFORE THE FIRST CUT)')}
+   if(!c.some(l=>/BEFORE THE FIRST CUT/.test(String(l)))){const k=c.findIndex(l=>/SAFE START|^G17\b/.test(String(l)));if(k>=0&&k<endM)c.splice(k+1,0,'G00 B0. (ROTARIES TO ZERO BEFORE THE FIRST CUT)')}
+   sl=c.find(l=>/BEFORE THE FIRST CUT/.test(String(l)))}}
+ if(!sl)return g;
+ const Ls=(String(sl).match(/\b[ABC](?=0\.)/g)||[]);if(!Ls.length)return g;const bk='G00 '+Ls.map(L=>L+'0.').join(' ')+' (ROTAR'+(Ls.length>1?'IES':'Y')+' BACK TO ZERO)';
+ let endMain=c.findIndex((l,i)=>i>2&&/^O9\d{3}\b/.test(String(l)));if(endMain<0)endMain=c.length;const ends=[];for(let i=0;i<endMain;i++)if(R111END.test(String(c[i]).replace(/\([^)]*\)/g,'')))ends.push(i);
+ for(let q=ends.length-1;q>=0;q--){const e=ends[q],s0=q?ends[q-1]+1:0;if(c.slice(s0,e).some(l=>R111HOME.test(String(l))&&!/BEFORE THE FIRST CUT/.test(String(l))))continue;c.splice(e,0,bk)}}catch(e){}return g}
+['gen','genL','genP','genJ2'].forEach(fn=>{const f=window[fn];if(typeof f!='function')return;const w=function(){return r112bBack(f.apply(this,arguments))};w.toString=()=>f.toString();window[fn]=w});
 
 /* R79-END */</script>
 </body></html>

@@ -1,0 +1,51 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112b: endings + safe start on every job, every rotary machine, 0/36/90, loops on and off; Stacey-style fills write every job; Macro B off plain == macro-on expanded --><iframe id="f" src="../index.html?v=110" style="width:390px;height:760px;border:0"></iframe><script src="fill110.js"></script><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,900)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length};
+// jobs that cannot run on a machine by design, and drawing jobs (need a DXF import; covered by ui-test40)
+const SKIP={3:['engrave','a4p','rotcl'],5:['index','a4p','rotcl']},DXF=/^dx/;
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Lathe w/ live tooling','Lathes');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});{const k0=S.cur;S.m.forEach((m,i)=>{if(r98t(m)=='hmc'){cur(i);if(!S.tools.find(t=>t.n==1))S.tools.push({n:1,type:'End mill',dia:0.5,len:2,fl:3})}});cur(k0)}save();
+ var FJ=(mi)=>{cur(mi);J=null;tab('new');pickJob('face');Object.keys(J.p).forEach(k=>{if(J.p[k].v==null){const sp=r99spec(k)||{};const ch=J2.face&&J2.face.choices&&J2.face.choices[k];J.p[k]={v:ch?ch[0]:/Cutter|Tool dia/.test(k)?0.5:/Tool/.test(k)?1:/Work offset/.test(k)?'G54':/Step/.test(k)?0.05:/Z0|X0|Y0|Start/.test(k)?0:2,g:false}}});show();r111fill0();show()};var HB=(mi)=>{cur(mi);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show()};
+ var SET=(id,v)=>{const i=document.querySelector('#r111ang input[data-a="'+id+'"]');i.value=v;i.dispatchEvent(new Event('input'));i.dispatchEvent(new Event('change'))};1`);
+ w.F110OV=F110OV;E(F110SETUP);w.__FILL=E(F110FILL);w.__MACH=F110MACH;
+ E(`var RUN110=(mi,op,ang)=>{J=null;cur(mi);try{tab('new')}catch(e){};try{pickJob(op)}catch(e){return {err:'pick '+e.message}}if(!J||J.op!=op)return {na:1};__FILL(op);show();__FILL(op);show();for(let i=0;i<3;i++){eval(__MACH);show()}r111fill0();show();document.querySelectorAll('#r111ang input').forEach(x=>{x.value=String(ang);x.dispatchEvent(new Event('input'));x.dispatchEvent(new Event('change'))});show();return {code:Array.isArray(J.code)?J.code.join('\\n'):null,held:(($('#out')||{}).textContent||'').slice(0,160)}};
+ var OPS110=Object.keys(OPN).filter(op=>typeof jAvail!='function'||jAvail(op));1`);
+ }catch(e){log('setup '+e.message,false);fin();return}
+ const AX={1:'A',3:'B',5:null};
+ // check one program: safe start after every tool change before any cut / job angle; a return before every M30
+ const chk=(code,ang,mi)=>{const L=code.split('\n');const end=L.findIndex((l,i)=>i>2&&/^O9\d{3}/.test(l));const M=end>0?L.slice(0,end):L;const errs=[];const nc=l=>l.replace(/\([^)]*\)/g,'');
+  const RW=/(^|\s)([ABC])(-?[\d.]+|#\d+|\[)/g;const words=l=>/\bG10\b|\bG6[56]\b|\bM98\b/.test(l)?[]:[...nc(l).matchAll(RW)].map(m=>m[3]);
+  const mark=l=>/\((ROTARIES TO ZERO BEFORE THE FIRST CUT|JOB ANGLE|ROTARY BACK TO ZERO|ROTARIES BACK TO ZERO)\)/.test(l);
+  const drives=M.some(l=>!mark(l)&&words(l).length);const angled=M.some(l=>/\(JOB ANGLE\)/.test(l));
+  let last=null;M.forEach((l,i)=>{const w=words(l);if(w.length)last=w[w.length-1];if(/\bM30\b/.test(nc(l))&&!(last!=null&&/^-?0\.?0*$/.test(last)))errs.push('rotary not at 0 before M30 at line '+(i+1)+' (last '+last+')')});
+  if(!/\bM30\b/.test(M.map(nc).join('\n')))errs.push('no M30');
+  if(!drives)M.forEach((l,i)=>{if(!/\bM0?6\b/.test(nc(l)))return;let s=-1,a=-1;for(let k=i+1;k<M.length;k++){const x=M[k];if(/ROTARIES TO ZERO BEFORE THE FIRST CUT/.test(x)&&s<0)s=k;if(/\(JOB ANGLE\)/.test(x)&&a<0)a=k;if(/^(N\d+ )?(G0?[123] |G65|G8[1-9]|G7[346]|G31)/.test(x)||/\bM0?6\b/.test(nc(x)))break}
+   if(s<0)errs.push('no safe start after '+l);if(angled&&+ang&&a<0)errs.push('no job angle after '+l);if(s>=0&&a>=0&&a<s)errs.push('job angle before safe start after '+l)});
+  return errs};
+ const combos=[];[1,3,5].forEach(mi=>[0,36,90].forEach(a=>combos.push([mi,a,0])));[1,3,5].forEach(mi=>combos.push([mi,36,1]));
+ const ON={};
+ const next=()=>{const c=combos.shift();if(!c)return flip();const [mi,ang,nl]=c;w.R112NOLOOP=nl;const held=[],bad=[];let n=0,types=new Set();
+  E('OPS110').forEach(op=>{if(DXF.test(op)||(SKIP[mi]||[]).includes(op))return;let x;try{x=w.RUN110(mi,op,ang)}catch(e){x={err:e.message}}if(x.na)return;n++;
+   if(!x.code){held.push(op+': '+(x.held||x.err));return}if(!nl&&ang==36)ON[mi+'|'+op]=x.code;
+   const e=chk(x.code,ang,mi);if(e.length)bad.push(op+': '+e[0])});
+  const nm={1:'4-axis',3:'HMC',5:'5-axis'}[mi]+' at '+ang+'°, loops '+(nl?'off':'on');
+  log(nm+': every job writes with Stacey-style fills ('+n+' jobs)',n>60&&!held.length,held.slice(0,4).join(' || '));
+  log(nm+': safe start before the job angle after every tool change, and a return before every M30',!bad.length,bad.slice(0,4).join(' || '));
+  setTimeout(next,0)};
+ const flip=()=>{
+  // Macro B off: each job that now writes plain must equal the macro-on program with its loops expanded, line for line
+  E(`S.m.forEach(m=>{m.opt.macroB=0});save();1`);w.R112NOLOOP=0;const bad=[],held=[];let flipped=0,still=0;
+  [1,3].forEach(mi=>E('OPS110').forEach(op=>{if(DXF.test(op)||(SKIP[mi]||[]).includes(op))return;const on=ON[mi+'|'+op];if(!on)return;let x;try{x=w.RUN110(mi,op,36)}catch(e){x={err:e.message}}if(x.na)return;
+   if(!x.code){still++;return}flipped++;const L=on.split('\n'),N=x.code.split('\n');const out=[];let ok=true;
+   for(let i=0;i<L.length;i++){if(/^#1\d\d=0 \(PASS COUNT\)$/.test(L[i])){const e=L.indexOf('END1',i);const ex=w.r112run(L.slice(i,e+1));if(!ex){ok=false;bad.push(mi+'|'+op+' loop did not run');break}const plain=N.slice(out.length,out.length+ex.length);if(!w.r112same(ex,plain)){ok=false;bad.push(mi+'|'+op+' differs at line '+(out.length+1));break}out.push(...plain);i=e;continue}out.push(L[i])}
+   if(ok&&out.join('\n')!==x.code)bad.push(mi+'|'+op+' rest differs');if(/^#|WHILE|IF\[|GOTO/m.test(x.code))bad.push(mi+'|'+op+' plain output has macro lines')}));
+  log('Macro B off: '+flipped+' jobs written plain, '+still+' true macro jobs still held',flipped>0&&still>0);
+  log('Macro B off: every plain program equals the macro-on program expanded, line for line',!bad.length,bad.slice(0,4).join(' || '));
+  fin()};
+ next()},1500)};
+</script>
