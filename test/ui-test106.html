@@ -28,7 +28,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  log("expander mismatch is caught (bad loop not offered)",E("JSON.stringify(r112expand(['#100=0 (START)','#101=2 (PASSES)','WHILE[#101GT0]DO1','G01 Z#100','#100=#100-0.1','#101=#101-1','END1']))")=='["G01 Z0","G01 Z-0.1"]');
 
  // ===== macros by default on a real job: helical bore O4600 on Mill B (Macro B on)
- E("S.m[1].opt.macroB=1;save();HB(1);r111fill0();show()");
+ E("S.m[1].opt.macroB=1;save();HB(1);r111fill0();if(J.r112stk&&!J.r112stk.shape)J.r112stk.shape='square';show()"); /* v112c #11: blank Stock shape is Not ready */
  log("O4600 with Macro B: passes written as one WHILE loop (#1xx=0 (PASS COUNT) … END1)",E("(()=>{const c=J.code.join('\\n');return /^#1\\d\\d=0 \\(PASS COUNT\\)\\nWHILE\\[#1\\d\\dLT10\\]DO1\\nG03 X0.25 Y0.0 I-0.25 J0. Z\\[-0.05\\*\\[#1\\d\\d\\+1\\]\\] F20.0\\n#1\\d\\d=#1\\d\\d\\+1\\nEND1$/m.test(c)})()")===true,E("J.code.join(' / ')"));
  const plainOn=E("(()=>{R112NOLOOP=1;show();const c=J.code.join('\\n');R112NOLOOP=0;show();return c})()");
  log("O4600: the loop expands to exactly the plain passes",E("(()=>{const o=J.r112loops[0];const c=J.code;const ex=r112run(c.slice(o.i,o.i+o.len));const p="+JSON.stringify("")+"||null;return !!ex&&ex.length==10})()")===true&&E("(()=>{const o=J.r112loops[0];return JSON.stringify(r112run(J.code.slice(o.i,o.i+o.len)))})()")==JSON.stringify(plainOn.split('\n').filter(l=>/^G03 .* Z-/.test(l))));

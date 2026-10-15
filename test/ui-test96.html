@@ -27,7 +27,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListe
   E("[...document.querySelectorAll('#r99sheet .opt')].find(b=>/Haas NGC/.test(b.textContent)).click()");await sl(30);
   log('4: tapping a row only highlights it; Done turns yellow; nothing saved yet',E("S.m[1].s.find(x=>x.k=='Control').st")!='user'&&!!E("$('#r99sheet .opt.sel')")&&E("getComputedStyle($('#r99sheet .done')).backgroundColor")=='rgb(255, 210, 31)');
   E("$('#r99sheet .done').click()");await sl(300);E("$('#r103back')&&$('#r103back').click()");await sl(150);
-  log('4: Done saves the Control and the job goes to the v105 draft + Restore card',/Haas NGC/.test(E("S.m[1].s.find(x=>x.k=='Control').v"))&&E("S.m[1].s.find(x=>x.k=='Control').st")=='user'&&E("(drGet()||{J:{}}).J.op")=='ctr'&&!!E("$('#r79dr')"));
+  log('4: Done saves the Control and the job is kept (v112c Casey)',/Haas NGC/.test(E("S.m[1].s.find(x=>x.k=='Control').v"))&&E("S.m[1].s.find(x=>x.k=='Control').st")=='user'&&E("J&&J.op")=='ctr');
 
  log('no console errors',!errs.length,errs.join('|'));
   o.textContent=r.join('\n')+'\nTOTAL '+r.filter(x=>x.startsWith('PASS')).length+' PASS '+r.filter(x=>x.startsWith('FAIL')).length+' FAIL';step=9}

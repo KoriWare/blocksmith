@@ -10,7 +10,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListe
   log('1: pill opens Setup at Control',E("document.querySelector('.tabs button.on').dataset.t")=='machines'&&!!E("r103rt"));
   E("(()=>{const s=document.querySelector('.r99f[data-r99k=\"Control\"] select');const o=[...s.options].find(o=>/Haas NGC/.test(o.text));s.value=o.value;s.dispatchEvent(new Event('change',{bubbles:true}))})()");await sl(300);
   E("$('#r103back')&&$('#r103back').click()");await sl(150);
-  log('1: after the Control change the job is a draft and Build shows the Restore card',E("(drGet()||{J:{}}).J.op")=='ctr'&&!!E("$('#r79dr')")&&E("document.querySelector('.tabs button.on').dataset.t")=='new',E("JSON.stringify({d:!!drGet(),c:!!$('#r79dr'),J:J&&J.op})"));
+  log('1: after the Control change the job is kept (v112c Casey: Control pick keeps the job, VMC and HMC alike)',E("J&&J.op")=='ctr'&&E("document.querySelector('.tabs button.on').dataset.t")=='new',E("JSON.stringify({d:!!drGet(),c:!!$('#r79dr'),J:J&&J.op})"));
   E("(()=>{const b=$('#r79dr button');b&&b.click()})()");await sl(100);
   log('1: Restore brings the job back',E("J&&J.op")=='ctr');
   // 2: focus + Tab/blur/change without typing never confirms — 10 runs × typed number / typed text / select

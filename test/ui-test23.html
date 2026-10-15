@@ -18,7 +18,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
    setv('Control',null);setv('Skip code (probe)',null);setv('Spindle probe on / off','M100 / M101');setv('DPRNT support','yes');setv('Max RPM','8000');E("S.m[S.cur].opt.probe=1;S.m[S.cur].opt.g10=1;save()");
    JOBS.forEach(([op,t,extra])=>{w.tab('new');d.querySelector('#q').value=t;w.go();const j0=E('J&&J.op');
     const miss=E('J?Object.entries(J.p).filter(([k,x])=>x.v==null).map(([k])=>k):[]');
-    Object.entries(extra).forEach(([k,v])=>E(`J.p[${JSON.stringify(k)}]={v:${JSON.stringify(v)},g:false}`));E('show()');
+    Object.entries(extra).forEach(([k,v])=>E(`J.p[${JSON.stringify(k)}]={v:${JSON.stringify(v)},g:false}`));E("if(J&&!J.lathe&&!(J.r112comp&&J.r112comp.m))J.r112comp={m:'off',d:null}");E('show()'); /* v112c #11: comp must be picked */
     const code=E('J&&J.code?txt().join("\\n"):""');let sim=['x'];try{sim=E('(()=>{const r=interp(txt(),{contact:mkContact(J)});return [r.err,r.alarms.map(a=>a.msg).join(),r.moves.length]})()')}catch(e){sim=[e.message]}
     const ck=code?E('checks(J).filter(c=>!c[1]).map(c=>c[0])'):['no code: '+d.querySelector('#out').innerText.slice(0,300)];
     log(`${hk?'Haas':'Fanuc'} ${op}: recognised, code written`,j0==op&&!!code,'op='+j0+' miss='+miss.join(','));
