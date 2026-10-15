@@ -70,6 +70,13 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  E("cur(I5);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show();r111fill0();SET('t','30');SET('c','45');show();tab('sim');scrub(Math.floor(J.M.length/2))");
  log("5-axis sim keeps two dials (Tilt + Table) in the strip",E("($('#r112dial')||{querySelectorAll:()=>[]}).querySelectorAll('.r112d').length")==2,E("($('#r112dial')||{}).textContent"));
 
+ // Stacey 7: Control → Other… typed 'TBD' then Done is refused (sheet stays, Needs text, value not saved)
+ E("edit(1);(()=>{const f=document.querySelector('.r99f[data-r99k=\"Control\"]');const i=f.querySelector('input');i.click();const sh=$('#r99sheet');const ob=[...sh.querySelectorAll('button,[role=option],li,.opt')].find(b=>/Other/.test(b.textContent));ob.click()})()");await new Promise(z=>setTimeout(z,100));
+ E("(()=>{const t=$('#r99othi');t.value='TBD';t.dispatchEvent(new Event('input',{bubbles:true}));[...$('#r99sheet').querySelectorAll('button')].find(b=>b.textContent.trim()=='Done').click()})()");
+ log("TBD + Done is refused: sheet stays open with the Needs line, Control not saved as TBD",E("!!$('#r99sheet')&&/needs a real answer/.test(($('#r99othe')||{}).textContent)&&!/TBD/i.test(S.m[1].s.find(x=>x.k=='Control').v)")===true,E("[!!$('#r99sheet'),($('#r99othe')||{}).textContent,($('#r99othi')||{}).value,S.m[1].s.find(x=>x.k=='Control').v].join('|')"));
+ E("(()=>{const t=$('#r99othi');t.value='Fanuc 0i-MF';t.dispatchEvent(new Event('input',{bubbles:true}));[...$('#r99sheet').querySelectorAll('button')].find(b=>b.textContent.trim()=='Done').click()})()");
+ log("a real typed control then Done is accepted",E("!$('#r99sheet')&&/Fanuc 0i-MF/.test(S.m[1].s.find(x=>x.k=='Control').v)")===true,E("[!!$('#r99sheet'),S.m[1].s.find(x=>x.k=='Control').v].join('|')"));
+
  }catch(e){log('crash',false,e.message)}
  document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
 </script>
