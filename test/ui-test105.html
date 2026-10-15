@@ -62,6 +62,14 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  log("tile contrast: Tool Library and job tiles use #f4f4f4 on solid #2f2f2f",E("(()=>{const a=[$('#bldtl'),document.querySelector('#jcjobs>button.chip')].filter(Boolean);return a.length>=1&&a.every(e=>{const c=getComputedStyle(e);return c.color=='rgb(244, 244, 244)'&&c.backgroundColor=='rgb(47, 47, 47)'})})()")===true);
  E("S.m[1].name='Mill B';save()");
 
+ // 4-axis Simulate: one A dial under the canvas, no 'not shown' banner, labels in their own strip above the canvas
+ E("HB(1);r111fill0();SET([...document.querySelectorAll('#r111ang input')][0].dataset.a,'36');show();tab('sim');scrub(Math.floor(J.M.length/2))");
+ log("4-axis sim: single A dial in a strip under the part",E("(()=>{const d=$('#r112dial');return !!d&&d.querySelectorAll('.r112d').length==1&&d.querySelector('.r112d').dataset.ax=='A'&&$('#cv').getBoundingClientRect().bottom<=d.getBoundingClientRect().top+1})()")===true,E("($('#r112dial')||{}).textContent"));
+ log("4-axis sim: 'Rotary moves not shown' banner gone, part drawn rotated",E("!$('#r101simb')&&!!r111simRot()")===true);
+ log("sim labels sit in a dark strip above the canvas (not on the part)",E("(()=>{const b=$('#r112lab');return !!b&&/T1 · S/.test(b.textContent)&&/Part shown at A36/.test(b.textContent)&&b.getBoundingClientRect().bottom<=$('#cv').getBoundingClientRect().top+1&&getComputedStyle(b).backgroundColor=='rgb(11, 11, 11)'})()")===true,E("($('#r112lab')||{}).textContent"));
+ E("cur(I5);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show();r111fill0();SET('t','30');SET('c','45');show();tab('sim');scrub(Math.floor(J.M.length/2))");
+ log("5-axis sim keeps two dials (Tilt + Table) in the strip",E("($('#r112dial')||{querySelectorAll:()=>[]}).querySelectorAll('.r112d').length")==2,E("($('#r112dial')||{}).textContent"));
+
  }catch(e){log('crash',false,e.message)}
  document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
 </script>

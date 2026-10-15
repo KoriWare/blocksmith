@@ -6650,15 +6650,9 @@ function r101rotCur(){const M=J&&J.M||[];const n=Math.min((typeof view!='undefin
   const p=(m&&typeof r100pairOf=='function'&&r100pairOf(m))||['B','C'];const tl=p[0],rl=p[1];const UK=!!st.unk||(!r102haas(m)&&J.M.some(z=>z.rot5&&z.rot5.unk));
   // the canvas context is already scaled for the device pixel ratio: draw in CSS pixels
   const T=ctx.getTransform?ctx.getTransform():{a:1,d:1};const W=cv.width/(T.a||1),H=cv.height/(T.d||1),R=16,pad=8;
-  ctx.save();ctx.font='11px sans-serif';ctx.textBaseline='top';
-  const dial=(x,y,L,deg,half)=>{ctx.textAlign='center';ctx.strokeStyle='#999';ctx.lineWidth=1.5;ctx.beginPath();half?ctx.arc(x,y,R,Math.PI,2*Math.PI):ctx.arc(x,y,R,0,2*Math.PI);ctx.stroke();const a=-Math.PI/2+deg*Math.PI/180;if(!UK){ctx.strokeStyle='#ffd23f';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+R*Math.cos(a),y+R*Math.sin(a));ctx.stroke()}ctx.fillStyle='#eee';const ly=by+2*R+10;if(UK){ctx.fillText(L,x,ly);ctx.fillStyle='#aaa';ctx.fillText('set by G68.2',x,ly+13)}else ctx.fillText(L+' '+(+deg).toFixed(1)+'°',x,ly)};
-  const bw=Math.min(W-2*pad,190),bh=UK?76:72,bx=W-bw-pad,by=H-bh-pad;ctx.fillStyle='rgba(0,0,0,.75)';ctx.fillRect(bx,by,bw,bh);
-  dial(bx+bw*0.27,by+2*R+2,'Tilt '+tl,st[tl]||0,1);dial(bx+bw*0.73,by+R+4,'Table '+rl,st[rl]||0,0);
-  if(UK){ctx.save();ctx.font='11px system-ui';ctx.fillStyle='#ff9f1a';ctx.textAlign='right';ctx.textBaseline='alphabetic';ctx.fillText('Rotary: set by G68.2',W-8,16);ctx.restore()}
-  ctx.textAlign='left';if(st.pl&&!st.pl.unk){ctx.fillStyle='#ffd23f';ctx.fillText(st.pl.haas?'G268 plane on':'G68.2 I'+st.pl.I+' J'+st.pl.J+' K'+st.pl.K,bx+4,by+bh-13)}
-  // banner: short, below the app's 'Rotary:' label at the top right, wraps on narrow screens
-  const t='Rotary moves not shown',tw=ctx.measureText(t).width,lines=tw+12>W*0.55?['Rotary moves','not shown']:[t];const lw=Math.max(...lines.map(x=>ctx.measureText(x).width))+12,lh=15,y0=pad+34;
-  ctx.fillStyle='rgba(140,20,20,.9)';ctx.fillRect(W-lw-pad,y0,lw,lines.length*lh+6);ctx.fillStyle='#fff';lines.forEach((x,i)=>ctx.fillText(x,W-lw-pad+6,y0+3+i*lh));ctx.restore()}catch(e){console.error(e)}return r}}
+  // v112: dials live in their own strip under the canvas (never over the part); 4-axis / HMC show one dial for the rotary letter
+  const one=['vmc4','hmc'].includes(r98t(m));const ax1=one?((typeof r111axes=='function'&&r111axes(m)[0])||{L:'A'}).L:null;
+  window.R112DIAL={ax:one?[[ax1,+(st[ax1]||0),0]]:[['Tilt '+tl,+(st[tl]||0),1],['Table '+rl,+(st[rl]||0),0]],UK,pl:st.pl&&!st.pl.unk?(st.pl.haas?'G268 plane on':'G68.2 I'+st.pl.I+' J'+st.pl.J+' K'+st.pl.K):''};}catch(e){console.error(e)}return r}}
 // text banner under the canvas too (screen readers / tests)
 {const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);try{const t=r101simNote();let b=$('#r101simb');const cvs=$('#cv');if(t&&cvs){if(!b){b=document.createElement('div');b.id='r101simb';b.className='ok bad';cvs.insertAdjacentElement('afterend',b)}b.textContent='⚠ Rotary moves not shown — the path is drawn flat in XYZ; the dials show the commanded rotary angles.'}else if(b)b.remove()}catch(e){}return r}}
 
@@ -7270,6 +7264,24 @@ pre.code,#cv,.code{white-space:pre-wrap!important;overflow-wrap:anywhere}
 `;document.head.appendChild(st)}
 {const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);r112card();return r}}
 {const _sh=show;show=function(){const r=_sh.apply(this,arguments);r112card();return r}}
+// ===== v112 sim: one A dial on 4-axis/HMC, no 'not shown' banner when the only rotary moves are the job angle lines, labels in their own strip, dials under the part
+function r112sim1(){const m=S.m[S.cur];return !!m&&['vmc4','hmc'].includes(r98t(m))}
+const R112OWN=/\((JOB ANGLE|ROTARY BACK TO ZERO|ROTARIES BACK TO ZERO|ROTARIES TO ZERO[^)]*)\)/;
+function r112ownOnly(){const c=(J&&J.code)||[];return c.every(l=>{const u=String(l).replace(/\([^)]*\)/g,'').toUpperCase();if(/^\s*(O\d|%|#)/.test(u))return true;return !/(^|\s)[ABC]\s*-?\d*\.?\d/.test(u)||R112OWN.test(String(l))})}
+{const _n=r101simNote;r101simNote=function(){const t=_n.apply(this,arguments);if(t&&r112sim1()&&r112ownOnly())return'';return t}}
+function r112dials(){const cvs=$('#cv');let d=$('#r112dial');const D=window.R112DIAL;if(!cvs||!D){if(d)d.remove();return}
+ if(!d){d=document.createElement('div');d.id='r112dial';d.className='simonly';d.setAttribute('aria-label','Rotary dials')}const after=cvs.closest('.r112cvw')||cvs;if(after.nextElementSibling!==d)after.insertAdjacentElement('afterend',d);
+ const dial=([L,deg,half])=>{const R=15,a=-Math.PI/2+deg*Math.PI/180,x=R*Math.cos(a),y=R*Math.sin(a);const arc=half?`<path d="M${-R} 0 A${R} ${R} 0 0 1 ${R} 0" fill="none" stroke="#999" stroke-width="1.5"/>`:`<circle r="${R}" fill="none" stroke="#999" stroke-width="1.5"/>`;
+  return `<div class="r112d" data-ax="${L}"><svg width="40" height="${half?24:40}" viewBox="${-20} ${half?-20:-20} 40 ${half?24:40}">${arc}${D.UK?'':`<line x1="0" y1="0" x2="${x.toFixed(2)}" y2="${y.toFixed(2)}" stroke="#ffd23f" stroke-width="2.5"/>`}</svg><span>${L} ${D.UK?'set by G68.2':(+deg).toFixed(1)+'°'}</span></div>`};
+ const h=D.ax.map(dial).join('')+(D.pl?`<div class="r112pl">${D.pl}</div>`:'');if(d.innerHTML!==h)d.innerHTML=h}
+function r112labs(L){const cvs=$('#cv');let b=$('#r112lab');if(!cvs||!L.length){if(b)b.remove();return}if(!b){b=document.createElement('div');b.id='r112lab';b.className='simonly'}const host=cvs.closest('.r112cvw')||cvs;if(host.previousElementSibling!==b)host.insertAdjacentElement('beforebegin',b);
+ const h=L.map(t=>`<div>${t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</div>`).join('');if(b.innerHTML!==h)b.innerHTML=h}
+{const _d=draw;draw=function(){if(typeof ctx=='undefined'||!ctx||typeof cv=='undefined'||!cv||!J)return _d.apply(this,arguments);window.R112DIAL=null;
+ const T0=ctx.getTransform?ctx.getTransform():{a:1,d:1};const W=cv.width/(T0.a||1);const ft=ctx.fillText,got=[];
+ ctx.fillText=function(t,x,y,...rest){try{const s=String(t);const M=ctx.getTransform(),sx=(M.a*x+M.c*y+M.e)/(T0.a||1),sy=(M.b*x+M.d*y+M.f)/(T0.d||1);
+  if(s.trim().length>=6&&sy<62&&sx<W*0.62&&ctx.textAlign!='center'&&ctx.textAlign!='right'&&ctx.textAlign!='end'){if(!got.includes(s))got.push(s);return}}catch(e){}return ft.call(this,t,x,y,...rest)};
+ let r;try{r=_d.apply(this,arguments)}finally{ctx.fillText=ft}try{r112labs(got);r112dials()}catch(e){}return r}}
+{const st=document.createElement('style');st.textContent='#r112lab{background:#0b0b0b;border:1px solid #2a2a2a;border-bottom:0;border-radius:12px 12px 0 0;padding:5px 9px;font:12px/1.35 -apple-system,system-ui,sans-serif;color:#e8e8e8}#r112lab div:nth-child(3){color:#ffd21f}#r112dial{display:flex;gap:18px;align-items:flex-end;justify-content:center;background:#0b0b0b;border:1px solid #2a2a2a;border-top:0;border-radius:0 0 12px 12px;padding:4px 8px 6px;font:12px -apple-system,system-ui,sans-serif;color:#eee}.r112d{display:flex;flex-direction:column;align-items:center;gap:2px}.r112pl{color:#ffd23f;align-self:center}';document.head.appendChild(st)}
 
 /* R79-END */</script>
 </body></html>
