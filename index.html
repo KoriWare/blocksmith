@@ -6117,7 +6117,7 @@ const R99CODE=/^\s*[GM]\d+(\.\d+)?(\s*[A-Z]#?\d+(\.\d+)?)*/i,R99PAIR=/^\s*[GM]\d
 function r99ph(v){const t=String(v==null?'':v).trim().toLowerCase();if(!t)return true;return R99PH.some(p=>t===p.toLowerCase())}
 function r99blankChoice(t){const lc=String(t||'').trim().toLowerCase();return /^not checked yet\b/.test(lc)||/^not sure\b/.test(lc)}
 function r99spec(k){return (typeof R99SPEC!='undefined'&&R99SPEC[k])||null}
-function r99hint(sp){if(!sp)return'';const h=sp.hint||sp.err||'';return h.replace(/^[^.]*?:\s*/,'').replace(/\s*like\s+".*$/,'').slice(0,110)||sp.fmt}
+function r99hint(sp){if(!sp)return'';const h=sp.hint||sp.err||'';return h.replace(/^[^.]*?:\s*/,'').replace(/\s*like\s+".*$/,'').slice(0,sp.long?400:110)||sp.fmt}
 function r99ok(k,v,sp){sp=sp||r99spec(k);const t=String(v==null?'':v).trim();if(!t||r99ph(t))return false;if(!sp)return!!t;if(sp.ok)return !!sp.ok(t);
  const st=sp.st;if(st=='picker')return sp.ch.some(c=>c.toLowerCase()===t.toLowerCase()||c.toLowerCase().startsWith(t.toLowerCase()+' ')||t.toLowerCase().startsWith(c.toLowerCase()));
  if(st=='picker+Other'){const lc=t.toLowerCase();if(r99blankChoice(t))return false;if(sp.ch.some(c=>c.toLowerCase()===lc))return true;if(r99ph(t)||t.length<2)return false;const yn=sp.ch.some(c=>/^yes\b/i.test(c))&&sp.ch.some(c=>/^no\b/i.test(c));if(yn)return /^(yes|no)\b/i.test(t);const words=new Set(sp.ch.join(' ').toLowerCase().match(/[a-z]{3,}/g)||[]);return (lc.match(/[a-z]{3,}/g)||[]).some(x=>words.has(x))||/[gm]\d|\d/i.test(t)}
@@ -7201,6 +7201,8 @@ const R111WHYL=[
  ['Tilt limits (5-axis)','Tilt axis limits (min / max deg)','An angle outside these limits is held so the head can\'t crash.'],
  ['C-axis-on code (mill-turn)','C-axis mode on / off','A C move needs it, or the spindle won\'t take the move.']];
 const R111WHY=Object.fromEntries(R111WHYL.map(([l,k,t])=>[k,t]));
+/* v112c: the Rotary head field hint is built from the same tip text as the star and Help */
+{const _sp112c=r99spec;r99spec=function(k){const sp=_sp112c.apply(this,arguments);try{if(sp&&typeof R104SIDE!='undefined'&&k==R104SIDE&&R111WHY[k]&&!String(sp.hint||'').includes(R111WHY[k])){sp.hint=String(sp.hint||'Pick Left or Right.').replace(/\s*$/,'')+' '+R111WHY[k];sp.long=1}}catch(e){}return sp}}
 function r111why(k){return R111WHY[k]||'This job\'s code reads '+k+'.'}
 function r111whyHome(k){return 'Some job on this machine reads it. '+(R111WHY[k]||'')} /* v112 Casey: Home tips match Help */
 // Home entry: everything any job on this machine reads

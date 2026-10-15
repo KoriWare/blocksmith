@@ -37,4 +37,7 @@ T114.push(async E=>{const g=`[...document.querySelectorAll('#r111ang .r111p')].m
  let bare=[];for(const [mi,op] of [[1,'face'],[3,'face'],[5,'face'],[3,'engrave'],[1,'engrave'],[5,'engrave']])for(const an of [0,36,'']){E(`RUN114(${mi},'${op}',${JSON.stringify(an)})`);const t=E(g);if(/(^|\/ )T# M06( \/|$)/.test(t)||t.trim()=='T# M06')bare.push(mi+'|'+op+'|'+an)}
  log('#3 no bare "T# M06" preview on face/engrave, 4-axis/HMC/5-axis, at 0, 36 and blank',!bare.length,bare.join(' '));
 });
+// ---- #4 rotary head hint = shared tip text
+T114.push(async E=>{const h=E(`tab('machines');edit(1);[...document.querySelectorAll('.r99hint')].map(e=>e.textContent).filter(t=>/which end of the table/.test(t)).join('||')`);const why=E(`R111WHY[R104SIDE]`);
+ log('#4 Rotary head field hint on the machine page includes the shared tip ("face and engrave jobs")',/face and engrave jobs/.test(h)&&h.includes(why),h);E(`tab('new');1`)});
 </script>
