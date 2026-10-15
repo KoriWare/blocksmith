@@ -308,7 +308,7 @@ function genL(j){const p=k=>j.p[k]?j.p[k].v:0,c=[],mv=[],L=s=>c.push(s);let TG='
  mv.forEach(m=>{const i=c.findIndex(l=>l.includes(m.t));m.l=i<0?7:i});
  j.stock=[-Rr,-Rr,-Lst,Rr,Rr,zmax];j.lb={R:Rr,L:Lst,z:zmax};let out=0;mv.forEach(m=>{if(m.b[0]<-1e-6||(!m.r&&m.b[2]<-Lst))m.out=1,out++});return{code:c,moves:mv,out}}
 // ---------- show / edits feed back
-const txt=()=>J.code.map((l,i)=>J.edits[i]??l);
+const txt=()=>(J&&Array.isArray(J.code)?J.code:[]).map((l,i)=>(J.edits||{})[i]??l); /* v113b: a held job has no program - empty text, never throw */
 function show(){const miss=Object.entries(J.p).filter(([k,x])=>x.v==null);
  let h=`<div class="card"><div class="t">${OPN[J.op]}</div>${Object.entries(J.p).map(([k,x])=>`<button class="chip ${x.v==null?'r':x.g?'gr':'y'}" onclick="ed('${k}')">${chipTxt(k,x)}</button>`).join('')}<div class="s">Yellow = from your words · gray = suggested, tap to change.</div></div>`;
  if(miss.length){h+=`<div class="card"><div class="t">Need ${miss.length} more — we have to be specific</div><div class="s">Anything that sets where the tool goes is never guessed.</div>${miss.map(([k])=>`<div class="set"><span>${k} <span class="s">(${UNIT[k]||''})</span></span>${k=='Confirm write'?`<button class="chip r" onclick="ed('Confirm write')">! Confirm G10 write</button>`:k=='Work offset'?`<select style="width:40%" data-k="${k}"><option value="">pick…</option>${offOpts().map(o=>`<option value="${o}">${offLbl(o)}</option>`).join('')}</select>`:`<input style="width:40%" data-k="${k}">`}</div>`).join('')}<button class="btn" onclick="fill()">Continue</button></div>`;$('#out').innerHTML=h;return}
@@ -7751,5 +7751,8 @@ function r113mark(){try{document.querySelectorAll('#out .r113bad').forEach(e=>e.
 document.addEventListener('input',e=>{const i=e.target&&e.target.closest&&e.target.closest('#r112stk input[data-sk]');if(!i||typeof J=='undefined'||!J)return;const v=String(i.value).trim();if(v!==''&&!isFinite(+v))return;r112stkSet(i.dataset.sk,v===''?null:+v);J.r79saved=0;try{drSave()}catch(_){}},true);
 // 7: a reopened job is unchanged until you edit it
 ['reopen','reopenV'].forEach(fn=>{const f=window[fn];if(typeof f!='function')return;window[fn]=function(){const r=f.apply(this,arguments);try{if(J){J.r79saved=1;setTimeout(()=>{if(J)J.r79saved=1},0)}}catch(e){}return r}});
+
+// v113b: saving a held job stores its values with an empty program and status 'Not ready'
+{const _sj113=saveJob;saveJob=function(){const held=typeof J!='undefined'&&J&&!(Array.isArray(J.code)&&J.code.length);const r=_sj113.apply(this,arguments);try{const rec=S.jobs[0];if(rec){rec.status=held?'Not ready':'Ready';if(held){rec.saved=[];rec.code=null}save()}}catch(e){}return r}}
 /* R79-END */</script>
 </body></html>
