@@ -45,4 +45,12 @@ T114.push(async E=>{const o=[];for(const mi of [1,3,5]){const x=E(`(()=>{J=null;
  log('#5 fresh probing job: angle field starts blank and the job is held until it is confirmed',o.every(x=>/"code":false/.test(x)&&/"inp":\[""(,"")*\]/.test(x)&&/not set/.test(x)),o.join(' || '));
  const p=[];for(const mi of [1,3,5]){const c=JSON.parse(E(`JSON.stringify(RUN114(${mi},'pbore',36))`)).code||'';const L=c.split('\n');const tc=L.findIndex(l=>/T\d+ M0?6/.test(l));const sz=L.findIndex(l=>/ROTARIES TO ZERO BEFORE THE FIRST CUT/.test(l)),ja=L.findIndex(l=>/\(JOB ANGLE\)/.test(l)),pr=L.findIndex(l=>/G65 P9|G31/.test(l.replace(/\(.*?\)/g,""))),m30=L.findIndex(l=>/^M30/.test(l)),bk=L.findIndex(l=>/BACK TO ZERO/.test(l));if(!(tc>=0&&tc<sz&&sz<ja&&ja<pr&&pr<bk&&bk<m30))p.push(mi+': '+[tc,sz,ja,pr,bk,m30].join(','))}
  log('#5 probing at 36 on 4-axis/HMC/5-axis: T# M06, safe-start 0, job angle, probe, back to 0, M30',!p.length,p.join(' || '))});
+// ---- #6 HMC square: dot <-> tile sync
+T114.push(async E=>{E(`HB(3);J.p['Center Y'].v=-0.75;r111fill0();show();SQ(2,1.5,0,'bl','top');const s=r112stk();s.fp=null;r112after();1`);await sl(200);
+ const st=`JSON.stringify({tile:[...document.querySelectorAll('#r112stk [data-st="yend5d"]')].filter(e=>e.className.split(' ').includes('on')).map(e=>e.dataset.sv),dot:[...document.querySelectorAll('#r112stk .dot9.on')].map(e=>e.dataset.pt)})`;
+ const R=[];const clk=async q=>{E(`document.querySelector('${q}').click();1`);await sl(250);return JSON.parse(E(st))};
+ R.push(['Top tile',await clk('#r112stk [data-st="yend5d"][data-sv="top"]'),['top'],['tc']]);R.push(['Bottom tile',await clk('#r112stk [data-st="yend5d"][data-sv="bottom"]'),['bottom'],['bc']]);
+ R.push(['top-center dot',await clk('#r112stk .dot9[data-pt="tc"]'),['top'],['tc']]);R.push(['bottom-center dot',await clk('#r112stk .dot9[data-pt="bc"]'),['bottom'],['bc']]);R.push(['middle-left dot',await clk('#r112stk .dot9[data-pt="ml"]'),[],['ml']]);
+ const bad=R.filter(([n,x,t,d])=>JSON.stringify(x.tile)!==JSON.stringify(t)||JSON.stringify(x.dot)!==JSON.stringify(d)).map(([n,x])=>n+' -> '+JSON.stringify(x));
+ log('#6 tiles and face dots stay in sync both ways (Top/Bottom tile -> dot, tc/bc dot -> tile, other dot clears both)',!bad.length,bad.join(' || '))});
 </script>

@@ -7521,7 +7521,7 @@ function r112stkHTML(){const md=r112smode(),st=r112stk(),ang=Math.abs(r112angNow
   if(md=='3')h+=r112tiles('z',[['top','Z on top'],['bottom','Z on bottom']],st.z)}
  if(st.shape=='square'){const q=st.square;
   if(md=='B'){h+=`<div class="lockchip">X · Z on centerline (B)</div><div class="split"><div class="col">${r112fld('square.L','Length',q.L,1,'e.g. 2.000')}</div><div class="col">${r112fld('square.W','Width',q.W,1,'e.g. 2.000')}</div></div>`;
-   const fp=st.fp||null;h+=`<div class="l">${dot(!!fp)}Y zero${star(!!fp)}</div>`+r112tiles('yend5d',[['bottom','Bottom'],['top','Top']],fp=='bc'&&st.y5d=='bottom'?'bottom':fp=='tc'&&st.y5d=='top'?'top':null)+`<div class="lblsm" style="margin-top:6px">Face points (pick 1)</div>`+r112grid('fp',fp,'Front face · '+(fp?R112FPN[fp]+' selected'+(/^(bc|tc)$/.test(fp)?' (on centerline)':''):'none selected'))+'<div class="r112sync">One pick sets the zero: a face point clears Top/Bottom; Top/Bottom snaps to the center point on that end.</div>'}
+   const fp=st.fp||null;h+=`<div class="l">${dot(!!fp)}Y zero${star(!!fp)}</div>`+r112tiles('yend5d',[['bottom','Bottom'],['top','Top']],fp=='bc'?'bottom':fp=='tc'?'top':null)+`<div class="lblsm" style="margin-top:6px">Face points (pick 1)</div>`+r112grid('fp',fp,'Front face · '+(fp?R112FPN[fp]+' selected'+(/^(bc|tc)$/.test(fp)?' (on centerline)':''):'none selected'))+'<div class="r112sync">One pick sets the zero: bottom-center = Bottom, top-center = Top; any other face point clears Top/Bottom.</div>'}
   else{h+=`<div class="split3">${r112fld('square.L','Length (X)',q.L,1,'3.000')}${r112fld('square.W','Width (Y)',q.W,1,'2.000')}${r112fld('square.H','Height (Z)',q.H,1,'1.500')}</div>`;
    h+=`<span class="chip" role="button" data-chip="1">Zero: ${R112PTN[st.zp]} · ${st.z} <span class="arr">›</span></span><div class="l">${dot(true)}Zero on stock</div><div class="s">Tap a point. Positions you type are from this work zero.</div>`+r112grid('zp',st.zp,'Top view · '+R112PTN[st.zp]+' selected')+r112tiles('z',[['top','Z on top'],['bottom','Z on bottom']],st.z)}
   if((md=='A'||md=='B')&&ang){const o=st.off||{};const a1=md=='A'?'y':'x';h+=`<div class="angtag">${md} ≠ 0 · centerline offsets required</div><div class="split"><div class="col">${r112fld('off.'+a1,'Zero from centerline '+a1.toUpperCase(),o[a1],1,'e.g. 0.000')}</div><div class="col">${r112fld('off.z','Zero from centerline Z',o.z,1,'e.g. 0.000')}</div></div>`}}
@@ -7536,7 +7536,7 @@ function r112stkClick(e){const t=e.target.closest('[data-st],[data-pt],[data-sug
  if(t.dataset.sugk){r112stkSet(t.dataset.sugk,+t.dataset.sugv)}
  else if(t.dataset.st=='yend5d'){st.y5d=t.dataset.sv;st.fp=t.dataset.sv=='bottom'?'bc':'tc'}
  else if(t.dataset.st){r112stkSet(t.dataset.st,t.dataset.sv)}
- else if(t.dataset.gk=='fp'){st.fp=t.dataset.pt;st.y5d=null}else if(t.dataset.gk=='zp'){st.zp=t.dataset.pt}
+ else if(t.dataset.gk=='fp'){st.fp=t.dataset.pt;st.y5d=st.fp=='bc'?'bottom':st.fp=='tc'?'top':null /* v112c: bottom-center lights Bottom, top-center lights Top, others clear both */}else if(t.dataset.gk=='zp'){st.zp=t.dataset.pt}
  r112after()}
 function r112stkChange(e){const i=e.target.closest('input[data-sk]');if(!i)return;const v=String(i.value).trim();r112stkSet(i.dataset.sk,v===''?null:(isFinite(+v)?+v:null));r112after()}
 function r112after(){if(J.r112old&&J.r112stk&&J.r112stk.shape&&(J.r112stk.top!=null||J.r112stk.front!=null||J.r112stk.shape=='square'&&J.r112stk.square.H>0))J.r112old=0;try{if(J.M)J.M.r112stkSig=null}catch(e){}show()}
