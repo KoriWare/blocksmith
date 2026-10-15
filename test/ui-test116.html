@@ -1,0 +1,51 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112e: centerline stock safety - rapid into stock (hard hold), Z0 inside stock (confirm), corner swing before rotary moves, break-out past the end faces; sim header Z0 = centerline --><iframe id="f" src="../index.html?v=116" style="width:390px;height:760px;border:0"></iframe><script src="fill110.js"></script><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length};
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();1`);
+ w.F110OV=F110OV;w.F110MACH=F110MACH;E(F110SETUP);w.__FILL=E(F110FILL);
+
+ E(`var R16=(mi,shape,cz,ang,ex)=>{cur(mi);J=null;tab('new');pickJob('hbore');const v=Object.assign({'Center X':3,'Center Y':3,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54','Clear Z':cz},ex||{});Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show();const s=r112stk(),md=r112smode();s.shape=shape;if(shape=='round'){s.round={d:2,len:6};s.xend='left';s.yend='bottom';if(md=='A')s.top=1;else s.front=1}else{s.square={L:6,W:2,H:2};s.fp='bc';s.off={x:'0',z:'0'}}r111fill0();show();const ax=r111axes();const st=r111state(ax);ax.forEach(a=>st.v[a.id]=String(ang));show();return st0()};
+ var st0=()=>({md:r112smode(),code:!!(J.code&&J.code.length),hold:J.r112eHold||'',hdr:zeroDesc(),dots:[...document.querySelectorAll('#r112stk .d,#r111ang .r111d')].map(d=>getComputedStyle(d).backgroundColor).join(),bar:!!document.querySelector('.r112eBar'),ready:(($('#ready')||{}).textContent||'')});
+ var CONF=()=>{const b=$('#r112eZ0c');if(b)b.click();return st0()};
+ var OVR=()=>{[...document.querySelectorAll('button')].filter(b=>/Override|Fix/.test(b.textContent)).forEach(b=>{try{b.click()}catch(e){}});try{if(typeof gate79=='function')J.r79ov=1}catch(e){}show();return st0()};1`);
+ const idx=JSON.parse(E(`JSON.stringify(S.m.map((m,i)=>[i,r98t(m)]))`));const A=idx.find(x=>x[1]=='vmc4')[0],B=idx.find(x=>x[1]=='hmc')[0];
+ const R=s=>JSON.parse(E('JSON.stringify('+s+')'));const RAP=/^Rapid into stock: Clear Z must be above the top of stock \((1\.000|1\.414) above centerline\)\.$/;
+ [['4-axis A',A,'round'],['HMC B',B,'round'],['HMC B',B,'square']].forEach(([nm,mi,sh])=>{const k=nm+' '+sh;
+  let x=R(`R16(${mi},'${sh}',0.1,58)`);log(k+' Clear Z 0.1 at 58°: held "Rapid into stock", no code',!x.code&&RAP.test(x.hold),JSON.stringify(x));
+  log(k+': stock and angle dots red and a red Not ready bar while held',x.bar&&x.dots&&x.dots.split('),').every(c=>/rgb\(238, 68, 68/.test(c)),JSON.stringify(x));
+  log(k+': sim header Z0 = centerline',/Z0 = centerline/.test(x.hdr),x.hdr);
+  x=R('OVR()');log(k+': override / Fix buttons cannot clear the rapid hold',!x.code&&RAP.test(x.hold),JSON.stringify(x));
+  x=R('CONF()');log(k+': Z0 confirm cannot clear the rapid hold either',!x.code&&RAP.test(x.hold),JSON.stringify(x));
+  x=R(`R16(${mi},'${sh}',1.1,0)`);log(k+' Clear Z 1.1 at 0°: Z0 0 held "Z0 is inside the stock (1.000 below its top)" with a confirm',!x.code&&/^Z0 is inside the stock \(1\.000 below its top\)\. Confirm it's from an earlier cut\.$/.test(x.hold)&&E("!!$('#r112eZ0c')"),JSON.stringify(x));
+  x=R('CONF()');log(k+' Clear Z 1.1: after the Z0 confirm the program is written',x.code&&!x.hold,JSON.stringify(x));
+  x=R(`R16(${mi},'${sh}',1.1,0,{Z0:1})`);log(k+' Z0 at the top of stock, Clear Z 1.1: written with no confirm',x.code&&!x.hold,JSON.stringify(x));
+  x=R(`R16(${mi},'${sh}',0.5,0,{Z0:1})`);log(k+' R/Clear below the top (0.5): held',!x.code&&RAP.test(x.hold),JSON.stringify(x));
+  x=R(`R16(${mi},'${sh}',1.1,0,{Z0:1,'Center X':0.2,'Center Y':0.2})`);log(k+': feature crossing the zero end face held "Breaks out of the end face"',!x.code&&/^Breaks out of the end face/.test(x.hold),JSON.stringify(x));
+  x=R(`R16(${mi},'${sh}',1.1,0,{Z0:1,'Center X':5.8,'Center Y':5.8})`);log(k+': feature past the far end (length 6) held "Breaks out of the end face"',!x.code&&/^Breaks out of the end face/.test(x.hold),JSON.stringify(x));
+ });
+ // corner swing: square block (half diagonal 1.414) and the swing check before rotary moves
+ let x=R(`R16(${B},'square',1.1,58,{Z0:1})`);log('HMC B square at 58°: Clear Z 1.1 under the 1.414 corner swing is held',!x.code&&/^Rapid into stock: Clear Z must be above the top of stock \(1\.414 above centerline\)\.$/.test(x.hold),JSON.stringify(x));
+ x=R(`R16(${B},'square',1.5,58,{Z0:1})`);log('HMC B square at 58°: Clear Z 1.5 clears the swing and writes',x.code&&!x.hold,JSON.stringify(x));
+ const sw=(mi,sh,lines)=>E(`(()=>{R16(${mi},'${sh}',1.5,0,{Z0:1});const g=gen;gen=()=>({code:${JSON.stringify(lines)}});try{return r112eSwing(J)||''}finally{gen=g}})()`);
+ log('square block: B move with the tool at Z0.5 (under the 1.414 swing) is held',/^Rapid into stock: the tool must be above the corner swing \(1\.414 from centerline\) before any rotary move\.$/.test(sw(B,'square',['T1 M06','G00 B0.','G43 H1 Z0.5','G00 B90.','M30'])),sw(B,'square',['T1 M06','G00 B0.','G43 H1 Z0.5','G00 B90.','M30']));
+ log('round bar on A: A move with the tool at Z0.5 (under the 1.000 radius) is held',/corner swing \(1\.000 from centerline\)/.test(sw(A,'round',['T1 M06','G43 H1 Z0.5','G00 A90.','M30'])));
+ log('rotary moves right after M06 and after G91 G28 Z0. pass',sw(B,'square',['T1 M06','G00 B0.','G43 H1 Z2.','G01 Z-0.1','G91 G28 Z0.','G90','G00 B0.','M30'])=='');
+ log('A square (Z0 on top or bottom, not centerline): no centerline holds',(()=>{const y=R(`R16(${A},'square',0.1,0)`);return !/Rapid into stock|Z0 is inside/.test(y.hold)&&!/centerline/.test(y.hdr)})());
+
+ // generic: every job type with Clear Z or R plane, on 4-axis A and HMC B, round and square stock
+ E(`var G16=(mi,op,shape,cz,ex)=>{cur(mi);eval(F110MACH);J=null;tab('new');try{pickJob(op)}catch(e){return null}if(!J||J.op!=op||J.lathe)return null;__FILL(op);show();__FILL(op);show();const ks=['Clear Z','R plane'].filter(k=>J.p[k]);if(!ks.length)return null;ks.forEach(k=>J.p[k]={v:cz,g:false});Object.entries(ex||{}).forEach(([k,v])=>{if(J.p[k])J.p[k]={v,g:false}});const s=r112stk(),md=r112smode();s.shape=shape;if(shape=='round'){s.round={d:2,len:6};s.xend='left';s.yend='bottom';if(md=='A')s.top=1;else s.front=1}else{s.square={L:6,W:2,H:2};s.fp='bc';s.off={x:'0',z:'0'}}J.r112eZ0ok=1;r111fill0();show();return {hold:J.r112eHold||'',code:!!(J.code&&J.code.length),cx:!!(J.p['Center X']||J.p['Center Y'])}};1`);
+ const ops=JSON.parse(E(`JSON.stringify(Object.keys(OPN))`));
+ [['4-axis A',A,['round']],['HMC B',B,['round','square']]].forEach(([nm,mi,shs])=>shs.forEach(sh=>{let n=0;const bad=[],bb=[],oth=[];let nb=0;
+  ops.forEach(op=>{const ok=JSON.parse(E(`JSON.stringify(G16(${mi},'${op}','${sh}',3,{Z0:1}))`));if(!ok||!ok.code)return;const x=JSON.parse(E(`JSON.stringify(G16(${mi},'${op}','${sh}',0.1))`));n++;if(x.code)bad.push(op+': WROTE CODE');else if(!/^Rapid into stock/.test(x.hold))oth.push(op);
+   const y=JSON.parse(E(`JSON.stringify(G16(${mi},'${op}','${sh}',3,{'Center X':0,'Center Y':0}))`));if(y&&y.cx){nb++;if(/^Rapid into stock/.test(y.hold))bb.push(op+': rapid hold at Clear Z 3');}});
+  log(nm+' '+sh+': every job type with Clear Z / R plane that writes at Clear Z 3 is held at 0.1 - "Rapid into stock" unless the job's own Clear Z rule fires first ('+n+' types, own rule: '+(oth.join(',')||'none')+')',n>5&&!bad.length&&oth.length<=2,bad.slice(0,6).join(' || ')+' own:'+oth.join(','));
+  log(nm+' '+sh+': at Clear Z 3 none of them is held for the rapid ('+nb+' with a center)',nb>=2&&!bb.length,bb.slice(0,6).join(' || '));
+ }));
+ }catch(e){log('exception',false,e.stack)}fin()},400)};
+</script>
