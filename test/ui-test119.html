@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112e: Helical bore cutter comp tile - Off byte-identical, G41/G42 with lead-in/lead-out arcs, D follows T, too-big hold --><iframe id="f" src="../index.html?v=119" style="width:390px;height:760px;border:0"></iframe><script src="fill110.js"></script><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length};
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();1`);
+ w.F110OV=F110OV;w.F110MACH=F110MACH;E(F110SETUP);w.__FILL=E(F110FILL);
+
+ E(`var HC=(m,cut,tool)=>{cur(0);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.1,Z0:0,Cutter:cut,'Helix pitch':0.05,Tool:tool||1,'Work offset':'G54','Clear Z':0.1,Feed:20};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});J.r112comp=m===undefined?undefined:{m,d:null};show();return {code:Array.isArray(J.code)?J.code.join('\\n'):null,hold:J.r112cmpHold||'',need:!!document.querySelector('#r112cmp .r112need'),card:!!$('#r112cmp')}};1`);
+ const R=s=>JSON.parse(E('JSON.stringify('+s+')'));
+ const u=R("HC(undefined,0.5)");log('fresh Helical bore shows the Cutter comp card with "Needs a pick" (none preselected)',u.card&&u.need,JSON.stringify(u));
+ const off=R("HC('off',0.5)");
+ const old=E("(()=>{const j=JSON.parse(JSON.stringify(J));j.r112comp=null;const s=R112CMP;return null})()");
+ const base=E("(()=>{const c=J.r112comp;J.r112comp=null;const g=gen(J);J.r112comp=c;return g.code.join('\\n')})()");
+ log('Off writes exactly the code without comp (byte-identical)',off.code===base&&!/G4[12]/.test(off.code),JSON.stringify({off:off.code&&off.code.slice(0,200)}));
+ const want41=["G01 Z0.0 F20.0","G01 G41 D1 X0.25 Y-0.25 F20.0 (COMP ON - STRAIGHT MOVE FROM THE CENTER)","G03 X0.5 Y0.0 I0. J0.25 (LEAD-IN ARC R0.25)","G03 X0.5 Y0.0 I-0.5 J0. Z-0.05 F20.0","G03 X0.5 Y0.0 I-0.5 J0. Z-0.1 F20.0","G03 X0.5 Y0.0 I-0.5 J0. (FLAT BOTTOM PASS)","G03 X0.25 Y0.25 I-0.25 J0. (LEAD-OUT ARC)","G40 G01 X0.0 Y0.0 (COMP OFF AT THE CENTER)","G00 Z0.1"].join('\n');
+ const c41=R("HC('G41',0.5)");log('Climb G41 at Ø1 with a 0.5 cutter: straight move with G41 D1 from the center, quarter lead-in arc R0.25, helix on the wall, lead-out arc, G40 at the center',c41.code&&c41.code.includes(want41),c41.code);
+ const c42=R("HC('G42',0.5)");log('Conventional G42: same shape mirrored with G02',c42.code&&c42.code.includes("G01 G42 D1 X0.25 Y0.25 F20.0 (COMP ON - STRAIGHT MOVE FROM THE CENTER)\nG02 X0.5 Y0.0 I0. J-0.25 (LEAD-IN ARC R0.25)")&&/G02 X0.25 Y-0.25 I-0.25 J0. \(LEAD-OUT ARC\)\nG40 G01 X0.0 Y0.0/.test(c42.code),c42.code);
+ const t7=R("HC('G41',0.5,7)");log('D follows T (T7 -> D7)',/G41 D7 /.test(t7.code||''),t7.code);
+ const big=R("HC('G41',0.8)");log('cutter 0.8 x the bore: held "Cutter too big for comp in this bore", no code',!big.code&&/^Cutter too big for comp in this bore/.test(big.hold),JSON.stringify(big));
+ const bigOff=R("HC('off',0.8)");log('same cutter with comp Off still writes',!!bigOff.code,JSON.stringify(bigOff).slice(0,200));
+ }catch(e){log('exception',false,e.stack)}fin()},400)};
+</script>
