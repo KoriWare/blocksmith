@@ -1,4 +1,4 @@
-<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113i: real-click regression - Engrave text, Wrapped around the 4th (A) axis on a round bar Ø1.5, Length 6, Left end, Top 0.75, Clearance 0.1: must write, pass, and never rotate A below the bar radius --><iframe id="f" src="../index.html?v=124" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113i/j: real-click regression - Engrave text, Wrapped around the 4th (A) axis on a round bar Ø1.5, Length 6, Left end, Top 0.75, Clearance 0.1: must write, pass, and never rotate A below the bar radius --><iframe id="f" src="../index.html?v=124" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
 let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,1500)));
 const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
 f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);if(!ph){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
@@ -7,23 +7,26 @@ const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const vis=e
 const TY=(sel,v)=>{const i=Q(sel);if(!i)return log('input '+sel,false,'missing');i.focus();i.value=v;i.dispatchEvent(new w.Event('input',{bubbles:true}));i.dispatchEvent(new w.Event('change',{bubbles:true}));i.blur()};
 const seq=[];const S=(fn,ms=300)=>seq.push([fn,ms]);
 // machine setup only (not under test): demo Mill B = 4th axis, Haas control, 4th-axis + cylindrical interpolation options, settings confirmed
-S(()=>ev(`(()=>{const i=S.m.findIndex(m=>r98t(m)=='vmc4');const m=S.m[i];m.opt=Object.assign(m.opt||{},{ax4:1,cyl:1});m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()&&sp&&sp.ex)x.v=String(sp.ex).replace(/^e\\.g\\.\\s*/,'');x.st='user'});const c=m.s.find(x=>/^Control/.test(x.k));c.v='Haas NGC-style';save();cur(i)})()`));
+S(()=>ev(`(()=>{const i=S.m.findIndex(m=>r98t(m)=='vmc4');const m=S.m[i];m.opt=Object.assign(m.opt||{},{ax4:1,cyl:1,rot:1});m.optOk=1;m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()&&sp&&sp.ex)x.v=String(sp.ex).replace(/^e\\.g\\.\\s*/,'');x.st='user'});const c=m.s.find(x=>/^Control/.test(x.k));c.v='Haas NGC-style';save();cur(i)})()`));
 S(()=>T('Build').click());S(()=>{const b=[...d.querySelectorAll('button')].find(b=>vis(b)&&/^Engraving/.test(b.textContent.trim()));b&&b.click()});
 S(()=>{const b=T('Engrave text');b?b.click():log('Engrave text job button',false,[...d.querySelectorAll('button')].filter(vis).map(b=>b.textContent.trim().slice(0,22)).join('|'))},400);
-const F={'Shaft Ø':'1.5','Letter height':'0.25','Start along axis':'1','Start angle':'0','Baseline rotation':'90','Start X':'1','Start Y':'0','Text height':'0.25','Depth':'0.01','Return R':'0.1','Tool':'3','Work offset':'G54','Angle':'0','Text':'AB','Mode':'Text'};
+const F={'Text':'HELLO WORLD','Shaft Ø':'1.5','Letter height':'0.25','Depth':'0.02','Tool':'7','Start angle':'135','Angle is':'START','Reading':'AROUND','Baseline rotation':'60','Mirror':'NO','Start X':'1','Start Y':'0','Text height':'0.25','Depth':'0.01','Return R':'0.1','Work offset':'G54'};
 for(let n=0;n<14;n++)S(()=>{const c=[...d.querySelectorAll('#out .chip.r')].find(vis);if(!c)return;const k=(c.getAttribute('onclick')||'').match(/ed\('([^']+)'\)/);c.click();setTimeout(()=>{if(!k)return;const i=Q('#out [data-k="'+k[1]+'"]');if(!i)return;i.focus();if(i.tagName=='SELECT'){const op=[...i.options].find(o=>o.value==F[k[1]])||[...i.options].find(o=>o.value);i.value=op.value}else i.value=F[k[1]]||'1';i.dispatchEvent(new w.Event('input',{bubbles:true}));i.dispatchEvent(new w.Event('change',{bubbles:true}));i.blur()},60)},200);
 S(()=>{const c=Q('#out [onclick="ed(\'Clearance\')"]');c?c.click():log('Clearance chip',false,'missing')},300);S(()=>{if(Q('#out [data-k="Clearance"]'))return TY('#out [data-k="Clearance"]','0.1');const i=Q('#dlgin');if(i){i.value='0.1';i.dispatchEvent(new w.Event('input',{bubbles:true}));Q('#dlgok').click()}else log('Clearance editor',false,'none')},300);S(()=>{log('Clearance set to 0.1',ev('J.p.Clearance&&J.p.Clearance.v')==0.1,ev('JSON.stringify(J.p.Clearance)'))});S(()=>{const b=T('Continue');b&&b.click()},400);S(()=>{const b=T('Generate Code');b&&b.click()},500);
 S(()=>{const b=Q('#r112stk [data-st=shape][data-sv=round]');b?b.click():log('Stock card',false,'missing')},400);
 S(()=>TY('#r112stk input[data-sk="round.d"]','1.5'));S(()=>TY('#r112stk input[data-sk="round.len"]','6'));
-S(()=>{const b=Q('#r112stk [data-st=xend][data-sv=left]');b&&b.click()});S(()=>TY('#r112stk input[data-sk="top"]','0.75'));
+S(()=>{const b=Q('#r112stk [data-st=xend][data-sv=left]');b&&b.click()});S(()=>TY('#r112stk input[data-sk="xs"]','1'));
 S(()=>{const b=T('Generate Code');b&&b.click()},600);
 S(()=>{const code=ev('(J.code||[]).join("\\n")'),hold=ev('J.r112eHold||""');window.CODE=code;window.HOLD=hold;
- log('wrap engrave Ø1.5 / Top 0.75 / Clearance 0.1: no hold',!hold,hold+' || '+(Q('#out')||{}).innerText.replace(/\s+/g,' ').slice(-500));
+ log('wrap engrave Ø1.5 / L6 / X start 1 / Clearance 0.1 (Kori values, demo name): no hold',!hold,hold+' || '+(Q('#out')||{}).innerText.replace(/\s+/g,' ').slice(-500));
  log('program written',code.split('\n').length>8,code);
  const L=code.split('\n');let z=Infinity,bad=null,mo=0;for(const l of L){const n=l.replace(/\([^)]*\)/g,'');const gm=n.match(/\bG0?([0-3])(?![\d.])/);if(gm)mo=+gm[1];if(/\bM0?6\b/.test(n))z=Infinity;if(/\bG28\b/.test(n)&&/Z/.test(n)){z=Infinity;continue}const m=n.match(/\bZ(-?[\d.]+)/);if(m&&!/\bG91\b/.test(n))z=+m[1];if(mo==0&&/\bA-?[\d.]/.test(n)&&z<0.75-1e-6){bad=l;break}}
  log('no rapid A move at or below the bar radius (0.75); G01 X/A cuts at depth are the engraving',!bad,bad);
- log('retract writes Z0.85 (radius 0.75 + Clearance 0.1)',/G43 H3 Z0\.85\b/.test(code),'');log('Top of stock is locked (read-only) at 0.7500 on round bar',(()=>{const t=Q('#r112stk input[data-sk="top"]');return !!t&&t.readOnly&&/^0\.75/.test(t.value)})(),'');
+ log('retract writes Z0.85 (radius 0.75 + Clearance 0.1)',/G43 H\d+ Z0\.85\b/.test(code),'');log('X start within 0..6 and every X in the program inside the bar',(()=>{const xs=code.split('\n').map(l=>l.replace(/\([^)]*\)/g,'').match(/\bX(-?[\d.]+)/)).filter(Boolean).map(m=>+m[1]);return xs.length>5&&xs.every(x=>x>=0&&x<=6)})(),code.split('\n').slice(6,12).join(' / '));
+ log('no cuts outside the stock',ev('J.out||0')==0,ev('J.out'));
+ const ck=[...d.querySelectorAll('#ck li,#ck .ck,#ck div')].map(e=>e.textContent);log('all code checks pass',/(\d+) of \1 pass/.test((Q('#out')||{}).innerText),((Q('#out')||{}).innerText.match(/Code checks: \d+ of \d+ pass/)||[''])[0]+' '+[...d.querySelectorAll('#ck .bad,#ck .no,#ck .r113fl')].map(e=>e.textContent).join(' | '));
+ log('sim stock is the Stock card bar: length 6, Ø1.5',ev('JSON.stringify(J.stock)')=='[0,-0.75,-0.75,6,0.75,0.75]',ev('JSON.stringify(J.stock)'));
  log('no exceptions',errs.length==0,errs.join(' || '))},300);
-S(()=>{fin()});
+if(/shot=1/.test(location.search))S(()=>{T('Simulate').click()},1500);else S(()=>{fin()});
 const run=i=>{if(i>=seq.length)return;try{seq[i][0]()}catch(e){log('step'+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),800)}
 </script>
