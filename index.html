@@ -7183,20 +7183,20 @@ function r111simRot(){if(R111OFF||typeof J=='undefined'||!J||!J.rang||!J.r111ins
 function r111fill0(){try{if(!J||!J.op)return;const ax=r111axes();if(!ax.length)return;const st=r111state(ax);ax.forEach(a=>{if(st.v[a.id]==null)st.v[a.id]='0'})}catch(e){}}
 // required stars: only on fields this job reads (same list as holds: R110READS via r107uses + Max RPM when the code writes S)
 function r111jobS(){try{if(!J||!J.op||J.lathe||r110lathe(J.op))return false;let c=Array.isArray(J.code)&&J.code.length?J.code:null;if(!c)return J.r111S!=null?J.r111S:false;J.r111S=!!r110S(c).length;return !!(c&&r110S(c).length)}catch(e){return false}}
-function r111reads(m){if(typeof J=='undefined'||!J||!J.op||!m)return[];const out=[];(m.s||[]).forEach(x=>{if(r103hid(m,x.k))return;if(r107uses(m,x)||(x.k=='Max RPM'&&r111jobS()))out.push(x.k)});return out}
+function r111reads(m){if(typeof J=='undefined'||!J||!J.op||!m)return[];const out=[];(m.s||[]).forEach(x=>{if(r103hid(m,x.k))return;if(r107uses(m,x)||(x.k=='Max RPM'&&r111jobS())||(x.k==R104SIDE&&!J.lathe&&r98t(m)=='vmc4'))out.push(x.k)});return out} /* side: same rule as r104need's block */
 // one shared source for 'why required' lines (tips under the star and the Help section)
 const R111WHYL=[
  ['Control','Control','This picks the code format your machine reads. Nothing is written until it\'s confirmed.'],
  ['Max RPM','Max RPM','This job writes S. Any S above Max RPM is held, never lowered quietly.'],
  ['Rotary axis letter','Rotary axis','This builds your home and zero lines. A letter that isn\'t confirmed is never written.'],
- ['Rotary side',(typeof R104SIDE!='undefined'?R104SIDE:'Rotary head on'),'This shows the 4th axis on the correct end of the table in the simulation. It doesn\'t change the code yet.'],
+ ['Rotary side',(typeof R104SIDE!='undefined'?R104SIDE:'Rotary head on'),'Required for face and engrave jobs. It shows the 4th axis on the correct end of the table in the simulation, and doesn\'t change the code yet.'],
  ['Rotary angle','Rotary angle','This sets the separate rotary move after the tool change. A blank angle holds the job, and nothing is guessed.'],
  ['Tilt limits (5-axis)','Tilt axis limits (min / max deg)','An angle outside these limits is held so the head can\'t crash.'],
  ['C-axis-on code (mill-turn)','C-axis mode on / off','A C move needs it, or the spindle won\'t take the move.']];
 const R111WHY=Object.fromEntries(R111WHYL.map(([l,k,t])=>[k,t]));
 function r111why(k){return R111WHY[k]||'This job\'s code reads '+k+'.'}
 // Home entry: everything any job on this machine reads
-function r111allReads(m){const lathe=isLT(m.type||'')||r98t(m)=='swiss';const U=new Set();Object.keys(R110READS).forEach(op=>{if(!!r110lathe(op)!==lathe)return;R110READS[op].forEach(k=>U.add(k))});if(!lathe)['Max RPM','Offset syntax','Extended offsets'].forEach(k=>U.add(k));return (m.s||[]).filter(x=>!r103hid(m,x.k)&&U.has(x.k)).map(x=>x.k)}
+function r111allReads(m){const lathe=isLT(m.type||'')||r98t(m)=='swiss';const U=new Set();Object.keys(R110READS).forEach(op=>{if(!!r110lathe(op)!==lathe)return;R110READS[op].forEach(k=>U.add(k))});if(!lathe)['Max RPM','Offset syntax','Extended offsets'].forEach(k=>U.add(k));if(r98t(m)=='vmc4')U.add(R104SIDE);return (m.s||[]).filter(x=>!r103hid(m,x.k)&&U.has(x.k)).map(x=>x.k)}
 let r111mode='home';
 function r111star(lb,k,ok){const s=document.createElement('span');s.className='r111star'+(ok?' r111y':'');s.textContent='*';s.setAttribute('role','button');s.title='Why is this needed?';s.dataset.k=k;
  s.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const host=lb.parentNode;let t=host.querySelector(':scope > .r111tip');if(t){t.remove();return}t=document.createElement('div');t.className='r111tip';t.textContent=r111why(k);lb.insertAdjacentElement('afterend',t)},true);lb.appendChild(s)}
