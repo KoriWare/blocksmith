@@ -65,4 +65,7 @@ T114.push(async E=>{E(`S.m.forEach(m=>m.opt.macroB=0);1`);const q=op=>JSON.parse
 T114.push(async E=>{const c=E(`cur(1);J=null;tab('new');pickJob('rotcl');__FILL('rotcl');show();__FILL('rotcl');show();for(let i=0;i<3;i++){eval(__MACH);show()}Array.isArray(J.code)?J.code.join('\\n'):'HELD '+($('#out').textContent||'').slice(0,200)`);
  const L=c.split('\n');const d=L.map((l,i)=>i&&/^G00 Z/.test(l)&&l==L[i-1]?i:-1).filter(i=>i>=0);const a180=L.findIndex(l=>/^G00 A180\./.test(l));
  log('#8 rotcl: no back-to-back duplicate G00 Z lines, and only one safe-Z move before A180',!/^HELD/.test(c)&&!d.length&&a180>0&&!(/^G00 Z/.test(L[a180-1])&&/^G00 Z/.test(L[a180-2])),c.slice(0,200)+' dup@'+d.join(','))});
+// ---- #9 cpock: pocket smaller than the cutter holds AND clears the program
+T114.push(async E=>{const x=JSON.parse(E(`(()=>{const r=RUN114(1,'cpock',0);const b=Array.isArray(J.code);J.p.Dia={v:0.2,g:false};J.p.Cutter={v:0.25,g:false};show();return JSON.stringify({b,a:Array.isArray(J.code),ed:!!$('#ed'),cp:!!$('#cp'),bad:($('#out .bad')||{}).textContent||''})})()`));
+ log('#9 cpock with pocket < cutter: held with the reason, program cleared (no editor, no Copy)',x.b&&!x.a&&!x.ed&&!x.cp&&/smaller than the pocket/.test(x.bad),JSON.stringify(x))});
 </script>
