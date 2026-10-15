@@ -7761,5 +7761,6 @@ document.addEventListener('input',e=>{const i=e.target&&e.target.closest&&e.targ
 // v113b: version line on the main (Home) screen footer and in About, from APP_VERSION
 function r113foot(){try{const pg=V&&V.dataset.page;const ttl=($('#ttl')||{}).textContent||'';if(!(pg=='home'||/^About$/.test(ttl)||(!pg&&/BlockSmith|Home/.test(ttl))))return;let f=V.querySelector('#r113foot');const ab=V.querySelector('#appver');if(ab){if(ab.textContent!==APP_VERSION)ab.textContent=APP_VERSION;return}if(!f){f=document.createElement('footer');f.id='r113foot';f.style.cssText='text-align:center;color:#8d8d8d;font-size:12px;margin:14px 0 10px';f.innerHTML='© 2026 KoriWare <span id="appver" style="color:#888;font-size:11px;margin-left:6px"></span>';V.appendChild(f)}f.querySelector('#appver').textContent=APP_VERSION}catch(e){}}
 ['tab','about','more','show'].forEach(fn=>{const o=window[fn];if(typeof o!='function')return;window[fn]=function(){const r=o.apply(this,arguments);r113foot();return r}});
+/* v113b: footer on first Home render after (re)load (r113foot runs before APP_VERSION exists) */{const _vf=()=>{try{document.querySelectorAll('#appver').forEach(e=>{if(e.textContent!==APP_VERSION)e.textContent=APP_VERSION});r113foot()}catch(e){}};_vf();addEventListener('load',_vf)}
 /* R79-END */</script>
 </body></html>
