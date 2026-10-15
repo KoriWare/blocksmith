@@ -1,0 +1,30 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112c: checks card/button/ready from the visible rows; angle preview; rotary head hint; probing angle; tile sync; M98/hold reasons; rotcl; cpock; tlen alarm text; Casey fresh-job items --><iframe id="f" src="../index.html?v=114" style="width:390px;height:760px;border:0"></iframe><script src="fill110.js"></script><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,500)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length};
+const sl=ms=>new Promise(r=>setTimeout(r,ms));
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(async()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Lathe w/ live tooling','Lathes');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});{const k0=S.cur;S.m.forEach((m,i)=>{if(r98t(m)=='hmc'){cur(i);if(!S.tools.find(t=>t.n==1))S.tools.push({n:1,type:'End mill',dia:0.5,len:2,fl:3})}});cur(k0)}save();
+ var HB=(mi)=>{cur(mi);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show()};
+ var SQ=(L,W,H,zp,z)=>{const s=r112stk();s.shape='square';s.square={L,W,H};if(zp)s.zp=zp;if(z)s.z=z;r112after()};
+ var ST114=()=>JSON.stringify({bad:$('#ck').classList.contains('bad'),ck:$('#ck').textContent,cp:($('#cp')||{}).textContent||'',ready:($('#ready')||{}).textContent||''});1`);
+ w.F110OV=F110OV;E(F110SETUP);w.__FILL=E(F110FILL);w.__MACH=F110MACH;
+ E(`var RUN114=(mi,op,ang)=>{J=null;cur(mi);try{tab('new')}catch(e){};pickJob(op);if(!J||J.op!=op)return {na:1};__FILL(op);show();__FILL(op);show();for(let i=0;i<3;i++){eval(__MACH);show()}r111fill0();show();if(ang!=null)document.querySelectorAll('#r111ang input').forEach(x=>{x.value=String(ang);x.dispatchEvent(new Event('input'));x.dispatchEvent(new Event('change'))});show();return {code:Array.isArray(J.code)?J.code.join('\\n'):null,held:(($('#out')||{}).textContent||'').slice(0,300)}};1`);
+ const T=window.T114||[];for(const t of T){try{await t(E,w)}catch(e){log('step error '+e.message,false)}}
+ }catch(e){log('setup '+e.message,false)}fin()},1500)};
+window.T114=[];
+// ---- #2 checks card / button / ready row follow the visible rows
+T114.push(async E=>{
+ E(`HB(3);J.p['Center Y'].v=-0.75;r111fill0();show();SQ(2,1.5,0,'bl','top');const s=r112stk();s.fp=null;r112after();document.querySelector('#r112stk [data-st="yend5d"][data-sv="top"]').click();1`);await sl(400);
+ const a=JSON.parse(E('ST114()'));E(`document.querySelector('#r112stk .dot9[data-pt="bc"]').click();1`);await sl(400);const b=JSON.parse(E('ST114()'));E(`document.querySelector('#r112stk .dot9[data-pt="tc"]').click();1`);await sl(400);const c=JSON.parse(E('ST114()'));
+ log('#2 all pass: green card, "Copy program", Ready',!a.bad&&/19 of 19/.test(a.ck)&&a.cp=='Copy program'&&/Ready/.test(a.ready),JSON.stringify(a));
+ log('#2 stock check fails after the zero moves: red card, "Fix 1 issue first", Not ready + Override',b.bad&&/18 of 19/.test(b.ck)&&b.cp=='Fix 1 issue first'&&/Not ready/.test(b.ready)&&/Override/.test(b.ready),JSON.stringify(b));
+ log('#2 back inside: green again, button back to "Copy program"',!c.bad&&/19 of 19/.test(c.ck)&&c.cp=='Copy program'&&/Ready/.test(c.ready),JSON.stringify(c));
+ E(`HB(0);r111fill0();show();SQ(2,1,1,'bl');SQ(2,1,1,'tc');saveJob();reopen(0);1`);await sl(600);const d=JSON.parse(E('ST114()'));
+ log('#2 reopened job with a failing stock check: red card, fix 1, Not ready + Override',d.bad&&/fix 1/.test(d.ck)&&d.cp=='Fix 1 issue first'&&/Override/.test(d.ready),JSON.stringify(d));
+});
+</script>
