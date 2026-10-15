@@ -1,0 +1,23 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112e: sim XYZ triad sits at the work offset zero (not the feature center), labeled with the offset; feature center is a gray dot --><iframe id="f" src="../index.html?v=118" style="width:390px;height:760px;border:0"></iframe><script src="fill110.js"></script><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length};
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();1`);
+ w.F110OV=F110OV;w.F110MACH=F110MACH;E(F110SETUP);w.__FILL=E(F110FILL);
+
+ E(`var HBX=(mi,shape,cx)=>{cur(mi);eval(F110MACH);J=null;tab('new');pickJob('hbore');const v={'Center X':cx,'Center Y':0.5,Dia:0.5,Depth:0.5,Z0:1,Cutter:0.25,'Helix pitch':0.05,Tool:1,'Work offset':'G54','Clear Z':1.6};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});J.r112comp={m:'off',d:null};show();const s=r112stk(),md=r112smode();if(shape){s.shape=shape;if(shape=='round'){s.round={d:2,len:6};s.xend='left';s.yend='bottom';if(md=='A')s.top=1;else s.front=1}else{s.square={L:6,W:2,H:2};s.fp='bc';s.off={x:'0',z:'0'}}}r111fill0();show();return !!J.code};
+ var TRI=()=>{const rec=[];const a0=window.arrow;window.arrow=function(p,q,c,l,scr){if(/^[XYZ]\+/.test(l||'')&&!scr)rec.push({l,p:P(p).map(v=>Math.round(v*10)/10)});return a0.apply(this,arguments)};try{draw()}finally{window.arrow=a0}const z=P([0,0,0]).map(v=>Math.round(v*10)/10);return {rec,z}};1`);
+ const idx=JSON.parse(E(`JSON.stringify(S.m.map((m,i)=>[i,r98t(m)]))`));const A=idx.find(x=>x[1]=='vmc4')[0],V=idx.find(x=>x[1]=='vmc3')[0];
+ [['plain VMC',V,null],['4-axis A round',A,'round']].forEach(([nm,mi,sh])=>{
+  E(`HBX(${mi},${JSON.stringify(sh)},2)`);E("tab('sim')");const a=JSON.parse(E('JSON.stringify(TRI())'));E("tab('new')");
+  E(`HBX(${mi},${JSON.stringify(sh)},4)`);E("tab('sim')");const b=JSON.parse(E('JSON.stringify(TRI())'));E("tab('new')");
+  const at0=r=>r.rec.length>=3&&r.rec.every(x=>Math.hypot(x.p[0]-r.z[0],x.p[1]-r.z[1])<1);
+  log(nm+': X+/Y+/Z+ arrows start at the work offset zero, not the feature center',at0(a)&&at0(b),JSON.stringify({a,b}));
+ });
+ }catch(e){log('exception',false,e.stack)}fin()},400)};
+</script>
