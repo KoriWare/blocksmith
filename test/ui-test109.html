@@ -6,7 +6,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Lathe w/ live tooling','Lathes');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
  S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
  {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
- S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});{const k0=S.cur;S.m.forEach((m,i)=>{if(r98t(m)=='hmc'){cur(i);if(!S.tools.find(t=>t.n==1))S.tools.push({n:1,type:'End mill',dia:0.5,len:2,fl:3})}});cur(k0)}save();
  var FJ=(mi)=>{cur(mi);J=null;tab('new');pickJob('face');Object.keys(J.p).forEach(k=>{if(J.p[k].v==null){const sp=r99spec(k)||{};const ch=J2.face&&J2.face.choices&&J2.face.choices[k];J.p[k]={v:ch?ch[0]:/Cutter|Tool dia/.test(k)?0.5:/Tool/.test(k)?1:/Work offset/.test(k)?'G54':/Step/.test(k)?0.05:/Z0|X0|Y0|Start/.test(k)?0:2,g:false}}});show();r111fill0();show()};var HB=(mi)=>{cur(mi);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show()};
  var SET=(id,v)=>{const i=document.querySelector('#r111ang input[data-a="'+id+'"]');i.value=v;i.dispatchEvent(new Event('input'));i.dispatchEvent(new Event('change'))};1`);
  const I3=0,IA=1,IB=3;
@@ -35,7 +35,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  const cs=E(`const s=r112stk();s.square={L:2,W:6,H:6};r112after();const k=J.code;J.code=['%','O1','G00 G90 X0 Y0','G00 Z1.','G00 A90.','M30','%'];const q=checks(J);J.code=k;q.filter(c=>/corner swing/.test(c[0])).map(c=>c[0]+':'+c[1]).join('|')`);
  log("corner-swing check fails when the swing exceeds the Z clearance",/inside the corner swing.*:false/.test(cs),cs);
  // HMC B round and square
- const baseB=E(`HB(${IB});r111fill0();show();progText()`);
+ const baseB=E(`HB(${IB});J.p['Center Y'].v=1;r111fill0();show();progText()`);
  const br=JSON.parse(E(`RD(3,2);const a=[progText(),r112solid().k,r112swing()];SQ(2,1.5,0,'bl','top');const s=r112stk();s.fp='bc';s.off={x:0,z:0};r112after();a.push(progText(),JSON.stringify(r112solid().b));JSON.stringify(a)`));
  log("HMC B round: cylinder along Y, program unchanged",br[0]===baseB&&br[1]=='cylY'&&br[2]==1.5,br.slice(1,3));
  log("HMC B square (bottom-centre): box -0.75..0.75 x 0..2, program unchanged",br[3]===baseB&&br[4]==JSON.stringify([-0.75,0,-0.75,0.75,2,0.75]),br[4]);
@@ -48,6 +48,21 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  // Job manager red marker: two entries on G54 with different zeros
  const jm=E(`try{const a={op:'hbore',r112stk:{shape:'square',zp:'bl',z:'top',off:{}},p:{'Work offset':{v:'G54'}}},b={op:'hbore',r112stk:{shape:'square',zp:'mc',z:'top',off:{}},p:{'Work offset':{v:'G54'}}};[r112zsig(a)!==r112zsig(b),r112zsig({})===null].join()}catch(e){'ERR '+e.message}`);
  log("Job manager: different zeros on one work offset differ (red marker signature)",jm=='true,true',jm);
+
+ // ---- v112b ----
+ log("3-axis machine never reports a rotary axis, even with a leftover 'Rotary axis' setting",E(`HB(${I3});const x=S.m[${I3}].s.find(y=>y.k=='Rotary axis');x&&x.v&&x.st=='user'&&rotAx()===null`)===true,E(`HB(${I3});JSON.stringify([rotAx(),S.m[${I3}].s.find(y=>y.k=='Rotary axis')])`));
+ const hm=JSON.parse(E(`HB(${IB});J.p['Center Y'].v=1;r111fill0();show();RD(3,2);r112stk().front=1.5;r112after();tab('sim');scrub(J.M.length);const o=[J.M.filter(m=>!m.r&&m.out==1).length,($('#r112lab')||{}).textContent,$('#ck').textContent];tab('new');JSON.stringify(o)`));
+ log("HMC round: bore inside the bar has no red cuts; stock labels in the label strip; all checks pass (T1 in library)",hm[0]==0&&/Stock: B table · Bottom · Ø 3\.0/.test(hm[1])&&/^Code checks: (\d+) of \1 pass/.test(hm[2]),hm);
+ const ns=E(`HB(${IB});J.p['Center Y'].v=1;r111fill0();show();RD(3,2);tab('sim');let n=0;const _l=ln;ln=function(){if(String(ctx.strokeStyle).toLowerCase()=='#666666')n++;return _l.apply(this,arguments)};try{draw()}finally{ln=_l}tab('new');n`);
+ log("HMC sim with stock set: old part box not drawn",ns===0,ns);
+ for(const [mi,L,ax] of [[IA,'A','Y and Z'],[IB,'B','X and Z']])for(const a of ['36','90']){const r=JSON.parse(E(`HB(${mi});J.p['Center Y'].v=1;r111fill0();show();SQ(2,1.5,1);SET('r','${a}');show();const o=[!!J.code,($('#out').textContent.match(/Not written: at ${L}${a}° the stock turns about the ${L} centerline[^]*?checked\./)||[''])[0],($('#r112bcc')||{}).textContent,document.querySelectorAll('#r112stk .r112need').length,!!$('#r112bcc .chip.r')];r112stk().off=${L=='A'?"{y:-0.75,z:0.5}":"{x:0,z:0}"};r112after();o.push(!!J.code,!$('#r112bcc'),document.querySelectorAll('#r112stk .r112need').length);SET('r','0');show();JSON.stringify(o)`));
+  log(`${L}${a} square, blank centerline offsets: held, '? Can't check' + Not ready, red Needs x2; filled offsets write again`,r[0]===false&&new RegExp(ax).test(r[1])&&/\? Can't check\s*Corner swing: centerline offsets are blank/.test(r[2])&&r[3]==2&&r[4]&&r[5]===true&&r[6]&&r[7]==0,JSON.stringify(r))}
+ const sw=E(`HB(${IA});r111fill0();show();SQ(2,1.5,1);SET('r','36');show();const k=J.code;J.code=['%','G00 Z1.','G00 A36.','M30'];const c=checks(J).find(x=>/corner swing/i.test(x[0]));J.code=k;SET('r','0');show();JSON.stringify(c)`);
+ log("corner swing never green while centerline is blank at A36",/Can't check/.test(sw)&&/false/.test(sw),sw);
+ const st=E(`tab('machines');edit(${IA});const lb=V.querySelector('.r99f[data-r99k="Control"] .r99lb');const s=lb.querySelector('.r111star');const w=s.parentNode;JSON.stringify([w.className,w.firstChild.textContent,getComputedStyle(w).whiteSpace])`);
+ log("label text + star wrapped in one nowrap span",/r112lw/.test(st)&&/Control/.test(st)&&/nowrap/.test(st),st);
+ const pk=E(`const m=S.m[${IA}];const sd=m.s.find(x=>x.k==R104SIDE);sd.v='';sd.st='suggested';m.r104told=1;save();HB(${IA});toast79('x');const t=$('#r79toast');t.classList.add('r99pin','r104note');t.dataset.r111m=${IA};t.innerHTML='<span>Mill B: which side is your rotary head on?</span><button type="button" class="btn" id="r104pick">› Pick</button>';t.style.display='';r112bPin();const pad=document.body.style.paddingBottom;r104open(${IA});const tip=(V.querySelector('.r99f[data-r99k="'+R104SIDE+'"] .r111tip')||{}).textContent||'';sd.v='Right';sd.st='user';save();r112bPin();JSON.stringify([pad,tip.slice(0,40),!!$('#r79toast'),document.body.style.paddingBottom])`);
+ log("pinned side banner reserves bottom padding; Pick opens the row tip; banner clears once the side is set",(()=>{try{const p=JSON.parse(pk);return parseInt(p[0])>40&&p[1].length>10&&p[2]===false&&p[3]===''}catch(e){return false}})(),pk);
  }catch(e){log('crash',false,e.message)}
  document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
 </script>

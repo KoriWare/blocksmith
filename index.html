@@ -7474,7 +7474,7 @@ function r112inside(p){const s=r112solid();if(!s)return true;const e=1e-6;if(s.k
  // undo r111's own turn about zero by turning back (it runs inside _P), then add c
  let [X,Y,Z]=[x+c[0],y+c[1],z+c[2]];R.slice().reverse().forEach(([L,t])=>{const C=Math.cos(-t),Sn=Math.sin(-t);if(L=='A'){const y1=Y*C-Z*Sn,z1=Y*Sn+Z*C;Y=y1;Z=z1}else if(L=='B'){const x1=X*C+Z*Sn,z1=-X*Sn+Z*C;X=x1;Z=z1}else{const x1=X*C-Y*Sn,y1=X*Sn+Y*C;X=x1;Y=y1}});return _P([X,Y,Z])}}catch(e){}return _P(p)}}
 // red off-stock cuts: a feed move with an end outside the stock solid (below its top) is drawn red
-function r112outMark(){try{if(!J||!J.M||!r112solid())return;if(J.M.r112stkSig===JSON.stringify(J.r112stk))return;J.M.r112stkSig=JSON.stringify(J.r112stk);J.M.forEach(m=>{if(m.r)return;if(m.r112o0===undefined)m.r112o0=m.out||0;const T=r112top()+1e-6,ok=p=>p[2]>T||r112inside(p);m.out=!(ok(m.a)&&ok(m.b))?1:m.r112o0})}catch(e){}}
+function r112outMark(){try{if(!J||!J.M||!r112solid())return;J.M.forEach(m=>{if(m.r)return;if(m.r112o0===undefined)m.r112o0=m.out||0;const T=r112top()+1e-6,ok=p=>p[2]>T||r112inside(p);m.out=!(ok(m.a)&&ok(m.b))?1:0})}catch(e){}}
 function r112top(){const s=r112solid();if(!s)return 1e9;if(s.k=='box')return s.b[5];if(s.k=='cylX')return s.c[1]+s.R;return s.R}
 function r112drawStock(){const s=r112solid();if(!s||!ctx)return;const md=r112smode();ctx.save();ctx.strokeStyle='rgba(190,190,190,.85)';ctx.lineWidth=1.2;ctx.setLineDash([]);
  const seg=(a,b)=>ln(a,b);const lab=(t,p,dx,dy)=>{const q=P(p);ctx.fillStyle='#ddd';ctx.font='11px system-ui';ctx.fillText(t,q[0]+(dx||0),q[1]+(dy||0))};
@@ -7563,6 +7563,30 @@ function r112bQ(){try{document.querySelectorAll('#cl > *, #cl div').forEach(d=>{
 {const _sh=show;show=function(){const r=_sh.apply(this,arguments);r112bCL();r112bQ();return r}}
 {if(typeof refresh=='function'){const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);r112bQ();return r}}}
 {const st=document.createElement('style');st.textContent='.r112q{display:inline-block;background:#3a3a3a;color:#cfcfcf;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;margin-right:4px}#r112bcc{font-size:12px;color:#bbb;margin:0 0 8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.r112need{color:#ff5a5a;font-weight:700;font-size:11px;margin-left:6px}';document.head.appendChild(st)}
+// Maria: label text and its star live in one span everywhere, so no flex gap can open between them
+function r112bWrapStar(s){try{if(!s||!s.parentNode||s.parentNode.classList.contains('r112lw'))return;let p=s.previousSibling;while(p&&p.nodeType==3&&!p.textContent.trim()){const q=p.previousSibling;p.remove();p=q}
+ if(p&&p.nodeType==3){p.textContent=p.textContent.replace(/\s+$/,'');const w=document.createElement('span');w.className='r112lw';p.before(w);w.appendChild(p);w.appendChild(s)}
+ else if(p&&p.nodeType==1&&!p.classList.contains('chip')&&!p.classList.contains('r99chip')){const t=[...p.childNodes].reverse().find(n=>n.nodeType==3);if(t)t.textContent=t.textContent.replace(/\s+$/,'');p.classList.add('r112lw');p.appendChild(s)}}catch(e){}}
+{const _rs=r111star;r111star=function(lb){const r=_rs.apply(this,arguments);try{const all=lb.querySelectorAll('.r111star');r112bWrapStar(all[all.length-1])}catch(e){}return r}}
+function r112bStars(){document.querySelectorAll('.r111star,#r112stk .star').forEach(r112bWrapStar)}
+{const _sh=show;show=function(){const r=_sh.apply(this,arguments);r112bStars();return r}}
+{const st=document.createElement('style');st.textContent='.r112lw{white-space:nowrap}.r112lw>.r111star,.r112lw>.star{margin-left:2px!important}#r111ang .r111l .r112lw>.r111star{margin-left:2px!important}';document.head.appendChild(st)}
+// Maria: Pick on the side banner also opens that row's tip
+{const _o=r104open;r104open=function(i){const r=_o.apply(this,arguments);try{const f=V.querySelector('.r99f[data-r99k="'+R104SIDE+'"]');const s=f&&f.querySelector('.r111star');if(s&&!f.querySelector('.r111tip'))s.click()}catch(e){}return r}}
+// Maria: pinned notice reserves room under the page (no overlap with DXF / Override / Play); side banner clears itself once the side is set
+function r112bPin(){try{let t=$('#r79toast');if(t&&t.classList.contains('r104note')&&/which side is your rotary head on/.test(t.textContent)){const hit=t.dataset.r111m!=null?+t.dataset.r111m:(S.m||[]).findIndex(m=>m&&r98t(m)=='vmc4'&&m.r104told);const m=S.m[hit];if(m&&r104side(m)){t.remove();t=null}}
+ const on=t&&t.classList.contains('r99pin')&&!t.classList.contains('r111hide')&&getComputedStyle(t).display!='none';const pad=on?Math.ceil(t.getBoundingClientRect().height)+16+'px':'';const v=$('#v')||document.body;if(document.body.style.paddingBottom!==pad){document.body.style.paddingBottom=pad;document.body.classList.toggle('r112pinpad',!!on)}}catch(e){}}
+setInterval(r112bPin,300);
+{const st=document.createElement('style');st.textContent='body.r112pinpad #v,body.r112pinpad main{padding-bottom:var(--r112pin,0)}';document.head.appendChild(st)}
+// Maria: a 3-axis machine never reports a rotary axis (a leftover Rotary axis setting drew the A+ arc and centerline)
+{const _r=rotAx;rotAx=function(){try{const m=S.m[S.cur];if(m&&r98t(m)=='vmc3')return null}catch(e){}return _r.apply(this,arguments)}}
+// Maria: HMC sim with a stock set: no old part box; stock labels (Bottom / Ø / B table / size) go to the label strip above the canvas
+{const _d=draw;draw=function(){let solid=null;try{solid=typeof J!='undefined'&&J&&J.r112stk&&!J.lathe&&r112solid()}catch(e){}if(!solid)return _d.apply(this,arguments);const _ln=ln;let skip=true;ln=function(a,b){if(skip&&String(ctx.strokeStyle).toLowerCase()=='#666666')return;skip=false;return _ln.apply(this,arguments)};try{return _d.apply(this,arguments)}finally{ln=_ln}}}
+{const _ds=r112drawStock;r112drawStock=function(){if(r112smode()!='B')return _ds.apply(this,arguments);const ft=ctx.fillText,got=[];ctx.fillText=function(t){const s=String(t);if(/^↑/.test(s))return ft.apply(this,arguments);got.push(s)};try{return _ds.apply(this,arguments)}finally{ctx.fillText=ft;try{const cvs=$('#cv');if(cvs){let b=$('#r112lab');if(!b){b=document.createElement('div');b.id='r112lab';b.className='simonly';const host=cvs.closest('.r112cvw')||cvs;host.insertAdjacentElement('beforebegin',b)}let d=b.querySelector('.r112bstk');if(!d){d=document.createElement('div');d.className='r112bstk';b.appendChild(d)}const tx='Stock: '+got.join(' · ');if(d.textContent!==tx)d.textContent=tx}}catch(e){}}}}
+// with a real stock set, 'Cuts stay inside stock sides' is judged against that stock (not the old part box)
+{const _c=checks;checks=function(j){const c=_c.apply(this,arguments);try{if(typeof J!='undefined'&&J&&J.r112stk&&r112solid()&&Array.isArray(J.M)){r112outMark();const bad=J.M.filter(m=>!m.r&&m.out==1).length;c.forEach((x,i)=>{if(x&&x[0]=='Cuts stay inside stock sides')c[i]=['Cuts stay inside the stock you set'+(bad?` (${bad} feed moves outside — drawn red)`:''),!bad]})}}catch(e){}return c}}
+{const _o=r112outside;r112outside=function(){try{if(J&&J.r112stk&&r112solid())return true}catch(e){}return _o.apply(this,arguments)}}
+{const _k=r112card;r112card=function(){try{const cl=$('#cl');if(cl&&J&&J.r112stk&&r112solid()&&Array.isArray(J.M)){r112outMark();const bad=J.M.filter(m=>!m.r&&m.out==1).length;let d=cl.querySelector('.r112bin');if(!d){d=document.createElement('div');d.className='s r112bin';cl.appendChild(d)}const t=(bad?'❌ ':'✅ ')+'Cuts stay inside the stock you set'+(bad?` (${bad} feed moves outside, drawn red)`:'');if(d.textContent!==t)d.textContent=t}}catch(e){}return _k.apply(this,arguments)}}
 
 /* R79-END */</script>
 </body></html>
