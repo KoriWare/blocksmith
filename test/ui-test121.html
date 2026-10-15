@@ -44,5 +44,24 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  const ST=()=>E("J.stock?J.stock[5]:r112top()");
  E("view.n=0;draw()");let a=R("window.R113IDLE");log('idle tool before Play sits at the first G43 Z (Z0.1), at or above the stock top',a&&a.at=='start'&&Math.abs(a.z-0.1)<1e-6&&a.z>=ST()-1e-9,JSON.stringify(a)+' top '+ST());
  E("scrub(J.M.length)");a=R("window.R113IDLE");log('after the run (ends G91 G28): tool drawn at the top edge with Home ↑, Z at or above the stock top',a&&a.home==1&&a.z>=ST()-1e-9,JSON.stringify(a)+' top '+ST());
-  }catch(e){log('exception',false,e.stack)}fin()},400)};
+  // v113b
+ x=G('cpock',Object.assign({},P,{Dia:0.81}),{fs:0.001});log('arc margin 0.03: Dia 0.81 (0.405 - 0.375 = 0.03) holds "no lead-in arc fits"',/no lead-in arc fits/.test(x.hold),x.hold);
+ x=G('cpock',Object.assign({},P,{Dia:0.82}),{fs:0.001});log('arc margin 0.03: Dia 0.82 (gap 0.035) writes the arc',!x.hold&&/ARC LEAD-IN/.test(x.c),x.hold);
+ x=G('cpock',P);log('cpock header names the real pocket dia 1.25 (rough is 1.23)',/^\(POCKET DIA 1\.25 /m.test(x.c)&&!/POCKET DIA 1\.23/.test(x.c),(x.c.match(/\(POCKET DIA[^)]*\)/)||[''])[0]);
+ E("(()=>{const i=$('#r112fs');i.focus();i.value='0.3';i.dispatchEvent(new Event('input',{bubbles:true}))})()");
+ log('finish stock hold applies on input (no blur): held, field red, focus kept',E("/half the tool radius/.test(J.r112cmpHold||'')&&$('#r112fs').classList.contains('r113bad')&&document.activeElement===$('#r112fs')&&$('#r112fs').value=='0.3'"),E("J.r112cmpHold+' '+($('#r112fs')||{}).className"));
+ log('D# / floor stock not red for a finish-stock hold',E("!$('#r112fl').classList.contains('r113bad')"),'');
+ ['edit','sim'].forEach(tb=>{E(`tab('${tb}')`);log(tb+' names the real hold reason, not "still has a confirm waiting"',E("(()=>{const t=document.querySelector('#out').textContent;return /half the tool radius/.test(t)&&!/still has a confirm waiting \\(free/.test(t)})()"),E("(($('#pendq')||{}).textContent||'').slice(0,300)"))});
+ E("tab('new')");
+ // 6 save/restore of the stock card
+ {const V3=idx.find(q=>q[1]=='vmc3')[0];const r=R(`(()=>{cur(${V3});eval(F110MACH);J=null;tab('new');pickJob('face');__FILL('face');show();__FILL('face');show();document.querySelector('#r112stk [data-st=shape][data-sv=round]').click();const ty=(k,v)=>{const i=document.querySelector('#r112stk input[data-sk="'+k+'"]');i.value=v;i.dispatchEvent(new Event('input',{bubbles:true}))};ty('round.d','2');ty('round.len','3');saveJob();reopen(0);const g=k=>{const i=document.querySelector('#r112stk input[data-sk="'+k+'"]');return i?[i.value,i.classList.contains('r112ibad')]:null};return {d:g('round.d'),len:g('round.len'),saved:J.r79saved,dirty:hasUser(J)&&!J.r79saved}})()`);
+  log('reopened job restores stock Ø 2 and Length 3 (typed without blur), neither red',r.d&&r.d[0]=='2'&&!r.d[1]&&r.len&&r.len[0]=='3'&&!r.len[1],JSON.stringify(r));
+  log('reopened, unedited job is not dirty (no "Changes may not be saved" on F5)',r.saved===1&&!r.dirty,JSON.stringify(r))}
+ // 8 Simulate opens at frame 0
+ x=G('cpock',{'Center X':1,Dia:1.25,Cutter:0.75,Z0:0});E("tab('sim')");const n0=E('view.n');log('Simulate opens at frame 0 with the tool at the first G43 Z',n0===0&&R("window.R113IDLE").at=='start',E("view.n+' '+JSON.stringify(window.R113IDLE)"));
+ E("scrub(J.M.length)");a=R("window.R113IDLE");log('Home ↑ stub at the top edge with the tag beside it',a.stub&&a.stub.tipY<=40&&a.stub.label[0]>a.stub.x&&a.stub.label[1]<=40,JSON.stringify(a));
+ E("tab('new')");
+ // 9 version line
+ log('About footer shows APP_VERSION v113b beside © 2026 KoriWare, no git hash',E("APP_VERSION==='v113b'")&&E("(()=>{try{about()}catch(e){try{more()}catch(_){}}const el=document.querySelector('#appver');return !!el&&el.textContent=='v113b'&&/2026 KoriWare/.test(el.parentElement.textContent)})()"),E("(document.querySelector('#appver')||{}).outerHTML"));
+ }catch(e){log('exception',false,e.stack)}fin()},400)};
 </script>
