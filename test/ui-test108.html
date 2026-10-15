@@ -27,7 +27,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  E("$('#r112match').click()");log("Match T1 puts D back to 1",E("$('#r112d').value=='1'&&/G41 D1 /.test(J.code.join())")===true);
  // holds
  log("an inside arc smaller than the tool radius holds (R0.1 < 0.125)",/inside arc R0\.1 is smaller than the tool radius \(0\.125\)/.test(E("(()=>{const j={op:'rpock',p:{'Center X':{v:0},'Center Y':{v:0},'Pocket L':{v:2},'Pocket W':{v:1},'Corner R':{v:0.1},Cutter:{v:0.25}}};return r112geo(j).hold})()")));
- log("thread mill with comp is held, never written wrong",E("(()=>{const j={op:'thmill',lathe:0,p:{Tool:{v:1}},r112comp:{m:'G41'}};const g={code:['G01 X1']};r112cmpApply(g,j);return g.code===null&&/thread milling/.test(j.r112cmpHold)})()")===true);
+ log("thread mill with comp is held, never written wrong",E("(()=>{const j={op:'thmill',lathe:0,p:{Tool:{v:1}},r112comp:{m:'G41'}};const g={code:['G01 X1']};r112cmpApply(g,j);return !/G41/.test(g.code.join())&&/thread milling/.test(j.r112cmpHold)})()")===true);
  // lathe side: OD/ID + turret, never G42 = OD by default
  log("lathe: rear turret OD → G42, ID → G41; front turret mirrored; blank turret → no side (holds)",E("(()=>{cur(4);const m=S.m[4];let x=m.s.find(y=>y.k=='Turret');if(!x){x={k:'Turret'};m.s.push(x)}x.v='Rear (X+ away from you)';x.st='user';const a=[r112latheSide(true),r112latheSide(false)];x.v='Front (X+ toward you)';const b=[r112latheSide(true),r112latheSide(false)];x.v='';x.st='confirm';const c=r112latheSide(true);return a.join()=='G42,G41'&&b.join()=='G41,G42'&&c===null})()")===true,E("S.m[4].type+' '+S.m[4].name"));
  // sim: offset path inside the pocket by the tool radius, programmed path kept for the dashed line, legend

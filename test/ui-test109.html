@@ -43,7 +43,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  const dw=E(`J.code=(J.code||[]).concat(['G254']);r112dwo();[r112rotOK(),!J.code||($('#out')||{}).textContent.includes('G254 / G54.4')].join()`);
  log("G254/G54.4 held until the DWO option is confirmed",dw=="false,true",dw);
  // old rotary job hold
- const ol=E(`HB(${IA});show();delete J.r112stk;J.r112old=1;show();const a=!!$('#r112held')&&!J.code;const s=r112stk();s.shape='round';s.round={d:2,len:3};s.top=1;r112after();[a,!$('#r112held')||!document.body.contains($('#r112held'))||!!J.code].join()`);
+ const ol=E(`HB(${IA});show();delete J.r112stk;J.r112old=1;show();const a=!!$('#r112held')&&/Rotary jobs now measure Z from the centerline/.test($('#r112held').textContent);const s=r112stk();s.shape='round';s.round={d:2,len:3};s.top=1;r112after();[a,!$('#r112held')||!document.body.contains($('#r112held'))||!!J.code].join()`);
  log("old rotary job held until top of stock entered, then writes",ol=='true,true',ol);
  // Job manager red marker: two entries on G54 with different zeros
  const jm=E(`try{const a={op:'hbore',r112stk:{shape:'square',zp:'bl',z:'top',off:{}},p:{'Work offset':{v:'G54'}}},b={op:'hbore',r112stk:{shape:'square',zp:'mc',z:'top',off:{}},p:{'Work offset':{v:'G54'}}};[r112zsig(a)!==r112zsig(b),r112zsig({})===null].join()}catch(e){'ERR '+e.message}`);

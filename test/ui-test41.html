@@ -9,7 +9,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   const conf=(u,kd,kv,ox,oy,rot,mir)=>E(`(()=>{const s=$('#dxu');s.value='${u}';s.onchange();$('#dxkd').value='${kd}';$('#dxkv').value='${kv}';$('#dxkb').click();dxSetO(${ox},${oy});const r=$('#dxr');r.value='${rot}';r.onchange();const m=$('#dxm');m.value='${mir}';m.onchange();$('#dxoc').click()})()`);
   const fill=o=>E(`Object.entries(${JSON.stringify(o)}).forEach(([k,v])=>J.p[k]={v,g:false});show()`);const code=()=>E('(J.code||[]).join("\\n")'),outT=()=>d.querySelector('#out').textContent;
   // ---- lathe, Fanuc
-  w.pick('Generic 2-axis lathe','Lathes');w.cur(E('S.m.length')-1);setv('Control','Fanuc 0i');setv('Max RPM (G50)','3000');setv('Diameter mode','yes');
+  w.pick('Generic 2-axis lathe','Lathes');E("S.m.forEach(m=>{const t=m.s.find(x=>x.k=='Turret');if(t){t.v='rear (X+ away from you)';t.st='user'}});save()");w.cur(E('S.m.length')-1);setv('Control','Fanuc 0i');setv('Max RPM (G50)','3000');setv('Diameter mode','yes');
   L('lathe_half.dxf');log('lathe: import screen open (no "not in this version")',!d.querySelector('#dxlathe')&&!!d.querySelector('#dxshapes'));
   log('lathe: CENTER layer off by default',!d.querySelector('.dxly[data-n="CENTER"]').checked);
   conf('in','w','2',0,0,0,'none');log('lathe: axis labels Z and X (radius)',/Z/.test(d.querySelector('#dxax').textContent)&&/X \(radius\)/.test(d.querySelector('#dxax').textContent));

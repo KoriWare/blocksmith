@@ -22,7 +22,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localSto
   if(d.querySelector('.dxbc')){d.querySelector('.dxbc').click();const op=E('J.op'),p0=E('JSON.stringify(J.p)');mmm();log('(1) Generate Code on a bolt-circle hand-off keeps its drawing values',E('J.op')==op&&E('JSON.stringify(J.p)')==p0,op)}
   w.tab('new');d.querySelector('#q').value='(from drawing gone.dxf)';E('J=null');w.go();log('(1) a bare “(from drawing …)” line explains instead of guessing',!!d.querySelector('#dxgone'));
   // lathe drawing job
-  w.pick('Generic 2-axis lathe','Lathes');w.cur(E('S.m.length')-1);setv('Control','Fanuc 0i');setv('Max RPM (G50)','3000');setv('Diameter mode','yes');const lat=E('S.cur');
+  w.pick('Generic 2-axis lathe','Lathes');E("S.m.forEach(m=>{const t=m.s.find(x=>x.k=='Turret');if(t){t.v='rear (X+ away from you)';t.st='user'}});save()");w.cur(E('S.m.length')-1);setv('Control','Fanuc 0i');setv('Max RPM (G50)','3000');setv('Diameter mode','yes');const lat=E('S.cur');
   L('lathe_half.dxf');conf('in','w','2',0,0,0,'none');d.querySelector('.dxlt').click();
   const LV={'Stock Ø':1.6,'Start Z':0.1,'Depth of cut':0.05,'Retract':0.02,'X allowance (dia)':0.02,'Z allowance':0.005,'Rough feed':0.01,'Finish feed':0.005,'SFM':400,'Tool':1,'Finish tool':2,'Nose comp':'G42 (OD, toward the chuck)'};
   fill(LV);log('(2) DXF G71: Work offset + X0 Z0 at red, no code',E('J.p["Work offset"].v')==null&&E('J.p["X0 Z0 at"].v')==null&&!/G71/.test(code())&&d.querySelectorAll('#out [data-k="Work offset"],#out [data-k="X0 Z0 at"]').length==2);
