@@ -7502,6 +7502,16 @@ function r112eRapid(j){try{if(!j||j.lathe||!j.p)return null;const t=r112eTop();i
  ['Clear Z','R plane','Retract Z','Safe Z','Clearance Z'].forEach(k=>{const x=j.p[k];if(x&&x.v!=null&&!isNaN(+x.v)&&+x.v<t-1e-6)bad.push(k)});
  if(!bad.length){let g0=null;try{g0=gen(j)}catch(e){}const sc=typeof UN=='function'&&UN()=='mm'?1/25.4:1;let mo=0;(g0&&g0.code||[]).forEach(l=>{const n=String(l).replace(/\([^)]*\)/g,'');if(/\bG0?1\b|\bG0?[23]\b/.test(n))mo=1;if(/\bG0?0\b/.test(n))mo=0;const z=n.match(/\bZ(-?[\d.]+)(?![\d.#\[])/);if(mo==0&&z&&!/\bG(28|30|52|53|91|92|65|10)\b/.test(n)){const v=+z[1]*sc;if(v>=0&&v<t-1e-6&&!bad.includes('rapid Z'))bad.push('rapid Z')}})}
  return bad.length?'Rapid into stock: Clear Z must be above the top of stock ('+t.toFixed(3)+' above centerline).':null}catch(e){return null}}
+/* v112e: Fit frames the stock (incl. the rotary corner swing) and the toolpath together with a small margin, at the current rotation */
+function r112ePts(){const pts=[];try{const st=J.stock;if(st)[0,3].forEach(i=>[1,4].forEach(j=>[2,5].forEach(k=>pts.push([st[i],st[j],st[k]]))));(J.M||J.moves||[]).forEach(m=>{if(m&&m.a)pts.push(m.a);if(m&&m.b)pts.push(m.b)});{let zt=-1e9,cx=0,cy=0;(J.M||J.moves||[]).forEach(m=>{if(m&&m.b&&m.b[2]>zt){zt=m.b[2];cx=m.b[0];cy=m.b[1]}});if(zt>-1e9)pts.push([cx,cy,zt+1.2])} /* room for the tool body above the highest point */
+ const s=typeof r112solid=='function'&&J.r112stk?r112solid():null,md=typeof r112smode=='function'?r112smode():null;if(s){const w=(md=='A'||md=='B')?(r112swing()||0):0;const ring=(f)=>{for(let a=0;a<360;a+=15){const t=a*Math.PI/180;pts.push(f(Math.cos(t),Math.sin(t)))}};
+  if(s.k=='cylX'){[s.x0,s.x1].forEach(x=>ring((c,n)=>[x,s.c[0]+Math.max(s.R,w)*c,s.c[1]+Math.max(s.R,w)*n]))}else if(s.k=='cylY'){[s.y0,s.y1].forEach(y=>ring((c,n)=>[Math.max(s.R,w)*c,y,Math.max(s.R,w)*n]))}
+  else{const b=s.b;[0,3].forEach(i=>[1,4].forEach(j=>[2,5].forEach(k=>pts.push([b[i],b[j],b[k]]))));if(w&&md=='A')[b[0],b[3]].forEach(x=>ring((c,n)=>[x,w*c,w*n]));if(w&&md=='B')[b[1],b[4]].forEach(y=>ring((c,n)=>[w*c,y,w*n]))}}}catch(e){}return pts.filter(p=>Array.isArray(p)&&p.every(v=>isFinite(v)))}
+function r112eFit(){try{if(!J||(J.lathe&&!view.rev)||!cv)return false;const pts=r112ePts();if(!pts.length)return false;const W=cv.clientWidth,H=cv.clientHeight||354;view.c=[0,0,0];view.s=1;view.px=0;view.py=0;
+ let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;pts.forEach(p=>{const q=P(p);const u=q[0]-W/2,v=150-q[1];u0=Math.min(u0,u);u1=Math.max(u1,u);v0=Math.min(v0,v);v1=Math.max(v1,v)});const m=14;
+ const sc=Math.min((W-2*m)/Math.max(u1-u0,1e-6),(H-2*m)/Math.max(v1-v0,1e-6));view.s=sc;view.px=-(u0+u1)/2*sc;view.py=H/2-150+(v0+v1)/2*sc;if(view.fs)view.fs=view.fs;draw();return true}catch(e){console.error(e);return false}}
+{const st=document.createElement('style');st.textContent='#cv{max-width:min(100%,calc(100vw - 32px))}';document.head.appendChild(st)}
+{const _vwE=vw;vw=function(k){_vwE.apply(this,arguments);if(k=='fit')r112eFit()}}
 function r112solid(){const st=J&&J.r112stk,md=r112smode();if(!st||!st.shape||!md)return null;
  if(st.shape=='round'){const d=st.round.d,L=st.round.len;if(!(d>0&&L>0))return null;const R=d/2;
   if(md=='A')return {k:'cylX',R,x0:st.xend=='left'?0:-L,x1:st.xend=='left'?L:0,c:[0,0]};
