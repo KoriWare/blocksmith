@@ -53,4 +53,12 @@ T114.push(async E=>{E(`HB(3);J.p['Center Y'].v=-0.75;r111fill0();show();SQ(2,1.5
  R.push(['top-center dot',await clk('#r112stk .dot9[data-pt="tc"]'),['top'],['tc']]);R.push(['bottom-center dot',await clk('#r112stk .dot9[data-pt="bc"]'),['bottom'],['bc']]);R.push(['middle-left dot',await clk('#r112stk .dot9[data-pt="ml"]'),[],['ml']]);
  const bad=R.filter(([n,x,t,d])=>JSON.stringify(x.tile)!==JSON.stringify(t)||JSON.stringify(x.dot)!==JSON.stringify(d)).map(([n,x])=>n+' -> '+JSON.stringify(x));
  log('#6 tiles and face dots stay in sync both ways (Top/Bottom tile -> dot, tc/bc dot -> tile, other dot clears both)',!bad.length,bad.join(' || '))});
+// ---- #7 M98/M99 are not macro code; missing subprograms hold; hold reasons name the real cause
+T114.push(async E=>{E(`S.m.forEach(m=>m.opt.macroB=0);1`);const q=op=>JSON.parse(E(`JSON.stringify(RUN114(1,'${op}',36))`));
+ const h=q('hsm');log('#7 Macro B off: hsm (M98 P<your program>) writes plain with the gray note',!!h.code&&/M98 P/.test(h.code)&&E(`!!$('#r112bpl')`)===true,JSON.stringify(h).slice(0,300));
+ const L=(h.code||'').split('\n');const m30=L.findIndex(l=>/^M30/.test(l)),bk=L.findIndex(l=>/BACK TO ZERO/.test(l)),sub=L.findIndex((l,i)=>i>2&&/^O\d/.test(l));log('#7 rotary return sits in the main program right before M30, never in a subprogram',bk>=0&&bk==m30-1&&(sub<0||bk<sub),[bk,m30,sub].join(','));
+ q('face');const f={held:E(`[...document.querySelectorAll('#out .bad')].map(e=>e.textContent).join(' ')`)};q('pnth');const p={held:E(`[...document.querySelectorAll('#out .bad')].map(e=>e.textContent).join(' ')`)};log('#7 G65 job says it calls a macro program (G65); # job says "uses # variables (needs Custom Macro B)"',/calls a macro program \(G65\)/.test(f.held)&&/uses # variables \(needs Custom Macro B\)/.test(p.held)&&!/G65/.test(p.held),f.held+' || '+p.held);
+ const a=E(`JSON.stringify([r112cSubMiss({p:{}},['M98 P12','M30','O0012','G01 X1.','M99']),r112cSubMiss({p:{}},['M98 P12','M30']),r112cSubMiss({p:{'Program':{v:12}}},['M98 P12','M30']),r112cSubMiss({p:{}},['M98 P12','M30','O0012','G01 X1.'])])`);
+ log('#7 M98 Pn: sub in the same output ending M99 is fine; missing or no M99 holds; your own program number from a field is allowed',a=='[[],[12],[],[12]]',a);
+ E(`S.m.forEach(m=>m.opt.macroB=1);1`)});
 </script>

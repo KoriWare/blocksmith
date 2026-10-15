@@ -10,7 +10,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  log('Macro B off, Helical bore (UI): code written, no macro words',hb.code&&!hb.mac,JSON.stringify(hb));
  log('Macro B off, Helical bore (UI): gray "Written as plain lines" note shown',/Written as plain lines/.test(hb.note),JSON.stringify(hb));
  const fm=JSON.parse(E(`J=null;tab('new');pickJob('face');Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:/Work offset/.test(k)?'G54':/Cutter/.test(k)?0.5:/Tool/.test(k)?1:/Step/.test(k)?0.05:/Z0|X0|Y0/.test(k)?0:2,g:false}});show();try{r111fill0();show()}catch(e){}JSON.stringify({code:Array.isArray(J.code),note:!!$('#r112bpl'),bad:($('#out .bad')||{}).textContent||''})`));
- log('Macro B off, Face mill (G65 macro program, UI): held with the macro-program reason, no plain note',!fm.code&&!fm.note&&/macro program \(G65 call\)/.test(fm.bad),JSON.stringify(fm));
+ log('Macro B off, Face mill (G65 macro program, UI): held with the real reason (calls G65), no plain note',!fm.code&&!fm.note&&/calls a macro program \(G65\)/.test(fm.bad),JSON.stringify(fm));
  const pd=JSON.parse(E(`toast79('A long notice that wraps onto a few lines so it is taller than one line of text, to check reserved space');r112bPin();const t=$('#r79toast');const h=t.getBoundingClientRect().height;const pb=parseFloat(getComputedStyle(document.body).paddingBottom);JSON.stringify({h,pb})`));
  log('Notice showing: body bottom padding ≥ notice height + bottom bar',pd.pb>=pd.h+78,JSON.stringify(pd));
  setTimeout(()=>{const pb2=parseFloat(E(`getComputedStyle(document.body).paddingBottom`));log('Notice gone: bottom padding back to the bar only',pb2<100,pb2);fin()},3900);
