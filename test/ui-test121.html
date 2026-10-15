@@ -1,0 +1,38 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113: finish stock + arc lead-in for the comp finish (app moves only) on HMC B / 4-axis A - top of stock and corner swing from the face point + Zero from centerline; blank zero holds with a link; off-center block --><iframe id="f" src="../index.html?v=120" style="width:390px;height:760px;border:0"></iframe><script src="fill110.js"></script><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,30000)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length};
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();1`);
+ w.F110OV=F110OV;w.F110MACH=F110MACH;E(F110SETUP);w.__FILL=E(F110FILL);
+
+ E(`var Z0V=7;var A0=S.m.findIndex(m=>r98t(m)=='vmc4');var SQB=(mi,cz,ang,off,H)=>{cur(mi);eval(F110MACH);J=null;tab('new');pickJob('cpock');__FILL('cpock');show();__FILL('cpock');J.p.Z0={v:Z0V,g:false};J.p['Clear Z']={v:cz,g:false};if(J.p['Center X'])J.p['Center X']={v:mi==A0?10:0,g:false};if(J.p['Center Y'])J.p['Center Y']={v:mi==A0?-1:10,g:false};J.r112comp={m:'off',d:null};J.r112eZ0ok=1;const s=r112stk();s.shape='square';s.square={L:20,W:9.875,H:H||null};s.fp='bc';s.zp='bl';s.off=off;r111fill0();const ax=r111axes();const st=r111state(ax);ax.forEach(a=>st.v[a.id]=String(ang));r112after();show();return {code:!!(J.code&&J.code.length),hold:J.r112eHold||'',top:(($('.r112etop')||{}).textContent||''),link:!!$('#r112eOffGo'),held:!!$('#r112held')}};1`);
+ const idx=JSON.parse(E(`JSON.stringify(S.m.map((m,i)=>[i,r98t(m)]))`));const A=idx.find(x=>x[1]=='vmc4')[0],B=idx.find(x=>x[1]=='hmc')[0];const R=s=>JSON.parse(E('JSON.stringify('+s+')'));
+ const V=idx.find(x=>x[1]=='vmc3')[0];
+ E(`var GJ=(op,ps,cm)=>{cur(${V});eval(F110MACH);J=null;tab('new');pickJob(op);__FILL(op);show();__FILL(op);Object.entries(ps||{}).forEach(([k,v])=>J.p[k]={v,g:false});J.r112comp=Object.assign({m:'G41',d:null},cm||{});show();return {hold:J.r112cmpHold||'',c:(J.code||[]).join('\\n'),fs:($('#r112fs')||{}).value,fl:($('#r112fl')||{}).value}};1`);
+ const G=(op,ps,cm)=>R(`GJ('${op}',${JSON.stringify(ps||{})},${JSON.stringify(cm||{})})`);
+ const P={'Center X':1,'Center Y':0,Dia:1.25,Cutter:0.75,'Stepover %':50,Depth:0.25,Z0:0};
+ let x=G('cpock',P);const c=x.c.split('\n');
+ log('defaults: Finish stock 0.01 and Floor stock 0 in the Cutter comp card',x.fs=='0.01'&&+x.fl===0,x.fs+'/'+x.fl);
+ log('1.25 pocket, 0.75 tool at X1: finish on the part line G03 X1.625 Y0.0 I-0.625 J0.0',c.includes('G03 X1.625 Y0.0 I-0.625 J0.0'),x.c.slice(-900));
+ log('rough leaves 0.010: last rough ring at path radius 0.24 (X1.24), no rough move past it',/X1\.24\b/.test(x.c)&&!c.slice(0,c.findIndex(l=>/FINISH PASS/.test(l))).some(l=>/X1\.(2[5-9]|[3-9])/.test(l)),x.c.slice(0,1500));
+ const iG41=c.findIndex(l=>/^G01 G41 D1/.test(l)),iArc=iG41+1;const ra=+((c[iG41]||'').match(/ARC LEAD-IN R([\d.]+)/)||[])[1];
+ log('G41 on a linear move, then a G03 quarter arc onto the wall',/^G01 G41 D1 X[\d.-]+ Y[\d.-]+/.test(c[iG41])&&/^G03 X1\.625 Y0\.0 /.test(c[iArc]),c[iG41]+' | '+c[iArc]);
+ log('arc radius between the tool radius 0.375 and the pocket radius 0.625 (R0.5)',ra>0.375&&ra<0.625&&ra==0.5,ra);
+ const iOut=c.findIndex(l=>/ARC LEAD-OUT/.test(l)),iG40=c.findIndex(l=>/G40 G01/.test(l));
+ log('0.02 overlap, then the exit arc, then G40 on a linear move',/OVERLAP 0\.02/.test(c[iOut-1])&&/^G03 /.test(c[iOut])&&iG40==iOut+1,c.slice(iOut-1,iG40+1).join(' | '));
+ log('no straight lead-in anywhere',!/STRAIGHT/.test(x.c),'');
+ x=G('cpock',P,{m:'G42'});log('Conventional G42: G02 lead arc',/G01 G42 D1 .*ARC LEAD-IN/.test(x.c)&&/\nG02 X1\.625 Y0\.0 I/.test(x.c),x.c.slice(-700));
+ x=G('cpock',P,{fs:0.2});log('hold: finish stock 0.2 > half the tool radius 0.1875',/half the tool radius/.test(x.hold)&&!x.c,x.hold);
+ x=G('cpock',Object.assign({},P,{'Stepover %':10}),{fs:0.1});log('hold: finish stock 0.1 > stepover 0.075',/more than the stepover/.test(x.hold)&&!x.c,x.hold);
+ x=G('cpock',Object.assign({},P,{Dia:0.76}),{fs:0.001});log('hold: no lead-in arc fits (Dia 0.76, tool 0.75: arc must be over 0.375 and under 0.38, with 0.005 margin each) - never a straight lead-in',/no lead-in arc fits/.test(x.hold)&&!/STRAIGHT/.test(x.c),x.hold+' '+x.c.slice(-500));
+ x=G('cpock',P,{fs:0});log('finish stock 0: no separate finish pass, no G41, rough to the line (X1.25)',!/FINISH PASS|G41/.test(x.c)&&/X1\.25\b/.test(x.c),x.c.slice(-400));
+ x=G('cpock',P,{fl:0.02});log('floor stock 0.02: rough stops at Z-0.23, finish at Z-0.25',/Z-0\.23\b/.test(x.c)&&!/Z-0\.2[4-9]/.test(x.c.split('FINISH PASS')[0])&&/G01 Z-0\.25/.test(x.c.split('FINISH PASS')[1]||''),x.c.slice(-800));
+ x=G('cpock',Object.assign({},P,{Output:'Haas native cycle'}));log('Haas native cycle output untouched: no arc lead-in, no finish stock',!/ARC LEAD-IN|FINISH STOCK/.test(x.c),x.c.slice(-500));
+ [['cboss',{}],['rpock',{}],['slot',{}],['polyb',{}]].forEach(([op,ps])=>{x=G(op,ps);const cc=x.c.split('\n');const i=cc.findIndex(l=>/^G01 G41 D1/.test(l)),o=cc.findIndex(l=>/ARC LEAD-OUT/.test(l));log(op+': finish with G41 linear, G03 arc, overlap, exit arc, G40 linear',!x.hold&&i>0&&/^G03 /.test(cc[i+1])&&/OVERLAP/.test(cc[o-1])&&/^G40 G01/.test(cc[o+1])&&/FINISH STOCK 0\.01/.test(x.c),x.hold+x.c.slice(-600))});
+ }catch(e){log('exception',false,e.stack)}fin()},400)};
+</script>
