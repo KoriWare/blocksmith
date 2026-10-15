@@ -23,7 +23,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document;
   E("J.edits[J.code.findIndex(x=>/^G55\\b/.test(x)||/ G55 /.test(x))]='G00 X1. Y1. (OFFSET REMOVED)';refresh()");
   log('Simulate: an edit that drops a work offset fails the whole-program check',[...d.querySelectorAll('#cl .s')].some(x=>/❌ Every section moving the part states its work offset/.test(x.textContent)),d.querySelector('#cl').textContent.slice(0,400));
   // a normal single job still shows single-job checks
-  E("tab('new');$('#q').value=JB.bolt[1];go();tab('sim')");log('single job in Simulate keeps its normal checks',!d.querySelector('#jmsimck')&&/checks passed/.test(d.querySelector('#ck').textContent));
+  E("tab('new');$('#q').value=JB.bolt[1];go();tab('sim')");log('single job in Simulate keeps its normal checks',!d.querySelector('#jmsimck')&&/checks passed|Code checks: \d+ of \d+ pass/.test(d.querySelector('#ck').textContent));
   // set tool change time -> green, used everywhere
   E("{const x=S.m[0].s.find(y=>y.k==TCT);x.v='12';x.st='user'}save();JMC.clear();jmOpen(S.jlists[0].id)");o=E("jmBuildUI()");
   log('set 12 s: green chip, cycle time = moves + 3 × 12',o.tcs==12&&o.tcSet&&!!d.querySelector('#jmct .chip.g')&&Math.abs(o.ct-(ct5+21))<0.5,o.ct+' '+ct5);

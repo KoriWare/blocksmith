@@ -4,7 +4,7 @@ const out=[],log=(n,ok,x)=>out.push((ok?'PASS ':'FAIL ')+n+(ok||x===undefined?''
 f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
  const errs=[];w.addEventListener('error',e=>errs.push(e.message));const ce=w.console.error;w.console.error=(...a)=>{errs.push(a.join(' '));ce.apply(w.console,a)};
  setTimeout(()=>{const E=x=>w.eval(x);try{
-  const ids=E('HELP.map(h=>h[0])');log('45 topics, no duplicates',ids.length==45&&new Set(ids).size==ids.length,ids.length);
+  const ids=E('HELP.map(h=>h[0])');log('46 topics (v111 adds Why some fields have a *), no duplicates',ids.length==46&&new Set(ids).size==ids.length,ids.length);
   const pos=k=>ids.indexOf(k),seq=['start','nav','machines','tools','build','editor','sim','library','programs','jobmgr','share','dxf','colors','haas','calc36','theme','backup','faq'];
   log('logical order',seq.every((k,i)=>i==0||pos(k)>pos(seq[i-1])),seq.map(pos).join());
   log('faq last',ids[ids.length-1]=='faq');

@@ -1,12 +1,12 @@
 <!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 104: Stacey / Casey / Maria / Kori v104 --><iframe id="f" src="../index.html?v=104" style="width:390px;height:844px;border:0"></iframe><script>
 let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
-f.onload=()=>{const w=f.contentWindow,d=w.document;const errs=[];w.addEventListener('error',e=>errs.push(e.message));const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const sl=t=>new Promise(r=>setTimeout(r,t));
+f.onload=()=>{const w=f.contentWindow,d=w.document;try{if(w.show&&!w.__r111z){w.__r111z=1;const _s=w.show;w.eval('show').toString;w.show=function(){const r=_s.apply(this,arguments);try{if(w.r111flat&&w.r111flat()&&w.eval('J').rang&&Object.values(w.eval('J').rang.v||{}).length<w.r111axes().length){w.r111fill0();return _s.apply(this,arguments)}}catch(e){}return r}}}catch(e){} /* v111: these pre-v111 cases type 0 in the new rotary angle field (blank now holds the job) */const errs=[];w.addEventListener('error',e=>errs.push(e.message));const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const sl=t=>new Promise(r=>setTimeout(r,t));
  if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
  if(step==1){step=2;setTimeout(()=>{/* plant a 4-axis machine saved before v104 (no side row, no r104v) */E("(()=>{const m=S.m[1];m.mtype='vmc4';m.opt.ax4=1;m.s=m.s.filter(x=>x.k!='Rotary head on');delete m.r104v;delete m.r104told;save();localStorage.setItem('mc',JSON.stringify(S))})()");w.location.reload()},700);return}
  setTimeout(async()=>{try{
  if(step==2){
   const tt=E("($('#r79toast')||{}).textContent||''");
-  log('6: 4-axis machine saved before v104 shows the one-time side notice with › Pick',/New: which side is your rotary head on\?/.test(tt)&&/› Pick/.test(tt),tt);
+  log('6: 4-axis machine saved before v104 shows the one-time side notice with › Pick',/: which side is your rotary head on\?/.test(tt)&&/› Pick|Open /.test(tt),tt);
   E("$('#r104pick')&&$('#r104pick').click()");await sl(80);
   log('6: › Pick opens Setup on that machine at the side pick',E("document.querySelector('.tabs button.on').dataset.t")=='machines'&&!!d.querySelector('.r104side')&&E("$('#mn').value")==E("S.m[1].name"));
   log('6: the notice is one-time',E("S.m[1].r104told")==1);

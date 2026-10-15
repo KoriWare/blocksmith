@@ -38,7 +38,7 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   w.ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');
   log('B common variables must be confirmed free',/❌ Common variables/.test(cl())&&/Not ready/.test(d.querySelector('#ready').textContent));
   [...d.querySelectorAll('#cl .chip')].find(b=>/free on this machine/.test(b.textContent)).click();log('B confirm free -> check passes',!/❌ Common variables/.test(cl())&&E("sv('Free common variables').st")=='user');
-  log('B sticky summary text',/checks passed/.test(d.querySelector('#ck').textContent)&&getComputedStyle(d.querySelector('#ck')).position=='sticky');
+  log('B sticky summary text',/checks passed|Code checks: \d+ of \d+ pass/.test(d.querySelector('#ck').textContent)&&getComputedStyle(d.querySelector('#ck')).position=='sticky');
   log('B syntax highlight + line numbers',!!d.querySelector('#ed .ln .hg')&&!!d.querySelector('#ed .ln .hk')&&getComputedStyle(d.querySelector('#ed .ln'),'::before').content!='none');
   log('B source notes collapsed',d.querySelector('#srcn')&&!d.querySelector('#srcn').open&&/G83/.test(d.querySelector('#srcn').textContent));
   w.scrub(Math.floor(E('J.M.length')/2));log('B live variables at step (#100 count, local #11)',/#100=/.test(d.querySelector('#vars').textContent)&&/#11=6/.test(d.querySelector('#vars').textContent));

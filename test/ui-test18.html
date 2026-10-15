@@ -1,6 +1,6 @@
 <!doctype html><body><pre id="o"></pre><iframe id="f" src="../index.html?v=28#new" style="width:390px;height:844px"></iframe><script>
 const out=[],log=(n,ok)=>out.push((ok?'PASS ':'FAIL ')+n);let step=0;
-f.onload=()=>{const w=f.contentWindow,d=w.document;if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
+f.onload=()=>{const w=f.contentWindow,d=w.document;try{if(w.show&&!w.__r111z){w.__r111z=1;const _s=w.show;w.eval('show').toString;w.show=function(){const r=_s.apply(this,arguments);try{if(w.r111flat&&w.r111flat()&&w.eval('J').rang&&Object.values(w.eval('J').rang.v||{}).length<w.r111axes().length){w.r111fill0();return _s.apply(this,arguments)}}catch(e){}return r}}}catch(e){} /* v111: these pre-v111 cases type 0 in the new rotary angle field (blank now holds the job) */if(step==0){step=1;w.localStorage.clear();w.location.reload();return}
  const errs=[];w.addEventListener('error',e=>errs.push(e.message));
  setTimeout(()=>{const E=x=>w.eval(x);try{E("NOASK=1");
   const mach=(n,g)=>{w.pick(n,g);w.cur(E('S.m.length')-1);/* §62: explicit tools (new machines start empty) */E("eDemoTool(S.m.at(-1));save()")};

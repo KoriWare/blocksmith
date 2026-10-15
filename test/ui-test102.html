@@ -1,0 +1,49 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 111b: angle field + stars --><iframe id="f" src="../index.html?v=111" style="width:320px;height:760px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Lathe w/ live tooling','Lathes');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();
+ var HB=(mi)=>{cur(mi);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show()};
+ var SET=(id,v)=>{const i=document.querySelector('#r111ang input[data-a="'+id+'"]');i.value=v;i.dispatchEvent(new Event('input'));i.dispatchEvent(new Event('change'))};1`);
+ // 3-axis: hidden
+ E("HB(0)");log("3-axis: no angle field and the job is written",E("!$('#r111ang')&&!!(J.code&&J.code.length)")===true);
+ // 4-axis blank
+ E("HB(1)");log("4-axis: blank angle holds (no guessed 0 move) with 'A angle not set'",E("!J.code&&/A angle not set/.test($('#r110hold').textContent)&&!!$('#r111ang')")===true,E("($('#r110hold')||{}).textContent"));
+ log("Casey 1: Machine row shows the angle blocker; tapping it focuses the angle field (not Setup)",E("(()=>{const c=$('.r102mach');if(!c||!/Machine: \\d+ to confirm/.test(c.textContent))return 'nochip';c.click();return document.activeElement&&document.activeElement.closest('#r111ang')?true:'nofocus:'+$('#ttl').textContent})()")===true,E("($('.r102mach')||{}).textContent"));
+ log("Casey 2: Tab/blur without typing never confirms",E("(()=>{const i=document.querySelector('#r111ang input');i.focus();i.dispatchEvent(new Event('change'));i.blur();return !J.code&&!(J.rang.v.r)})()")===true);
+ E("SET('r','90')");
+ log("typed 90: G00 A90. after T# M06 and after the home line",E("(()=>{const c=J.code||[];const t=c.findIndex(l=>/T1 M06/.test(l)),h=c.findIndex(l=>/A0\\. \\(ROTARIES/.test(l)),a=c.indexOf('G00 A90.');return t>=0&&a>t&&(h<0||a>h)})()")===true,E("JSON.stringify((J.code||[]).slice(4,9))"));
+ E("tab('sim')");log("sim shows the part at the angle",E("JSON.stringify(r111simRot())")==JSON.stringify([["A",Math.PI/2]]));E("tab('new')");
+ // Casey 3: 3-axis draft and restore
+ E("HB(1);SET('r','45');r98set(1,'vmc3')");log("Casey 3: switching to 3-axis parks the job in a draft",E("!!localStorage.getItem(DRK)&&/45/.test(localStorage.getItem(DRK))")===true);
+ E("r98set(1,'vmc4');const d=JSON.parse(localStorage.getItem(DRK));J=d.J;cur(d.cur);tab('new');show()");log("Casey 3: back on 4-axis, Restore brings the angle back",E("J.rang&&J.rang.v.r=='45'&&(J.code||[]).includes('G00 A45.')")===true,E("JSON.stringify(J.rang)"));
+ // Casey 4: letter change clears
+ E("(()=>{const x=S.m[1].s.find(y=>y.k=='Rotary axis');x.v='B';x.st='user';save();show()})()");log("Casey 4: changing the rotary letter clears the angle",E("!J.code&&r111num(J.rang.v.r)==null&&/B angle not set/.test($('#r110hold').textContent)")===true,E("JSON.stringify(J.rang)"));
+ E("(()=>{const x=S.m[1].s.find(y=>y.k=='Rotary axis');x.v='A';save()})()");
+ // HMC B
+ E("HB(3)");log("HMC: B angle field",E("/Rotary angle \\(B\\)/.test($('#r111ang').textContent)")===true);E("SET('r','90')");log("HMC: G00 B90.",E("(J.code||[]).includes('G00 B90.')")===true);
+ // 5-axis limits
+ E("HB(I5)");log("5-axis: tilt and table fields",E("$('#r111ang').querySelectorAll('input').length")==2);
+ E("SET('t','135');SET('c','0')");log("5-axis: B 135 past the -30..110 limit is held",E("!J.code&&/B 135 is past the tilt limit/.test($('#r110hold').textContent)")===true,E("($('#r110hold')||{}).textContent"));
+ E("SET('t','30');SET('c','45')");log("5-axis: within limits writes G00 B30. C45.",E("(J.code||[]).includes('G00 B30. C45.')")===true,E("JSON.stringify((J.code||[]).slice(3,9))"));
+ // flat-0 byte-identical vs v110 behaviour, every machine type, every flat job
+ /*DIFF*/
+ // stars: agree with holds and count, both entry points
+ E("HB(1)");E("edit(1)");
+ const st=JSON.parse(E("JSON.stringify([...V.querySelectorAll('.r111star')].map(s=>s.dataset.k))")),rd=JSON.parse(E("JSON.stringify(r111reads(S.m[1]))"));
+ log("stars (from the job): exactly the fields this job reads",st.length>0&&st.length==rd.length&&rd.every(k=>st.includes(k))&&st.includes('Max RPM')&&!st.includes('Probe'),JSON.stringify([st,rd]));
+ const __h=E(`(()=>{const m=S.m[1];const t=(k)=>{const x=m.s.find(y=>y.k==k);const v0=x.v,s0=x.st;x.v='zz!!';x.st='confirm';x.r106bad=1;HB(1);r111fill0();show();const held=!J.code;x.v=v0;x.st=s0;delete x.r106bad;return held};const sk=${JSON.stringify(st)}.filter(k=>k!='Rotary axis')[0];const uk=m.s.map(x=>x.k).find(k=>!${JSON.stringify(st)}.includes(k)&&/Probe|Rapid/.test(k));const a=t(sk),b=t(uk);return a&&!b?true:JSON.stringify([sk,a,uk,b])})()`);log("stars agree with holds: junk in a starred field holds, junk in an unstarred one doesn't",__h===true,__h);
+ log("stars agree with count: Machine N equals blocking items",E("(()=>{HB(1);const c=$('.r102mach');return !c||+c.textContent.match(/(\\d+)/)[1]==r102machItems().length})()")===true);
+ E("home();edit(1)");const sh=JSON.parse(E("JSON.stringify([...V.querySelectorAll('.r111star')].map(s=>s.dataset.k))"));
+ log("stars (from Home): what any job on this machine reads (a superset)",sh.length>=st.length&&st.every(k=>sh.includes(k)),JSON.stringify(sh));
+ log("star color: gray when confirmed",E("[...V.querySelectorAll('.r111star')].filter(s=>s.dataset.k=='Control').every(s=>s.classList.contains('r111y'))")===true);
+ log("tapping a star opens one why-line naming the line it feeds; tapping again closes",E("(()=>{const s=[...V.querySelectorAll('.r111star')].find(s=>s.dataset.k=='Max RPM');s.click();const t=s.closest('.r99f').querySelector('.r111tip');const ok=t&&/This job writes S\\. Any S above Max RPM is held, never lowered quietly\./.test(t.textContent);s.click();return ok&&!s.closest('.r99f').querySelector('.r111tip')})()")===true);
+ log("Help 'Why some fields have a *' uses the same lines",E("(()=>{const h=HELP.find(x=>x[1]=='Why some fields have a *');return !!h&&Object.values(R111WHY).every(v=>h[2]().includes(esc(v)))})()")===true);
+ log("no '* required' line anywhere",!/\* required/i.test(E("document.body.innerText")));
+ }catch(e){log('crash',false,e.message)}
+ document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
+</script>

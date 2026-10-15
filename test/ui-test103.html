@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 111: flat jobs with angle 0 stay byte-identical to v110 (fixture test/fx/v110-gcode.json, every machine type) --><iframe id="f" src="../index.html?v=111" style="width:390px;height:760px;border:0"></iframe><script src="gen103.js"></script><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
+f.onload=()=>{const w=f.contentWindow;if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+setTimeout(async()=>{try{const fx=await (await fetch('fx/v110-gcode.json')).json();
+R103GEN(w,n=>{const ks=Object.keys(fx);const bad=ks.filter(k=>fx[k]!==n[k]);const types=new Set(ks.filter(k=>fx[k]&&fx[k][0]=='%').map(k=>k.split('|')[0]));
+log('fixture covers every machine type (3-axis, 4-axis, HMC, 5-axis, lathe, live lathe)',types.size==6,[...types]);
+log('angle 0: '+ks.length+' runs ('+ks.filter(k=>fx[k]&&fx[k][0]=='%').length+' with code) byte-identical to v110',bad.length==0,bad.slice(0,3).map(k=>k+' => '+String(n[k]).slice(0,200)).join(' || '));
+o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},false)}catch(e){o.textContent='ERR '+e.message}},1500)}</script>

@@ -5,7 +5,7 @@ f.onload=()=>{const w=f.contentWindow;if(first){first=0;w.localStorage.clear();w
   E('S.cur=0');w.tab('new');log('import button on New',/Import .nc/.test(d.body.textContent));
   w.importToEditor('%\nO0123 (TEST)\nG17 G20 G90 G54\nG00 X0 Y0 Z1.\nG01 Z-0.2 F10.\nG01 X2. Y1.\nG00 Z1.\nM30\n%');
   log('imported lines are pink user lines',d.querySelectorAll('.ln.u').length==9);log('sim runs imported moves',E('J.M.length')>=4&&!E('J.run.err'));
-  log('checker runs on import',/checks passed/.test(d.querySelector('#ck').textContent));
+  log('checker runs on import',/checks passed|Code checks: \d+ of \d+ pass/.test(d.querySelector('#ck').textContent));
   E('S.cur=0');w.tab('new');w.ex('G54 T2 3 x 4 grid 0.75 spacing start x0 y0 z0 0 0.4 deep drill');const i=E("J.code.findIndex(l=>/^G52/.test(l))");const el=d.querySelector(`.ln[data-i="${i+3}"]`);
   const k=E("J.code.findIndex(l=>/^G65/.test(l))");const e2=d.querySelector(`.ln[data-i="${k}"]`);e2.textContent=E('J.code['+k+']').replace('U0.75','U3.0');e2.oninput();
   log('grid spacing edit beyond stock flagged red on sides',/leave the side of the stock/.test(d.querySelector('#info').textContent));

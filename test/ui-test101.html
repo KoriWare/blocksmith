@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- Round 111 --><iframe id="f" src="../index.html?v=111" style="width:320px;height:760px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(()=>{try{
+ if(step==1){E(`NOASK=1;{const a=S.m[0];const c=a.s.find(y=>y.k=='Custom M-codes');c.v='M100 = door (check)';c.st='user'};cur(1);r98set(1,'vmc5');const m=S.m[1];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','A + C');r100ensure(m,'A direction','','confirm');r100ensure(m,'C direction','','confirm');set('A direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);save()`);step=2;w.location.reload();return}
+ const m1=JSON.parse(E("JSON.stringify(S.m[1].s.filter(x=>/^(A|C) direction$|axis \\+ direction$/.test(x.k)).map(x=>[x.k,x.v,x.st,!!x.r106bad]))"));
+ log("2: A+C Clockwise (+) survives reload (no junk, Tilt + direction kept)",m1.length==4&&m1.every(x=>x[1]=='Clockwise (+)'&&x[2]=='user'&&!x[3]),JSON.stringify(m1));
+ log("2: no stray '(1 needs fixing)' on the 5-axis machine",!/needs fixing/.test(E("setupLine(S.m[1])")),E("setupLine(S.m[1])"));
+ log("5: planted Custom M-code with (check) is kept and flagged as junk",E("(()=>{const x=S.m[0].s.find(y=>y.k=='Custom M-codes');return x.v=='M100 = door (check)'&&x.st!='user'&&r110junk(S.m[0]).includes('Custom M-codes')})()")===true,E("JSON.stringify(S.m[0].s.find(y=>y.k=='Custom M-codes'))"));
+ log("1: serial and g47w read Max RPM; warm reads Control + Rotary axis + Max RPM",E("R110READS.serial.includes('Max RPM')&&R110READS.g47w.includes('Max RPM')&&JSON.stringify(R110READS.warm)=='[\"Control\",\"Rotary axis\",\"Max RPM\"]'")===true);
+ log("3: a valid typed control shows no Needs text",E("r110ctlOK('Mazak Smooth')")===true);
+ E("cur(0);(()=>{const x=S.m[0].s.find(y=>y.k=='Max RPM');x.v='';x.st='confirm';delete x.r106bad})()");
+ log("4: warm with blank Max RPM says not confirmed",/not confirmed/.test(E("J2.warm.block({p:{}})"))&&!/\(0\)/.test(E("J2.warm.block({p:{}})")));
+ log("6: Setup % and to confirm use the same rows",E("(()=>{const m=S.m[0],v=r103vis(m),u=v.filter(x=>x.st=='user').length;const l=setupLine(m);const mm=l.match(/Setup (\\d+)% · (\\d+) to confirm/);return +mm[2]==v.length-u&&(+mm[1]==100)==(+mm[2]==0)})()")===true,E("setupLine(S.m[0])"));
+ E("cur(0);tab('machines');edit(0)");
+ log("10: Max RPM has Clear (not set) once confirmed",E("(()=>{const x=S.m[0].s.find(y=>y.k=='Max RPM');x.v='8000';x.st='user';save();edit(0);return !!V.querySelector('.r99f[data-r99k=\"Max RPM\"] .r111clr')})()")===true);
+ log("9: typed junk 'abc' in Max RPM is saved as junk (no fallback to the suggestion) and holds S jobs",E("(()=>{const i=V.querySelector('.r99f[data-r99k=\"Max RPM\"] input');i.value='abc';i.dispatchEvent(new Event('change'));const x=S.m[0].s.find(y=>y.k=='Max RPM');return x.v=='abc'&&x.st!='user'&&!!x.r106bad&&r110mx()==null})()")===true);
+ E("(()=>{const x=S.m[0].s.find(y=>y.k=='Max RPM');x.v='8000';x.st='user';delete x.r106bad;S.m[0].s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'});save();cur(0);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54',RPM:9000};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show()})()");
+ log("8: held S rings the RPM box red and grays Generate Code",E("$('#out').querySelectorAll('.r111rpm').length>0&&[...document.querySelectorAll('button')].filter(b=>/^\\s*Generate Code\\s*$/.test(b.textContent)).every(b=>b.disabled)")===true);
+ E("(()=>{const m=S.m[1];r98set(1,'vmc4');m.r104told=1;const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='';sd.st='confirm'}toast79('x');const t=$('#r79toast');t.classList.add('r99pin','r104note');t.innerHTML='<span>New: which side is your rotary head on?</span><button type=\"button\" class=\"btn\" id=\"r104pick\">› Pick</button>';t.dataset.r111m=1;home()})()");
+ const tx=E("$('#r79toast').innerText"),hid0=E("$('#r79toast').classList.contains('r111hide')");E("cur(0);tab('new')");const hid1=E("$('#r79toast').classList.contains('r111hide')");E("cur(1);tab('new')");const hid2=E("$('#r79toast').classList.contains('r111hide')"),tx2=E("$('#r79toast').innerText");
+ log("7: side notice names the machine, Open Mill B off it, hidden on Mill A Build, Pick on Mill B",/^Mill B: which side is your rotary head on\?/.test(tx)&&/Open Mill B/.test(tx)&&hid0===false&&hid1===true&&hid2===false&&/Pick/.test(tx2),[tx,hid0,hid1,hid2,tx2].join(' | '));
+ log("sw.js mc-v111",true);
+ }catch(e){log('crash',false,e.message)}
+ document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
+</script>
