@@ -13,7 +13,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  E(`var R16=(mi,shape,cz,ang,ex)=>{cur(mi);J=null;tab('new');pickJob('hbore');const v=Object.assign({'Center X':3,'Center Y':3,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54','Clear Z':cz},ex||{});Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show();const s=r112stk(),md=r112smode();s.shape=shape;if(shape=='round'){s.round={d:2,len:6};s.xend='left';s.yend='bottom';if(md=='A')s.top=1;else s.front=1}else{s.square={L:6,W:2,H:2};s.fp='bc';s.off={x:'0',z:'0'}}r111fill0();show();const ax=r111axes();const st=r111state(ax);ax.forEach(a=>st.v[a.id]=String(ang));show();return st0()};
  var st0=()=>({md:r112smode(),code:!!(J.code&&J.code.length),hold:J.r112eHold||'',hdr:zeroDesc(),dots:[...document.querySelectorAll('#r112stk .d,#r111ang .r111d')].map(d=>getComputedStyle(d).backgroundColor).join(),bar:!!document.querySelector('.r112eBar'),ready:(($('#ready')||{}).textContent||'')});
  var CONF=()=>{const b=$('#r112eZ0c');if(b)b.click();return st0()};
- var OVR=()=>{[...document.querySelectorAll('button')].filter(b=>/Override|Fix/.test(b.textContent)).forEach(b=>{try{b.click()}catch(e){}});try{if(typeof gate79=='function')J.r79ov=1}catch(e){}show();return st0()};1`);
+ var OVR=()=>{[...document.querySelectorAll('button')].filter(b=>/Override|Fix/.test(b.textContent)&&b.id!='r112eFix').forEach(b=>{try{b.click()}catch(e){}});try{if(typeof gate79=='function')J.r79ov=1}catch(e){}show();return st0()};1`);
  const idx=JSON.parse(E(`JSON.stringify(S.m.map((m,i)=>[i,r98t(m)]))`));const A=idx.find(x=>x[1]=='vmc4')[0],B=idx.find(x=>x[1]=='hmc')[0];
  const R=s=>JSON.parse(E('JSON.stringify('+s+')'));const RAP=/^Rapid into stock: Clear Z must be above the top of stock \((1\.000|1\.414) above centerline\)\.$/;
  [['4-axis A',A,'round'],['HMC B',B,'round'],['HMC B',B,'square']].forEach(([nm,mi,sh])=>{const k=nm+' '+sh;
@@ -44,8 +44,17 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
  [['4-axis A',A,['round']],['HMC B',B,['round','square']]].forEach(([nm,mi,shs])=>shs.forEach(sh=>{let n=0;const bad=[],bb=[],oth=[];let nb=0;
   ops.forEach(op=>{const ok=JSON.parse(E(`JSON.stringify(G16(${mi},'${op}','${sh}',3,{Z0:1}))`));if(!ok||!ok.code)return;const x=JSON.parse(E(`JSON.stringify(G16(${mi},'${op}','${sh}',0.1))`));n++;if(x.code)bad.push(op+': WROTE CODE');else if(!/^Rapid into stock/.test(x.hold))oth.push(op);
    const y=JSON.parse(E(`JSON.stringify(G16(${mi},'${op}','${sh}',3,{'Center X':0,'Center Y':0}))`));if(y&&y.cx){nb++;if(/^Rapid into stock/.test(y.hold))bb.push(op+': rapid hold at Clear Z 3');}});
-  log(nm+' '+sh+': every job type with Clear Z / R plane that writes at Clear Z 3 is held at 0.1 - "Rapid into stock" unless the job's own Clear Z rule fires first ('+n+' types, own rule: '+(oth.join(',')||'none')+')',n>5&&!bad.length&&oth.length<=2,bad.slice(0,6).join(' || ')+' own:'+oth.join(','));
+  log(nm+' '+sh+': every job type with Clear Z / R plane that writes at Clear Z 3 is held at 0.1 - "Rapid into stock" unless the job own Clear Z rule fires first ('+n+' types, own rule: '+(oth.join(',')||'none')+')',n>5&&!bad.length&&oth.length<=2,bad.slice(0,6).join(' || ')+' own:'+oth.join(','));
   log(nm+' '+sh+': at Clear Z 3 none of them is held for the rapid ('+nb+' with a center)',nb>=2&&!bb.length,bb.slice(0,6).join(' || '));
  }));
+
+ // sweep follow-ups: VMC stock top, R plane in canned cycles, one-tap Fix, 5-axis note, thmill comp coming soon
+ const V0=idx.find(x=>x[1]=='vmc3')[0],F5=idx.find(x=>x[1]=='vmc5');
+ E(`var SW=(mi,op,shape,cz)=>{cur(mi);eval(F110MACH);J=null;tab('new');pickJob(op);__FILL(op);show();__FILL(op);show();if(cz!=null)['Clear Z','R plane'].forEach(k=>{if(J.p[k])J.p[k]={v:cz,g:false}});J.r112comp={m:'off',d:null};J.r112eZ0ok=1;const s=r112stk();s.shape=shape;s.round={d:2,len:6};s.xend='left';s.top=1;s.square={L:3,W:2,H:1.5};s.zp='bl';s.z='bottom';s.off={x:'0',y:'0',z:'0'};r111fill0();show();return {hold:J.r112eHold||'',code:!!(J.code&&J.code.length),fix:(($('#r112eFix')||{}).textContent||''),n5:!!$('#r112e5ax')}};1`);
+ let q=R(`SW(${V0},'bolt','square')`);log('VMC square block (Z0 on the bottom, top Z1.5): Clear Z 0.1 held "Rapid into stock ... (Z1.500)" with a one-tap Fix "Clear Z 0.1 → 1.6"',!q.code&&/\(Z1\.500\)/.test(q.hold)&&/Fix: Clear Z 0\.1 → 1\.6/.test(q.fix),JSON.stringify(q));
+ log('the Fix changes nothing until tapped',E("J.p['Clear Z'].v")==0.1);
+ E("$('#r112eFix').click()");log('tapping Fix sets Clear Z 1.6 and clears the rapid hold',E("J.p['Clear Z'].v")==1.6&&!/Rapid into stock/.test(E("J.r112eHold||''")),E("J.r112eHold||''"));
+ q=R(`SW(${A},'bback','round')`);log('4-axis A bback: R plane 0.5 in G87 under the top (1.0) is held, Fix names the R plane',!q.code&&/^Rapid into stock/.test(q.hold)&&/R plane 0\.5 → 1\.1/.test(q.fix),JSON.stringify(q));
+ if(F5){q=R(`SW(${F5[0]},'bolt','square')`);log('5-axis: gray "Stock clearance not checked on 5-axis", no hold',q.n5&&!/Rapid into stock/.test(q.hold),JSON.stringify(q))}
  }catch(e){log('exception',false,e.stack)}fin()},400)};
 </script>
