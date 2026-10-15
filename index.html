@@ -7314,6 +7314,68 @@ function r112expand(P){try{const V={};const out=[];const ev=s=>{s=s.replace(/#(\
  if(!macro&&R.out.length)window.R112WHY='No WHILE loop suggested: Custom Macro B is not confirmed on this machine.';else if(!R.out.length&&R.seen&&R.why.length)window.R112WHY='No WHILE loop suggested: '+R.why.join('; ')+'.';
  return r}}
 {const _sc=scan;scan=function(){const r=_sc.apply(this,arguments);try{const d=$('#sug');if(d&&window.R112WHY){const g=document.createElement('div');g.className='s r112why';g.style.color='#9a9a9a';g.textContent=window.R112WHY;d.appendChild(g)}}catch(e){}return r}}
+// ===== v112 cutter comp (mock: bs/mock/comp.html). Off / Climb (G41) / Conventional (G42); D defaults to T#.
+// Profile-type jobs get one finish pass on the part line after the roughing: straight lead-in ≥ one tool radius with G41/G42, the contour, G40 on a straight lead-out.
+// Roughing stays a tool-centre path. An inside arc smaller than the tool radius holds the job. Lathe: side from OD/ID + the confirmed turret side, never G42 = OD by default.
+const R112CMP=/^(cpock|cboss|rpock|slot|polyb|thmill)$/;
+function r112cmpOf(j){j=j||J;const c=j&&j.r112comp;return c&&/^G4[12]$/.test(c.m)?c:null}
+function r112cmpD(j){const c=r112cmpOf(j)||{};const t=+((j.p.Tool||{}).v);const d=c.d!=null&&String(c.d).trim()!==''?+c.d:t;return {d,t}}
+function r112f(v){return f4(Math.abs(v)<5e-10?0:v)}
+// closed contour as a list of segments from S back to S, built counter-clockwise; reversed for clockwise
+function r112rev(S,segs){const out=[];let pts=[S,...segs.map(s=>s.p)];for(let i=segs.length-1;i>=0;i--){const s=segs[i];out.push(s.c?{p:pts[i],c:s.c,g:s.g=='G03'?'G02':'G03'}:{p:pts[i]})}return out}
+function r112geo(j){const v=k=>{const x=j.p[k];return x?+x.v:NaN},cut=v('Cutter'),r=cut/2;let S,in_=true,segs=[],arcsIn=[],why=null;
+ if(j.op=='cpock'){const cx=v('Center X'),cy=v('Center Y'),R=v('Dia')/2;S=[cx+R,cy];segs=[{p:[cx+R,cy],c:[cx,cy],g:'G03',full:1}];arcsIn.push(R)}
+ else if(j.op=='cboss'){const cx=v('Center X'),cy=v('Center Y'),R=v('Boss Ø')/2;S=[cx+R,cy];in_=false;segs=[{p:[cx+R,cy],c:[cx,cy],g:'G03',full:1}]}
+ else if(j.op=='rpock'){const cx=v('Center X'),cy=v('Center Y'),L=v('Pocket L')/2,W=v('Pocket W')/2,R=Math.max(0,v('Corner R')||0);S=[cx+L,cy];if(R>0)arcsIn.push(R);
+  const a=(p,c)=>R>0?[{p,c,g:'G03'}]:[];segs=[{p:[cx+L,cy+W-R]},...a([cx+L-R,cy+W],[cx+L-R,cy+W-R]),{p:[cx-L+R,cy+W]},...a([cx-L,cy+W-R],[cx-L+R,cy+W-R]),{p:[cx-L,cy-W+R]},...a([cx-L+R,cy-W],[cx-L+R,cy-W+R]),{p:[cx+L-R,cy-W]},...a([cx+L,cy-W+R],[cx+L-R,cy-W+R]),{p:[cx+L,cy]}].filter((s,i,A)=>!(i>0&&!s.c&&!A[i-1].c&&Math.hypot(s.p[0]-A[i-1].p[0],s.p[1]-A[i-1].p[1])<1e-9))}
+ else if(j.op=='slot'){const A=[v('Start X'),v('Start Y')],B=[v('End X'),v('End Y')],h=v('Slot width')/2,len=Math.hypot(B[0]-A[0],B[1]-A[1]);if(!(len>0))return{why:'slot start and end are the same point'};const u=[(B[0]-A[0])/len,(B[1]-A[1])/len],n=[-u[1],u[0]],M=[(A[0]+B[0])/2,(A[1]+B[1])/2];const P=(p,k)=>[p[0]+n[0]*k,p[1]+n[1]*k];
+  S=P(M,-h);arcsIn.push(h);segs=[{p:P(B,-h)},{p:P(B,h),c:B,g:'G03'},{p:P(A,h)},{p:P(A,-h),c:A,g:'G03'},{p:S}]}
+ else if(j.op=='polyb'){const cx=v('Center X'),cy=v('Center Y'),N=Math.round(v('Sides')),a=v('Across flats')/2,th=(v('First flat angle')||0)*Math.PI/180,Rv=a/Math.cos(Math.PI/N);in_=!/boss|out/i.test(String((j.p.Side||{}).v||'pocket'));
+  S=[cx+a*Math.cos(th),cy+a*Math.sin(th)];segs=[];for(let k=0;k<N;k++){const t=th+Math.PI/N+k*2*Math.PI/N;segs.push({p:[cx+Rv*Math.cos(t),cy+Rv*Math.sin(t)]})}segs.push({p:S});if(in_&&a<r)why='across flats is smaller than the cutter'}
+ else return null;
+ const small=arcsIn.filter(R=>R<r-1e-9);if(small.length)return{hold:`inside arc R${r112f(small[0])} is smaller than the tool radius (${r112f(r)})`};if(why)return{hold:why};
+ return {S,segs,in_,r}}
+function r112cmpBlock(j,c){const g=r112geo(j);if(!g)return null;if(g.hold||g.why)return g;const v=k=>{const x=j.p[k];return x?+x.v:NaN};const {d}=r112cmpD(j);const r=g.r;
+ // climb (G41, tool left of travel): inside → counter-clockwise, outside → clockwise; conventional reverses
+ const ccw=(c.m=='G41')==g.in_;let segs=g.segs;if(!ccw)segs=r112rev(g.S,g.segs);
+ // lead-in normal: from S toward the material-free side (inside: into the pocket, outside: away from the boss)
+ const p1=segs[0].c?(()=>{const s=segs[0];const rx=g.S[0]-s.c[0],ry=g.S[1]-s.c[1];return s.g=='G03'?[-ry,rx]:[ry,-rx]})():[segs[0].p[0]-g.S[0],segs[0].p[1]-g.S[1]];const tl=Math.hypot(p1[0],p1[1])||1;const t=[p1[0]/tl,p1[1]/tl];
+ const left=[-t[1],t[0]],off=c.m=='G41'?left:[-left[0],-left[1]];// tool centre sits on this side; lead-in comes from there
+ let Lin=r+0.05;if(j.op=='slot')Lin=Math.max(r,v('Slot width')/2);if(j.op=='polyb'&&g.in_)Lin=Math.max(r,Math.min(Lin,v('Across flats')/2));if(j.op=='cpock')Lin=Math.max(r,Math.min(Lin,v('Dia')/2));
+ const Q=[g.S[0]+off[0]*Lin,g.S[1]+off[1]*Lin];const z0=v('Z0')||0,zf=z0-v('Depth'),cz=v('Clear Z')||0.1,F=v('Feed')||10,Fp=v('Plunge feed')||F/2;
+ const L=[`(FINISH PASS ON THE PART LINE - CUTTER COMP ${c.m} D${d} - ${c.m=='G41'?'CLIMB':'CONVENTIONAL'})`,`G00 Z${r112f(z0+cz)}`,`G00 X${r112f(Q[0])} Y${r112f(Q[1])}`,`G01 Z${r112f(zf)} F${r112f(Fp)}`,`G01 ${c.m} D${d} X${r112f(g.S[0])} Y${r112f(g.S[1])} F${r112f(F)} (COMP ON - STRAIGHT LEAD-IN ${r112f(Lin)})`];
+ let at=g.S;segs.forEach(s=>{if(s.c){L.push(`${s.g} X${r112f(s.p[0])} Y${r112f(s.p[1])} I${r112f(s.c[0]-at[0])} J${r112f(s.c[1]-at[1])}`)}else L.push(`G01 X${r112f(s.p[0])} Y${r112f(s.p[1])}`);at=s.p});
+ L.push(`G40 G01 X${r112f(Q[0])} Y${r112f(Q[1])} (COMP OFF - STRAIGHT LEAD-OUT)`,`G00 Z${r112f(z0+cz)}`);return {lines:L,Q,S:g.S,r,Lin,m:c.m,d}}
+function r112cmpApply(g,j){j.r112cmpHold=null;j.r112cmpInfo=null;const c=r112cmpOf(j);if(!c||!g||!Array.isArray(g.code))return g;
+ if(j.lathe){if(j.op!='dxlathe')return g;return g}
+ if(!R112CMP.test(j.op))return g;if(j.op=='thmill'){j.r112cmpHold='cutter comp for thread milling is not written yet — pick Off';g.code=null;return g}
+ const b=r112cmpBlock(j,c);if(!b)return g;if(b.hold||b.why){j.r112cmpHold=b.hold||b.why;g.code=null;return g}
+ // insert after the last cutting move, before the final retract / end
+ const C=g.code;let end=C.findIndex(l=>/^\s*(G91\s+G28|G28|M30|M0?2\b|M99)/.test(String(l)));if(end<0)end=C.length;let k=end-1;while(k>0&&!/^\s*(G0?[123]\b|X|Y)/.test(String(C[k])))k--;
+ if(String(C[k+1]||'').trim()==b.lines[b.lines.length-1])b.lines.pop();C.splice(k+1,0,...b.lines);j.r112cmpInfo={at:k+1,n:b.lines.length,r:b.r,d:b.d,m:b.m};return g}
+// lathe: the nose comp side comes from OD/ID and the confirmed turret side (rear: OD G42 / ID G41; front: mirrored)
+function r112turret(){const x=sv('Turret');if(!x||x.st!='user'||!String(x.v||'').trim()||x.r106bad||x.r99flag)return null;return /front/i.test(x.v)?'front':/rear/i.test(x.v)?'rear':null}
+function r112latheSide(od){const t=r112turret();if(!t)return null;return (od!==(t=='front'))?'G42':'G41'}
+['gen','genL','genP'].forEach(fn=>{const _g=eval(fn);const w=function(j){const g=_g.apply(this,arguments);try{const jj=j||J;if(jj&&g){if(jj.lathe&&jj.op=='dxlathe'&&Array.isArray(g.code)&&g.code.some(l=>/\bG42\b/.test(String(l)))){const sd=r112latheSide(true);if(!sd){jj.r112cmpHold='nose comp side needs the turret side (front or rear) confirmed in Machines';g.code=null}else if(sd!='G42')g.code=g.code.map(l=>String(l).replace(/\bG42\b/g,sd))}else if(!jj.lathe)r112cmpApply(g,jj)}}catch(e){console.error(e)}return g};w.toString=()=>_g.toString();if(fn=='gen')gen=w;else if(fn=='genL')genL=w;else genP=w});
+{const _sh=show;show=function(){const r=_sh.apply(this,arguments);try{if(typeof J!='undefined'&&J&&J.r112cmpHold&&(!Array.isArray(J.code)||!J.code.length))r110hold('⛔ Not written: '+J.r112cmpHold+'.',true)}catch(e){}return r}}
+// comp card (Off / Climb (G41) / Conventional (G42) + D#), sim offset path + programmed path
+function r112cmpUI(){try{let c=$('#r112cmp');const on=typeof J!='undefined'&&J&&J.op&&!J.lathe&&R112CMP.test(J.op)&&(V.dataset.page!='sim');const host=$('#r111ang')||($('#out')&&$('#out').querySelector('.card'));
+ if(!on||!host){if(c)c.remove();return}const cm=J.r112comp||{m:'off',d:null};const {d,t}=r112cmpD(J);
+ if(!c){c=document.createElement('div');c.id='r112cmp';c.className='card'}if(host.nextElementSibling!==c)host.after(c);
+ const b=(m,l)=>`<button type="button" class="r112cb${(cm.m||'off')==m?' on':''}" data-m="${m}">${l}</button>`;const hand=cm.d!=null&&String(cm.d).trim()!==''&&+cm.d!==t;
+ const h=`<div class="t">Cutter comp<span class="r111star r111y" title="Off is a valid answer">*</span></div><div class="r112seg">${b('off','Off')}${b('G41','Climb (G41)')}${b('G42','Conventional (G42)')}</div>`+(cm.m&&cm.m!='off'?`<div class="r112drow"><b>D#</b><input id="r112d" inputmode="numeric" value="${d}"><span class="r112dt">${hand?'':'= T'+t}</span>${hand?`<span class="r112hand">(hand-typed: D${d} ≠ T${t} · <a href="#" id="r112match">Match T${t}</a>)</span>`:''}</div>`:'');
+ if(c.dataset.h!==h){c.innerHTML=h;c.dataset.h=h;c.querySelectorAll('.r112cb').forEach(x=>x.onclick=()=>{J.r112comp={m:x.dataset.m,d:(J.r112comp||{}).d??null};show()});const i=$('#r112d');if(i)i.onchange=()=>{const v=String(i.value).trim();J.r112comp={...J.r112comp,d:/^\d{1,3}$/.test(v)?+v:null};show()};const a=$('#r112match');if(a)a.onclick=e=>{e.preventDefault();J.r112comp={...J.r112comp,d:null};show()}}}catch(e){console.error(e)}}
+function r112cmpSim(){try{if(!J||!J.M||!J.code)return;const C=J.code;const on=C.findIndex(l=>/\(COMP ON - STRAIGHT LEAD-IN/.test(l)),off=C.findIndex(l=>/\(COMP OFF - STRAIGHT LEAD-OUT/.test(l));if(on<0||off<0||J.M.r112done)return;J.M.r112done=1;
+ const g41=/\bG41\b/.test(C[on]);const {d}=r112cmpD(J);const r=(+((J.p.Cutter||{}).v)||0)/2;const mv=J.M;const idx=[];mv.forEach((m,i)=>{if(m.l>on&&m.l<off)idx.push(i)});
+ idx.forEach(i=>{const m=mv[i];const dx=m.b[0]-m.a[0],dy=m.b[1]-m.a[1],L=Math.hypot(dx,dy);if(L<1e-12){m.r112p=[m.a,m.b];return}const n=g41?[-dy/L,dx/L]:[dy/L,-dx/L];m.r112p=[m.a.slice(),m.b.slice()];m.a=[m.a[0]+n[0]*r,m.a[1]+n[1]*r,m.a[2]];m.b=[m.b[0]+n[0]*r,m.b[1]+n[1]*r,m.b[2]];m.r112o=1});
+ const li=mv.findIndex(m=>m.l==on),lo=mv.findIndex(m=>m.l==off);if(li>=0&&idx.length){mv[li].r112p=[mv[li].a.slice(),mv[li].b.slice()];mv[li].b=mv[idx[0]].a.slice();mv[li].r112o=1}if(lo>=0&&idx.length){mv[lo].r112p=[mv[lo].a.slice(),mv[lo].b.slice()];mv[lo].a=mv[idx[idx.length-1]].b.slice();mv[lo].r112o=1}
+ J.r112cmpSim={d,r}}catch(e){console.error(e)}}
+{const _d=draw;draw=function(){try{r112cmpSim()}catch(e){}const r=_d.apply(this,arguments);try{if(!J||!J.M||!J.r112cmpSim||!ctx)return r;const n=Math.min(view.n,J.M.length);ctx.save();
+ J.M.slice(0,n).forEach(m=>{if(!m.r112p)return;ctx.setLineDash([4,3]);ctx.strokeStyle='#bdbdbd';ctx.lineWidth=1;ln(m.r112p[0],m.r112p[1]);ctx.setLineDash([]);ctx.strokeStyle='#ffd21f';ctx.lineWidth=2;ln(m.a,m.b)});ctx.restore();
+ let nt=$('#r112cmpn');const cvs=$('#cv');if(cvs){if(!nt){nt=document.createElement('div');nt.id='r112cmpn';nt.className='simonly s'}const after=$('#r112dial')||cvs;if(after.nextElementSibling!==nt)after.after(nt);const t=`- - programmed — offset path · Sim assumes D${J.r112cmpSim.d} = ${f4(J.r112cmpSim.r)} radius (from tool Ø). Check the control's offset page.`;if(nt.textContent!==t)nt.innerHTML='<span style="color:#bdbdbd">- - programmed</span> <span style="color:#ffd21f">— offset path</span> · Sim assumes D'+J.r112cmpSim.d+' = '+f4(J.r112cmpSim.r)+' radius (from tool Ø). Check the control\'s offset page.'}}catch(e){console.error(e)}return r}}
+{const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);try{if(!(J&&J.r112cmpSim)){const n=$('#r112cmpn');if(n)n.remove()}}catch(e){}return r}}
+{const _sh=show;show=function(){const r=_sh.apply(this,arguments);r112cmpUI();return r}}
+{const st=document.createElement('style');st.textContent='#r112cmp .r112seg{display:grid;grid-template-columns:1fr 1.25fr 1.45fr;gap:6px;margin:8px 0}.r112cb{min-height:40px!important;border-radius:10px!important;background:#111!important;border:1.5px solid #444!important;color:#eee!important;font-weight:600;font-size:13px!important;padding:4px!important}.r112cb.on{background:#ffd21f!important;border-color:#ffd21f!important;color:#111!important}.r112drow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.r112drow input{width:70px;min-height:40px;border-radius:10px;border:1.5px solid #3c6;background:#0b0b0b;color:#eee;padding:0 10px;font-size:15px}.r112dt{color:#bbb;background:#222;border-radius:10px;padding:3px 8px;font-size:12px}.r112dt:empty{display:none}.r112hand{color:#999;font-size:11px}.r112hand a{color:#ddd}#r112cmpn{color:#aaa;font-size:11px;margin:4px 2px}';document.head.appendChild(st)}
 // ===== v112 macros by default: with Custom Macro B confirmed, repeated plain passes are written as one WHILE loop with a whole-number counter (#100–#199).
 // Every loop is run through r112run (a small macro interpreter) and compared with the plain lines it replaces; any difference keeps the plain lines and says why in a gray line.
 function r112run(P){// returns expanded motion lines, or null if the program uses anything this checker does not understand
@@ -7333,7 +7395,7 @@ function r112pickVar(code){const used=new Set();code.forEach(l=>[...String(l).ma
  const cand=[...fr.filter(k=>k>=100&&k<=199),...Array.from({length:100},(_,i)=>100+i)];return cand.find(k=>!used.has(k))||null}
 function r112loopify(code){const L=code.slice();const res={code:L,loops:[],fb:[]};const N=l=>String(l).trim().toUpperCase();
  // only plain motion lines outside any existing WHILE…END and outside comp changes
- const depth=[];let d=0;L.forEach((l,i)=>{const u=N(l);if(/^WHILE/.test(u))d++;depth[i]=d;if(/^END\d/.test(u))d=Math.max(0,d-1)});
+ const depth=[];let d=0,cmp=0;L.forEach((l,i)=>{const u=N(l).replace(/\([^)]*\)/g,'');if(/\bG4[12]\b/.test(u))cmp=1;if(/^WHILE/.test(u))d++;depth[i]=d+(cmp?100:0);if(/^END\d/.test(u))d=Math.max(0,d-1);if(/\bG40\b/.test(u))cmp=0});/* lines while comp is on are never turned into a loop: G41/G42 stay before any WHILE and G40 after its END */
  const ok=i=>{const l=String(L[i]||'');return depth[i]==0&&/^G0?[0-3](?!\d)/i.test(l.trim())&&!/[#(\[;]/.test(l)&&!/G4[0-2]\b|G4[3-9]|G5|G6|G8|G9[0-9]|M\d|T\d|S\d/i.test(l.replace(/^G0?[0-3]/i,''))};
  const words=l=>[...N(l).matchAll(/([A-Z])(-?\d*\.?\d+)/g)].map(m=>({a:m[1],v:+m[2],s:m[2]}));const shape=l=>N(l).replace(/(?<=[A-Z])-?\d*\.?\d+/g,'#').replace(/\s+/g,' ');
  const cands=[];

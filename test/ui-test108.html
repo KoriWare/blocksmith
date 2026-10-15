@@ -1,0 +1,44 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112: cutter comp (mock comp.html) --><iframe id="f" src="../index.html?v=111" style="width:320px;height:760px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(async()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Lathe w/ live tooling','Lathes');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();
+ var FJ=(mi)=>{cur(mi);J=null;tab('new');pickJob('face');Object.keys(J.p).forEach(k=>{if(J.p[k].v==null){const sp=r99spec(k)||{};const ch=J2.face&&J2.face.choices&&J2.face.choices[k];J.p[k]={v:ch?ch[0]:/Cutter|Tool dia/.test(k)?0.5:/Tool/.test(k)?1:/Work offset/.test(k)?'G54':/Step/.test(k)?0.05:/Z0|X0|Y0|Start/.test(k)?0:2,g:false}}});show();r111fill0();show()};var HB=(mi)=>{cur(mi);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show()};
+ var SET=(id,v)=>{const i=document.querySelector('#r111ang input[data-a="'+id+'"]');i.value=v;i.dispatchEvent(new Event('input'));i.dispatchEvent(new Event('change'))};1`);
+
+ E(`var MK=(op,v,m,d)=>{cur(1);J=null;tab('new');pickJob(op);Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});Object.keys(J.p).forEach(k=>{if(J.p[k].v==null){const ch=J2[op]&&J2[op].choices&&J2[op].choices[k];const sp=r99spec(k)||{};J.p[k]={v:ch?ch[0]:sp.ch&&sp.ch.length?sp.ch[0]:1,g:false}}});if(m!==undefined)J.r112comp={m,d:d??null};show();r111fill0();show();return J.code?J.code.join('\\n'):null};var BB={'Center X':0,'Center Y':0,Depth:0.2,Z0:0,Cutter:0.25,Stepdown:0.1,Tool:1,'Work offset':'G54'};var FP=c=>c.slice(c.indexOf('(FINISH PASS'),c.indexOf('(COMP OFF')+40);1`);
+ log("comp card on profile/pocket/boss/slot/thread-mill jobs only",E("['cpock','cboss','rpock','slot','polyb','thmill'].every(op=>{cur(1);J=null;tab('new');pickJob(op);show();return !!$('#r112cmp')})&&['face','hbore','bolt'].every(op=>{cur(1);J=null;tab('new');pickJob(op);show();return !$('#r112cmp')})")===true);
+ const base=E("MK('cpock',{...BB,Dia:1})"),off=E("MK('cpock',{...BB,Dia:1},'off')");
+ log("Off (default) writes the same bytes as before",!!base&&base===off&&!/G4[12]\b/.test(base));
+ const c41=E("FP(MK('cpock',{...BB,Dia:1},'G41'))");
+ log("Climb G41, pocket: straight lead-in ≥ tool radius, G41 D1, CCW G03 on the part line, G40 on a straight lead-out",/G00 X0\.325 Y0\.0\nG01 Z-0\.2 F10\.0\nG01 G41 D1 X0\.5 Y0\.0 F20\.0 \(COMP ON - STRAIGHT LEAD-IN 0\.175\)\nG03 X0\.5 Y0\.0 I-0\.5 J0\.0\nG40 G01 X0\.325 Y0\.0 \(COMP OFF/.test(c41),c41);
+ log("Conventional G42 reverses the contour (G02)",/G01 G42 D1 X0\.5 Y0\.0 F20\.0 [^\n]*\nG02 X0\.5 Y0\.0 I-0\.5 J0\.0/.test(E("FP(MK('cpock',{...BB,Dia:1},'G42'))")));
+ log("boss (outside): climb G41 runs clockwise, lead-in from outside",/G00 X0\.675 Y0\.0[\s\S]*G01 G41 D1 X0\.5 Y0\.0[^\n]*\nG02 X0\.5 Y0\.0 I-0\.5/.test(E("FP(MK('cboss',{...BB,'Boss Ø':1,'Stock Ø':1.6},'G41'))")));
+ log("slot: lead-in along the normal from the centre line (half width ≥ radius)",/G00 X1\.0 Y0\.0[\s\S]*G01 G41 D1 X1\.0 Y-0\.25[^\n]*LEAD-IN 0\.25\)\nG01 X2\.0 Y-0\.25\nG03 X2\.0 Y0\.25 I0\.0 J0\.25/.test(E("FP(MK('slot',{...BB,'Start X':0,'Start Y':0,'End X':2,'End Y':0,'Slot width':0.5},'G41'))")));
+ // D# defaults to T#, tags, Match
+ E("MK('cpock',{...BB,Dia:1,Tool:1},'G41')");
+ log("D defaults to T#: D1 with the '= T1' tag",E("$('#r112d').value=='1'&&$('#r112cmp .r112dt').textContent=='= T1'&&/G41 D1 /.test(J.code.join())")===true);
+ E("(()=>{const i=$('#r112d');i.value='12';i.onchange()})()");
+ log("hand-typed D12: 'D12 ≠ T1 · Match T1' and the code uses D12",/\(hand-typed: D12 ≠ T1 · Match T1\)/.test(E("$('#r112cmp').textContent"))&&/G41 D12 /.test(E("J.code.join()")));
+ E("$('#r112match').click()");log("Match T1 puts D back to 1",E("$('#r112d').value=='1'&&/G41 D1 /.test(J.code.join())")===true);
+ // holds
+ log("an inside arc smaller than the tool radius holds (R0.1 < 0.125)",/inside arc R0\.1 is smaller than the tool radius \(0\.125\)/.test(E("(()=>{const j={op:'rpock',p:{'Center X':{v:0},'Center Y':{v:0},'Pocket L':{v:2},'Pocket W':{v:1},'Corner R':{v:0.1},Cutter:{v:0.25}}};return r112geo(j).hold})()")));
+ log("thread mill with comp is held, never written wrong",E("(()=>{const j={op:'thmill',lathe:0,p:{Tool:{v:1}},r112comp:{m:'G41'}};const g={code:['G01 X1']};r112cmpApply(g,j);return g.code===null&&/thread milling/.test(j.r112cmpHold)})()")===true);
+ // lathe side: OD/ID + turret, never G42 = OD by default
+ log("lathe: rear turret OD → G42, ID → G41; front turret mirrored; blank turret → no side (holds)",E("(()=>{cur(4);const m=S.m[4];let x=m.s.find(y=>y.k=='Turret');if(!x){x={k:'Turret'};m.s.push(x)}x.v='Rear (X+ away from you)';x.st='user';const a=[r112latheSide(true),r112latheSide(false)];x.v='Front (X+ toward you)';const b=[r112latheSide(true),r112latheSide(false)];x.v='';x.st='confirm';const c=r112latheSide(true);return a.join()=='G42,G41'&&b.join()=='G41,G42'&&c===null})()")===true,E("S.m[4].type+' '+S.m[4].name"));
+ // sim: offset path inside the pocket by the tool radius, programmed path kept for the dashed line, legend
+ E("MK('rpock',{...BB,'Pocket L':2,'Pocket W':1.2,'Corner R':0.25},'G41');tab('sim');scrub(J.M.length)");
+ log("sim: offset path drawn one tool radius inside (x 0.875) and the programmed part line kept (x 1.0)",E("(()=>{const m=J.M.filter(m=>m.r112o);const s=m.find(z=>Math.abs(z.r112p[0][0]-1)<1e-9&&Math.abs(z.r112p[1][0]-1)<1e-9);return m.length>5&&!!s&&Math.abs(s.a[0]-0.875)<1e-9})()")===true);
+ log("sim legend: '- - programmed — offset path · Sim assumes D1 = 0.125 radius (from tool Ø)…'",/- - programmed — offset path · Sim assumes D1 = 0\.125 radius \(from tool Ø\)\. Check the control's offset page\./.test(E("($('#r112cmpn')||{}).textContent")));
+ E("tab('new')");
+ // comp + macros: G41/G42 before any WHILE, G40 after END; the comp block itself never becomes a loop
+ E("S.m[1].opt=S.m[1].opt||{};S.m[1].opt.macroB=1;save()");const cm=E("MK('cpock',{...BB,Dia:1,Depth:0.6},'G41')")||'';
+ log("comp + Macro B: no WHILE/END between G41 and G40",(()=>{const L=cm.split('\n');const a=L.findIndex(l=>/G41/.test(l)),b=L.findIndex(l=>/^G40 /.test(l));return a>0&&b>a&&!L.slice(a,b+1).some(l=>/WHILE|END\d/.test(l))})(),cm.slice(-900));
+
+ }catch(e){log('crash',false,e.message)}
+ document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
+</script>
