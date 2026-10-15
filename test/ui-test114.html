@@ -27,4 +27,14 @@ T114.push(async E=>{
  E(`HB(0);r111fill0();show();SQ(2,1,1,'bl');SQ(2,1,1,'tc');saveJob();reopen(0);1`);await sl(600);const d=JSON.parse(E('ST114()'));
  log('#2 reopened job with a failing stock check: red card, fix 1, Not ready + Override',d.bad&&/fix 1/.test(d.ck)&&d.cp=='Fix 1 issue first'&&/Override/.test(d.ready),JSON.stringify(d));
 });
+// ---- #3 angle preview
+T114.push(async E=>{const g=`[...document.querySelectorAll('#r111ang .r111p')].map(e=>e.textContent).join(' / ')`;
+ E(`S.m.forEach(m=>m.opt.macroB=0);1`);E(`RUN114(1,'face',0)`);const a=E(g);E(`S.m.forEach(m=>m.opt.macroB=1);1`);
+ log('#3 held Face mill: gray "Nothing written yet: <reason>"',/^Nothing written yet: .*macro program/.test(a),a);
+ E(`RUN114(3,'engrave',null);document.querySelectorAll('#r111ang input').forEach(x=>{x.value='';x.dispatchEvent(new Event('input'));x.dispatchEvent(new Event('change'))});show();1`);const b=E(g);
+ log('#3 HMC engrave with a blank angle: shows why, never a bare T# M06',b&&!/^\s*T# M06\s*$/.test(b)&&!/(^| \/ )T# M06( \/ |$)/.test(b),b);
+ E(`RUN114(1,'face',36)`);const c=E(g);log('#3 written at 36: real lines from the program (tool change, safe start, job angle)',/T1 M06/.test(c)&&/A36\. \(JOB ANGLE\)/.test(c),c);
+ let bare=[];for(const [mi,op] of [[1,'face'],[3,'face'],[5,'face'],[3,'engrave'],[1,'engrave'],[5,'engrave']])for(const an of [0,36,'']){E(`RUN114(${mi},'${op}',${JSON.stringify(an)})`);const t=E(g);if(/(^|\/ )T# M06( \/|$)/.test(t)||t.trim()=='T# M06')bare.push(mi+'|'+op+'|'+an)}
+ log('#3 no bare "T# M06" preview on face/engrave, 4-axis/HMC/5-axis, at 0, 36 and blank',!bare.length,bare.join(' '));
+});
 </script>
