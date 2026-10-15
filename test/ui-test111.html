@@ -1,0 +1,41 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v112b: Casey fixes --><iframe id="f" src="../index.html?v=111" style="width:320px;height:760px;border:0"></iframe><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(async()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Lathe w/ live tooling','Lathes');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});{const k0=S.cur;S.m.forEach((m,i)=>{if(r98t(m)=='hmc'){cur(i);if(!S.tools.find(t=>t.n==1))S.tools.push({n:1,type:'End mill',dia:0.5,len:2,fl:3})}});cur(k0)}save();
+ var FJ=(mi)=>{cur(mi);J=null;tab('new');pickJob('face');Object.keys(J.p).forEach(k=>{if(J.p[k].v==null){const sp=r99spec(k)||{};const ch=J2.face&&J2.face.choices&&J2.face.choices[k];J.p[k]={v:ch?ch[0]:/Cutter|Tool dia/.test(k)?0.5:/Tool/.test(k)?1:/Work offset/.test(k)?'G54':/Step/.test(k)?0.05:/Z0|X0|Y0|Start/.test(k)?0:2,g:false}}});show();r111fill0();show()};var HB=(mi)=>{cur(mi);J=null;tab('new');pickJob('hbore');const v={'Center X':0,'Center Y':0,Dia:1,Depth:0.5,Z0:0,Cutter:0.5,'Helix pitch':0.05,Tool:1,'Work offset':'G54'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show()};
+ var SET=(id,v)=>{const i=document.querySelector('#r111ang input[data-a="'+id+'"]');i.value=v;i.dispatchEvent(new Event('input'));i.dispatchEvent(new Event('change'))};1`);
+ const I3=0,IA=1,IB=3;
+ E(`var SQ=(L,W,H,zp,z)=>{const s=r112stk();s.shape='square';s.square={L,W,H};s.zp=zp;s.z=z||'top';r112after()}`);
+ // 1 pause after a real pick on the machine page
+ const pz=JSON.parse(E(`HB(${IA});r103rt={J:J,y:0,cur:${IA},sig:r103sig(S.m[${IA}]),seen:1};tab('machines');edit(${IA});const blk=r103block;r103block=()=>[];window.R112BLAST=Date.now();r103tick();const a=[!!r103rt,($('#r103back')||{}).textContent||''];window.__blk=blk;JSON.stringify(a)`));
+ await new Promise(r=>setTimeout(r,1700));
+ const pz2=E(`r103block=window.__blk;!r103rt`);
+ log("picking on the machine page from a job pauses with '✓ Saved · back to job', then returns",pz[0]===true&&/✓ Saved · back to job/.test(pz[1])&&pz2===true,JSON.stringify([pz,pz2]));
+ // 2 Machine: N to confirm clears and goes to the right row
+ const mc=JSON.parse(E(`const m=S.m[${IA}];const sd=m.s.find(x=>x.k==R104SIDE);sd.v='';sd.st='suggested';save();cur(${IA});J=null;tab('new');pickJob('face');Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:/Work offset/.test(k)?'G54':/Tool/.test(k)&&!/dia/i.test(k)?1:/Z0|X0|Y0/.test(k)?0:2,g:false}});show();const b=$('#out .r102mach');const a=[b&&b.textContent,b&&b.title];if(b)b.click();const hl=[...V.querySelectorAll('.r103hl')].map(f=>f.dataset.r99k);r103rt=null;sd.v='Left';sd.st='user';save();cur(${IA});tab('new');show();a.push(hl.join(),!$('#out .r102mach'));JSON.stringify(a)`));
+ log("'Machine: 1 to confirm' names the side, its tap highlights 'Rotary head on', and it clears once Left is picked",/Machine: 1 to confirm/.test(mc[0])&&/Rotary head on/.test(mc[1])&&mc[2]=='Rotary head on'&&mc[3]===true,JSON.stringify(mc));
+ // 3 moved-zero line
+ const mz=JSON.parse(E(`HB(${I3});r111fill0();show();const p0=progText();SQ(2,1,1,'bl');const a=[!!$('#r112bmz')];SQ(2,1,1,'tc');const n=$('#r112bmz');a.push(n&&n.textContent,n&&getComputedStyle(n).color,n&&getComputedStyle(n.querySelector('a')).color,progText()===p0);JSON.stringify(a)`));
+ log("moved-zero line hidden at the default; 'Zero moved: Front-left → Back-center · Jump' gray with yellow Jump; program unchanged",mz[0]===false&&mz[1]=='Zero moved: Front-left → Back-center · Jump'&&/154, 154, 154/.test(mz[2])&&/255, 210, 31/.test(mz[3])&&mz[4]===true,JSON.stringify(mz));
+ // 4 stale wasn't accepted
+ const sa=E(`HB(${I3});R92.typed={Dia:'-1'};J.p.Dia.v=null;show();const a=!!document.querySelector('.r92why');cur(${I3});J=null;tab('new');pickJob('hbore');show();[a,Object.keys(R92.typed).length,!!document.querySelector('.r92why')].join()`);
+ log("a 'wasn't accepted' line from one job never carries to a fresh job",/,0,false$/.test(sa),sa);
+ // 5 Max RPM chip clears while typing
+ const rp=E(`const m=S.m[${IA}];const x=m.s.find(y=>y.k=='Max RPM');x.v='abc';x.st='confirm';x.r106bad=1;save();tab('machines');edit(${IA});const f=V.querySelector('.r99f[data-r99k="Max RPM"]');const i=f.querySelector('input');i.value='8000';i.dispatchEvent(new Event('input'));[f.querySelector('.r99chip').textContent,x.st,x.v,!!x.r106bad,f.querySelector('.r99w').classList.contains('bad')].join()`);
+ log("Max RPM: a valid value clears the chip and red border without Enter",rp=='✓,user,8000,false,false',rp);
+ // 6 rotary Z hold with a stock record but no top height; link never changes shape
+ const zh=JSON.parse(E(`HB(${IA});r111fill0();show();const s=r112stk();s.shape='square';s.square={L:2,W:1,H:null};J.machine=S.m[${IA}].name;S.jobs.push(JSON.parse(JSON.stringify(J)));save();reopen(S.jobs.length-1);const a=[!!J.r112old,!!$('#r112held'),!J.code];$('#r112held a').click();a.push(J.r112stk.shape);J.r112stk.square.H=1;r112after();a.push(!!J.r112old,Array.isArray(J.code));S.jobs.pop();save();JSON.stringify(a)`));
+ log("old rotary job with a stock record but no height is held; the link keeps the shape; entering the height writes",zh.join()=='true,true,true,square,false,true',JSON.stringify(zh));
+ // 7 Job manager mismatch never green
+ const jm=E(`HB(${I3});r111fill0();show();SQ(2,1,1,'bl');const j1=JSON.parse(JSON.stringify(J));SQ(2,1,1,'mc');const j2=JSON.parse(JSON.stringify(J));const l=jmNew('zeros');l.entries=[{job:j1,on:true},{job:j2,on:true}];save();jmOpen(l.id);const rows=[...document.querySelectorAll('.jme')];const a=[rows.length,rows.filter(r=>r.classList.contains('r112zbad')).length,rows.filter(r=>r.querySelector('.chip.g')).length,[...document.querySelectorAll('button')].some(b=>/^\\s*Build one program/.test(b.textContent)&&b.disabled)];S.jlists.splice(S.jlists.indexOf(l),1);save();a.join()`);
+ log("Job manager: mismatched zeros are red, never green ready, and the build is blocked",jm=='2,2,0,true',jm);
+ // 8 help labels match the screen
+ log("Help labels say 'Rotary axis' and 'Rotary head on'",E(`R111WHYL.map(x=>x[0]).join('|')`).includes('Rotary axis|Rotary head on'),E(`R111WHYL.map(x=>x[0]).join('|')`));
+ }catch(e){log('crash',false,e.message)}
+ document.getElementById('o').textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length},1500)};
+</script>
