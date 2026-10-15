@@ -7735,7 +7735,7 @@ function r113start(){const M=J&&J.M||[];const C=J.code||[];const i=C.findIndex(l
 {const _t113=tool;tool=function(t){try{if(J&&!J.lathe&&!J.swiss&&Array.isArray(J.M)&&J.M.length){const M=J.M,n=view.n||0;
  if(n==0){t=r113start();window.R113IDLE={z:t[2],home:0,at:'start'}}
  else if(n>=M.length){const last=M[M.length-1];if(r113home(last)){let k=M.length-1;while(k>0&&r113home(M[k]))k--;const b=M[k].b;let z=b[2];for(let i=0;i<400&&P([b[0],b[1],z])[1]>34;i++)z+=0.25;t=[b[0],b[1],z];window.R113IDLE={z,home:1,at:'home'};
-   try{const d=((J.p.Cutter||J.p['Drill Ø']||{v:.25}).v)/2;const q=P(t),qr=P([t[0]+d,t[1],t[2]]);const rp=Math.max(3,Math.min(14,Math.abs(qr[0]-q[0])||6));const tipY=30;ctx.save();ctx.strokeStyle='#f2f2f2';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(q[0]-rp,0);ctx.lineTo(q[0]-rp,tipY-3);ctx.lineTo(q[0],tipY);ctx.lineTo(q[0]+rp,tipY-3);ctx.lineTo(q[0]+rp,0);ctx.stroke();ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(q[0]-rp,8);ctx.lineTo(q[0]+rp,8);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#ddd';ctx.font='11px system-ui';ctx.fillText('Home ↑',q[0]+rp+6,tipY-6);ctx.restore();window.R113IDLE.stub={x:q[0],tipY,label:[q[0]+rp+6,tipY-6]}}catch(e){}return}
+   try{const d=((J.p.Cutter||J.p['Drill Ø']||{v:.25}).v)/2;const q=P(t),qr=P([t[0]+d,t[1],t[2]]);const rp=Math.max(3,Math.min(14,Math.abs(qr[0]-q[0])||6));const tipY=30;ctx.save();ctx.strokeStyle='#f2f2f2';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(q[0]-rp,0);ctx.lineTo(q[0]-rp,tipY-3);ctx.lineTo(q[0],tipY);ctx.lineTo(q[0]+rp,tipY-3);ctx.lineTo(q[0]+rp,0);ctx.stroke();ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(q[0]-rp,8);ctx.lineTo(q[0]+rp,8);ctx.stroke();ctx.setLineDash([]);ctx.restore();window.R113IDLE.stub={x:q[0],rp,tipY,label:[q[0]+rp+8,tipY-2],f:(window.R113F=(window.R113F||0)+1)}}catch(e){}return}
   t=last.b;window.R113IDLE={z:t[2],home:0,at:'end'}}}}catch(e){}return _t113.call(this,t)}}
 {const _p113=r112ePts;r112ePts=function(){const pts=_p113.apply(this,arguments);try{if(J&&J.M&&J.M.some(r113home)){const hb=J.M.filter(r113home).map(m=>m.b);const keep=pts.filter(p=>!hb.some(b=>Math.abs(b[0]-p[0])<1e-9&&Math.abs(b[1]-p[1])<1e-9&&Math.abs(b[2]-p[2])<1e-9));const st=r113start();keep.push(st,[st[0],st[1],st[2]+1.2]);return keep}}catch(e){}return pts}}
 
@@ -7754,5 +7754,8 @@ document.addEventListener('input',e=>{const i=e.target&&e.target.closest&&e.targ
 
 // v113b: saving a held job stores its values with an empty program and status 'Not ready'
 {const _sj113=saveJob;saveJob=function(){const held=typeof J!='undefined'&&J&&!(Array.isArray(J.code)&&J.code.length);const r=_sj113.apply(this,arguments);try{const rec=S.jobs[0];if(rec){rec.status=held?'Not ready':'Ready';if(held){rec.saved=[];rec.code=null}save()}}catch(e){}return r}}
+
+// v113b: 'Home ↑' tag drawn last (on top of everything on the canvas), right beside the stub tip
+{const _d113=draw;draw=function(){const f0=window.R113F||0;const r=_d113.apply(this,arguments);try{const a=window.R113IDLE;if(a&&a.home&&a.stub&&a.stub.f>f0&&ctx){const st=a.stub;ctx.save();ctx.setTransform(1,0,0,1,0,0);const k=(cv.width/(cv.clientWidth||cv.width))||1;ctx.scale(k,k);ctx.font='bold 12px system-ui';const t='Home ↑',w=ctx.measureText(t).width;let x=st.x+st.rp+8,y=st.tipY;const W=cv.clientWidth||cv.width/k;if(x+w+10>W)x=st.x-st.rp-8-w-10;ctx.fillStyle='rgba(17,17,17,.85)';ctx.fillRect(x-5,y-13,w+10,18);ctx.fillStyle='#ffd21f';CanvasRenderingContext2D.prototype.fillText.call(ctx,t,x,y);ctx.restore();st.label=[x,y];st.drawn=1}}catch(e){}return r}}
 /* R79-END */</script>
 </body></html>
