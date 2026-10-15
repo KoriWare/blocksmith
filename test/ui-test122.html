@@ -1,0 +1,46 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113c: real-click regression - brand-new jobs from an empty Build (no stock set) on Mill A (Fanuc 0i) and on the default machine; Casey's cpock Climb case must give code with Y0 and no throw --><iframe id="f" src="../index.html?v=122" style="width:390px;height:760px;border:0"></iframe><script>
+let phase=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,1500)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+const SHOT=/shot=1/.test(location.search);const OPS=SHOT?['Circular pocket']:['Circular pocket','Circular boss','Rectangular pocket','Slot (straight)','Polygon / hex boss or pocket','Helical bore','Face mill'];
+const VAL={'Center X':'2','Center Y':'0','Dia':'1.25','Depth':'0.5','Z0':'0','Cutter':'0.75','Stepdown':'0.25','Tool':'1','Boss Ø':'1','Stock Ø':'1.75','End X':'3','Slot width':'0.75'};
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
+ const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));const ce=w.console.error;w.console.error=function(){errs.push([...arguments].map(a=>a&&a.stack||a).join(' '));};
+ if(phase==0){phase=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ const vis=e=>e&&e.offsetParent;const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t)||[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim().startsWith(t));
+ const seq=[];const S=(fn,ms=250)=>seq.push([fn,ms]);
+ const TY=(k,v)=>{const i=Q('#out [data-k="'+k+'"]');if(!i)return false;i.focus();if(i.tagName=='SELECT'){const op=[...i.options].find(o=>o.value&&(o.value==v))||[...i.options].find(o=>o.value);i.value=op?op.value:''}else i.value=v;i.dispatchEvent(new w.Event('input',{bubbles:true}));i.dispatchEvent(new w.Event('change',{bubbles:true}));i.blur();return true};
+ const job=(mach,op,isCasey)=>{let e0;
+  S(()=>{e0=errs.length;T('Build').click()});S(()=>{const b=T('▸ Milling')||T('Milling');b&&b.click()},350);S(()=>{if(!T(op.slice(0,25))){const b=T('Milling');b&&b.click()}});S(()=>{const b=[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim().startsWith(op.slice(0,25))&&!/·/.test(e.textContent));if(!b)log(mach+' '+op+': job button',false,'missing');else b.click()},350);
+  // fill every red field through its chip, one at a time (as a user would)
+  for(let n=0;n<14;n++)S(()=>{const c=[...d.querySelectorAll('#out .chip.r')].find(vis);if(!c)return;const k=(c.getAttribute('onclick')||'').match(/ed\('([^']+)'\)/);c.click();setTimeout(()=>{if(k)TY(k[1],k[1]=='Work offset'?'G54':VAL[k[1]]||'1')},60)},200);
+  S(()=>{const b=T('Climb (G41)');if(b)b.click()});
+  S(()=>{const b=T('Control: not set');if(b)b.click()},400);S(()=>{const i=Q('input.r106ci');if(i&&vis(i)){i.click();setTimeout(()=>{const o=T('Fanuc 0i-style');o&&o.click();setTimeout(()=>{const dn=T('Done');dn&&dn.click();setTimeout(()=>T('Build').click(),150)},150)},150)}},700);
+  S(()=>{const b=T('Continue');if(b)b.click()},400);
+  S(()=>{const b=T('Generate Code');b&&b.click()},600);
+  S(()=>{const code=ev('(J&&J.code||[]).join("\\n")'),stk=ev('JSON.stringify(J&&J.stock)'),txt=(Q('#out')||{}).innerText||'',hold=!!Q('#r110hold');const my=errs.slice(e0).filter(x=>!/favicon|manifest/.test(x));
+   log(mach+' · '+op+': no exception from an empty job (shiftZero/show)',my.length==0,my.join(' || '));
+   log(mach+' · '+op+': Build form still drawn (not just the Job title)',/Generate Code/.test(txt+([...d.querySelectorAll('button')].filter(vis).map(b=>b.textContent).join('|')))&&txt.length>200,txt.slice(0,300));
+   log(mach+' · '+op+': program generated or a named hold',code.length>40||hold,'code='+code.slice(0,200)+' stock='+stk+' out='+txt.replace(/\s+/g,' ').slice(0,600));
+   if(code.length>40)log(mach+' · '+op+': stock box set',/^\[/.test(stk),stk);
+   if(isCasey){const ys=code.split('\n').filter(l=>/^G0?[0-3]\b.*\bY/.test(l)||/ G0?[0-3] .*Y/.test(l));log(mach+' · Casey cpock: code writes Y0 (Center Y 0), never Y1/Y-1 at the center',/\bY0\.0?\b/.test(code)&&!/\bY-?1\.0?\b/.test(code.split('\n').filter(l=>/^G0?0 |G54/.test(l)).join(' ')),ys.slice(0,3).join(' | '));log(mach+' · Casey cpock: Stock card shows',!!Q('#r112stk'),'');log(mach+' · Casey cpock: Work offset kept after Climb (G54 in code)',/\bG54\b/.test(code),'');
+    // leave Build and come back: the form must come back filled
+    S2.push(()=>{T('Editor').click()},()=>{T('Build').click()},()=>{const t=(Q('#out')||{}).innerText||'';log(mach+' · Casey cpock: after leaving Build the form comes back filled',/Center X\s*2/.test(t)&&/Work offset\s*G54/.test(t),t.slice(0,200))})}
+  },100);
+  S(()=>{let i=0;const nx=()=>{if(i<S2.length){S2[i++]();setTimeout(nx,400)}};if(!SHOT)S2.length&&nx()},S2ms());};
+ const S2=[];const S2ms=()=>1500;
+/* control set from the job card */ const ctl0=()=>{S(()=>{T('Build').click()});S(()=>{const b=T('Control: not set');if(b)b.click()},400);S(()=>{const i=Q('input.r106ci');if(i&&vis(i)){i.click();setTimeout(()=>{const o=T('Fanuc 0i-style');o&&o.click();setTimeout(()=>{const dn=T('Done');dn&&dn.click()},150)},150)}},700)};
+ // Mill A (demo, first in the list) with Fanuc 0i
+ S(()=>{T('Machines').click()});S(()=>{[...d.querySelectorAll('button')].filter(b=>vis(b)&&b.textContent.trim()=='Use this machine')[0].click()},300);
+ S(()=>{log('Mill A picked',ev('S.m[S.cur].name')=='Mill A',ev('S.m[S.cur].name')+ev('JSON.stringify(S.m[S.cur].s.find(x=>/control/i.test(x.k)))'))});
+ OPS.forEach(op=>{S(()=>{S2.length=0});job('Mill A',op,op=='Circular pocket')});
+ if(!SHOT){
+ // default machine: + Add machine -> Generic 3-axis VMC (the default) -> Create
+ S(()=>{T('Machines').click()});S(()=>{T('+ Add machine').click()},400);S(()=>{T('Generic 3-axis VMC').click()},300);S(()=>{const b=T('Create');b&&b.click()},500);
+ S(()=>{const b=[...d.querySelectorAll('button')].filter(b=>vis(b)&&b.textContent.trim()=='Use this machine');b.length&&b[0].click()},300);
+ S(()=>{window.M0=ev('S.m[S.cur].name');log('default machine (Generic 3-axis VMC) is current',/Generic 3-axis/.test(window.M0),window.M0)});
+ OPS.forEach(op=>{S(()=>{S2.length=0});job('default machine',op,op=='Circular pocket')});
+ }
+ const run=i=>{if(i>=seq.length){r.unshift('INFO default machine = '+window.M0);fin();return}try{seq[i][0]()}catch(e){log('step '+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};
+ setTimeout(()=>run(0),800)}
+</script>
