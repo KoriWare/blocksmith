@@ -1,0 +1,134 @@
+{
+ "app": "koriware-blocksmith",
+ "format": 2,
+ "exported": "2026-10-16",
+ "job": {
+  "type": "rboss",
+  "typeName": "Rectangular Boss/Profile",
+  "name": "DEMO BIG CHAMFER",
+  "note": "synthetic demo: chamfer longer than half the side, round + small chamfer corners",
+  "values": {
+   "Cutter": {
+    "v": 0.5,
+    "g": false
+   },
+   "Tool": {
+    "v": 4,
+    "g": false
+   },
+   "Feed": {
+    "v": 20,
+    "g": false
+   },
+   "RPM": {
+    "v": 3000,
+    "g": false
+   },
+   "Clear Z": {
+    "v": 0.1,
+    "g": false
+   },
+   "Plunge feed": {
+    "v": 10,
+    "g": false
+   },
+   "Stepover %": {
+    "v": 50,
+    "g": false
+   },
+   "Finish stock": {
+    "v": 0.01,
+    "g": false
+   },
+   "Edge overrun": {
+    "v": 0.1,
+    "g": false
+   },
+   "Cut direction": {
+    "v": "Climb",
+    "g": false
+   },
+   "Z0": {
+    "v": 0,
+    "g": false
+   },
+   "Boss placement": {
+    "v": "Center in stock",
+    "g": false
+   },
+   "Boss L": {
+    "v": 3,
+    "g": false
+   },
+   "Boss W": {
+    "v": 1.5,
+    "g": false
+   },
+   "Depth": {
+    "v": 0.4,
+    "g": false
+   },
+   "Stepdown": {
+    "v": 0.1,
+    "g": false
+   },
+   "Work offset": {
+    "v": "G59",
+    "g": false
+   },
+   "Sides": {
+    "v": "Back, Right, Front, Left",
+    "g": false
+   },
+   "Corner Back-right": {
+    "v": "Chamfer 1",
+    "g": false
+   },
+   "Corner Front-right": {
+    "v": "Chamfer 0.1",
+    "g": false
+   },
+   "Corner Front-left": {
+    "v": "Sharp",
+    "g": false
+   },
+   "Corner Back-left": {
+    "v": "Round 0.25",
+    "g": false
+   },
+   "Keep tool down": {
+    "v": "NO",
+    "g": false
+   }
+  },
+  "code": [],
+  "extra": {
+   "r112stk": {
+    "shape": "square",
+    "round": {
+     "d": null,
+     "len": null
+    },
+    "square": {
+     "L": 4,
+     "W": 2.5,
+     "H": 1
+    },
+    "zp": "tr",
+    "z": "top",
+    "xend": "left",
+    "yend": "bottom",
+    "fp": "bc",
+    "top": null,
+    "front": null,
+    "off": {}
+   }
+  }
+ },
+ "from": {
+  "machineType": "demo VMC",
+  "control": "Fanuc 0i-style",
+  "lathe": false,
+  "note": "demo"
+ }
+}

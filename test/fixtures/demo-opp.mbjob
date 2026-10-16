@@ -1,0 +1,96 @@
+{
+ "app": "koriware-blocksmith",
+ "format": 2,
+ "exported": "2026-10-16",
+ "job": {
+  "type": "rboss",
+  "typeName": "Rectangular Boss/Profile",
+  "name": "DEMO OPPOSITE SIDES",
+  "note": "synthetic demo job for tests",
+  "values": {
+   "Cutter": {
+    "v": 0.5,
+    "g": false
+   },
+   "Tool": {
+    "v": 4,
+    "g": false
+   },
+   "Feed": {
+    "v": 20,
+    "g": false
+   },
+   "RPM": {
+    "v": 3000,
+    "g": false
+   },
+   "Clear Z": {
+    "v": 0.1,
+    "g": false
+   },
+   "Plunge feed": {
+    "v": 10,
+    "g": false
+   },
+   "Stepover %": {
+    "v": 50,
+    "g": false
+   },
+   "Finish stock": {
+    "v": 0.01,
+    "g": false
+   },
+   "Edge overrun": {
+    "v": 0.1,
+    "g": false
+   },
+   "Cut direction": {
+    "v": "Climb",
+    "g": false
+   },
+   "Z0": {
+    "v": 0,
+    "g": false
+   },
+   "Boss placement": {
+    "v": "Center in stock",
+    "g": false
+   },
+   "Boss L": {
+    "v": 4,
+    "g": false
+   },
+   "Boss W": {
+    "v": 2,
+    "g": false
+   },
+   "Depth": {
+    "v": 0.4,
+    "g": false
+   },
+   "Stepdown": {
+    "v": 0.1,
+    "g": false
+   },
+   "Work offset": {
+    "v": "G56",
+    "g": false
+   },
+   "Sides": {
+    "v": "Front, Back",
+    "g": false
+   },
+   "Keep tool down": {
+    "v": "YES",
+    "g": false
+   }
+  },
+  "code": []
+ },
+ "from": {
+  "machineType": "demo VMC",
+  "control": "Fanuc 0i-style",
+  "lathe": false,
+  "note": "demo"
+ }
+}

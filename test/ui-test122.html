@@ -15,7 +15,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
   // fill every red field through its chip, one at a time (as a user would)
   for(let n=0;n<14;n++)S(()=>{const c=[...d.querySelectorAll('#out .chip.r')].find(vis);if(!c)return;const k=(c.getAttribute('onclick')||'').match(/ed\('([^']+)'\)/);c.click();setTimeout(()=>{if(k)TY(k[1],k[1]=='Work offset'?'G54':VAL[k[1]]||'1')},60)},200);
   S(()=>{const b=T('Climb (G41)');if(b)b.click()});
-  S(()=>{const b=T('Control: not set');if(b)b.click()},400);S(()=>{const i=Q('input.r106ci');if(i&&vis(i)){i.click();setTimeout(()=>{const o=T('Fanuc 0i-style');o&&o.click();setTimeout(()=>{const dn=T('Done');dn&&dn.click();setTimeout(()=>T('Build').click(),150)},150)},150)}},700);
+  S(()=>{const b=T('Control: not set');if(b)b.click()},400);S(()=>{if(Q('#r99sheet')){const o=[...d.querySelectorAll('#r99sheet .opt')].find(b=>/Fanuc 0i/.test(b.textContent));o&&o.click();setTimeout(()=>{const dn=Q('#r99sheet .done');dn&&dn.click()},150);return}const i=Q('input.r106ci');if(i&&vis(i)){i.click();setTimeout(()=>{const o=T('Fanuc 0i-style');o&&o.click();setTimeout(()=>{const dn=T('Done');dn&&dn.click();setTimeout(()=>T('Build').click(),150)},150)},150)}},700);
   S(()=>{const b=T('Continue');if(b)b.click()},400);
   S(()=>{const b=T('Generate Code');b&&b.click()},600);
   S(()=>{const code=ev('(J&&J.code||[]).join("\\n")'),stk=ev('JSON.stringify(J&&J.stock)'),txt=(Q('#out')||{}).innerText||'',hold=!!Q('#r110hold');const my=errs.slice(e0).filter(x=>!/favicon|manifest/.test(x));
@@ -29,7 +29,7 @@ f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
   },100);
   S(()=>{let i=0;const nx=()=>{if(i<S2.length){S2[i++]();setTimeout(nx,400)}};if(!SHOT)S2.length&&nx()},S2ms());};
  const S2=[];const S2ms=()=>1500;
-/* control set from the job card */ const ctl0=()=>{S(()=>{T('Build').click()});S(()=>{const b=T('Control: not set');if(b)b.click()},400);S(()=>{const i=Q('input.r106ci');if(i&&vis(i)){i.click();setTimeout(()=>{const o=T('Fanuc 0i-style');o&&o.click();setTimeout(()=>{const dn=T('Done');dn&&dn.click()},150)},150)}},700)};
+/* control set from the job card */ const ctl0=()=>{S(()=>{T('Build').click()});S(()=>{const b=T('Control: not set');if(b)b.click()},400);S(()=>{if(Q('#r99sheet')){const o=[...d.querySelectorAll('#r99sheet .opt')].find(b=>/Fanuc 0i/.test(b.textContent));o&&o.click();setTimeout(()=>{const dn=Q('#r99sheet .done');dn&&dn.click()},150);return}const i=Q('input.r106ci');if(i&&vis(i)){i.click();setTimeout(()=>{const o=T('Fanuc 0i-style');o&&o.click();setTimeout(()=>{const dn=T('Done');dn&&dn.click()},150)},150)}},700)};
  // Mill A (demo, first in the list) with Fanuc 0i
  S(()=>{T('Machines').click()});S(()=>{[...d.querySelectorAll('button')].filter(b=>vis(b)&&b.textContent.trim()=='Use this machine')[0].click()},300);
  S(()=>{log('Mill A picked',ev('S.m[S.cur].name')=='Mill A',ev('S.m[S.cur].name')+ev('JSON.stringify(S.m[S.cur].s.find(x=>/control/i.test(x.k)))'))});
