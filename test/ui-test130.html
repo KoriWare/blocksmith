@@ -1,0 +1,34 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113o: Library cards for engraving jobs show only the real engrave text (live from the saved Text value), red No text yet when empty; other job types unchanged. Seeded from preset sample sentences, reload, real clicks. Demo names only. --><iframe id="f" src="../index.html?v=130" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,1500)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
+if(ph==0){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+if(ph==1){ph=2;
+ setTimeout(()=>{const res=ev(`(()=>{cur(0);const c=S.m[0].s.find(x=>x.k=='Control');c.st='user';const mk=(q,nm,tx)=>{tab('new');$('#q').value=q;go();if(tx!==undefined)J.p.Text={v:tx,g:false};J.name=nm;saveJob()};
+ mk(EXE.mill[0],'Demo shaft engrave','HELLO WORLD');
+ mk('G54 T7 engrave "SN-1024" 0.125 tall 0.004 deep start x0 y0 on top face','Demo flat engrave','DEMO-01');
+ mk('G54 T7 engrave "SN-1024" 0.125 tall 0.004 deep start x0 y0 on top face','Demo empty engrave',null);
+ c.v='HAAS NGC';S.m[0].mtype='vmc4';tab('new');pickJob('g47w');if(!J||J.op!='g47w')throw new Error('g47w avail='+jAvail('g47w')+' k='+jKind('g47w')+' ctrl='+ctrlKey());J.p.Text={v:'WRAP DEMO',g:false};J.name='Demo wrap engrave';saveJob();
+ mk('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1','Demo bolt');
+ localStorage.setItem('mc',JSON.stringify(S));return JSON.stringify(S.jobs.map(j=>[j.name,j.op,j.emode,(j.p.Text||{}).v,j.text]))})()`);window.SEED=res;w.location.reload()},1500);return}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+const vis=e=>e&&e.offsetParent;const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t)||[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim().startsWith(t));
+const seq=[];const S=(fn,ms=300)=>seq.push([fn,ms]);const cards=()=>[...d.querySelectorAll('#lo .card')].filter(vis);
+const card=n=>cards().find(c=>((c.querySelector('.t')||{}).textContent||'').trim()==n);const line=n=>{const c=card(n);return c?[...c.querySelectorAll('.s')].map(x=>x.textContent.trim()):[]};
+S(()=>log('seeded engraving jobs from sample sentences (SN-1024 in the stored sentence)',/SN-1024/.test(window.SEED||'')&&/"engrave","shaft"/.test(window.SEED||'')&&/g47w/.test(window.SEED||''),window.SEED));
+S(()=>T('Library').click(),600);
+S(()=>{if(/shot=1/.test(location.search)){const c=card('Demo wrap engrave');c&&c.scrollIntoView({block:'start'});seq.length=0;return}log('no card shows the stale sample sentence',!cards().some(c=>/SN-1024|tall/.test(c.textContent)),cards().map(c=>c.innerText.replace(/\s+/g,' ').slice(0,120)).join(' || '))});
+S(()=>{log('shaft engrave card: only “HELLO WORLD”',line('Demo shaft engrave').includes('“HELLO WORLD”'),line('Demo shaft engrave').join(' | '))});
+S(()=>{log('flat engrave card: only “DEMO-01”',line('Demo flat engrave').includes('“DEMO-01”'),line('Demo flat engrave').join(' | '))});
+S(()=>{log('wrapped (4th axis) engrave card: only “WRAP DEMO”',line('Demo wrap engrave').includes('“WRAP DEMO”'),line('Demo wrap engrave').join(' | '))});
+S(()=>{const c=card('Demo empty engrave'),e=c&&c.querySelector('.r113et');log('empty text: red "No text yet"',e&&e.textContent=='No text yet'&&/255, 138, 138/.test(w.getComputedStyle(e).color),e&&e.textContent)});
+S(()=>{log('other job types unchanged (bolt circle keeps its description)',line('Demo bolt').some(x=>/bolt circle/.test(x))&&!card('Demo bolt').querySelector('.r113et'),line('Demo bolt').join(' | '))});
+S(()=>{const q=Q('#lq');q.value='hello world';q.dispatchEvent(new w.Event('input'))},300);
+S(()=>{const t=cards().map(c=>c.querySelector('.t').textContent.trim());log('Library search finds the real engrave text',t.join('|')=='Demo shaft engrave',t.join('|'));const q=Q('#lq');q.value='';q.dispatchEvent(new w.Event('input'))},300);
+S(()=>{const c=card('Demo flat engrave').querySelector('[onclick^="reopen("]');c.click()},600);
+S(()=>{ev("J.p.Text={v:'DEMO-02',g:false};J.name='Demo flat engrave';saveJob()")},600);
+S(()=>{log('re-save with new text: card reads “DEMO-02” (live)',line('Demo flat engrave').includes('“DEMO-02”'),line('Demo flat engrave').join(' | '))},300);
+S(()=>{log('no exceptions',errs.length==0,errs.join(' || '));fin()},300);
+const run=i=>{if(i>=seq.length)return;try{seq[i][0]()}catch(e){log('step'+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),900)}
+</script>
