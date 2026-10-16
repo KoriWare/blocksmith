@@ -1,0 +1,36 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113r: four fixes, real clicks, demo names: shaft engrave Ø from the Stock card (old Shaft Ø fills it, no chip), setup sheet Values show the Stock card, ?sheet opens the sheet on load, G71 Start Z suggested 0.1 --><iframe id="f" src="../index.html?v=134" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+const SHOT=new URLSearchParams(location.search).get('shot');
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+const vis=e=>e&&e.offsetParent;const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t)||[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim().startsWith(t));
+const run=(seq,i)=>{if(i>=seq.length)return;try{seq[i][0]()}catch(e){log('step'+i,false,e.stack)}setTimeout(()=>run(seq,i+1),seq[i][1])};
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+if(ph==0){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+if(ph==1){ph=2;setTimeout(()=>{window.SEED=ev(`(()=>{cur(0);const c=S.m[0].s.find(x=>x.k=='Control');c.st='user';tab('new');ex(EXE.mill[0]);J.p.Text={v:'HELLO WORLD',g:false};J.name='Demo shaft';saveJob();const j=S.jobs[0];j.p['Shaft Ø']={v:1.25,g:false};j.r112stk={shape:null,round:{d:null,len:null},square:{L:null,W:null,H:null},zp:'bl',z:'top',xend:'left',yend:'bottom',fp:'bc',top:null,front:null,off:{}};localStorage.setItem('mc',JSON.stringify(S));return JSON.stringify([j.p['Shaft Ø'],j.r112stk.shape])})()`);w.location.reload()},1500);return}
+if(ph==2){ph=3;const seq=[],S=(fn,ms=300)=>seq.push([fn,ms]);
+S(()=>log('seeded an old shaft engrave job: Shaft Ø 1.25, empty Stock card',/1\.25/.test(window.SEED||''),window.SEED));
+S(()=>T('Library').click(),600);
+S(()=>{const c=[...d.querySelectorAll('#lo .card')].find(c=>/Demo shaft/.test(c.textContent));c.querySelector('[onclick^="reopen("]').click()},900);
+S(()=>{const chips=[...d.querySelectorAll('#out .chip')].filter(vis).map(c=>c.textContent.trim());const i=Q('#r112stk input[data-sk="round.d"]');log('1) opened: Stock card filled from the old value (round bar Ø 1.25), no Shaft Ø chip',i&&+i.value==1.25&&!chips.some(t=>/^Shaft Ø/.test(t))&&ev("J.r112stk.shape")=='round',(i&&i.value)+' :: '+chips.join('|'))},300);
+S(()=>{const i=Q('#r112stk input[data-sk="round.d"]');i.focus();i.value='1.5';i.dispatchEvent(new w.Event('input',{bubbles:true}));i.dispatchEvent(new w.Event('change',{bubbles:true}));i.blur()},500);
+S(()=>{const b=T('Generate Code');b&&b.click()},600);S(()=>{const b=T('They');b&&b.click()},500);
+S(()=>{log('1) the engraving reads Ø1.5 from the Stock card (radius 0.75 in the math), chip still hidden',+ev("J.p['Shaft Ø'].v")==1.5&&+ev("eGeom(J).R.toFixed(4)")==0.75&&![...d.querySelectorAll('#out .chip')].filter(vis).some(c=>/^Shaft Ø/.test(c.textContent.trim())),ev("JSON.stringify([J.p['Shaft Ø'],(()=>{try{return eGeom(J).R}catch(e){return e.message}})()])"))},300);
+S(()=>{let b=T('🖨 Setup sheet');if(!b){const sv=T('💾 Save…');sv&&sv.click()}},500);
+S(()=>{const dc=Q('#dlgno');if(Q('#dlgin')&&dc)dc.click();const b=T('🖨 Setup sheet');b?(b.click(),window.SHE=ev('(()=>{try{if(!document.getElementById("sheet"))sheet();return document.getElementById("sheet")?"ok":"none"}catch(e){return e.stack}})()')):log('setup sheet button',false,[...d.querySelectorAll('button')].filter(vis).map(b=>b.textContent.trim().slice(0,18)).join('|')+' ready='+ev('JSON.stringify([J.code&&J.code.length,typeof missing])'))},500);
+S(()=>{const sh=Q('#sheet');const row=sh&&[...sh.querySelectorAll('tr')].find(t=>/^Values/.test(t.textContent));const t=row?row.textContent:'';log('2) setup sheet Values: "Stock card: Ø1.50 round bar", no Stock Ø / Shaft Ø',/Stock card: Ø1\.50 round bar/.test(t)&&!/Stock Ø|Shaft Ø/.test(t),t.slice(0,300)+' SHE='+String(window.SHE).replace(/file:[^)]*index.html/g,''));if(SHOT=='sheet'){seq.length=0;return}const c=[...sh.querySelectorAll('button')].find(b=>/Close/.test(b.textContent));c.click()},500);
+S(()=>{ev("J.r112stk.shape='square';J.r112stk.square={L:3,W:2,H:0.5};sheet()")},500);
+S(()=>{const sh=Q('#sheet');const row=sh&&[...sh.querySelectorAll('tr')].find(t=>/^Values/.test(t.textContent));const t=row?row.textContent:'';log('2) square block shows L × W × H in Values',/Stock card: 3\.00 × 2\.00 × 0\.50 in block/.test(t),t.slice(0,200));const c=[...sh.querySelectorAll('button')].find(b=>/Close/.test(b.textContent));c.click();ev("J.r112stk.shape='round';show()")},500);
+S(()=>{ev("window.KEEP=jClone(J);S.cur=2;save();tab('new');pickJob('g71')")},600);
+S(()=>{log('4) G71 Start Z: gray suggestion 0.1 in front of the face',ev("JSON.stringify(J.p['Start Z'])")=='{"v":0.1,"g":true}'&&!ev("j2Req(J).includes('Start Z')"),ev("JSON.stringify([J.op,J.p['Start Z']])"))},300);
+S(()=>{const q=Q('#q');q.value='g71 rough and finish profile 1.0 bar start z 0.25 doc 0.05 t1 finish tool 2';ev('go()')},600);
+S(()=>{log('4) a typed Start Z (0.25) is kept, not overridden',ev("JSON.stringify(J.p['Start Z'])")=='{"v":0.25,"g":false}',ev("JSON.stringify([J.op,J.p['Start Z'],$('#q').value,(isL()?parseL:parse)($('#q').value)])"))},300);
+S(()=>{ev("S.cur=0;save();J=KEEP;drSave()");w.localStorage.setItem('r113t134','1');ph=3;f.src='../index.html?v=134&sheet=1'},500);
+run(seq,0);return}
+if(ph==3){ph=4;const seq=[],S=(fn,ms=300)=>seq.push([fn,ms]);S(()=>{},2500);
+S(()=>{const sh=Q('#sheet');log('3) ?sheet opens the setup sheet on load for the current job',!!sh&&vis(sh)!==undefined&&/Setup sheet/.test(sh.textContent),sh?sh.textContent.slice(0,120):'no sheet; ttl='+Q('#ttl').textContent+' '+ev('JSON.stringify([location.search,!!drGet(),!!localStorage.getItem(DRK),window.R113RS,typeof r113rQS,document.readyState,performance.now(),typeof J!="undefined"&&J&&J.op])'));if(SHOT=='qs'){seq.length=0;return}},2200);
+S(()=>{const sh=Q('#sheet');const c=sh&&[...sh.querySelectorAll('button')].find(b=>/Close/.test(b.textContent));c&&c.click()},500);
+S(()=>{log('3) Close works as normal (sheet gone, page underneath)',!Q('#sheet')&&!!Q('#ttl').textContent,Q('#ttl').textContent)},300);
+S(()=>{log('no exceptions',errs.length==0,errs.join(' || '));fin()},300);
+run(seq,0)}}
+</script>
