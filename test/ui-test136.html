@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113s: (1) reopened thread mill on demo Mill B keeps RPM 4000 not red; (3) face one-tap Fix names the Z it writes. --><iframe id="f" src="../index.html?v=136" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><iframe id="g" src="about:blank" style="display:none;width:390px;height:844px"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,800)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+f.onload=()=>{const w=f.contentWindow,d=w.document;if(!ph){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const vis=e=>e&&e.offsetParent;
+const chip=()=>[...d.querySelectorAll('#out button')].find(e=>/ed\('RPM'\)/.test(e.getAttribute('onclick')||''));
+const seq=[];const S=(fn,ms=500)=>seq.push([fn,ms]);const run=i=>{if(i>=seq.length)return part2();try{seq[i][0]()}catch(e){log('step '+i,false,e.message)}setTimeout(()=>run(i+1),seq[i][1])};
+S(()=>E(`cur(1);const c=S.m[1].s.find(x=>x.k=='Control');c.st='user';tab('new');$('#q').value='G54 T5 thread mill internal 1/2-13 major 0.5 0.75 deep center x0 y0 z0 0 0.375 cutter';go();`));
+S(()=>{const c=chip();c?c.click():log('RPM chip',false,'missing')});
+S(()=>{const i=d.querySelector('#dlgin');i.value='4000';d.querySelector('#dlgok').click()});
+S(()=>{const c=chip();log('RPM 4000 not red before save',c&&!/\br111rpm\b|\br\b/.test(c.className)&&/4000/.test(c.textContent),c&&c.className+'='+c.textContent)});
+S(()=>E("J.name='Demo thread';saveJob()"),800);
+S(()=>{const c=[...d.querySelectorAll('#lo .card')].find(c=>/Demo thread/.test(c.textContent));const b=c&&c.querySelector('[onclick^="reopen("]');b?b.click():log('Library reopen',false,'missing')},900);
+S(()=>{const c=chip();log('reopened RPM 4000 not red',c&&!/\br111rpm\b|\br\b/.test(c.className)&&/4000/.test(c.textContent),c&&c.className+'='+c.textContent);log('no stale J.r111S',!E('J.r111S'),E('JSON.stringify(J.r111S)'))});
+setTimeout(()=>run(0),2500)};
+function part2(){g.src='ui-test125-run.html?mt=hmc';const iv=setInterval(()=>{try{const t=g.contentDocument.getElementById('o').textContent;if(!/P=\d+/.test(t))return;clearInterval(iv);const w=g.contentDocument.getElementById('f').contentWindow,d=w.document;
+w.eval("J.p['Clear Z']={v:-0.4,g:false};show()");const b=d.getElementById('r113sFix');log('face Fix button names written Z',b&&b.textContent.trim()=='Set Clear Z to Z0.35',b&&b.textContent);
+if(b)b.click();setTimeout(()=>{log('Clear Z set to 0.1',+w.eval("J.p['Clear Z'].v")==0.1);const code=w.eval("gen(J).code.join('\\n')");log('code writes Q0.1 under G52 Z0.25 (=Z0.35)',/G52[^\n]*Z0\.25/.test(code)&&/Q0\.1\b/.test(code),code.slice(0,400));log('button gone after fix',!d.getElementById('r113sFix'));log('toast shows Z',/Z0\.35/.test((d.getElementById('r79toast')||{}).textContent||''));fin()},600)}catch(e){}},500)}
+</script>
