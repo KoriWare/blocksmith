@@ -1,0 +1,38 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113n: legacy data link-up - seed localStorage with v113m-style saved data (doubled machine names, a job list that references them, a name clash), reload, then with real clicks: Library, Open, version history, Share, setup sheet, Job manager, Build picker all still link up after the load-time cleanup. Demo names only. --><iframe id="f" src="../index.html?v=128" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,1500)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
+if(ph==0){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+if(ph==1){ph=2;// seed only (not under test): two real saves of a bolt-circle job on Mill A (so it has a version history) plus a job list, then rewrite the stored data the way v113m left it
+ setTimeout(()=>{const res=ev(`(()=>{cur(0);const c=S.m[0].s.find(x=>x.k=='Control');c.st='user';tab('new');$('#q').value='G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1';go();Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k=='Work offset'?'G54':1,g:false}});show();J.name='Demo bolt';saveJob();reopen(0);J.p['Start°'].v=20;show();J.name='Demo bolt';saveJob();
+ const a=JSON.parse(JSON.stringify(S.jobs[0]));const b=JSON.parse(JSON.stringify(a));b.date=a.date-60000;b.versions=[];S.jobs.push(b); /* b: an old job already named plain "Demo bolt" */
+ a.name='Demo bolt · Mill A · Mill A';S.jobs[0]=a;
+ const l={id:'jlseed',mid:S.m[0].id,name:'Demo list',mode:'inline',prog:1000,entries:[{id:'e1',label:'Demo bolt · Mill A',job:JSON.parse(JSON.stringify(Object.assign({},a,{name:undefined}))),on:true}]};S.jlists=(S.jlists||[]).filter(x=>x.id!='jlseed');S.jlists.push(l);
+ localStorage.setItem('mc',JSON.stringify(S));return JSON.stringify([S.jobs.map(j=>[j.name,j.machine,(j.versions||[]).length]),S.m[0].id])})()`);window.SEED=res;w.location.reload()},1500);return}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+let SHARED=null;try{w.navigator.share=async x=>{SHARED=x};w.navigator.canShare=()=>true}catch(e){}
+const vis=e=>e&&e.offsetParent;const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t)||[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim().startsWith(t));
+const seq=[];const S=(fn,ms=300)=>seq.push([fn,ms]);const cards=()=>[...d.querySelectorAll('#lo .card')].filter(vis);
+S(()=>log('seeded v113m data (before reload)',/Demo bolt · Mill A · Mill A/.test(window.SEED||''),window.SEED));
+S(()=>{log('after reload: stored names cleaned, the clash kept apart ("Demo bolt (2)" + "Demo bolt"), version history intact',ev('JSON.stringify(S.jobs.map(j=>[j.name,(j.versions||[]).length]))')=='[["Demo bolt (2)",1],["Demo bolt",0]]',ev('JSON.stringify(S.jobs.map(j=>[j.name,j.machine,(j.versions||[]).length]))'))});
+S(()=>T('Library').click(),500);
+S(()=>{const t=cards().map(c=>(c.querySelector('.t')||{}).textContent.trim());log('Library: two cards, plain names, machine line once each',t.join('|')=='Demo bolt (2)|Demo bolt'&&cards().every(c=>(c.textContent.match(/Mill A/g)||[]).length==1),t.join('|')+' :: '+cards().map(c=>c.innerText.replace(/\s+/g,' ').slice(0,90)).join(' || '))});
+S(()=>{log('version history still on the renamed job',/Version history \(1 earlier\)/.test(cards()[0].textContent),cards()[0].innerText.replace(/\s+/g,' ').slice(0,300))});
+S(()=>{const b=cards()[0].querySelector('.mbsh');b?b.click():log('Share job button',false,'')},600);
+S(()=>{const f=SHARED&&SHARED.files&&SHARED.files[0];log('Share: file named for the clean name and carries it',f&&/^Demo-bolt-?\(?2?\)?.*\.mbjob$|^Demo-bolt-2\.mbjob$/.test(f.name),f?f.name:'no share call '+JSON.stringify(SHARED&&Object.keys(SHARED)));if(f)f.text().then(t=>{window.SH=t})},1500);
+S(()=>{const t=window.SH||ev('JSON.stringify(mbFile(S.jobs[0]))');log('Share file job name is "Demo bolt (2)" (no machine)',/"name":\s*"Demo bolt \(2\)"/.test(t),'len='+t.length+' '+(t.match(/"name":[^,]*/g)||[]).join(' ')+' file='+(SHARED&&SHARED.files&&SHARED.files[0].name))},300);
+S(()=>{const c=cards()[0].querySelector('[onclick^="reopen("]');c.click()},600);
+S(()=>{log('Open: Build has the renamed job with its code',ev('J.name')=='Demo bolt (2)'&&ev('(J.code||J.saved||[]).length')>5,ev('JSON.stringify([J.name,(J.code||[]).length])'))},300);
+S(()=>{const b=T('Generate Code');b&&b.click()},600);S(()=>{const b=T('They');b&&b.click()},600);
+S(()=>{let b=T('🖨 Setup sheet');if(!b){const sv=T('💾 Save…');if(sv){sv.click()}}},500);
+S(()=>{const dc=Q('#dlgno')||[...d.querySelectorAll('button')].filter(vis).find(b=>/^Cancel$/.test(b.textContent.trim()));if(Q('#dlgin')&&dc)dc.click();let b=T('🖨 Setup sheet');b?b.click():log('Setup sheet button',false,[...d.querySelectorAll('button')].filter(vis).map(b=>b.textContent.trim().slice(0,18)).join('|'))},500);
+S(()=>{const sh=Q('#sheet');log('setup sheet (titled by job type) names the machine once, never doubled',sh&&/Mill A \(demo/.test(sh.textContent)&&!/Mill A · Mill A/.test(sh.textContent),sh&&sh.innerText.replace(/\s+/g,' ').slice(0,300));const c=sh&&[...sh.querySelectorAll('button')].find(b=>/Close/.test(b.textContent));c&&c.click()},500);
+S(()=>{const pk=[...d.querySelectorAll('option')].filter(o=>/^my:/.test(o.value));log('Build picker "my jobs" lists both by clean name and opens the right one',pk.length==2&&pk.some(o=>o.textContent.trim()=='Demo bolt (2)')&&pk.some(o=>o.textContent.trim()=='Demo bolt'),pk.map(o=>o.textContent).join('|'));const o2=pk.find(o=>o.textContent.trim()=='Demo bolt');if(o2){const s=o2.closest('select');s.value=o2.value;s.dispatchEvent(new w.Event('change',{bubbles:true}))}},500);
+S(()=>{log('picker open lands on "Demo bolt" (the other job, not merged)',ev('J.name')=='Demo bolt'&&ev('(J.versions||[]).length')==0,ev('JSON.stringify([J.name,(J.versions||[]).length])'))},400);
+S(()=>T('Library').click(),500);S(()=>{const b=T('Open Job manager');b&&b.click()},500);S(()=>{const b=[...d.querySelectorAll('.jmls button')].find(b=>vis(b)&&/Open/.test(b.textContent));b?b.click():log('open Demo list',false,'')},500);
+S(()=>{const e=[...d.querySelectorAll('.jme')].filter(vis)[0];log('Job manager entry from the doubled job reads "Demo bolt (2)" (same as its Library card) and still renders',e&&/Demo bolt \(2\)/.test(e.textContent)&&!/Mill A/.test(e.textContent)&&ev('jmL().entries[0].label')=='Demo bolt (2)',ev('jmL().entries[0].label')+' | '+(e&&e.innerText.replace(/\s+/g,' ').slice(0,160)))},400);
+S(()=>{const s=Q('#jmadd');const o=s?[...s.options].filter(o=>/^lib:/.test(o.value)).map(o=>o.textContent.trim()):[];log('Job manager add-picker lists Library jobs by the same names',o.join('|')=='Demo bolt|Demo bolt (2)'||o.join('|')=='Demo bolt (2)|Demo bolt',o.join('|'))},300);
+S(()=>{log('no exceptions',errs.length==0,errs.join(' || '));fin()},300);
+const run=i=>{if(i>=seq.length)return;try{seq[i][0]()}catch(e){log('step'+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),900)}
+</script>
