@@ -1,0 +1,74 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113v: Rectangular Boss/Profile real clicks on demo Mill A (3-axis VMC): Stock card square block, tap-a-side diagram, per-corner Sharp/Round/Chamfer, all 4 sides / 2 adjacent / 2 opposite / 1 side, Center in stock vs Point from work offset, oversize-corner and zero-size holds, code checks, Simulate, hidden on Mill B (4-axis) and the lathe. ?shot=1 stops at the side/corner picker, ?shot=2 at Simulate. --><iframe id="f" src="../index.html?v=139" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,900)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+const SHOT=(location.search.match(/shot=(\d)/)||[])[1]|0;const NM='Rectangular Boss/Profile';
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);if(!ph){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const vis=e=>e&&e.offsetParent;
+const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t)||[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim().startsWith(t));
+const CLK=e=>e.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+const TYPE=(i,v)=>{i.focus();if(i.tagName=='SELECT'){const op=[...i.options].find(o=>o.value==v||o.textContent.trim()==v);if(op)i.value=op.value}else i.value=v;i.dispatchEvent(new w.Event('input',{bubbles:true}));i.dispatchEvent(new w.Event('change',{bubbles:true}));i.blur()};
+const chip=k=>[...d.querySelectorAll('#out .chip,#out button')].find(e=>vis(e)&&(e.getAttribute('onclick')||'')==`ed('${k}')`);
+const seq=[];const S=(fn,ms=300)=>seq.push([fn,ms]);
+const ED=(k,v)=>{S(()=>{const c=chip(k);c?c.click():log('chip '+k,false,'missing')},150);S(()=>{const i=Q(`#out [data-k="${k}"]`)||Q('#dlgin');if(!i)return log('input '+k,false,'none');TYPE(i,v);const ok=Q('#dlgok');if(ok&&vis(ok))ok.click()},250)};
+const SIDE=k=>S(()=>{const e=Q(`#rbpick [data-rbside="${k}"]`);e?CLK(e):log('side '+k,false,'no diagram')},300);
+const COR=(c,k,v)=>{S(()=>{const b=Q(`#rbpick [data-rbc="${c}"][data-k="${k}"]`);b?b.click():log('corner '+c+' '+k,false,(Q('#rbpick')||{}).innerText)},300);if(v!=null)S(()=>{const i=Q(`#rbpick input[data-c="${c}"]`);i?TYPE(i,v):log('corner size '+c,false,'no input')},300)};
+const code=()=>ev("(J.code||[]).join('\\n')");const GEN=()=>{S(()=>{const b=T('Continue');b&&b.click()},300);S(()=>{const b=T('Generate Code');b&&b.click()},500)};
+const ck=()=>ev("JSON.stringify(checks(J).filter(c=>/unpicked|rapid into stock/i.test(c[0])))");
+const picked=()=>[...d.querySelectorAll('#rbpick [data-rbside]')].filter(e=>e.getAttribute('fill')=='#ffd21f').map(e=>e.dataset.rbside).join(',');
+const rows=()=>[...d.querySelectorAll('#rbpick .rbc')].map(e=>e.dataset.c).join(',');
+// --- machine filter (real taps on the picker)
+const PICK=()=>{S(()=>T('Build').click());S(()=>{const b=[...d.querySelectorAll('button')].find(b=>vis(b)&&/^Milling/.test(b.textContent.trim()));b&&b.click()},300)};
+S(()=>ev("cur(1)"),300);PICK();S(()=>log('hidden on demo Mill B (4-axis VMC)',!T(NM)&&!ev("jAvail('rboss')"),''));
+S(()=>ev("cur(2)"),300);S(()=>T('Build').click(),300);S(()=>log('hidden on the demo lathe',!T(NM)&&!ev("jAvail('rboss')"),''));
+S(()=>ev("cur(0);const c=S.m[0].s.find(x=>x.k=='Control');c.st='user'"),300);PICK();
+S(()=>{const b=T(NM);log('shown on demo Mill A (3-axis VMC) in Milling',!!b,'');b&&b.click()},600);
+S(()=>{log('Build shows the new job and the side diagram',ev('J.op')=='rboss'&&!!Q('#rbpick'),ev('J&&J.op'));});
+// stock card: square block 4 × 3 × 1, zero front-left / top
+ED('Boss placement','Center in stock');
+S(()=>log('Boss placement = Center in stock (tap)',ev("J.p['Boss placement'].v")=='Center in stock',ev("JSON.stringify(J.p['Boss placement'])")));
+ED('Boss L','2');ED('Boss W','1.5');ED('Depth','0.3');ED('Z0','0');ED('Cutter','0.5');ED('Stepdown','0.15');ED('Tool','4');
+ED('Work offset','G54');S(()=>{const b=T('Continue');b&&b.click()},400);
+S(()=>{const b=Q('#r112stk [data-st=shape][data-sv=square]');b?CLK(b):log('Stock card square',false,'missing')},400);
+S(()=>{[['square.L','4'],['square.W','3'],['square.H','1']].forEach(([k,v])=>{const i=Q(`#r112stk input[data-sk="${k}"]`);i?TYPE(i,v):log('stock '+k,false,'missing')})},400);
+
+// A) all four sides with mixed corners
+S(()=>log('nothing picked yet: holds',/Tap at least one side/.test(ev('rbData(J).hold')),ev('rbData(J).hold')));['Back','Right','Front','Left'].forEach(SIDE);
+S(()=>{log('A: all four sides highlighted when picked',picked()=='Back,Front,Left,Right',picked());log('A: a corner row for each of the 4 corners',rows()=='Back-right,Front-right,Front-left,Back-left',rows())});
+COR('Back-right','Round','0.25');COR('Front-right','Chamfer','0.1');COR('Back-left','Round','0.125');
+S(()=>{log('A: corner choices stored',ev("['Back-right','Front-right','Front-left','Back-left'].map(c=>J.p['Corner '+c].v).join('|')")=='Round 0.25|Chamfer 0.1|Sharp|Round 0.125',ev("['Back-right','Front-right','Front-left','Back-left'].map(c=>J.p['Corner '+c].v).join('|')"));if(SHOT==1){seq.length=0;Q('#rbpick').scrollIntoView({block:'center'})}},300);
+GEN();
+S(()=>{const t=code();log('A: code written (Center in stock: X2 Y1.5)',/CENTER X2\.0 Y1\.5 - SIDES: BACK, RIGHT, FRONT, LEFT/.test(t),t.slice(0,400));
+ log('A: finish has the round corners (R0.25, R0.125) and the chamfer',/G02 X3\.0 Y2\.0 I0\.0 J-0\.25/.test(t)&&/G02 X1\.125 Y2\.25 I0\.125 J0\.0/.test(t)&&/G01 X3\.0 Y0\.85\nG01 X2\.9 Y0\.75/.test(t),t.split('FINISH PASS')[1]);
+ log('A: climb G41 D4 with arc lead-in, overlap, arc lead-out, G40',/G01 G41 D4 X[\d.-]+ Y[\d.-]+ F[\d.]+ \(COMP ON - ARC LEAD-IN R0\.375\)\nG03 /.test(t)&&/\(OVERLAP 0\.02\)\nG03 [^\n]*\(ARC LEAD-OUT\)\nG40 G01/.test(t),'');
+ log('A: two depth levels (Stepdown 0.15 to 0.3)',(t.match(/^G01 Z-0\.15 /mg)||[]).length==1&&(t.match(/^G01 Z-0\.3 /mg)||[]).length==2,'');
+ log('A: code checks pass (no cut through the boss / unpicked side, no rapid into stock)',/"No cut through the boss or an unpicked side",true\],\["No rapid into stock",true/.test(ck()),ck());
+ const bad=ev("(()=>{const c=[...J.code];const i=c.findIndex(l=>/^G01 X1\\.0 Y0\\.75$/.test(l));c.splice(i+1,0,'G01 X2.0 Y1.5');return rbVerify(J,c).cut.length})()");log('A: the check catches a cut into the boss',+bad>=1,bad)});
+S(()=>{const b=T("They're free");b&&b.click()},300);S(()=>T('Simulate').click(),900);
+S(()=>{log('A: all code checks pass (incl. cuts stay inside the stock: past-the-edge runs are air)',/Code checks: (\d+) of \1 pass/.test(d.body.innerText),(d.body.innerText.match(/Code checks:[^\n]*\n[^\n]*/)||[''])[0]);log('A: Simulate opens',/Simulate/.test((Q('#ttl')||{}).textContent||'')&&!/Finish this job in Build/.test(d.body.innerText),(Q('#ttl')||{}).textContent);if(SHOT==2){seq.length=0;setTimeout(()=>{ev('try{scrub(+$("#sc").max)}catch(e){}');const t=T('Top');t&&t.click();setTimeout(()=>{const fb=T('Fit');fb&&fb.click()},200)},300)}},700);
+S(()=>T('Build').click(),500);
+// F) holds: zero size, oversize corners
+COR('Back-left','Round','0');S(()=>log('F: a size of 0 holds',/Back-left corner: the radius must be more than 0/.test(ev('rbData(J).hold')),ev('rbData(J).hold')));
+COR('Back-left','Round','1.1');COR('Back-right','Round','1');S(()=>{const h=ev('rbData(J).hold');log('F: corners adding up to more than a side hold the job',/Back side: its corners \(1\.1 \+ 1\.0\) add up to more than its length 2\.0/.test(h),h);log('F: hold is shown on Build',/add up to more than its length/.test((Q('#out')||{}).innerText||''),'')});
+COR('Back-left','Sharp');COR('Back-right','Sharp');
+// B) two adjacent sides: Back + Right
+SIDE('Front');SIDE('Left');S(()=>{log('B: Back + Right picked, one corner row (Back-right)',picked()=='Back,Right'&&rows()=='Back-right',picked()+' / '+rows())});COR('Back-right','Chamfer','0.2');GEN();
+S(()=>{const t=code();log('B: open chain starts past the stock (X-0.35) and ends past it (Y-0.35)',/^G00 X-0\.35 Y3\.51$/m.test(t)&&/G01 X[\d.]+ Y-0\.35\n/.test(t),t.slice(0,600));log('B: one finish pass with the chamfer',(t.match(/FINISH PASS/g)||[]).length==1&&/G01 X2\.8 Y2\.25\nG01 X3\.0 Y2\.05/.test(t),t.split('FINISH PASS')[1]);log('B: checks pass',/,true\],\[[^\]]*,true\]/.test(ck()),ck())});
+// C) two opposite sides: Back + Front
+SIDE('Right');SIDE('Front');S(()=>log('C: Back + Front picked, no corner rows',picked()=='Back,Front'&&rows()=='',picked()+' / '+rows()));GEN();
+S(()=>{const t=code();const fp=t.split('(FINISH PASS');log('C: two finish passes, lift between them',fp.length==3&&/G00 Z0\.1\n$/.test(fp[1]),'');log('C: never drags across an unpicked side (lifts between Back and Front rough passes)',/G01 X4\.35 Y2\.51 F20\.0\nG00 Z0\.1\nG00 X4\.35 Y0\.24/.test(t),t.slice(0,800));log('C: checks pass',/,true\],\[[^\]]*,true\]/.test(ck()),ck())});
+// D) one side: Right
+SIDE('Back');SIDE('Front');SIDE('Right');S(()=>log('D: only Right picked',picked()=='Right',picked()));GEN();
+S(()=>{const t=code();log('D: one side: straight down past the stock at both ends',/SIDES: RIGHT\)/.test(t)&&/^G00 X3\.26 Y3\.35$/m.test(t)&&/G01 X3\.26 Y-0\.35 F20\.0/.test(t),t.slice(0,600));log('D: checks pass',/,true\],\[[^\]]*,true\]/.test(ck()),ck())});
+// E) Center in stock vs a point from the work offset
+S(()=>{w.__c1=code()});
+S(()=>{const c=chip('Boss placement');c?c.click():log('Boss placement chip',false,'missing')},400);
+S(()=>{log('E: Point from work offset asks for Point / Point X / Point Y (red, never guessed)',ev("J.p['Boss placement'].v")=='Point from work offset'&&['Boss point','Point X','Point Y'].every(k=>{const c=chip(k);return c&&/\br\b/.test(c.className)}),['Boss point','Point X','Point Y'].map(k=>{const c=chip(k);return c&&c.className+'='+c.textContent}).join(' | '));log('E: holds until they are given',/Pick which Boss point|Enter Point X/.test(ev('rbData(J).hold')),ev('rbData(J).hold'))});
+ED('Boss point','Front-left');
+ED('Point X','1');ED('Point Y','0.75');GEN();
+S(()=>{const t=code();log('E: front-left point X1 Y0.75 = same boss as Center in stock',t.replace(/\(.*?\)/g,'')==w.__c1.replace(/\(.*?\)/g,''),t.slice(0,300)+' HOLD '+ev('rbData(J).hold')+' P '+ev('JSON.stringify(J.p)'))});
+ED('Point X','0.5');GEN();S(()=>{const t=code();log('E: moving the point moves the boss (center X1.5)',/CENTER X1\.5 Y1\.5/.test(t)&&/G01 X2\.76 Y-0\.35 F20\.0/.test(t),t.slice(0,500))});
+S(()=>{ev("help('rboss')")},500);S(()=>log('Help has a Rectangular Boss/Profile entry',/Rectangular Boss\/Profile/.test(d.body.innerText)&&/tap each side/i.test(d.body.innerText),''));
+S(()=>log('no exceptions',errs.length==0,errs.join(' || ')));
+const run=i=>{if(i>=seq.length){if(!SHOT)fin();return}try{seq[i][0]()}catch(e){log('step '+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),900)};
+</script>
