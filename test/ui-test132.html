@@ -1,0 +1,38 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113p: deleting a Library job removes its linked Job manager entries (confirm names the list count); linked entries whose job is already gone are dropped on load; unlinked old entries stay with a gray not in Library tag; saved programs untouched. Real clicks, demo names. --><iframe id="f" src="../index.html?v=132" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,1500)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
+if(ph==0){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+if(ph==1){ph=2;
+ setTimeout(()=>{const res=ev(`(()=>{cur(0);const c=S.m[0].s.find(x=>x.k=='Control');c.st='user';const mk=nm=>{tab('new');$('#q').value='G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1';go();Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k=='Work offset'?'G54':1,g:false}});show();J.name=nm;saveJob()};
+ mk('Demo gone');mk('Demo keep');mk('Demo gone');/* 2nd version of Demo gone keeps its id */
+ const ix=n=>S.jobs.findIndex(j=>j.name==n);const l1=jmNew('Demo list 1');jmAdd(l1,'lib:'+ix('Demo gone'));jmAdd(l1,'lib:'+ix('Demo keep'));
+ l1.entries.push({id:'old1',label:'Old part · DEMO-01',job:JSON.parse(JSON.stringify(l1.entries[0].job)),on:true});
+ const l2=jmNew('Demo list 2');jmAdd(l2,'lib:'+ix('Demo gone'));
+ l1.entries.push({id:'dead1',label:'Dead job',job:JSON.parse(JSON.stringify(l1.entries[0].job)),on:true,lib:'ljdead',lk2:1});
+ S.progs=S.progs||[];S.progs.push({id:'pgseed',gid:'pgseed',lid:l1.id,mid:S.m[0].id,name:'Demo prog',ver:1,lines:['%','O1000','M30','%'],date:Date.now(),snap:JSON.parse(JSON.stringify(l1.entries))});
+ S.cur=0;save();localStorage.setItem('mc',JSON.stringify(S));return JSON.stringify([S.jobs.map(j=>[j.name,!!j.uid,j.uid]),S.jlists.map(l=>l.entries.map(e=>[e.label,e.lib]))])})()`);window.SEED=res;w.location.reload()},1500);return}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+const vis=e=>e&&e.offsetParent;const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t)||[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim().startsWith(t));
+const seq=[];const S=(fn,ms=300)=>seq.push([fn,ms]);const cards=()=>[...d.querySelectorAll('#lo .card')].filter(vis);
+const ents=()=>[...d.querySelectorAll('.jme')].filter(vis).map(e=>e.querySelector('b').textContent.replace(/^\d+\.\s*/,'').trim()+(e.querySelector('.r113nl')?'[not in Library]':'')).join('|');
+const openList=n=>{S(()=>T('Library').click(),500);S(()=>T('Open Job manager').click(),500);S(()=>{const r=[...d.querySelectorAll('.jmls')].find(x=>x.textContent.includes(n));r.querySelector('button').click()},500)};
+const store=()=>JSON.parse(w.localStorage.getItem('mc'));
+S(()=>log('seeded: Demo gone (2 versions, one id) in 2 lists, Demo keep, an old unlinked entry, a dead link',/Dead job/.test(window.SEED||''),window.SEED));
+S(()=>log('on load the entry whose Library job is gone was removed (stored too)',!store().jlists.some(l=>l.entries.some(e=>e.lib=='ljdead'))&&store().jlists[0].entries.length==3,JSON.stringify(store().jlists.map(l=>l.entries.map(e=>e.label)))));
+openList('Demo list 1');
+S(()=>{log('list 1: linked entries plain, old unlinked entry kept with a gray "not in Library" tag',ents()=='Demo gone|Demo keep|Old part · DEMO-01[not in Library]',ents());if(/shot=1/.test(location.search))seq.length=0});
+S(()=>T('Library').click(),500);
+S(()=>{const c=cards().find(c=>c.querySelector('.t').textContent.trim()=='Demo gone');const b=[...c.querySelectorAll('button')].find(b=>/Delete/.test(b.textContent));b.click()},500);
+S(()=>{const t=((Q('#dlg')||Q('.dlg')||d.body).innerText||'');log('delete confirm says "Also in 2 job lists — it will be removed from them"',/Also in 2 job lists — it will be removed from them/.test(t),t.slice(0,300));const y=T('Delete job');y.click()},500);
+S(()=>{log('confirmed: job gone from Library, entries gone from both lists, other entries kept',!cards().some(c=>c.querySelector('.t').textContent.trim()=='Demo gone')&&JSON.stringify(store().jlists.map(l=>l.entries.map(e=>e.label)))=='[["Demo keep","Old part · DEMO-01"],[]]',JSON.stringify(store().jlists.map(l=>l.entries.map(e=>e.label))))},300);
+S(()=>{log('saved program untouched (record and snapshot unchanged)',ev("JSON.stringify(S.progs.filter(p=>p.id=='pgseed').map(p=>[p.lines.length,p.snap.length]))")=='[[4,4]]',ev("JSON.stringify(S.progs.map(p=>[p.id,p.lines.length,(p.snap||[]).length]))"))});
+S(()=>{const c=cards().find(c=>c.querySelector('.t').textContent.trim()=='Demo keep');[...c.querySelectorAll('button')].find(b=>/Delete/.test(b.textContent)).click()},500);
+S(()=>{const t=((Q('#dlg')||Q('.dlg')||d.body).innerText||'');log('single list: "Also in 1 job list — it will be removed from it"',/Also in 1 job list — it will be removed from it/.test(t),t.slice(0,300));const n=[...d.querySelectorAll('button')].filter(vis).find(b=>/^Cancel$|^No$|^Keep/.test(b.textContent.trim()));n&&n.click()},500);
+S(()=>{log('cancel keeps the job and its entry',cards().some(c=>c.querySelector('.t').textContent.trim()=='Demo keep')&&store().jlists[0].entries.length==2,JSON.stringify(store().jlists.map(l=>l.entries.length)))},300);
+openList('Demo list 1');
+S(()=>{log('list 1 now: Demo keep + Old part [not in Library]',ents()=='Demo keep|Old part · DEMO-01[not in Library]',ents())});
+S(()=>{log('no exceptions',errs.length==0,errs.join(' || '));fin()},300);
+const run=i=>{if(i>=seq.length)return;try{seq[i][0]()}catch(e){log('step'+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),900)}
+</script>
