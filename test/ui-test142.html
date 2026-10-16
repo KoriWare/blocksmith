@@ -1,0 +1,63 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113z8: Rectangular Boss/Profile - nine Build cards, shared Cutter comp card (Off / G41 / G42) is the one direction control, comp card on every milling profile/boss/pocket job, Keep tool down links extra material rows around the outside of the stock, corner rows merged into one line/arc, view row only on Simulate (six even buttons), Circular Boss/Profile unchanged. Synthetic fixture: fixtures/demo-z8.mbjob. ?shot=1 stops on Build, ?shot=2 on Simulate. --><iframe id="f" src="../index.html?v=142" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+const SHOT=(location.search.match(/shot=(\d)/)||[])[1]|0;let FX='';
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);if(!ph){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const vis=e=>e&&e.offsetParent;
+const CLK=e=>e.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t);
+const chipIn=(card,k)=>{const c=Q('#'+card);return !!(c&&[...c.querySelectorAll('.chip,button')].find(e=>vis(e)&&(e.getAttribute('onclick')||'')==`ed('${k}')`))};
+const code=()=>ev("(J.code||[]).join('\\n')");const GEN=()=>{const c=T('Continue');if(c){c.click();setTimeout(()=>{const b=T('Generate Code');b&&b.click()},400)}else{const b=T('Generate Code');b&&b.click()}};
+const seq=[];const S=(fn,ms=400)=>seq.push([fn,ms]);
+// A: comp card coverage - every Milling job whose name says pocket / boss / profile / slot must use the shared Cutter comp card
+S(()=>{const R=JSON.parse(ev(`JSON.stringify(Object.keys(J2).filter(k=>(' '+(JCAT['Milling']||'')+' ').includes(' '+k+' ')&&/pocket|boss|profile|slot/i.test(J2[k].name||'')).map(k=>[k,R112CMP.test(k)]))`));
+ const EX={troch:'trochoidal slot: no separate finish pass to compensate',g150:'Haas G150 native pocket cycle: the control applies the offset'};
+ const miss=R.filter(([k,ok])=>!ok&&!EX[k]).map(x=>x[0]);log('A: every Milling profile/boss/pocket job type has the Cutter comp card (Off / G41 / G42) - '+R.map(x=>x[0]).join(', '),miss.length==0&&R.some(x=>x[0]=='rboss'&&x[1]),'missing: '+miss.join(', '))},200);
+// open the synthetic Rect Boss fixture through the Library import
+S(()=>{try{const x=new XMLHttpRequest();x.open('GET','fixtures/demo-z8.mbjob',false);x.send();FX=x.responseText}catch(e){log('fixture',false,e.message)}ev("tab('recent')")},800);
+S(()=>{w.mbRead(new w.File([FX],'demo-z8.mbjob'))},4000);
+S(()=>{const b=Q('#mbgo');b?CLK(b):log('import',false,'no #mbgo')},4000);
+S(()=>{const L=[...d.querySelectorAll('#v *')].filter(e=>vis(e)&&!e.children.length&&/^(Demo z8 boss|Rectangular Boss\/Profile)$/.test(e.textContent.trim()));L.length?CLK(L[L.length-1]):log('open',false,'no job link')},4000);
+S(()=>{ev("(()=>{const m=S.m[S.cur];m.s.forEach(x=>{x.st='user'});const c=m.s.find(x=>x.k=='Control');if(c&&!String(c.v||'').trim()){const sp=r99spec('Control');c.v=sp&&sp.ch?sp.ch.find(v=>/fanuc/i.test(v))||sp.ch[0]:'Fanuc 0i'}save();show()})()")},800);
+S(()=>{log('B: fixture opened as Rectangular Boss/Profile on Build',ev('J&&J.op')=='rboss'&&ev('V.dataset.page')=='build',ev('J&&J.op')+' '+ev('V.dataset.page'));
+ const ids=['r8mach','r8tool','r112stk','r8part','rbpick','r8depth','r8cut','r8moves','r8speeds'];const el=ids.map(i=>Q('#'+i));const ord=el.every((e,i)=>e&&vis(e)&&(i==0||(el[i-1].compareDocumentPosition(e)&4)));
+ log('B: nine cards top to bottom: Machine, Tool, Stock, Part, Sides, Depth, Cutting, Moves, Speeds',ord,ids.map((i,k)=>i+':'+!!(el[k]&&vis(el[k]))).join(' '));
+ const M={r8mach:['Work offset'],r8tool:['Tool','Cutter'],r112stk:['Z0'],r8part:['Boss L','Boss W','Boss placement'],r8depth:['Depth','Stepdown','Finish stock Z'],r8cut:['Stepover %','Finish stock','Spring pass'],r8moves:['Edge overrun','Clear Z'],r8speeds:['RPM','Feed','Plunge feed']};
+ const bad=[];Object.entries(M).forEach(([c,ks])=>ks.forEach(k=>{if(k=='Boss placement'){if(!Q(`#${c} .r5sw[data-r5k="${k}"]`))bad.push(c+':'+k);return}if(!chipIn(c,k))bad.push(c+':'+k)}));if(!Q('#r8moves .r5sw[data-r5k="Keep tool down"]'))bad.push('r8moves:Keep tool down');
+ log('B: every chip sits in its card',!bad.length,bad.join(', '));
+ const pr=(a,b)=>{const x=[...d.querySelectorAll('#out .chip')].find(e=>(e.getAttribute('onclick')||'')==`ed('${a}')`),y=[...d.querySelectorAll('#out .chip')].find(e=>(e.getAttribute('onclick')||'')==`ed('${b}')`);return x&&y&&x.parentElement===y.parentElement&&x.parentElement.classList.contains('r8pair')&&Math.abs(x.getBoundingClientRect().top-y.getBoundingClientRect().top)<1};
+ log('B: Boss L + Boss W and Feed + Plunge feed side by side',pr('Boss L','Boss W')&&pr('Feed','Plunge feed'),'');
+ log('B: corners in the Part card, sides diagram in the Sides card, no Cut direction switch',!!Q('#r8part .rbc')&&!!Q('#rbpick [data-rbside]')&&!Q('#rbpick .rbdir')&&!Q('#rbpick .rbc')&&![...d.querySelectorAll('#out .chip')].some(e=>vis(e)&&/Cut direction/.test(e.getAttribute('onclick')||'')),'');
+ log('B: Cutter comp card inside Cutting, Climb (G41) picked for a Climb job',!!Q('#r8cut #r112cmp')&&vis(Q('#r112cmp'))&&!!Q('#r112cmp .r112cb.on[data-m="G41"]'),(Q('#r112cmp')||{}).outerHTML);
+ log('B: Circular Boss/Profile layout untouched (code check)',!/cboss/.test(ev("String(r8layout)").match(/J\.op!='rboss'/)?'':'cboss'),'')},300);
+S(()=>{GEN()},1500);
+let c41='';S(()=>{c41=code();if(!c41)log('dbg',false,ev('JSON.stringify([J.code&&J.code.length,J2.rboss.block(J),Object.entries(J.p).filter(([k,x])=>x.v==null).map(x=>x[0])])')+' btns:'+[...d.querySelectorAll('#v button')].filter(vis).map(b=>b.textContent.trim()).slice(0,40).join('/'));log('C: Climb: finish with G41 D4 and G40',/G01 G41 D4 /.test(c41)&&/G40 G01/.test(c41)&&!/G42/.test(c41),c41.slice(0,200));if(SHOT==1)seq.length=0},300);
+// Keep tool down YES on the fixture: rows link around the outside of the stock, every link checked
+S(()=>{const t=code();const n=(t.match(/OUTSIDE THE STOCK\)/g)||[]).length;const bad=ev('JSON.stringify(r113kdVerify(J,J.code))');log('D: Keep tool down links extra material rows at depth around the outside of the stock ('+n+' link moves), every link only through cut area / air',n>0&&bad=='[]',bad)},200);
+S(()=>{const t=code().split('\n');let on=0,run=[],bad=[];const P=l=>{const x=l.match(/X(-?[\d.]+)/),y=l.match(/Y(-?[\d.]+)/);return x&&y?[+x[1],+y[1]]:null};
+ t.forEach((l,i)=>{if(/^\(EXTRA MATERIAL PASS/.test(l))on=1;if(/^\(END EXTRA/.test(l))on=0;if(on&&/^G01 X/.test(l)&&!/KEEP DOWN/.test(l)){run.push([P(l),i+1])}else run=[];if(run.length>=3){const [a,b,c]=run.slice(-3).map(x=>x[0]);const dl=Math.abs((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]))/Math.hypot(c[0]-a[0],c[1]-a[1]);if(dl<2e-4)bad.push(run[run.length-1][1])}});
+ const arcs=t.filter((l,i)=>/^G0[23] /.test(l)).length;log('E: extra material rows: no run of tiny collinear steps left (merged into one move), corner rows on the round written as arcs',!bad.length&&arcs>0,'lines '+bad.slice(0,6).join(','))},200);
+S(()=>{const chk=JSON.parse(ev("JSON.stringify(checks(J).filter(c=>!c[1]).map(c=>c[0]))"));log('E: code checks all pass with Keep tool down + merged rows (Climb)',!chk.length,chk.join(' | '))},300);
+// Off
+S(()=>{const b=Q('#r112cmp .r112cb[data-m="off"]');b?CLK(b):log('off',false,'no Off')},600);S(()=>GEN(),1500);
+S(()=>{const t=code();const fi=t.slice(t.indexOf('(FINISH PASS'));log('F: Off: finish on the tool centre with no G41 / G42 / D / G40, finish stock still taken',/NO CUTTER COMP/.test(fi)&&!/G4[012]\b|\bD\d/.test(t.replace(/\([^)]*\)/g,'').split('\n').filter(l=>!/^G17/.test(l)).join('\n'))&&/FINISH STOCK 0\.01/.test(t),fi.slice(0,300));
+ const chk=JSON.parse(ev("JSON.stringify(checks(J).filter(c=>!c[1]).map(c=>c[0]))"));log('F: Off: code checks all pass (no gouge, nothing through the boss)',!chk.length,chk.join(' | '));
+ log('F: Off: rough passes unchanged from Climb (only the finish differs)',c41.slice(0,c41.indexOf('(FINISH PASS'))==t.slice(0,t.indexOf('(FINISH PASS')).replace('NO CUTTER COMP, TOOL CENTRE - CLIMB','CLIMB G41 D4'),'')},300);
+// Conventional
+S(()=>{const b=Q('#r112cmp .r112cb[data-m="G42"]');b?CLK(b):log('g42',false,'no G42')},600);S(()=>GEN(),1500);
+S(()=>{const t=code();log('G: Conventional (G42) on the card writes G42 D4 and sets the cut direction (one control)',/G01 G42 D4 /.test(t)&&!/G41/.test(t)&&ev("J.p['Cut direction'].v")=='Conventional',ev("J.p['Cut direction'].v"));const chk=JSON.parse(ev("JSON.stringify(checks(J).filter(c=>!c[1]).map(c=>c[0]))"));log('G: Conventional: code checks all pass',!chk.length,chk.join(' | '))},300);
+S(()=>{const b=Q('#r112cmp .r112cb[data-m="G41"]');b&&CLK(b)},600);S(()=>GEN(),1500);
+// view row: Build has none, Simulate has six even buttons as wide as the Pan / Play row
+S(()=>{const vb=[...d.querySelectorAll('#v button')].filter(b=>vis(b)&&/^(Top|Front|Iso|Fit|＋|－)$/.test(b.textContent.trim()));log('H: Build shows no view buttons and no Simulate playback / Tool controls',!vb.length&&!vis(Q('#pbar'))&&!vis(Q('#r5view')),vb.map(b=>b.textContent).join(','))},200);
+S(()=>ev("tab('sim')"),1800);
+S(()=>{const row=Q('#r5view'),pb=Q('#pbar');const bs=row?[...row.children]:[];const W=bs.map(b=>b.getBoundingClientRect().width);const rr=row&&row.getBoundingClientRect(),pr=pb&&pb.getBoundingClientRect();
+ log('H: Simulate view row: six buttons, even widths, spread over the full row, same width as the Pan / Play row',bs.length==6&&bs.every(b=>b.tagName=='BUTTON')&&Math.max(...W)-Math.min(...W)<1.5&&rr&&pr&&Math.abs(rr.width-pr.width)<2&&Math.abs(bs[0].getBoundingClientRect().left-rr.left)<1.5&&Math.abs(bs[5].getBoundingClientRect().right-rr.right)<1.5,JSON.stringify({n:bs.length,W,row:rr&&rr.width,pbar:pr&&pr.width}));if(SHOT==2)seq.length=0},300);
+S(()=>ev("tab('new')"),1200);
+S(()=>{log('H: back on Build the view row is hidden again',!vis(Q('#r5view'))&&![...d.querySelectorAll('#v button')].some(b=>vis(b)&&/^(Top|Iso|Fit)$/.test(b.textContent.trim())),'')},200);
+// Circular Boss/Profile untouched
+S(()=>{ev("pickJob('cboss')")},1500);
+S(()=>{log('I: Circular Boss/Profile keeps its own layout (no nine cards)',ev('J&&J.op')=='cboss'&&!d.querySelector('#r8tool,#r8part,#r8speeds'),ev('J&&J.op'))},200);
+S(()=>{log('no page errors',!errs.length,errs.join(' | '));fin()},10);
+const run=()=>{const s=seq.shift();if(!s)return;try{s[0]()}catch(e){log('step',false,e.stack)}setTimeout(run,s[1])};setTimeout(run,1200)};
+</script>

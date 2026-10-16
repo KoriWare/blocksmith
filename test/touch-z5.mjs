@@ -111,11 +111,11 @@ ok(await E(()=>(document.querySelector('[data-r5stk]')||{dataset:{}}).dataset.r5
 await E(()=>document.querySelector('#rbpick').scrollIntoView({block:'start'}));await p.screenshot({path:SHOT+'/v113z5-stock-outline.png'});
 // ---------- 10) gray defaults are placeholders in an empty box
 await E(()=>{Object.assign(r112stk(),{shape:'square',square:{L:4,W:3,H:1},zp:'tr'});J.p['Corner Back-right']={v:'Chamfer',g:false};show()});await sl(300);
-{const r=await E(()=>{const i=document.querySelector('#rbpick input[data-c]');return i&&{v:i.value,ph:i.placeholder}});ok(r&&r.v===''&&r.ph=='0.03','default chamfer size = empty box with gray placeholder 0.03 ('+JSON.stringify(r)+')');}
-{const i=await p.$('#rbpick input[data-c]');if(i){await tapEl(i);await p.keyboard.type('0.05');await p.keyboard.press('Enter');await sl(400);
- ok(await E(()=>{const i=document.querySelector('#rbpick input[data-c]');return i.value=='0.05'&&!i.classList.contains('r3sug')}),'typed 0.05 shows solid (no gray class)');
- const j=await p.$('#rbpick input[data-c]');await tapEl(j);await E(()=>{const i=document.querySelector('#rbpick input[data-c]');i.value='';i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('change',{bubbles:true}));i.blur()});await sl(400);
- const cc=await code();ok(cc.length>0&&await E(()=>{const i=document.querySelector('#rbpick input[data-c]');return i.value===''&&i.placeholder=='0.03'&&/CHAMFER 0\.03/.test(J.code.join(' '))}),'clearing brings the gray 0.03 placeholder back and the program still writes (default used)')}}
+{const r=await E(()=>{const i=document.querySelector('#r8part input[data-c]');return i&&{v:i.value,ph:i.placeholder}});ok(r&&r.v===''&&r.ph=='0.03','default chamfer size = empty box with gray placeholder 0.03 ('+JSON.stringify(r)+')');}
+{const i=await p.$('#r8part input[data-c]');if(i){await tapEl(i);await p.keyboard.type('0.05');await p.keyboard.press('Enter');await sl(400);
+ ok(await E(()=>{const i=document.querySelector('#r8part input[data-c]');return i.value=='0.05'&&!i.classList.contains('r3sug')}),'typed 0.05 shows solid (no gray class)');
+ const j=await p.$('#r8part input[data-c]');await tapEl(j);await E(()=>{const i=document.querySelector('#r8part input[data-c]');i.value='';i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('change',{bubbles:true}));i.blur()});await sl(400);
+ const cc=await code();ok(cc.length>0&&await E(()=>{const i=document.querySelector('#r8part input[data-c]');return i.value===''&&i.placeholder=='0.03'&&/CHAMFER 0\.03/.test(J.code.join(' '))}),'clearing brings the gray 0.03 placeholder back and the program still writes (default used)')}}
 
 // ---------- 11) extra material passes + engagement: no move cuts more than the stepover (area swept / path length on a 0.01 grid, deepest roughing level)
 
@@ -210,7 +210,7 @@ for(let n of ['opp','rad','cham','cham2','lr']){await fresh();const big=n=='cham
 // ---------- v113z6) Maria: the RENDERED Keep tool down switch shows the effective value (locked = Off) after a real file import, after the 0.7 s machine-poll redraw, after toggles/undo, and after a reload
 {await fresh();const kdState=()=>E(()=>{const s=[...document.querySelectorAll('.r5sw[data-r5k="Keep tool down"]')];if(s.length!=1)return {n:s.length};const b=v=>s[0].querySelector(`[data-v=${v}]`);const yel=e=>/255, 210, 31/.test(getComputedStyle(e).backgroundColor);return {n:1,offSel:b('NO').classList.contains('on')&&b('NO').getAttribute('aria-checked')=='true'&&yel(b('NO')),onSel:b('YES').classList.contains('on')||b('YES').getAttribute('aria-checked')=='true'||yel(b('YES')),onDis:b('YES').disabled,why:!!s[0].querySelector('.r5why'),v:J.p['Keep tool down'].v}});
  const okLocked=(st,m)=>ok(st.n==1&&st.offSel&&!st.onSel&&st.onDis&&st.why,m+': '+JSON.stringify(st));
- ok(await E(()=>APP_VERSION)=='v113z7'&&/const C='mc-v113z7'/.test(fs.readFileSync(path.join(BASE,'sw.js'),'utf8')),'build v113z6 with service-worker cache mc-v113z6 (no stale copy)');
+ ok(await E(()=>APP_VERSION)=='v113z8'&&/const C='mc-v113z8'/.test(fs.readFileSync(path.join(BASE,'sw.js'),'utf8')),'build v113z8 with service-worker cache mc-v113z8 (no stale copy)');
  await E(()=>tab('recent'));await sl(500);const fi=await p.$('#mbf');await fi.uploadFile(path.join(HERE,'fixtures','demo-lr.mbjob'));await sl(1200);{const h=await p.evaluateHandle(()=>[...document.querySelectorAll('button')].find(e=>e.offsetParent&&e.textContent.trim()=='Add to Library'));if(h.asElement())await tapEl(h.asElement());await sl(800)}
  await E(()=>{const i=S.jobs.findIndex(x=>/DEMO RIGHT LEFT/.test(x.name||''));reopen(i);Object.assign(r112stk(),{shape:'square',square:{L:4,W:3,H:1},zp:'tr'});show()});await sl(600);
  okLocked(await kdState(),'real file import (#mbf), Right+Left + YES: rendered Off selected (yellow), On not selected + disabled, reason shown');
