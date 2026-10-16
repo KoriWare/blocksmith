@@ -1,0 +1,34 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113p: Job manager follows the active machine - lists on Mill A and Mill B (demo), real clicks: Machines -> Use this machine, Library -> Open Job manager shows that machine's lists; Switch machine updates live; opening another machine's list asks first; a sandbox save keeps the active machine; lists keep their machine. Demo names only. --><iframe id="f" src="../index.html?v=131" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,1500)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
+if(ph==0){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+if(ph==1){ph=2;
+ setTimeout(()=>{const res=ev(`(()=>{const mk=(k,n)=>{S.cur=k;const l=jmNew(n);jmAdd(l,'op:cboss');return l.id};const a=mk(0,'Demo list A1'),a2=mk(0,'Demo list A2'),b=mk(1,'Demo list B1');S.cur=0;save();window.top.IDS={a,a2,b};return JSON.stringify(S.jlists.map(l=>[l.name,l.mid]))})()`);window.SEED=res;window.MIDS=ev("JSON.stringify(S.m.map(m=>m.id))");w.location.reload()},1500);return}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+const vis=e=>e&&e.offsetParent;const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t)||[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim().startsWith(t));
+const seq=[];const S=(fn,ms=300)=>seq.push([fn,ms]);
+const lists=()=>[...d.querySelectorAll('.jmls b')].filter(vis).map(b=>b.textContent.trim()).join('|');const bar=()=>((Q('#jmmach')||{}).textContent||'').replace(/\s+/g,' ');
+const useM=n=>{S(()=>T('Machines').click(),500);S(()=>{const c=[...d.querySelectorAll('.card')].filter(vis).find(c=>(c.querySelector('.t')||{}).textContent.startsWith(n));c.click()},500);S(()=>{const b=T('Use this machine');b&&b.click()},500)};
+const openJM=()=>{S(()=>T('Library').click(),500);S(()=>T('Open Job manager').click(),500)};
+S(()=>log('seeded lists on Mill A (2) and Mill B (1)',/Demo list B1/.test(window.SEED||''),window.SEED));
+useM('Mill B');openJM();
+S(()=>{log('after Use this machine = Mill B: Job manager shows Mill B lists only, with the Lists for line',/Job manager · Mill B/.test(Q('#ttl').textContent)&&lists()=='Demo list B1'&&/Lists for Mill B · Switch machine/.test(bar()),Q('#ttl').textContent+' :: '+lists()+' :: '+bar());if(/shot=1/.test(location.search))seq.length=0});
+S(()=>{const s=Q('#jmmsel');s.value='0';s.dispatchEvent(new w.Event('change'))},500);
+S(()=>{log('Switch machine -> Mill A: list updates live to Mill A lists, active machine is Mill A',/Job manager · Mill A/.test(Q('#ttl').textContent)&&lists()=='Demo list A1|Demo list A2'&&/Lists for Mill A/.test(bar())&&ev('S.m[S.cur].name')=='Mill A',lists()+' :: '+bar())});
+useM('Mill B');openJM();
+S(()=>{log('switch again (Machines -> Mill B): Job manager shows Mill B lists',lists()=='Demo list B1'&&/Lists for Mill B/.test(bar()),lists()+' :: '+bar())});
+S(()=>{const b=[...d.querySelectorAll('.jmls button')].find(b=>vis(b)&&/Open/.test(b.textContent));b.click()},500);
+S(()=>{log('open a Mill B list: its entries render (sandbox checks run)',d.querySelectorAll('.jme').length==1,d.querySelectorAll('.jme').length)},300);
+S(()=>{log('a sandbox check never stores another machine as active (stored cur = Mill B)',JSON.parse(w.localStorage.getItem('mc')).cur==1&&ev('S.cur')==1,w.localStorage.getItem('mc').match(/"cur":\d+/))},300);
+S(()=>{ev("S.cur=0;save()");w.dispatchEvent(new w.Event('focus'))},300);
+S(()=>{log('active machine changed elsewhere (another tab) -> back on the Job manager it follows Mill A',/Job manager · Mill A/.test(Q('#ttl').textContent)&&lists()=='Demo list A1|Demo list A2',Q('#ttl').textContent+' :: '+lists())},400);
+S(()=>T('Library').click(),500);
+S(()=>{const it=[...d.querySelectorAll('#jmcard .set')].find(e=>/Demo list B1/.test(e.textContent));it.querySelector('button').click()},500);
+S(()=>{const y=[...d.querySelectorAll('button')].filter(vis).find(b=>/^Switch to Mill B/.test(b.textContent.trim()));log('opening Mill B list while on Mill A asks first ("Switch to Mill B"), nothing switched yet',!!y&&ev('S.m[S.cur].name')=='Mill A',[...d.querySelectorAll('button')].filter(vis).map(b=>b.textContent.trim().slice(0,20)).join('|'));y&&y.click()},400);
+S(()=>{log('confirm -> list opens on Mill B, active = Mill B',/Job manager · Mill B/.test(Q('#ttl').textContent)&&ev('S.m[S.cur].name')=='Mill B'&&!!Q('#jmname')&&Q('#jmname').value=='Demo list B1',Q('#ttl').textContent)},500);
+S(()=>{log('lists stay tied to their own machine, none lost or moved',ev("JSON.stringify(S.jlists.map(l=>[l.name,S.m.findIndex(m=>m.id==l.mid),l.entries.length]))")=='[["Demo list A1",0,1],["Demo list A2",0,1],["Demo list B1",1,1]]',ev("JSON.stringify(S.jlists.map(l=>[l.name,S.m.findIndex(m=>m.id==l.mid),l.entries.length]))"))});
+S(()=>{log('no exceptions',errs.length==0,errs.join(' || '));fin()},300);
+const run=i=>{if(i>=seq.length)return;try{seq[i][0]()}catch(e){log('step'+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),900)}
+</script>
