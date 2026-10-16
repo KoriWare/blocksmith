@@ -165,5 +165,32 @@ await T('z3',async()=>{await p.goto(URL);await p.evaluate(()=>{localStorage.clea
  log('Stacey 5: G03 draws the other way (convex): its points bulge out from the chord',await E(`(()=>{const r=interp(['G18','G00 X0.6 Z0','G03 X1 Z-0.2 R0.2'],{lathe:1});return 1})()`)&&await E(`(()=>{const p=r2pl('X0.6 Z0\\nG03 X1 Z-0.2 R0.2');const a=r3arc([0,0.3],[-0.2,0.5],0.2,false);const m=a[Math.floor(a.length/2)-1];return Math.hypot(m[0]-(-0.2),m[1]-0.3)>0.19&&Math.hypot(m[0]-(-0.2),m[1]-0.3)<0.21})()`),'');
  if(SHOT){await E(`scrub(J.M.length);1`);await sl(300);await p.evaluate(()=>{$('#cv').scrollIntoView({block:'start'});scrollBy(0,-70)});await sl(300);await p.screenshot({path:OUT+'v113z3-arc-sim.png'})}
 });
+
+// v113z4: corner defaults (one effective size), live Need count, chamfer label, free-variables card stability
+await T('z4',async()=>{await p.goto(URL);await p.evaluate(()=>{localStorage.clear();localStorage.setItem('mc_tour','done')});await p.goto(URL);await sl(1200);
+ await E(`cur(0);const c=S.m[0].s.find(x=>x.k=='Control');c.st='user';save();1`);await tapText('Build');await sl(400);await tapText('Milling');await sl(400);await tapText('Rectangular Boss');await sl(600);
+ const need=()=>E(`(document.querySelector('#rbpick .rbneed')||{textContent:''}).textContent`);const n0=await need();
+ for(const [k,v] of [['Boss L','2'],['Boss W','1.5'],['Depth','0.3']]){await tap(`#out input[data-k="${k}"]`);await type(v)}
+ log('Casey 1: diagram "Need N more" counts down live while typing (9 → 6, before leaving the field)',/^Need 9 more/.test(n0)&&/^Need 6 more/.test(await need()),n0.slice(0,20)+' -> '+(await need()).slice(0,20));
+ for(const [k,v] of [['Z0','0'],['Cutter','0.5'],['Stepdown','0.15'],['Tool','4'],['Boss placement','Center in stock'],['Work offset','G54']]){const h=await p.$(`#out [data-k="${k}"]`);if(!h)continue;if(await h.evaluate(e=>e.tagName)=='SELECT'){await h.evaluate((e,v)=>{e.value=[...e.options].find(o=>o.value&&(o.textContent.includes(v)||o.value==v)||o.value&&!/pick/i.test(o.textContent)).value;e.dispatchEvent(new Event('change',{bubbles:true}))},v)}else{await tap(h);await type(v)}}
+ await E('document.activeElement.blur();1');await sl(900);
+ log('Casey 1: once everything is filled the Need text goes away and the real shape shows',!(await p.$('#rbpick .rbneed'))&&!!(await p.$('#rbpick svg')),await need());
+ await E(`J.p.Sides={v:null,g:false};['Front','Back','Left','Right'].forEach(rbSide);S.m[0].s.forEach(x=>x.st='user');Object.assign(r112stk(),{shape:'square',square:{L:4,W:3,H:1}});show();1`);await sl(500);
+ await tap('#rbpick button[data-rbc="Front-left"][data-k="Chamfer"]');await sl(700);
+ const L=JSON.parse(await E(`JSON.stringify([...document.querySelectorAll('#rbpick .rbclbl')].map(e=>[e.dataset.c,e.textContent,e.getAttribute('fill')]))`));const box=await E(`(i=>[i.placeholder,i.value,i.classList.contains('r3sug')])(document.querySelector('#rbpick input[data-c="Front-left"]'))`);const cl=await E(`(J.code||[]).filter(l=>/CORNERS/.test(l)).join('')`);
+ log('Casey 2 / Stacey: default chamfer reads the same effective size everywhere: label "C0.03 × 45°" in gray, placeholder 0.03, program CHAMFER 0.03',L.some(x=>x[0]=='Front-left'&&x[1]=='C0.03 × 45°'&&x[2]=='#9a9a9a')&&box[0]=='0.03'&&box[2]&&/FRONT-LEFT CHAMFER 0\.03/.test(cl),JSON.stringify([L,box,cl]));
+ await tap('#rbpick button[data-rbc="Back-right"][data-k="Round"]');await sl(700);log('Stacey: Round placeholder is 0.06 (not 0.25) and the program uses R0.06',await E(`document.querySelector('#rbpick input[data-c="Back-right"]').placeholder`)=='0.06'&&/BACK-RIGHT R0\.06/.test(await E(`(J.code||[]).join(' ')`)),await E(`document.querySelector('#rbpick input[data-c="Back-right"]').placeholder`));
+ const clr=async()=>{await tap('#rbpick input[data-c="Front-left"]');await E(`document.activeElement.select();1`);await p.keyboard.press('Backspace');await E('document.activeElement.blur();1');await sl(800)};
+ await clr();log('Stacey: clearing the box uses the default C0.03 (no hold, code written)',!(await E(`(document.querySelector('#out .ok.bad')||{}).textContent||''`))&&(await E('(J.code||[]).length'))>0&&/FRONT-LEFT CHAMFER 0\.03/.test(await E(`(J.code||[]).join(' ')`)),await E(`JSON.stringify(J.p['Corner Front-left'])`));
+ await tap('#rbpick input[data-c="Front-left"]');await E(`document.activeElement.select();1`);await type('0');await E('document.activeElement.blur();1');await sl(800);
+ log('Stacey: an explicit 0 holds and says "Use Sharp for no corner"',/must be more than 0\. Use Sharp for no corner/.test(await E(`(document.querySelector('#out .ok.bad')||{}).textContent||''`)),await E(`(document.querySelector('#out .ok.bad')||{}).textContent||''`));
+ await clr();await tap('#rbpick button[data-rbc="Back-right"][data-k="Sharp"]');await sl(500);
+ if(SHOT){await p.evaluate(()=>{$('#rbpick').scrollIntoView({block:'start'});scrollBy(0,-70)});await sl(400);await p.screenshot({path:OUT+'v113z4-corners.png'})}
+ // free common variables card (Bolt circle preset, Free common variables unconfirmed): measure jump
+ await p.goto(URL);await sl(1200);await E(`cur(0);1`);await E(`tab('new');pickJob('bolt');1`);await sl(600);
+ await E(`['Holes',6,'Dia',3,'Start°',15,'Depth',0.5,'Tool',2,'Center X',0,'Center Y',0,'Z0',0].reduce((a,v,i,A)=>{if(i%2==0)J.p[v]={v:A[i+1],g:false};return a},0);J.p['Work offset']={v:'G54',g:false};S.m[0].s.forEach(x=>{if(x.k!='Free common variables')x.st='user'});const f=S.m[0].s.find(x=>x.k=='Free common variables');if(f)f.st='sug';1`);
+ await E('scrollTo(0,200);1');await sl(300);const pre=JSON.parse(await E(`JSON.stringify([scrollY,document.querySelector('#out .card').getBoundingClientRect().top])`));await E('show();1');await sl(1200);
+ const post=JSON.parse(await E(`JSON.stringify([scrollY,document.querySelector('#out .card').getBoundingClientRect().top])`));
+ log('Casey 3: "are these free on Mill A?" card appears for the Bolt circle preset and the view does not jump (scroll + job card unchanged)',!!(await p.$('#cvask'))&&Math.abs(post[0]-pre[0])<1&&Math.abs(post[1]-pre[1])<1,JSON.stringify([pre,post]))});
 log('no page errors',errs.length==0,errs.join(' | '));
 console.log(r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length);await b.close();
