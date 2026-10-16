@@ -1,7 +1,7 @@
 <!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113c: real-click regression - brand-new jobs from an empty Build (no stock set) on Mill A (Fanuc 0i) and on the default machine; Casey's cpock Climb case must give code with Y0 and no throw --><iframe id="f" src="../index.html?v=122" style="width:390px;height:760px;border:0"></iframe><script>
 let phase=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,1500)));
 const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
-const SHOT=/shot=1/.test(location.search);const OPS=SHOT?['Circular pocket']:['Circular pocket','Circular boss','Rectangular pocket','Slot (straight)','Polygon / hex boss or pocket','Helical bore','Face mill'];
+const SHOT=/shot=1/.test(location.search);const OPS=SHOT?['Circular pocket']:['Circular pocket','Circular Boss/Profile','Rectangular pocket','Slot (straight)','Polygon / hex boss or pocket','Helical bore','Face mill'];
 const VAL={'Center X':'2','Center Y':'0','Dia':'1.25','Depth':'0.5','Z0':'0','Cutter':'0.75','Stepdown':'0.25','Tool':'1','Boss Ø':'1','Stock Ø':'1.75','End X':'3','Slot width':'0.75'};
 f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
  const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));const ce=w.console.error;w.console.error=function(){errs.push([...arguments].map(a=>a&&a.stack||a).join(' '));};

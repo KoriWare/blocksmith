@@ -1,0 +1,47 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113u: 'Circular boss' renamed 'Circular Boss/Profile' - old saved names (Library job, Job manager entry) and old import typeName map on load; no visible 'Circular boss' on the picker, Build, setup sheet, Library, Job manager, Help, Simulate; export typeName and default save name use the new name. Demo names only. --><iframe id="f" src="../index.html?v=138" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+const SHOT=/shot=1/.test(location.search);const NEW='Circular Boss/Profile';
+const OLD=t=>{const m=String(t).match(/[^\n]{0,40}Circular boss(?!\/Profile)[^\n]{0,40}/);return m?m[0]:null};
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
+if(ph==0){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const vis=e=>e&&e.offsetParent;
+const T=t=>[...d.querySelectorAll('button,label')].find(e=>vis(e)&&e.textContent.trim()==t)||[...d.querySelectorAll('button,label')].find(e=>vis(e)&&e.textContent.trim().startsWith(t));
+const seq=[];const S=(fn,ms=400)=>seq.push([fn,ms]);const run=i=>{if(i>=seq.length){if(!SHOT)fin();return}try{seq[i][0]()}catch(e){log('step '+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};
+const VIS=where=>S(()=>{const o=OLD(d.body.innerText);log('no visible "Circular boss" on '+where,!o,o)},300);
+if(ph==1){ph=2;
+ // setup (not under test): a saved cboss job in the Library and a Job manager list entry, then rewrite storage to the OLD name like an older version saved it
+ S(()=>ev(`(()=>{cur(0);const c=S.m[0].s.find(x=>x.k=='Control');c.st='user';tab('new');$('#q').value='circular boss 1.0 dia from 2.0 stock 0.3 deep center x0 y0 z0 0 0.5 cutter stepdown 0.1 T3 G54';go();Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k=='Work offset'?'G54':1,g:false}});show();J.name=jName('cboss');saveJob();const l={id:'jlseed',mid:S.m[0].id,name:'Demo list',mode:'inline',prog:1000,entries:[]};S.jlists=S.jlists||[];S.jlists.push(l);save()})()`),900);
+ S(()=>{let n=0;for(let i=0;i<w.localStorage.length;i++){const k=w.localStorage.key(i),v=w.localStorage.getItem(k);if(v&&v.includes(NEW)&&!/^mc_ver|version/i.test(k)){w.localStorage.setItem(k,v.split(NEW).join('Circular boss'));n++}}log('setup: storage rewritten to the old name',n>0,n);w.location.reload()},300);
+ return setTimeout(()=>run(0),900)}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+S(()=>{let old=0;for(let i=0;i<w.localStorage.length;i++){const v=w.localStorage.getItem(w.localStorage.key(i))||'';if(/Circular boss(?!\/Profile)/.test(v))old++}log('old saved names mapped on load (no "Circular boss" left in storage)',old==0,old);log('Library job name now "Circular Boss/Profile"',ev(`S.jobs.some(j=>j.op=='cboss'&&j.name=='${NEW}')`)===true,ev("JSON.stringify(S.jobs.map(j=>j.name))"))});
+// job picker + category
+S(()=>T('Build').click());S(()=>{const b=[...d.querySelectorAll('button')].find(b=>vis(b)&&/^Milling/.test(b.textContent.trim()));b&&b.click()},400);
+S(()=>{const b=T(NEW);log('job picker lists "Circular Boss/Profile"',!!b,[...d.querySelectorAll('button')].filter(vis).map(b=>b.textContent.trim().slice(0,24)).join('|'))},200);VIS('the job picker');S(()=>{if(SHOT){seq.length=0;const b=d.querySelector('button');const t=[...d.querySelectorAll('button')].find(b=>vis(b)&&b.textContent.trim().startsWith(NEW));t&&t.scrollIntoView({block:'center'})}},100);
+S(()=>{const b=T(NEW);b&&b.click()},600);S(()=>{log('Build shows the new type name',d.body.innerText.includes(NEW),(Q('#out')||{}).innerText&&Q('#out').innerText.slice(0,200))});VIS('Build (new job)');
+S(()=>{log('default save name is the type name',ev('jName(J.op)')==NEW&&ev("(J.name||jName(J.op))")==NEW,ev('J.name'))});
+// Library
+S(()=>T('Library').click(),500);S(()=>{log('Library card shows "Circular Boss/Profile"',[...d.querySelectorAll('.card')].some(c=>vis(c)&&c.textContent.includes(NEW)),'')});VIS('the Library');
+S(()=>{const c=[...d.querySelectorAll('.card')].find(c=>vis(c)&&c.textContent.includes(NEW));const b=c&&c.querySelector('[onclick^="reopen("]');b?b.click():log('reopen',false,'missing')},700);VIS('Build (reopened)');
+S(()=>{log('export typeName / name use the new name',ev("(()=>{const x=mbFile(J).job;return x.typeName+'|'+x.name})()")==NEW+'|'+NEW,ev("JSON.stringify(mbFile(J).job.typeName)"))});
+// setup sheet
+S(()=>{const b=T('Climb (G41)');if(b)b.click()},300);S(()=>{const b=Q('#r112stk [data-st=shape][data-sv=round]');if(b)b.click()},400);S(()=>{const i=Q('#r112stk input[data-sk="round.d"]');if(!i)return;i.focus();i.value='3';i.dispatchEvent(new w.Event('input',{bubbles:true}));i.dispatchEvent(new w.Event('change',{bubbles:true}));i.blur()},300);
+S(()=>{const b=T('Continue');b&&b.click()},400);S(()=>{const b=T('Generate Code');b&&b.click()},600);S(()=>{const b=T("They're free");b&&b.click()},500);
+S(()=>{let b=T('🖨 Setup sheet');if(!b){const sv=T('💾 Save…');sv&&sv.click();b=T('🖨 Setup sheet')}b?b.click():log('setup sheet button',false,'missing '+[...d.querySelectorAll('button')].filter(vis).map(b=>b.textContent.trim().slice(0,22)).join('|')+' code='+ev('(J.code||[]).length'))},600);
+S(()=>{log('setup sheet shows the new name',!!Q('#sheet')&&Q('#sheet').innerText.includes(NEW),(Q('#sheet')||{}).innerText&&Q('#sheet').innerText.slice(0,300))});VIS('the setup sheet');
+S(()=>{const b=[...(Q('#sheet')||d).querySelectorAll('button')].find(b=>/Close/.test(b.textContent));b&&b.click()},400);
+// Simulate
+S(()=>T('Simulate').click(),900);S(()=>{log('code header names CIRCULAR BOSS/PROFILE',/CIRCULAR BOSS\/PROFILE/.test(ev("(J.code||[]).join(' ')")))});VIS('Simulate');
+// Job manager: old label 'Circular boss · DEMO-01' maps on open; picker
+S(()=>{ev(`(()=>{const l=S.jlists.find(x=>x.name=='Demo list');const e=jmAdd(l,'op:cboss');e.label='Circular boss · DEMO-01';save()})()`);ev('jobMgr()')},700);
+S(()=>{const l=ev("JSON.stringify(S.jlists.find(x=>x.name=='Demo list').entries.map(e=>e.label))");log('old Job manager label mapped',!/Circular boss/.test(l)&&l.includes(NEW),l)});VIS('the Job manager');
+S(()=>{const o=ev("JSON.stringify(jmAddOpts?jmAddOpts(''):'')");log('Job manager add picker has no old name',!/Circular boss(?!\/Profile)/.test(o),o.slice(0,300))});
+// Help
+S(()=>ev("help('stock')"),600);VIS('Help (Stock card)');S(()=>{log('Help mentions Circular Boss/Profile',d.body.innerText.includes(NEW),'')});
+S(()=>ev("help('jobs')"),600);VIS('Help (jobs)');
+// import of an old file maps typeName
+S(()=>{const x=ev(`JSON.stringify(mbParse(JSON.stringify({app:MBJ.app,format:MBJ.fmt,exported:'2026-10-15',job:{type:'cboss',typeName:'Circular boss',name:'Circular boss',note:'',values:{}}})))`);log('import maps an old typeName / name',!/Circular boss(?!\/Profile)/.test(x)&&x.includes(NEW),x.slice(0,300))});
+S(()=>log('no exceptions',errs.length==0,errs.join(' || ')));
+setTimeout(()=>run(0),900)};
+</script>
