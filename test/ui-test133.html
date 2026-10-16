@@ -15,9 +15,15 @@ S(()=>{log('Library help: machine line, engrave text, Duplicate to…, delete re
 S(()=>{const t=sec('jobmgr');log('Job manager help: follows active machine, picker counts lists, not in Library, ✕ removes',/Lists for <machine> · Switch machine/.test(t)&&/how many lists/.test(t)&&/not in Library/.test(t)&&/✕ removes an entry/.test(t),t.slice(-600))});
 S(()=>{log('offsets G54.1 Pn, Simulate XYZ, changelog order',/G54\.1 P10/.test(sec('offsets'))&&/XYZ/.test(sec('sim'))&&/newest first/.test(sec('about')),'')});
 S(()=>{log('stale text gone (engrave start along the axis, Build code read-out)',!/start along the axis,/.test(sec('engrave'))&&!/Build still shows a code read-out/.test(sec('editor'))&&/Stock card/.test(sec('engrave')),sec('engrave').slice(0,200))});
+S(()=>{const t=sec('jobmgr');log('Job manager help starts with what it is for: combine saved jobs into one program, make a list, add, order, Build / Rebuild',/^Job manager[^]*?What it's for: the Job manager is where you combine several saved jobs into one program\. 1\. Make a list for the machine\. 2\. Add jobs.*3\. Put them in order.*4\. Tap Build one program; after a change, 🔁 Rebuild/.test(t),t.slice(0,400))});
+S(()=>{const b=Q('#h-jobmgr button')||null;T('Library').click()},500);
+S(()=>{const e=Q('#jmlibwhat');log('Library Job lists card has the one-line explanation',vis(e)&&/Combine several saved jobs into one program: make a list for a machine, add jobs, put them in order, then Build one program/.test(e.textContent),e&&e.textContent)},300);
+S(()=>T('Open Job manager').click(),500);
+S(()=>{const e=Q('#jmwhat');log('top of the Job manager has the line (with Lists for <machine>)',vis(e)&&/Combine several saved jobs into one program: make a list for this machine/.test(e.textContent)&&e.closest('#jmmach'),e&&e.textContent);if(/shot=2/.test(location.search))seq.length=0},300);
+S(()=>T('More').click(),500);S(()=>{const c=[...d.querySelectorAll('.card')].filter(vis).find(c=>/❓ Help/.test(c.textContent));c.click()},600);
 S(()=>{const q=Q('#hq');q.value='not in library';q.dispatchEvent(new w.Event('input'))},300);
 S(()=>{const sh=[...d.querySelectorAll('#hl details')].filter(x=>x.style.display!='none').map(x=>x.id);log('Help search "not in library" finds the Job manager section',sh.includes('h-jobmgr'),sh.join(','));const q=Q('#hq');q.value='';q.dispatchEvent(new w.Event('input'))},300);
-S(()=>{const s=Q('#h-stock');s.open=true;w.scrollTo(0,s.getBoundingClientRect().top+w.scrollY-75);if(/shot=1/.test(location.search)){seq.length=0}},300);
+S(()=>{const s=Q(/shot=3/.test(location.search)?'#h-jobmgr':'#h-stock');s.open=true;w.scrollTo(0,s.getBoundingClientRect().top+w.scrollY-75);if(/shot=[13]/.test(location.search)){seq.length=0}},300);
 S(()=>{log('no exceptions',errs.length==0,errs.join(' || '));fin()},300);
 const run=i=>{if(i>=seq.length)return;try{seq[i][0]()}catch(e){log('step'+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),900)}
 </script>
