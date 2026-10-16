@@ -18,15 +18,15 @@ async function genTap(){const h=await p.evaluateHandle(()=>[...document.querySel
 const code=async()=>{await genTap();return E(()=>(J.code||[]).slice())};
 globalThis.engScan=async function(){return E(()=>{const c=J.code;const M=interp(c);const mv=(Array.isArray(M)?M:M.moves).filter(m=>!m.r);const fi=c.findIndex(l=>/^\(FINISH PASS|^\(FLOOR PASS/.test(l));const bx=rbBox(J),o=rbData(J),P5=r5poly(o),r=+J.p.Cutter.v/2,so=+J.p.Cutter.v*(+J.p['Stepover %'].v||50)/100;
  /* every move of every kind at every Z level: rough, extra material, entries, exits, floor and finish. A plunge that lands on stock counts as a full-width cut. */
- const h=0.01,nx=Math.ceil((bx[3]-bx[0])/h),ny=Math.ceil((bx[4]-bx[1])/h);const z0=bx[5];let worst=0,wl='',left=0,plunge='';
+ const h=0.005,W=0.05,nx=Math.ceil((bx[3]-bx[0])/h),ny=Math.ceil((bx[4]-bx[1])/h);const z0=bx[5];let win=[],wsum=0,wlen=0;let worst=0,wl='',left=0,plunge='';
  const levels=[...new Set(mv.filter(m=>m.b[2]<z0-1e-6).map(m=>+m.b[2].toFixed(5)))].sort((a,b)=>b-a);let g;const scan=lim=>{g=new Uint8Array(nx*ny);
  for(let i=0;i<nx;i++)for(let k=0;k<ny;k++){const x=bx[0]+(i+.5)*h,y=bx[1]+(k+.5)*h;if(r5polyD(P5,x,y)>0)g[i*ny+k]=1}
  const disk=(x,y,count)=>{let n=0;for(let i=Math.max(0,Math.floor((x-r-bx[0])/h));i<=Math.min(nx-1,Math.ceil((x+r-bx[0])/h));i++)for(let k=Math.max(0,Math.floor((y-r-bx[1])/h));k<=Math.min(ny-1,Math.ceil((y+r-bx[1])/h));k++){const px=bx[0]+(i+.5)*h,py=bx[1]+(k+.5)*h;if(g[i*ny+k]&&(px-x)**2+(py-y)**2<=r*r){g[i*ny+k]=0;n++}}return n};
  /* levels top-down: material at a level is what every level above already left (same XY grid, the boss is a prism) */
- levels.forEach(zl=>{mv.forEach(m=>{if(m.l>=lim)return;const za=+m.a[2].toFixed(5),zb=+m.b[2].toFixed(5);if(zb!==zl&&za!==zl)return;
-   if(za!==zb){/* plunge or ramp ending at this level */if(zb===zl){const n=disk(m.b[0],m.b[1]);if(n*h*h>0.02*r*r&&!plunge)plunge=c[m.l]}return}
-   const len=Math.hypot(m.b[0]-m.a[0],m.b[1]-m.a[1]);if(len<1e-9)return;let cut=0;const st=Math.max(1,Math.ceil(len/(h/2)));for(let s=0;s<=st;s++)cut+=disk(m.a[0]+(m.b[0]-m.a[0])*s/st,m.a[1]+(m.b[1]-m.a[1])*s/st);
-   if(len>0.1){const ae=cut*h*h/len;if(ae>worst){worst=ae;wl=c[m.l]+' @Z'+zl}}});
+ levels.forEach(zl=>{win=[];wsum=0;wlen=0;mv.forEach(m=>{if(m.l>=lim)return;const za=+m.a[2].toFixed(5),zb=+m.b[2].toFixed(5);if(zb!==zl&&za!==zl)return;
+   if(za!==zb){win=[];wsum=0;wlen=0;/* plunge or ramp ending at this level */if(zb===zl){const n=disk(m.b[0],m.b[1]);if(n*h*h>0.02*r*r&&!plunge)plunge=c[m.l]}return}
+   /* v113z7: engagement = area removed over a sliding 0.05 window of travel, on every move however short (entries included), carried across consecutive moves */
+   const len=Math.hypot(m.b[0]-m.a[0],m.b[1]-m.a[1]);if(len<1e-9)return;const ds=h/2,st=Math.max(1,Math.ceil(len/ds)),dd=len/st;for(let s=1;s<=st;s++){const n=disk(m.a[0]+(m.b[0]-m.a[0])*s/st,m.a[1]+(m.b[1]-m.a[1])*s/st);win.push([n,dd,m.l]);wsum+=n;wlen+=dd;while(wlen-win[0][1]>=W-1e-12){wsum-=win[0][0];wlen-=win[0][1];win.shift()}if(wlen>=W-1e-9){const ae=wsum*h*h/wlen;if(ae>worst){worst=ae;wl=c[m.l]+' @Z'+zl}}}});
   })};
  /* uncut stock after roughing (before floor/finish) is what the finish must take */
  scan(fi<0?1e9:fi);for(let i=0;i<nx;i+=2)for(let k=0;k<ny;k+=2)if(g[i*ny+k]){const d=r5polyD(P5,bx[0]+(i+.5)*h,bx[1]+(k+.5)*h);if(d>left)left=d}
@@ -205,12 +205,12 @@ for(const kind of ['fresh','imported']){await fresh();await E(()=>{const c=S.m[0
   ok(!st.sheet&&!String(st.ctl.v||'').trim()&&st.ctl.st!='user'&&/Build/.test(st.ttl)&&st.op=='rboss'&&/Control: not set/.test(st.pill)&&!/✓ Saved|Unsaved Build work/.test(st.body)&&st.saved,kind+': Clear (not set) clears Control, saves it, stays on the same job (pill back to "Control: not set"): '+st.pill)}}
 
 // ---------- v113z6) Stacey: no move of ANY kind (rough, extra material, entries, exits, floor, finish) engages more than the stepover; no plunge onto stock
-for(const n of ['opp','rad','cham','lr']){await fresh();await loadFx(n,n=='cham'?null:(n=='rad'?{shape:'square',square:{L:4.5,W:3.5,H:1},zp:'tr'}:{shape:'square',square:{L:4.5,W:3.5,H:1},zp:'tr'}));await E(()=>{J.p['Keep tool down']={v:'NO',g:false};J.p['Finish stock Z']={v:0.02,g:false};show()});await code();const r=await engScan();
- ok(r.worst<=r.so+0.02&&!r.plunge,`demo ${n}: every move incl. entries/exits/floor/finish engages <= stepover (widest ${r.worst.toFixed(3)} at ${r.wl}, stepover ${r.so.toFixed(3)}), no plunge onto stock ${r.plunge||''}`)}
+for(let n of ['opp','rad','cham','cham2','lr']){await fresh();const big=n=='cham2';n=n=='cham2'?'cham':n;await loadFx(n,big?{shape:'square',square:{L:4.6,W:3.2,H:1},zp:'tr'}:n=='cham'?null:(n=='rad'?{shape:'square',square:{L:4.5,W:3.5,H:1},zp:'tr'}:{shape:'square',square:{L:4.5,W:3.5,H:1},zp:'tr'}));await E(()=>{J.p['Keep tool down']={v:'NO',g:false};J.p['Finish stock Z']={v:0.02,g:false};show()});await code();const r=await engScan();
+ ok(r.worst<=r.so+0.01&&!r.plunge,`demo ${n} (0.005 grid, 0.05 sliding window, margin 0.01): every move incl. entries/exits/floor/finish engages <= stepover (widest ${r.worst.toFixed(3)} at ${r.wl}, stepover ${r.so.toFixed(3)}), no plunge onto stock ${r.plunge||''}`)}
 // ---------- v113z6) Maria: the RENDERED Keep tool down switch shows the effective value (locked = Off) after a real file import, after the 0.7 s machine-poll redraw, after toggles/undo, and after a reload
 {await fresh();const kdState=()=>E(()=>{const s=[...document.querySelectorAll('.r5sw[data-r5k="Keep tool down"]')];if(s.length!=1)return {n:s.length};const b=v=>s[0].querySelector(`[data-v=${v}]`);const yel=e=>/255, 210, 31/.test(getComputedStyle(e).backgroundColor);return {n:1,offSel:b('NO').classList.contains('on')&&b('NO').getAttribute('aria-checked')=='true'&&yel(b('NO')),onSel:b('YES').classList.contains('on')||b('YES').getAttribute('aria-checked')=='true'||yel(b('YES')),onDis:b('YES').disabled,why:!!s[0].querySelector('.r5why'),v:J.p['Keep tool down'].v}});
  const okLocked=(st,m)=>ok(st.n==1&&st.offSel&&!st.onSel&&st.onDis&&st.why,m+': '+JSON.stringify(st));
- ok(await E(()=>APP_VERSION)=='v113z6'&&/const C='mc-v113z6'/.test(fs.readFileSync(path.join(BASE,'sw.js'),'utf8')),'build v113z6 with service-worker cache mc-v113z6 (no stale copy)');
+ ok(await E(()=>APP_VERSION)=='v113z7'&&/const C='mc-v113z7'/.test(fs.readFileSync(path.join(BASE,'sw.js'),'utf8')),'build v113z6 with service-worker cache mc-v113z6 (no stale copy)');
  await E(()=>tab('recent'));await sl(500);const fi=await p.$('#mbf');await fi.uploadFile(path.join(HERE,'fixtures','demo-lr.mbjob'));await sl(1200);{const h=await p.evaluateHandle(()=>[...document.querySelectorAll('button')].find(e=>e.offsetParent&&e.textContent.trim()=='Add to Library'));if(h.asElement())await tapEl(h.asElement());await sl(800)}
  await E(()=>{const i=S.jobs.findIndex(x=>/DEMO RIGHT LEFT/.test(x.name||''));reopen(i);Object.assign(r112stk(),{shape:'square',square:{L:4,W:3,H:1},zp:'tr'});show()});await sl(600);
  okLocked(await kdState(),'real file import (#mbf), Right+Left + YES: rendered Off selected (yellow), On not selected + disabled, reason shown');
