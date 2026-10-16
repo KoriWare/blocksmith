@@ -1,0 +1,70 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113n: real-click regression - job names never carry the machine name: save default, re-save, Library card (name + machine line once), legacy doubled names cleaned, Job manager shows the same name. Demo names only. --><iframe id="f" src="../index.html?v=127" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,1500)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);if(!ph){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const vis=e=>e&&e.offsetParent;const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t)||[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim().startsWith(t));
+const TY=(sel,v)=>{const i=Q(sel);if(!i)return log('input '+sel,false,'missing');i.focus();i.value=v;i.dispatchEvent(new w.Event('input',{bubbles:true}));i.dispatchEvent(new w.Event('change',{bubbles:true}));i.blur()};
+const seq=[];const S=(fn,ms=300)=>seq.push([fn,ms]);
+// machine setup only (not under test): demo Mill B = 4th axis, Haas control, 4th-axis + cylindrical interpolation options, settings confirmed
+S(()=>ev(`(()=>{const i=S.m.findIndex(m=>r98t(m)=='vmc4');const m=S.m[i];m.opt=Object.assign(m.opt||{},{ax4:1,cyl:1,rot:1});m.optOk=1;m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()&&sp&&sp.ex)x.v=String(sp.ex).replace(/^e\\.g\\.\\s*/,'');x.st='user'});const c=m.s.find(x=>/^Control/.test(x.k));c.v='Haas NGC-style';save();cur(i)})()`));
+S(()=>T('Build').click());S(()=>{const b=[...d.querySelectorAll('button')].find(b=>vis(b)&&/^Engraving/.test(b.textContent.trim()));b&&b.click()});
+S(()=>{const b=T('Engrave text');b?b.click():log('Engrave text job button',false,[...d.querySelectorAll('button')].filter(vis).map(b=>b.textContent.trim().slice(0,22)).join('|'))},400);
+const F={'Text':'HELLO WORLD','Shaft Ø':'1.5','Letter height':'0.25','Depth':'0.02','Tool':'7','Start angle':'135','Angle is':'START','Reading':'AROUND','Baseline rotation':'60','Mirror':'NO','Start X':'1','Start Y':'0','Text height':'0.25','Depth':'0.01','Return R':'0.1','Work offset':'G54'};
+for(let n=0;n<14;n++)S(()=>{const c=[...d.querySelectorAll('#out .chip.r')].find(vis);if(!c)return;const k=(c.getAttribute('onclick')||'').match(/ed\('([^']+)'\)/);c.click();setTimeout(()=>{if(!k)return;const i=Q('#out [data-k="'+k[1]+'"]');if(!i)return;i.focus();if(i.tagName=='SELECT'){const op=[...i.options].find(o=>o.value==F[k[1]])||[...i.options].find(o=>o.value);i.value=op.value}else i.value=F[k[1]]||'1';i.dispatchEvent(new w.Event('input',{bubbles:true}));i.dispatchEvent(new w.Event('change',{bubbles:true}));i.blur()},60)},200);
+S(()=>{const c=Q('#out [onclick="ed(\'Clearance\')"]');c?c.click():log('Clearance chip',false,'missing')},300);S(()=>{if(Q('#out [data-k="Clearance"]'))return TY('#out [data-k="Clearance"]','0.1');const i=Q('#dlgin');if(i){i.value='0.1';i.dispatchEvent(new w.Event('input',{bubbles:true}));Q('#dlgok').click()}else log('Clearance editor',false,'none')},300);S(()=>{log('Clearance set to 0.1',ev('J.p.Clearance&&J.p.Clearance.v')==0.1,ev('JSON.stringify(J.p.Clearance)'))});S(()=>{const b=T('Continue');b&&b.click()},400);S(()=>{const b=T('Generate Code');b&&b.click()},500);
+S(()=>{const b=Q('#r112stk [data-st=shape][data-sv=round]');b?b.click():log('Stock card',false,'missing')},400);
+S(()=>TY('#r112stk input[data-sk="round.d"]','1.5'));S(()=>TY('#r112stk input[data-sk="round.len"]','6'));
+S(()=>{const b=Q('#r112stk [data-st=xend][data-sv=left]');b&&b.click()});S(()=>TY('#r112stk input[data-sk="xs"]','1'));
+S(()=>{const b=T('Generate Code');b&&b.click()},600);
+S(()=>{const code=ev('(J.code||[]).join("\\n")'),hold=ev('J.r112eHold||""');window.CODE=code;window.HOLD=hold;
+ log('wrap engrave Ø1.5 / L6 / X start 1 / Clearance 0.1 (Kori values, demo name): no hold',!hold,hold+' || '+(Q('#out')||{}).innerText.replace(/\s+/g,' ').slice(-500));
+ log('program written',code.split('\n').length>8,code);
+ const L=code.split('\n');let z=Infinity,bad=null,mo=0;for(const l of L){const n=l.replace(/\([^)]*\)/g,'');const gm=n.match(/\bG0?([0-3])(?![\d.])/);if(gm)mo=+gm[1];if(/\bM0?6\b/.test(n))z=Infinity;if(/\bG28\b/.test(n)&&/Z/.test(n)){z=Infinity;continue}const m=n.match(/\bZ(-?[\d.]+)/);if(m&&!/\bG91\b/.test(n))z=+m[1];if(mo==0&&/\bA-?[\d.]/.test(n)&&z<0.75-1e-6){bad=l;break}}
+ log('no rapid A move at or below the bar radius (0.75); G01 X/A cuts at depth are the engraving',!bad,bad);
+ log('retract writes Z0.85 (radius 0.75 + Clearance 0.1)',/G43 H\d+ Z0\.85\b/.test(code),'');log('X start within 0..6 and every X in the program inside the bar',(()=>{const xs=code.split('\n').map(l=>l.replace(/\([^)]*\)/g,'').match(/\bX(-?[\d.]+)/)).filter(Boolean).map(m=>+m[1]);return xs.length>5&&xs.every(x=>x>=0&&x<=6)})(),code.split('\n').slice(6,12).join(' / '));
+ log('no cuts outside the stock',ev('J.out||0')==0,ev('J.out'));
+ const ck=[...d.querySelectorAll('#ck li,#ck .ck,#ck div')].map(e=>e.textContent);log('all code checks pass',/(\d+) of \1 pass/.test((Q('#out')||{}).innerText),((Q('#out')||{}).innerText.match(/Code checks: \d+ of \d+ pass/)||[''])[0]+' '+[...d.querySelectorAll('#ck .bad,#ck .no,#ck .r113fl')].map(e=>e.textContent).join(' | '));
+ log('sim stock is the Stock card bar: length 6, Ø1.5',ev('JSON.stringify(J.stock)')=='[0,-0.75,-0.75,6,0.75,0.75]',ev('JSON.stringify(J.stock)'));
+ log('no exceptions',errs.length==0,errs.join(' || '))},300);
+const SH=(new URLSearchParams(location.search)).get('shot')||'';
+const cards=()=>[...d.querySelectorAll('#lo .card')].filter(vis);
+S(()=>{const b=T('💾 Save…');b?b.click():log('Save… button',false,'')},500);
+S(()=>{const i=Q('#dlgin');log('save default name has no machine name ("Engrave text")',i&&i.value=='Engrave text',i&&i.value);if(i){i.value='HELLO WORLD';i.dispatchEvent(new w.Event('input',{bubbles:true}))}const ok=Q('#dlgok');ok&&ok.click()},500);
+S(()=>{const c=d.querySelector('#lo [onclick^="reopen("]');c&&c.click()},600);S(()=>{const g=T('Generate Code');g&&g.click()},600);S(()=>{const b=T('💾 Save…')||[...d.querySelectorAll('button')].find(b=>vis(b)&&/^💾/.test(b.textContent.trim()));b?b.click():log('Save… again',false,[...d.querySelectorAll('button')].filter(vis).map(b=>b.textContent.trim().slice(0,18)).join('|'))},500);
+S(()=>{const i=Q('#dlgin');log('re-save default is the plain name',i&&i.value=='HELLO WORLD',i&&i.value);const ok=Q('#dlgok');ok&&ok.click()},500);
+S(()=>{log('Library record: name HELLO WORLD, machine Mill B',ev('JSON.stringify(S.jobs.map(j=>[j.name,j.machine]))')=='[["HELLO WORLD","Mill B"]]',ev('JSON.stringify(S.jobs.map(j=>[j.name,j.machine]))'))},300);
+S(()=>T('Library').click(),500);
+S(()=>{const c=cards()[0],t=c&&c.querySelector('.t'),m=c&&c.querySelector('.r113mach');log('Library card: title "HELLO WORLD", machine on its own line once',t&&t.textContent.trim()=='HELLO WORLD'&&m&&m.textContent.trim()=='🖥 Mill B'&&(c.textContent.match(/Mill B/g)||[]).length==1,c&&c.innerText.replace(/\s+/g,' ').slice(0,200))},300);
+// legacy data from older versions: the doubled name as stored before v113n, then the load-time cleanup
+S(()=>{ev("S.jobs[0].name='HELLO WORLD · Mill B · Mill B';save();r113nmFix();recent()");const t=cards()[0]&&cards()[0].querySelector('.t');log('old doubled name "HELLO WORLD · Mill B · Mill B" cleaned on load',ev('S.jobs[0].name')=='HELLO WORLD'&&t&&t.textContent.trim()=='HELLO WORLD',ev('S.jobs[0].name'))},400);
+S(()=>{const b=T('Open Job manager');b?b.click():log('Open Job manager',false,'')},500);
+S(()=>{const i=Q('#jmnew');if(!i)return log('new list box',false,'');i.value='Demo list';i.dispatchEvent(new w.Event('input',{bubbles:true}));Q('#jmnewb').click()},500);
+S(()=>{if(!Q('#jmadd')){const b=[...d.querySelectorAll('.jmls button')].find(b=>vis(b)&&/Open/.test(b.textContent));b&&b.click()}},500);
+S(()=>{const s=Q('#jmadd');if(!s)return log('add-job picker',false,'');const o=[...s.options].find(o=>/^lib:/.test(o.value));log('Job manager picker lists the Library job by the same name',o&&o.textContent.trim()=='HELLO WORLD',o&&o.textContent);if(o){s.value=o.value;s.dispatchEvent(new w.Event('change',{bubbles:true}));Q('#jmaddb').click()}},500);
+S(()=>{const e=[...d.querySelectorAll('.jme')].filter(vis)[0];const nm=ev('jmName(jmL().entries[0])');log('Job manager entry shows the same name as the Library card ("HELLO WORLD", no machine suffix)',nm=='HELLO WORLD'&&e&&/HELLO WORLD/.test(e.textContent)&&!/Mill B/.test(e.textContent),nm+' | '+(e&&e.innerText.replace(/\s+/g,' ').slice(0,160)))},400);
+S(()=>{ev("jmL().entries[0].label='HELLO WORLD · Mill B';save();r113nmFix();jmOpen(jmL().id)");log('old Job manager entry label with machine suffix cleaned on load',ev('jmL().entries[0].label')=='HELLO WORLD',ev('jmL().entries[0].label'))},400);
+// machine setup only (not under test): a second 4th-axis demo machine "Mill D" (no tools, Fanuc-style control)
+S(()=>ev(`(()=>{const b=S.m.find(m=>m.name=='Mill B');const m=JSON.parse(JSON.stringify(b));m.name='Mill D';m.id='millD';m.tools=[];const c=m.s.find(x=>/^Control/.test(x.k));c.v='Fanuc 0i-style';S.m.push(m);save()})()`),200);
+S(()=>T('Library').click(),500);
+S(()=>{const b=[...d.querySelectorAll('.r113dup')].find(vis);b?b.click():log('Library ⧉ Dup button',false,'')},400);
+S(()=>{const s=Q('#r113dm');const o=s?[...s.options].map(o=>o.textContent):[];log('Duplicate to…: only same-type machines (Mill B, Mill D), current machine default',o.length==2&&/^Mill B/.test(o[0])&&o[1]=='Mill D'&&s.options[s.selectedIndex].textContent.startsWith('Mill B'),o.join(','));if(s){s.value=[...s.options].find(o=>o.textContent=='Mill D').value;s.dispatchEvent(new w.Event('change',{bubbles:true}))}const g=Q('#r113dgo');g&&g.click()},400);
+S(()=>{const j=JSON.parse(ev('JSON.stringify(S.jobs.find(j=>j.machine=="Mill D")||null)'));const src=JSON.parse(ev('JSON.stringify(S.jobs.find(j=>j.machine=="Mill B"))'));if(!j)return log('copy on Mill D',false,'none');
+ log('copy is on Mill D, named HELLO WORLD, saved Not ready, no code (rebuilt for Mill D control when opened)',j.name=='HELLO WORLD'&&j.notReady==1&&!j.code&&!j.saved,JSON.stringify([j.name,j.notReady,!!j.code]));
+ log('job values kept (Text, Shaft Ø, Letter height, Depth, Feed)',['Text','Shaft Ø','Letter height','Depth','Feed'].every(k=>!j.p[k]||!src.p[k]||JSON.stringify(j.p[k].v)==JSON.stringify(src.p[k].v)),['Text','Shaft Ø','Depth'].map(k=>k+'='+(j.p[k]&&j.p[k].v)).join(' '));
+ const pos=Object.keys(j.p).filter(k=>/offset$|^Start [XY]$|Z0/.test(k)&&k!='Edge overrun');log('positions and offsets cleared to required (red)',pos.length>0&&pos.every(k=>j.p[k].v==null),pos.map(k=>k+'='+j.p[k].v).join(' '));
+ log('Tool 7 not in Mill D tool list -> Tool required again',j.p.Tool&&j.p.Tool.v==null,JSON.stringify(j.p.Tool));
+ log('Stock card zero cleared (offsets / X start gone, must re-pick)',!j.r112stk||(j.r112stk.r113zeroClr==1&&!Object.keys(j.r112stk.off||{}).length),JSON.stringify(j.r112stk));
+ const c=[...d.querySelectorAll('#lo .card')].filter(vis).find(c=>/Mill D/.test(c.textContent));log('Library shows the copy with a Not ready chip and the machine line Mill D',c&&c.querySelector('.r113nrc')&&/🖥 Mill D/.test(c.textContent),c&&c.innerText.replace(/\s+/g,' ').slice(0,160))},500);
+S(()=>{const c=[...d.querySelectorAll('#lo .card')].filter(vis).find(c=>/Mill D/.test(c.textContent));const r=c&&c.querySelector('[onclick^="reopen("]');r?r.click():log('open copy',false,'')},500);
+S(()=>{log('copy opens on Mill D with required (red) values, nothing written yet',ev('S.m[S.cur].name')=='Mill D'&&[...d.querySelectorAll('#out .chip.r')].filter(vis).length>0&&!ev('(J.code||[]).length'),ev('S.m[S.cur].name')+' red='+[...d.querySelectorAll('#out .chip.r')].filter(vis).length)},500);
+// Job manager Dup -> Duplicate to… this machine: copy in the same list
+S(()=>{ev("cur(S.m.findIndex(m=>m.name=='Mill B'))");T('Library').click()},500);S(()=>{const b=T('Open Job manager');b&&b.click()},500);S(()=>{const b=[...d.querySelectorAll('.jmls button')].find(b=>vis(b)&&/Open/.test(b.textContent));b&&b.click()},500);
+S(()=>{const b=[...d.querySelectorAll('.jme button')].find(b=>vis(b)&&b.textContent.trim()=='Dup');b?b.click():log('Job manager Dup',false,'')},400);
+S(()=>{const s=Q('#r113dm');log('Job manager Dup opens Duplicate to… (Mill B default)',s&&s.options[s.selectedIndex].textContent.startsWith('Mill B'),s&&[...s.options].map(o=>o.textContent).join(','));const g=Q('#r113dgo');g&&g.click()},400);
+S(()=>{log('same machine: copy added to the list',ev('jmL().entries.length')==2&&/\(copy\)/.test(ev('jmName(jmL().entries[1])')),ev('JSON.stringify(jmL().entries.map(e=>jmName(e)))'))},400);
+S(()=>{log('no exceptions',errs.length==0,errs.join(' || '));if(SH=='lib')T('Library').click();if(!SH)fin()},300);
+;
+S(()=>{fin()});
+const run=i=>{if(i>=seq.length)return;try{seq[i][0]()}catch(e){log('step'+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),800)}
+</script>
