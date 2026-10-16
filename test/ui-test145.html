@@ -1,0 +1,46 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113z11b: Rect Boss/Profile fixes: positive Z0 Shift Clear Z check, same moves at any shift, Z0 Shift dialog title, sim offset path on every comp pair (spring), Maria polish --><iframe id="f" src="../index.html?v=145" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+const SHOT=(location.search.match(/shot=(\d)/)||[])[1]|0;let FX='';
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);if(!ph){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const vis=e=>e&&e.offsetParent;
+const CLK=e=>e.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t);
+const chipIn=(card,k)=>{const c=Q('#'+card);return !!(c&&[...c.querySelectorAll('.chip,button')].find(e=>vis(e)&&(e.getAttribute('onclick')||'')==`ed('${k}')`))};
+const code=()=>ev("(J.code||[]).join('\\n')");const GEN=()=>{const c=T('Continue');if(c){c.click();setTimeout(()=>{const b=T('Generate Code');b&&b.click()},400)}else{const b=T('Generate Code');b&&b.click()}};
+const seq=[];const S=(fn,ms=400)=>seq.push([fn,ms]);
+// open the synthetic Rect Boss fixture through the Library import
+S(()=>{try{const x=new XMLHttpRequest();x.open('GET','fixtures/demo-z8.mbjob',false);x.send();FX=x.responseText}catch(e){log('fixture',false,e.message)}ev("tab('recent')")},800);
+S(()=>{w.mbRead(new w.File([FX],'demo-z8.mbjob'))},4000);
+for(let k=0;k<4;k++)S(()=>{if(Q('#mbgo')||w.J&&w.J.op=='rboss')return;w.mbRead(new w.File([FX],'demo-z8.mbjob'))},3000);S(()=>{const b=Q('#mbgo');b?CLK(b):log('import',false,'no #mbgo')},4000);
+S(()=>{const L=[...d.querySelectorAll('#v *')].filter(e=>vis(e)&&!e.children.length&&/^(Demo z8 boss|Rectangular Boss\/Profile)$/.test(e.textContent.trim()));L.length?CLK(L[L.length-1]):log('open',false,'no job link')},4000);
+S(()=>{ev("(()=>{const m=S.m[S.cur];m.s.forEach(x=>{x.st='user'});const c=m.s.find(x=>x.k=='Control');if(c&&!String(c.v||'').trim()){const sp=r99spec('Control');c.v=sp&&sp.ch?sp.ch.find(v=>/fanuc/i.test(v))||sp.ch[0]:'Fanuc 0i'}save();show()})()")},800);
+const DUMP=/dump=1/.test(location.search);let GOLD='';
+const XG=f=>{try{const x=new XMLHttpRequest();x.open('GET',f,false);x.send();return x.responseText}catch(e){return ''}};
+S(()=>{const r=JSON.parse(ev(`(()=>{const sv=JSON.stringify(J.p);const o={};J.p.Z0={v:0.05,g:false};J.p['Clear Z']={v:0.3,g:false};J.code=null;show();const g=gen(J);J.code=g.code;show();o.a=[r112eRapid(J),J2.rboss.block(J)||null,(document.querySelector('#r112eHold')||{}).textContent||'',g.code.find(l=>/^G43/.test(l)),checks(J).filter(x=>!x[1]).map(x=>x[0])];J.p['Clear Z']={v:-0.02,g:false};J.code=null;show();o.b=r112eRapid(J);J.p=JSON.parse(sv);J.code=null;show();return JSON.stringify(o)})()`));
+ log('1: Z0 Shift +0.05 with Clear Z 0.3 is written (no false Clear Z hold; G43 Z0.35; all checks pass)',r.a[0]==null&&r.a[1]==null&&!r.a[2]&&/Z0\.35\b/.test(r.a[3])&&!r.a[4].length,JSON.stringify(r.a));
+ log('1: the Clear Z check still catches a real problem at +0.05 (Clear Z -0.02 writes Z0.03, below the top Z0.05)',/Rapid into stock: Clear Z must be above the top of stock \(Z0\.050\)/.test(r.b||''),r.b)},400);
+S(()=>{const r=JSON.parse(ev(`(()=>{const sv=JSON.stringify(J.p);const G=v=>{J.p.Z0={v,g:false};J.code=null;show();return gen(J).code.map(String)};const sk=c=>c.map(l=>l.replace(/Z-?[\\d.]+/g,'Z'));const b=sk(G(0)).join('\\n');const o=[];for(const v of [-0.05,0.05,0.5,-0.5]){const c=G(v);o.push([v,c.length,sk(c).join('\\n')==b,c.filter(l=>/ABOVE THE BOSS TOP/.test(l)).length])}o.push(G(0).length);J.p=JSON.parse(sv);J.code=null;show();return JSON.stringify(o)})()`));
+ log('2: the move structure is the same at shift -0.05, +0.05, +0.5 and -0.5 as at 0 (same lines, only Z values differ, no RAPID TO 0.05 ABOVE THE BOSS TOP)',r.slice(0,4).every(x=>x[1]==r[4]&&x[2]&&x[3]==0),JSON.stringify(r))},400);
+S(()=>{ev("ed('Z0')")},300);
+S(()=>{const m=Q('.dlgb .dlgm');log("3: the Z0 Shift edit dialog is titled 'Z0 Shift (in, − = top lower)'",!!m&&m.textContent=='Z0 Shift (in, − = top lower)',m&&m.textContent);const c=Q('#dlgno');c&&c.click()},300);
+S(()=>{ev("(()=>{J.r112comp={...(J.r112comp||{}),m:'G41'};J.p['Spring pass']={v:'On - 1 pass',g:false};J.code=null;show();J.code=gen(J).code;show()})()");const b=[...d.querySelectorAll('.tabs button, .tabs *')].find(e=>vis(e)&&e.textContent.trim()=='Simulate');b&&CLK(b)},2000);
+const SP={};const spr=m=>{const r=JSON.parse(ev(`(()=>{const C=J.code,M=J.M||[];const ons=[],offs=[];C.forEach((l,i)=>{if(/\\(COMP ON - /.test(l))ons.push(i);if(/\\(COMP OFF - /.test(l))offs.push(i)});const seg=k=>M.filter(x=>x.l>ons[k]&&x.l<offs[k]).map(x=>[x.a[0].toFixed(4),x.a[1].toFixed(4),x.b[0].toFixed(4),x.b[1].toFixed(4),x.r112o?1:0].join(','));const a=seg(0),b=seg(1);return JSON.stringify({code:C.join('\\n'),n:[ons.length,a.length,b.length],off:[a.filter(x=>x.endsWith(',1')).length,b.filter(x=>x.endsWith(',1')).length],same:a.join('|')==b.join('|')})})()`));SP[m]=r;const gold=XG('fixtures/demo-z8.spring.v113z11.'+m+'.nc').replace(/\n$/,'');
+ log('4 ('+m+'): Spring on: the sim draws the offset path for the finish AND the spring pass, on the same XY',r.n[0]==2&&r.off[0]>5&&r.off[0]==r.off[1]&&r.same,JSON.stringify({n:r.n,off:r.off,same:r.same}));
+ log('4 ('+m+'): program output byte-identical to v113z11 (fixtures/demo-z8.spring.v113z11.'+m+'.nc)',r.code==gold,r.code.length+' vs '+gold.length)};
+S(()=>spr('G41'),300);
+S(()=>{ev("(()=>{J.r112comp={...(J.r112comp||{}),m:'G42'};J.code=null;show();J.code=gen(J).code;show();if(typeof draw=='function')draw()})()")},1500);
+S(()=>spr('G42'),300);
+S(()=>{ev("(()=>{J.r112comp={...(J.r112comp||{}),m:'G41'};J.p['Spring pass']={v:'Off',g:false};J.code=null;tab('new')})()");const b=[...d.querySelectorAll('.tabs button, .tabs *')].find(e=>vis(e)&&e.textContent.trim()=='Build');b&&CLK(b)},1500);
+S(()=>{ev("(()=>{J.code=gen(J).code;J.p.Depth={v:0,g:false};show()})()")},800);
+S(()=>{const shown=[...d.querySelectorAll('#out *')].filter(e=>vis(e)&&!e.children.length&&/Depth/.test(e.textContent)&&/more than 0|above 0/.test(e.textContent)).map(e=>e.textContent.trim());log('5: Depth 0 shows a single message: ⛔ Not written: Depth (boss top to floor) must be more than 0.',shown.length==1&&/^⛔ Not written: Depth \(boss top to floor\) must be more than 0\.$/.test(shown[0]),JSON.stringify(shown));
+ log("5: every hold reads 'Not written' (no 'Not written yet')",!/Not written yet/.test(d.body.textContent))},400);
+S(()=>{ev("(()=>{J.p.Depth={v:0.3,g:false};J.code=gen(J).code;show()})()")},600);
+S(()=>{const b=[...d.querySelectorAll('#out *')].find(e=>!e.children.length&&/Round bar$/.test(e.textContent));CLK(b.closest('button,[onclick]')||b)},500);
+S(()=>{const h=Q('#out .ok.bad');log("5: tapping Round bar holds at once with \"Not written: Round bar stock isn't supported yet for Rectangular Boss/Profile - use Square block\"",!!h&&h.textContent=="⛔ Not written: Round bar stock isn't supported yet for Rectangular Boss/Profile - use Square block",h&&h.textContent);ev("(()=>{J.r112stk.shape='square';J.code=null;show()})()")},400);
+S(()=>{const h=Q(`#out .chip[onclick="ed('Z0')"] .r11hint`);const cs=h&&w.getComputedStyle(h);const lum=c=>{const m=c.match(/\d+/g).map(Number);return (0.2126*m[0]+0.7152*m[1]+0.0722*m[2])/255};log('5: the − = top lower hint is readable (≥ 12 px, light text)',!!h&&parseFloat(cs.fontSize)>=12&&lum(cs.color)>0.75,cs&&[cs.fontSize,cs.color].join(' '))},300);
+S(()=>{const sv=Q('#rbpick svg');const pts=[];sv.querySelectorAll('path.rbpart,line[data-rbshape]').forEach(e=>{const st=e.getAttribute('stroke');if(!st||st=='transparent'||st=='none')return;const n=e.getTotalLength();for(let t=0;t<=n;t+=0.5){const p=e.getPointAtLength(t);pts.push([p.x,p.y])}});const res=[...sv.querySelectorAll('text.rbclbl')].filter(t=>/^C/.test(t.textContent)).map(t=>{const b=t.getBBox();let m=1e9;pts.forEach(([x,y])=>{const dx=Math.max(b.x-x,0,x-b.x-b.width),dy=Math.max(b.y-y,0,y-b.y-b.height);m=Math.min(m,Math.hypot(dx,dy))});return [t.textContent,+m.toFixed(1)]});const g=k=>(res.find(r=>r[0].startsWith(k))||[0,-1])[1];log('5: chamfer labels get more room from the outline: C1.5 and C0.1 ≥ 3 px (were 2.6 / 2), C0.75 keeps ≥ 2 px (its 21 px corner triangle sits against the stock edge)',res.length>=3&&g('C1.5')>=3&&g('C0.1')>=3&&g('C0.75')>=2,JSON.stringify(res))},300);
+S(()=>{log('no page errors',!errs.length,errs.join(' | '));fin()},10);
+const run=()=>{const s=seq.shift();if(!s)return;try{s[0]()}catch(e){log('step',false,e.stack)}setTimeout(run,s[1])};setTimeout(run,1200)};
+</script>
