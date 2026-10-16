@@ -17,13 +17,15 @@ const JOB=(op,sh)=>{
   log(op+': roughing/finish legend shown',!!Q('#r113zleg'),'');
   const L=JSON.parse(code0);const i71=L.findIndex(x=>/G7[12] P/.test(x)),i70=L.findIndex(x=>/G70 P/.test(x));
   const fr=A.findIndex(x=>x[0]=='rough');const ff=A.findIndex(x=>x[0]=='fin');
-  ev(`scrub(${fr})`);const sb=[...d.querySelectorAll('button')].find(e=>vis(e)&&(e.getAttribute('onclick')||'')=='step()');sb?CLK(sb):log('Step button',false,'missing');
+  ev(`scrub(${fr})`);const sb=[...d.querySelectorAll('button')].find(e=>vis(e)&&e.id=='r2fw');sb?CLK(sb):log('Step button',false,'missing');
   setTimeout(()=>{log(op+': Step onto a roughing move highlights the G7x cycle line',((Q('#simcode .cur')||{}).textContent||'').includes(L[i71].replace(/\s*\(.*$/,''))&&A[ev('view.n')-1][1]==i71,(Q('#simcode .cur')||{}).textContent);
    ev(`scrub(${ff})`);CLK(sb);setTimeout(()=>{log(op+': Step onto a finish move highlights the G70 line',((Q('#simcode .cur')||{}).textContent||'').includes(L[i70].replace(/\s*\(.*$/,'')),(Q('#simcode .cur')||{}).textContent);
     if(SHOT==sh){ev(`scrub(J.M.length)`);seq.length=0}},300)},300)},1500);
 };
 JOB('g71',1);JOB('g72',2);
 S(()=>{const m=ev(`JSON.stringify((R=>R.moves.filter(m=>m.cyc).length)(interp(['G90 G54','G00 X0 Y0','G71 P10 Q20 U0.1','G01 X1 F10'],{})))`);log('mill Simulate unchanged: no cycle expansion outside lathe',m==='0',m)},300);
+S(()=>{const R=JSON.parse(ev(`JSON.stringify(R2EX.map(x=>{cur(2);tab('new');pickJob('g71');const v={Profile:x[2],['Stock Ø']:1.5,['Start Z']:0.1,['Depth of cut']:0.1,Tool:1,['Finish tool']:2,['Work offset']:'G54',['X0 Z0 at']:'X0 spindle centerline, Z0 finished front face'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show();const n=x[2].split('\\n').length;return[x[0],prof36(x[2]).length==n,J2.g71.block(J),(J.code||[]).join('\\n').match(/^N20 .*$/m)&&(J.code||[]).filter(l=>/^(N20 )?G0[123] X/.test(l)).length,/G02 X1\.0 Z-0\.7 R0\.2/.test((J.code||[]).join('\\n'))]}))`));
+ R.forEach(x=>log('Example "'+x[0]+'" passes the app validation and generates the profile',x[1]&&!x[2]&&x[3]>=2,JSON.stringify(x)));log('Arc example emits G02 X Z R in the profile',R[3][4],'')},300);
 S(()=>fin(),10);
 const run=()=>{const s=seq.shift();if(!s)return;try{s[0]()}catch(e){log('step',false,e.stack)}setTimeout(run,s[1])};setTimeout(run,800)};
 </script>
