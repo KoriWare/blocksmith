@@ -1,0 +1,23 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113q: Help updated for changelog 3.9-5.4 - real clicks: More -> Help opens, new Stock card and Build preview sections are there with the new facts, updated sections carry the new text, stale text is gone. --><iframe id="f" src="../index.html?v=133" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
+if(ph==0){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+const vis=e=>e&&e.offsetParent;const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t)||[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim().startsWith(t));
+const seq=[];const S=(fn,ms=300)=>seq.push([fn,ms]);const sec=id=>{const e=Q('#h-'+id);return e?e.textContent.replace(/\s+/g,' '):''};
+S(()=>T('More').click(),600);
+S(()=>{const c=[...d.querySelectorAll('.card')].filter(vis).find(c=>/❓ Help/.test(c.textContent));c.click()},600);
+S(()=>log('Help opens from More',Q('#ttl').textContent=='Help'&&!!Q('#hl'),Q('#ttl').textContent));
+S(()=>{const t=sec('stock');log('new section: Stock card (Height (Z) for horizontal, round bar Ø/2, zero point, face/boss/wrap X start, Edge overrun, Save as Not ready, setup sheet Close)',/Height \(Z\)/.test(t)&&/tombstone/.test(t)&&/half the Ø/.test(t)&&/Zero point/.test(t)&&/X start/.test(t)&&/Edge overrun/.test(t)&&/Save as Not ready/.test(t)&&/✕ Close/.test(t),t.slice(0,400))});
+S(()=>{const t=sec('preview');log('new section: read-only Build preview, teach always on, edit in Editor, XYZ',/read-only/.test(t)&&/Teach is always on/.test(t)&&/Editor/.test(t)&&/XYZ/.test(t),t)});
+S(()=>{log('Library help: machine line, engrave text, Duplicate to…, delete removes list entries',/machine on its own line/.test(sec('library'))&&/Duplicate to…/.test(sec('library'))&&/Also in N job list/.test(sec('library'))&&/HELLO WORLD/.test(sec('engrave')),sec('library').slice(-500))});
+S(()=>{const t=sec('jobmgr');log('Job manager help: follows active machine, picker counts lists, not in Library, ✕ removes',/Lists for <machine> · Switch machine/.test(t)&&/how many lists/.test(t)&&/not in Library/.test(t)&&/✕ removes an entry/.test(t),t.slice(-600))});
+S(()=>{log('offsets G54.1 Pn, Simulate XYZ, changelog order',/G54\.1 P10/.test(sec('offsets'))&&/XYZ/.test(sec('sim'))&&/newest first/.test(sec('about')),'')});
+S(()=>{log('stale text gone (engrave start along the axis, Build code read-out)',!/start along the axis,/.test(sec('engrave'))&&!/Build still shows a code read-out/.test(sec('editor'))&&/Stock card/.test(sec('engrave')),sec('engrave').slice(0,200))});
+S(()=>{const q=Q('#hq');q.value='not in library';q.dispatchEvent(new w.Event('input'))},300);
+S(()=>{const sh=[...d.querySelectorAll('#hl details')].filter(x=>x.style.display!='none').map(x=>x.id);log('Help search "not in library" finds the Job manager section',sh.includes('h-jobmgr'),sh.join(','));const q=Q('#hq');q.value='';q.dispatchEvent(new w.Event('input'))},300);
+S(()=>{const s=Q('#h-stock');s.open=true;w.scrollTo(0,s.getBoundingClientRect().top+w.scrollY-75);if(/shot=1/.test(location.search)){seq.length=0}},300);
+S(()=>{log('no exceptions',errs.length==0,errs.join(' || '));fin()},300);
+const run=i=>{if(i>=seq.length)return;try{seq[i][0]()}catch(e){log('step'+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),900)}
+</script>
