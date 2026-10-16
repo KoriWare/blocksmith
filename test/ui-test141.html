@@ -1,0 +1,29 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113z: lathe G71/G72/G70 expanded in Simulate for display only (demo lathe, Simulate + Step clicks). ?shot=1 stops at G71 sim, ?shot=2 at G72 sim. --><iframe id="f" src="../index.html?v=141" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+const SHOT=(location.search.match(/shot=(\d)/)||[])[1]|0;
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);if(!ph){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const vis=e=>e&&e.offsetParent;
+const CLK=e=>e.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+const seq=[];const S=(fn,ms=400)=>seq.push([fn,ms]);
+const PR={g71:'x0.5,z0; x0.5,z-1; x1.1,z-1.2; x1.5,z-1.2',g72:'x1.5,z-0.5; x1,z-0.5; x0.6,z0; x0,z0'};
+let code0,L0;
+const JOB=(op,sh)=>{
+ S(()=>{ev(`cur(2);S.m[2].s.forEach(x=>x.st='user');tab('new');pickJob('${op}');const v={Profile:'${PR[op]}',['Stock Ø']:1.5,['Start Z']:0.1,['Depth of cut']:0.1,Tool:1,['Finish tool']:2,['Work offset']:'G54',['X0 Z0 at']:'X0 spindle centerline, Z0 finished front face'};Object.keys(v).forEach(k=>J.p[k]={v:v[k],g:false});show();1`);code0=ev('JSON.stringify(J.code)');log(op+': code generated with cycle',/G7[12]/.test(code0)&&/G70 P10 Q20/.test(code0),code0.slice(0,300))},1200);
+ S(()=>{const b=[...d.querySelectorAll('button,a,.nav *')].find(e=>vis(e)&&/^\s*Simulate\s*$/.test(e.textContent)&&!e.closest('#out'));b?CLK(b):ev("tab('sim')")},1500);
+ S(()=>{const M=ev('JSON.stringify((J.M||[]).map(m=>[m.cyc||"",m.l]))');const A=JSON.parse(M);const c=k=>A.filter(x=>x[0]==k).length;
+  log(op+': Simulate expands roughing ('+c('rough')+'), semi-finish at allowance ('+c('semi')+') and G70 finish ('+c('fin')+')',c('rough')>=4&&c('semi')>=2&&c('fin')>=2,M.slice(0,300));
+  log(op+': output code unchanged by the expansion',ev('JSON.stringify(J.code)')==code0&&!/G01|G00/.test(L0=JSON.parse(code0).filter(x=>/^N1[1-9]\b/.test(x)).join()),d.querySelectorAll('#simcode pre div').length+' vs '+JSON.parse(code0).length);
+  log(op+': roughing/finish legend shown',!!Q('#r113zleg'),'');
+  const L=JSON.parse(code0);const i71=L.findIndex(x=>/G7[12] P/.test(x)),i70=L.findIndex(x=>/G70 P/.test(x));
+  const fr=A.findIndex(x=>x[0]=='rough');const ff=A.findIndex(x=>x[0]=='fin');
+  ev(`scrub(${fr})`);const sb=[...d.querySelectorAll('button')].find(e=>vis(e)&&(e.getAttribute('onclick')||'')=='step()');sb?CLK(sb):log('Step button',false,'missing');
+  setTimeout(()=>{log(op+': Step onto a roughing move highlights the G7x cycle line',((Q('#simcode .cur')||{}).textContent||'').includes(L[i71].replace(/\s*\(.*$/,''))&&A[ev('view.n')-1][1]==i71,(Q('#simcode .cur')||{}).textContent);
+   ev(`scrub(${ff})`);CLK(sb);setTimeout(()=>{log(op+': Step onto a finish move highlights the G70 line',((Q('#simcode .cur')||{}).textContent||'').includes(L[i70].replace(/\s*\(.*$/,'')),(Q('#simcode .cur')||{}).textContent);
+    if(SHOT==sh){ev(`scrub(J.M.length)`);seq.length=0}},300)},300)},1500);
+};
+JOB('g71',1);JOB('g72',2);
+S(()=>{const m=ev(`JSON.stringify((R=>R.moves.filter(m=>m.cyc).length)(interp(['G90 G54','G00 X0 Y0','G71 P10 Q20 U0.1','G01 X1 F10'],{})))`);log('mill Simulate unchanged: no cycle expansion outside lathe',m==='0',m)},300);
+S(()=>fin(),10);
+const run=()=>{const s=seq.shift();if(!s)return;try{s[0]()}catch(e){log('step',false,e.stack)}setTimeout(run,s[1])};setTimeout(run,800)};
+</script>
