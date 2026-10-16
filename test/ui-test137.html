@@ -1,0 +1,40 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113t: Keep tool down (step-down jobs) - real chip taps on a demo face (macro), keyway and trochoidal slot (plain), spherical cap (retracts anyway with a note), Simulate links, code check, Help line. --><iframe id="f" src="../index.html?v=137" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,900)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+const SHOT=/shot=1/.test(location.search);
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);if(!ph){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const vis=e=>e&&e.offsetParent;
+const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t)||[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim().startsWith(t));
+const KD=()=>[...d.querySelectorAll('#out button,#out .chip')].find(e=>vis(e)&&/ed\('Keep tool down'\)/.test(e.getAttribute('onclick')||''));
+const code=()=>ev("(J.code||[]).join('\\n')");const GEN=()=>{S(()=>{const b=T('Continue');b&&b.click()},400);S(()=>{const b=T('Generate Code');b&&b.click()},600)};
+const seq=[];const S=(fn,ms=400)=>seq.push([fn,ms]);
+// job setup only (typed request + values; not under test)
+const mk=(q,vals)=>S(()=>ev(`(()=>{cur(0);{const c=S.m[0].s.find(x=>x.k=='Control');if(c)c.st='user'}tab('new');$('#q').value=${JSON.stringify(q)};go();const v=${JSON.stringify(vals)};for(const k in v)J.p[k]={v:v[k],g:false};for(const k in J.p)if(J.p[k]&&J.p[k].v==null)J.p[k]={v:0.25,g:false};show()})()`),600);
+// 1) face (macro output)
+mk('face mill 3 x 2 step down 0.1 stepover 70 2.0 cutter T1 G54',{Length:3,Width:2,Depth:0.2,Z0:0,Stepdown:0.1,Tool:1,'Clear Z':0.1});
+S(()=>{const c=KD();log('face: Keep tool down chip shows, off by default',c&&/Keep tool down: NO/.test(c.textContent),c&&c.textContent);log('face default writes no W1 / no KEEP DOWN',!/W1\.|KEEP DOWN/.test(code()));c&&c.click()},500);
+S(()=>{const c=KD();log('face: tap turns it YES',c&&/YES/.test(c.textContent),c&&c.textContent);const t=code();log('face macro call carries W1.',/G65 P9102 [^\n]*W1\./.test(t),t.slice(0,300));log('face macro feeds across instead of the between-pass retract',/IF\[#23NE1\]GOTO7[\s\S]*G01 X\[-#7\/2-#17\] Y#103 F#9 \(KEEP DOWN - FEED ACROSS CUT AREA\)[\s\S]*IF\[#23EQ1\]GOTO9\nN8\nG00 Z0\.1\nN9/.test(t),t.split('O9102')[1]);
+ const I=ev(`(()=>{const m=interp(J.code).moves;const L=m.filter(q=>!q.r&&Math.abs(q.a[2]-q.b[2])<1e-9&&q.a[2]<-0.05&&q.a[2]>-0.15&&Math.abs(q.b[0]-(-1.1))<1e-6&&Math.abs(q.b[1]-0.9)<1e-6);const up=m.filter((q,i)=>i>0&&q.r&&q.b[2]>q.a[2]&&q.a[2]<-1e-6);return JSON.stringify({link:L.length,ups:up.length,al:interp(J.code).alarms.length})})()`);let o1={};try{o1=JSON.parse(I)}catch(e){}log('face sim (runs the macro): one feed link at the first depth, one retract at the end, no alarms',o1.link==1&&o1.ups==1&&o1.al==0,I);
+ const ck=ev("JSON.stringify(checks(J).filter(c=>/Keep tool down/.test(c[0])))");log('face code check: links feed only through cut area',/"Keep tool down: every link feeds only through the cut area[^"]*",true/.test(ck),ck)});
+S(()=>{const b=T("They're free");b&&b.click()},600);S(()=>{const b=T('Generate Code');b&&b.click()},600);S(()=>T('Simulate').click(),900);
+S(()=>{log('Simulate opens on the kept-down face (no Finish-in-Build card)',/Simulate/.test((Q('#ttl')||{}).textContent||'')&&!/Finish this job in Build/.test(d.body.innerText),(Q('#ttl')||{}).textContent);if(SHOT){seq.length=0;setTimeout(()=>{ev('try{scrub(+$("#sc").max)}catch(e){}');const fb=T('Fit');fb&&fb.click()},400)}},600);
+// 2) keyway (plain output): same start point each pass
+mk('keyway',{'Center X':0,'Center Y':0,Length:2,Width:0.25,Depth:0.3,Z0:0.5,Cutter:0.25,Stepdown:0.1,Tool:3,'Work offset':'G54','Shaft Ø':1,'Shaft top Z':0.5,'Key width':0.25,'Start X':0,'End X':2});
+S(()=>{const c=KD();c?c.click():log('keyway chip',false,'missing '+[...d.querySelectorAll('#out .chip')].map(e=>e.textContent).join('|'))});GEN();
+S(()=>{const t=code();const n=(t.match(/\(KEEP DOWN - NEXT PASS STARTS HERE\)/g)||[]).length,rz=(t.match(/^G00 Z/mg)||[]).length;log('keyway (plain): feeds straight down at the same point, no retract between passes',n>=2&&rz==1,'n='+n+' rz='+rz+' '+t.slice(0,900)+' op='+ev('J.op+" "+(J.code&&J.code.length)+" "+JSON.stringify(J.p)')+' btns='+[...d.querySelectorAll('button')].filter(vis).map(b=>b.textContent.trim().slice(0,20)).join('|')+' out='+(Q('#out')||{}).innerText.slice(0,400))});
+// 3) trochoidal slot: link back across the cut slot at depth
+mk('trochoidal slot',{'Start X':0,'Start Y':0,'End X':2,'End Y':0,'Slot width':0.5,Depth:0.3,Z0:0,Cutter:0.25,Step:0.05,Stepdown:0.1,Tool:3,'Work offset':'G54'});
+S(()=>{const c=KD();c?c.click():log('troch chip',false,'missing')});GEN();
+S(()=>{const t=code();const n=(t.match(/^G01 X[-\d.]+ Y[-\d.]+ \(KEEP DOWN - FEED ACROSS CUT AREA\)$/mg)||[]).length;log('trochoidal slot: feeds back across the cut slot at depth (G01 link)',n>=2,t.slice(0,600));
+ log('code check passes on the real links',/,true\]/.test(ev("JSON.stringify(checks(J).filter(c=>/every link feeds/.test(c[0])))")));
+ const bad=ev(`(()=>{const c=[...J.code];const i=c.findIndex(l=>/KEEP DOWN - FEED ACROSS/.test(l));c[i]='G01 X1.0 Y0.9 (KEEP DOWN - FEED ACROSS CUT AREA)';return r113kdVerify(J,c).length})()`);log('the check catches a link moved over uncut stock',+bad>=1,bad)});
+// 4) spherical cap: next start is over uncut stock -> retracts anyway with a note
+mk('spherical cap',{'Center X':0,'Center Y':0,Dia:1,Height:0.3,Depth:0.3,Z0:0,Cutter:0.25,Stepdown:0.1,Tool:3,'Work offset':'G54'});
+S(()=>{const c=KD();c?c.click():log('cap chip',false,'missing')});GEN();
+S(()=>{const t=code();log('spherical cap: retracts anyway with a note in the code',/\(KEEP DOWN: RETRACTED HERE - NEXT START IS OVER UNCUT STOCK\)\nG00 Z/.test(t),t.slice(0,500));const ck=ev("JSON.stringify(checks(J).filter(c=>/retracted anyway/.test(c[0])))");log('and a note in the checks list',/retracted anyway at pass 2/.test(ck),ck)});
+// 5) Help
+S(()=>{ev("help('stock')")},600);S(()=>{log('Help has the Keep tool down line',/Keep tool down/.test(d.body.innerText),'')});
+S(()=>log('no exceptions',errs.length==0,errs.join(' || ')));
+const run=i=>{if(i>=seq.length){if(!SHOT)fin();return}try{seq[i][0]()}catch(e){log('step '+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),900)};
+</script>

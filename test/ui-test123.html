@@ -12,7 +12,8 @@ f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);if(!p
  const seq=[];const S=(fn,ms=300)=>seq.push([fn,ms]);const page=()=>ev('V.dataset.page')+'/'+(Q('#ttl')||{}).textContent;
  S(()=>T('Library').click());
  S(()=>{const inp=Q('#mbf');const dt=new w.DataTransfer();dt.items.add(new w.File([JSON.stringify(JOB)],'demo.mbjob',{type:''}));inp.files=dt.files;inp.dispatchEvent(new w.Event('change',{bubbles:true}))},700);
- S(()=>{const b=[...d.querySelectorAll('#mbimp button')].find(vis);b?b.click():log('import add button',false,Q('#mbimp')&&Q('#mbimp').innerText)},500);
+ /* v113t: the import preview comes from FileReader (real file I/O). Headless virtual time does not wait for it, so a fixed 500 ms step sometimes ran before the preview existed. Wait for it (up to 400 polls) instead. */
+ S(()=>{const b=[...d.querySelectorAll('#mbimp button')].find(vis);if(!b&&WT++<400)return 'RETRY';b?b.click():log('import add button',false,'no preview after '+WT+' polls: '+(Q('#mbimp')&&Q('#mbimp').innerText))},500);
  S(()=>{const t=[...d.querySelectorAll('.card .t')].find(e=>vis(e)&&/Demo boss/.test(e.textContent));const c=t&&t.closest('.card');c?(c.querySelector('[onclick^=reopen]')||c).click():log('open imported job',false,'no card '+[...d.querySelectorAll('*')].filter(e=>vis(e)&&e.children.length<3&&/Demo boss/.test(e.textContent)).map(e=>e.tagName+'.'+e.className+' oc='+e.getAttribute('onclick')).slice(0,6).join(' ; ')+' || '+(Q('#mbimp')||{}).innerText)},500);
  for(let n=0;n<12;n++)S(()=>{const c=[...d.querySelectorAll('#out .chip.r')].find(vis);if(!c)return;const k=(c.getAttribute('onclick')||'').match(/ed\('([^']+)'\)/);c.click();setTimeout(()=>{if(k)TY(k[1],k[1]=='Work offset'?'G54':VAL[k[1]]||'1')},60)},200);
  S(()=>{const b=T('Control: not set');if(b)b.click()},400);S(()=>{const i=Q('input.r106ci');if(i&&vis(i)){i.click();setTimeout(()=>{T('Fanuc 0i-style').click();setTimeout(()=>{const dn=T('Done');dn&&dn.click();setTimeout(()=>T('Build').click(),150)},150)},150)}},800);
@@ -30,5 +31,5 @@ f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);if(!p
  S(()=>{T('Build').click()},400);S(()=>{let b=T('🖨 Setup sheet');if(!b){T('💾 Save…').click();b=T('🖨 Setup sheet')}b.click()},500);S(()=>{w.history.back()},600);
  S(()=>{log('back gesture (history back) closes the sheet',!Q('#sheet'),'')});
  S(()=>{log('no exceptions',errs.length==0,errs.join(' || '))});
- const run=i=>{if(i>=seq.length){if(!SHOT)fin();return}try{seq[i][0]()}catch(e){log('step '+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),800)}
+ let WT=0;const run=i=>{if(i>=seq.length){if(!SHOT)fin();return}let rt;try{rt=seq[i][0]()}catch(e){log('step '+i,false,e.stack)}if(rt==='RETRY')return setTimeout(()=>run(i),25);setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),800)}
 </script>
