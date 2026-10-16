@@ -1,0 +1,34 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113o: Job manager names - seed v113n-style job list entries (old label-builder suffix ' · DEMO-01', a (copy), an entry with no Library job, a user-typed name with a dot), reload, real clicks: entries show the linked Library job's live name, (copy) kept, suffix dropped only for the old auto pattern. Demo names only. --><iframe id="f" src="../index.html?v=129" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,1500)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
+if(ph==0){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+if(ph==1){ph=2;
+ setTimeout(()=>{const res=ev(`(()=>{cur(0);const c=S.m[0].s.find(x=>x.k=='Control');c.st='user';tab('new');$('#q').value='G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1';go();Object.keys(J.p).forEach(k=>{if(J.p[k].v==null)J.p[k]={v:k=='Work offset'?'G54':1,g:false}});show();J.name='HELLO WORLD';saveJob();
+ const l={id:'jlseed',mid:S.m[0].id,name:'Demo list',mode:'inline',prog:1000,entries:[]};S.jlists=(S.jlists||[]).filter(x=>x.id!='jlseed');S.jlists.push(l);
+ const jb=JSON.parse(JSON.stringify(Object.assign({},S.jobs[0],{name:undefined,uid:undefined})));
+ l.entries.push({id:'e1',label:'HELLO WORLD · DEMO-01',job:jb,on:true},{id:'e2',label:'HELLO WORLD · DEMO-01 (copy)',job:JSON.parse(JSON.stringify(jb)),on:true});
+ const e3=jmAdd(l,'op:cboss');e3.label='Circular boss · DEMO-01';
+ l.entries.push({id:'e4',label:'Op 1 · deburr',job:JSON.parse(JSON.stringify(jb)),on:true});
+ l.entries.forEach(e=>{delete e.lib;delete e.lk2});S.jobs.forEach(j=>delete j.uid);
+ localStorage.setItem('mc',JSON.stringify(S));return JSON.stringify(l.entries.map(e=>e.label))})()`);window.SEED=res;w.location.reload()},1500);return}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+const vis=e=>e&&e.offsetParent;const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t)||[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim().startsWith(t));
+const seq=[];const S=(fn,ms=300)=>seq.push([fn,ms]);
+const names=()=>[...d.querySelectorAll('.jme')].filter(vis).map(e=>e.querySelector('b').textContent.replace(/^\d+\.\s*(⚠\s*)?/,'').trim());
+const openList=()=>{S(()=>T('Library').click(),500);S(()=>{const b=T('Open Job manager');b&&b.click()},500);S(()=>{const b=[...d.querySelectorAll('.jmls button')].find(b=>vis(b)&&/Open/.test(b.textContent));b?b.click():log('open Demo list',false,'')},500)};
+S(()=>log('seeded v113n-style entries (before reload)',/HELLO WORLD · DEMO-01 \(copy\)/.test(window.SEED||''),window.SEED));
+openList();
+S(()=>{if(/shot=1/.test(location.search)){seq.length=0;return}const n=names();log('Job manager shows clean names: linked Library name, (copy) kept, no-Library entry by type, user dot name kept',n.join('|')=='HELLO WORLD|HELLO WORLD (copy)|Circular boss|Op 1 · deburr',n.join('|'))});
+S(()=>{const s=Q('#jmadd');const o=s?[...s.options].filter(o=>/^lib:/.test(o.value)).map(o=>o.textContent.trim()):[];log('add-a-job picker matches ("HELLO WORLD")',o.join('|')=='HELLO WORLD',o.join('|'))});
+S(()=>{log('entries 1-2 linked to the Library job, 3-4 not',ev("JSON.stringify(jmL().entries.map(e=>!!e.lib))")=='[true,true,false,false]',ev("JSON.stringify(jmL().entries.map(e=>[e.label,e.lib]))"))});
+S(()=>{const b=[...d.querySelectorAll('.jme')].filter(vis)[0].querySelector('[aria-label="Duplicate"]');b.click()},500);
+S(()=>{const b=Q('#r113dgo');if(b)b.click()},500);
+S(()=>{const n=names();log('Dup of a linked entry reads "HELLO WORLD (copy)" (stays linked)',n.join('|')=='HELLO WORLD|HELLO WORLD (copy)|HELLO WORLD (copy)|Circular boss|Op 1 · deburr'&&ev("jmL().entries[1].lib===jmL().entries[0].lib"),n.join('|'))});
+S(()=>{ev("S.jobs.filter(j=>j.name=='HELLO WORLD').forEach(j=>j.name='HELLO WORLD v2');save()")},300);
+S(()=>{},1500);openList();
+S(()=>{const n=names();log('after Library rename (no stored copy): linked entries follow live ("HELLO WORLD v2", "(copy)" kept), others unchanged',n[0]=='HELLO WORLD v2'&&n.filter(x=>x=='HELLO WORLD v2 (copy)').length==2&&n.includes('Circular boss')&&n.includes('Op 1 · deburr')&&!n.some(x=>/DEMO-01/.test(x)),n.join('|'))});
+S(()=>{log('no exceptions',errs.length==0,errs.join(' || '));fin()},300);
+const run=i=>{if(i>=seq.length)return;try{seq[i][0]()}catch(e){log('step'+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),900)}
+</script>
