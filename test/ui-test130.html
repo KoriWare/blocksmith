@@ -27,7 +27,7 @@ S(()=>{log('other job types unchanged (bolt circle keeps its description)',line(
 S(()=>{const q=Q('#lq');q.value='hello world';q.dispatchEvent(new w.Event('input'))},300);
 S(()=>{const t=cards().map(c=>c.querySelector('.t').textContent.trim());log('Library search finds the real engrave text',t.join('|')=='Demo shaft engrave',t.join('|'));const q=Q('#lq');q.value='';q.dispatchEvent(new w.Event('input'))},300);
 S(()=>{const c=card('Demo flat engrave').querySelector('[onclick^="reopen("]');c.click()},600);
-S(()=>{ev("J.p.Text={v:'DEMO-02',g:false};J.name='Demo flat engrave';saveJob()")},600);
+S(()=>{ev("J.p.Text={v:'DEMO-02',g:false};J.name='Demo flat engrave';saveJob();tab('recent')")},600);
 S(()=>{log('re-save with new text: card reads “DEMO-02” (live)',line('Demo flat engrave').includes('“DEMO-02”'),line('Demo flat engrave').join(' | '))},300);
 S(()=>{log('no exceptions',errs.length==0,errs.join(' || '));fin()},300);
 const run=i=>{if(i>=seq.length)return;try{seq[i][0]()}catch(e){log('step'+i,false,e.stack)}setTimeout(()=>run(i+1),seq[i][1])};setTimeout(()=>run(0),900)}

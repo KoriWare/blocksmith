@@ -9,7 +9,7 @@ S(()=>E(`cur(1);const c=S.m[1].s.find(x=>x.k=='Control');c.st='user';tab('new');
 S(()=>{const c=chip();c?c.click():log('RPM chip',false,'missing')});
 S(()=>{const i=d.querySelector('#dlgin');i.value='4000';d.querySelector('#dlgok').click()});
 S(()=>{const c=chip();log('RPM 4000 not red before save',c&&!/\br111rpm\b|\br\b/.test(c.className)&&/4000/.test(c.textContent),c&&c.className+'='+c.textContent)});
-S(()=>E("J.name='Demo thread';saveJob()"),800);
+S(()=>E("J.name='Demo thread';saveJob();tab('recent')"),800);
 S(()=>{const c=[...d.querySelectorAll('#lo .card')].find(c=>/Demo thread/.test(c.textContent));const b=c&&c.querySelector('[onclick^="reopen("]');b?b.click():log('Library reopen',false,'missing')},900);
 S(()=>{const c=chip();log('reopened RPM 4000 not red',c&&!/\br111rpm\b|\br\b/.test(c.className)&&/4000/.test(c.textContent),c&&c.className+'='+c.textContent);log('no stale J.r111S',!E('J.r111S'),E('JSON.stringify(J.r111S)'))});
 setTimeout(()=>run(0),2500)};
