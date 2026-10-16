@@ -24,6 +24,7 @@ S(()=>ev("cur(2)"),300);S(()=>T('Build').click(),300);S(()=>log('hidden on the d
 S(()=>ev("cur(0);const c=S.m[0].s.find(x=>x.k=='Control');c.st='user'"),300);PICK();
 S(()=>{const b=T(NM);log('shown on demo Mill A (3-axis VMC) in Milling',!!b,'');b&&b.click()},600);
 S(()=>{log('Build shows the new job and the side diagram',ev('J.op')=='rboss'&&!!Q('#rbpick'),ev('J&&J.op'));});
+S(()=>{const s=[...d.querySelectorAll('#r112cmp .r112cb')].map(b=>b.textContent+(b.classList.contains('on')?'*':'')).join('|');log('v113z9: new job: Cutter comp blank, needs a pick (no Climb preselect)',s=='Off|Climb (G41)|Conventional (G42)'&&ev("String(J.r112comp.m)")=='null',s);const b=Q('#r112cmp .r112cb[data-m="G41"]');b&&CLK(b)},400);
 // stock card: square block 4 × 3 × 1, zero front-left / top
 ED('Boss placement','Center in stock');
 S(()=>log('Boss placement = Center in stock (tap)',ev("J.p['Boss placement'].v")=='Center in stock',ev("JSON.stringify(J.p['Boss placement'])")));
@@ -83,7 +84,7 @@ S(()=>{const t=code();log('H2: all 4, R1.0 + R1.0 on the 2.0 Back side: valid pr
 COR('Back-right','Round','1.5');S(()=>{log('H3: over the side length: holds with a clear message, no code',/Back side: its corners \(1\.0 \+ 1\.5\) add up to more than its length 2\.0/.test(ev('rbData(J).hold'))&&/add up to more than its length/.test(Q('#out').innerText),ev('rbData(J).hold'));if(SHOT==3){seq.length=0;(Q('#r79hold,#out .bad,#out .ok.bad')||Q('#rbpick')).scrollIntoView({block:'center'})}},400);
 COR('Back-right','Sharp');COR('Back-left','Sharp');ED('Boss L','2');ED('Boss W','1.5');
 // I) Conventional
-S(()=>log('I (v113z8): direction asked on the Cutter comp card (Off / Climb (G41) / Conventional (G42)), Climb (G41) for a new job, no separate switch, no gray chip',[...d.querySelectorAll('#r112cmp .r112cb')].map(b=>b.textContent+(b.classList.contains('on')?'*':'')).join('|')=='Off|Climb (G41)*|Conventional (G42)'&&!Q('#rbpick .rbdir')&&!vis(chip('Cut direction')),[...d.querySelectorAll('#r112cmp .r112cb')].map(b=>b.textContent+(b.classList.contains('on')?'*':'')).join('|')));
+S(()=>log('I (v113z9): direction asked on the Cutter comp card (Off / Climb (G41) / Conventional (G42)), Climb (G41) once tapped, no separate switch, no gray chip',[...d.querySelectorAll('#r112cmp .r112cb')].map(b=>b.textContent+(b.classList.contains('on')?'*':'')).join('|')=='Off|Climb (G41)*|Conventional (G42)'&&!Q('#rbpick .rbdir')&&!vis(chip('Cut direction')),[...d.querySelectorAll('#r112cmp .r112cb')].map(b=>b.textContent+(b.classList.contains('on')?'*':'')).join('|')));
 GEN();S(()=>{w.__clb=code();log('I: climb = G41 + G03 lead-in',/G01 G41 D4 [^\n]*\nG03 /.test(w.__clb)&&!/G42/.test(w.__clb),'')});
 S(()=>CLK(Q('#r112cmp .r112cb[data-m="G42"]')),300);GEN();S(()=>{const t=code();log('I: conventional = G42, lead-in/out G02, cut direction reversed (arcs G03)',/G01 G42 D4 [^\n]*LEAD-IN[^\n]*\nG02 /.test(t)&&/G02 [^\n]*\(ARC LEAD-OUT\)/.test(t)&&!/G41/.test(t)&&/CONVENTIONAL/.test(t),t.split('FINISH PASS')[1]);log('I: conventional checks pass',/,true\],\[[^\]]*,true\]/.test(ck()),ck())});
 S(()=>CLK(Q('#r112cmp .r112cb[data-m="G41"]')),300);
