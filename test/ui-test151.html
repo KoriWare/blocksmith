@@ -1,0 +1,40 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113z13b: Undo bar passes taps through, Saved pill by the Save button, list names 80, Home draft on its own machine, no rounded digits in fields --><iframe id="f" src="../index.html?v=151" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>{r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,600)));o.textContent=r.join('\n')};
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};let FX='';const errs=[];
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);if(!ph){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const vis=e=>e&&e.offsetParent;const CLK=e=>e.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+const B=t=>[...d.querySelectorAll('#v button')].find(e=>vis(e)&&e.textContent.trim()==t);
+const seq=[];const S=(fn,ms=400)=>seq.push([fn,ms]);
+// A
+S(()=>{ev("tab('new');pickJob('rboss');show()")},800);
+S(()=>{CLK(B('Feed (G01)'))},500);
+S(()=>{const t=Q('#r5toast');const tr=t&&t.getBoundingClientRect();if(!tr||!tr.height){log('A: Changed · Undo bar shown',false,'none');return}
+ const b=B('Climb (G41)');b.scrollIntoView({block:'start'});w.scrollBy(0,b.getBoundingClientRect().top-(tr.top+4));const q=b.getBoundingClientRect();const x=q.left+q.width/2,y=tr.top+Math.min(tr.height,q.height)/2;
+ const hit=d.elementFromPoint(x,y);const ub=t.querySelector('button');const uq=ub.getBoundingClientRect();const hu=d.elementFromPoint(uq.left+uq.width/2,uq.top+uq.height/2);
+ log('A: a tap on a button under the Changed · Undo bar reaches the button (bar passes taps through)',!!hit&&hit.closest('button')===b,hit&&(hit.id||hit.tagName+' '+hit.textContent.slice(0,30)));
+ log('A: Undo on the bar is still tappable',hu===ub||ub.contains(hu),hu&&hu.tagName);
+ if(hit&&hit.closest('button'))CLK(hit.closest('button'));setTimeout(()=>log('A: the tapped option takes effect while the bar is up',ev("J.r112comp.m")=='G41',ev("JSON.stringify(J.r112comp)")),300)},400);
+// E
+S(()=>{ev("(()=>{S.cur=S.m.findIndex(m=>m.name=='Mill A');J.p['Boss L']={v:2.4,g:false};J.p['Boss W']={v:1.7,g:false};save();show();home()})()")},500);
+S(()=>{const kB=ev("S.m.findIndex(m=>m.name=='Mill B')"),kA=ev("S.m.findIndex(m=>m.name=='Mill A')");window.RG=ev("(()=>{try{r13goM("+kB+");return 'ok '+S.cur}catch(e){return e.stack}})()");setTimeout(()=>{const dr=JSON.parse(ev("JSON.stringify(drGet())"));log('E: tapping Mill B on Home saves the open edit as a draft on Mill A (its own machine)',dr&&dr.cur===kA&&dr.J.p['Boss L'].v===2.4&&ev("S.m[S.cur].name")=='Mill B',JSON.stringify({cur:dr&&dr.cur,kA,kB,rg:window.RG,now:ev("S.m[S.cur].name")}));
+ ev("drRestore()");setTimeout(()=>log('E: Restore brings the edit back on Mill A with its values',ev("S.m[S.cur].name")=='Mill A'&&ev("J.op")=='rboss'&&ev("J.p['Boss L'].v")===2.4&&ev("J.p['Boss W'].v")===1.7,ev("S.m[S.cur].name+' '+J.op+' '+J.p['Boss L'].v")),400)},500)},1600);
+// C
+S(()=>{const n='L'.repeat(78)+'xy';ev("(()=>{const k=S.m.findIndex(m=>m.name=='Mill A');S.cur=k;jmNew('"+n+"')})()");setTimeout(()=>{log('C: job list names keep 80 characters',ev("S.jlists[S.jlists.length-1].name.length")===80&&Q('#jmname')&&Q('#jmname').maxLength==80,ev("S.jlists[S.jlists.length-1].name.length")+' '+(Q('#jmname')||{}).maxLength);ev("jobMgr()");setTimeout(()=>log('C: the New list name box takes 80',(Q('#jmnew')||{}).maxLength==80),300)},400)},1200);
+// F + B on demo-rb
+S(()=>{try{const x=new XMLHttpRequest();x.open('GET','fixtures/demo-rb.mbjob',false);x.send();FX=x.responseText}catch(e){}ev("tab('recent')")},800);
+S(()=>{w.mbRead(new w.File([FX],'demo-rb.mbjob'))},3000);
+for(let k=0;k<4;k++)S(()=>{if(Q('#mbgo'))return;w.mbRead(new w.File([FX],'demo-rb.mbjob'))},2500);S(()=>{const b=Q('#mbgo');b&&CLK(b)},3000);
+S(()=>{ev("reopen(S.jobs.findIndex(j=>j.op=='rboss'))")},2000);
+S(()=>{ev("J.r112stk.round.d=3.1234;J.p['Boss L']={v:2.0625,g:false};show()")},700);
+S(()=>{const i=Q('#r112stk input[data-sk="round.d"]');const bl=[...d.querySelectorAll('#out .chip')].find(e=>vis(e)&&e.getAttribute('onclick')=="ed('Boss L')");
+ log('F: a field with more digits shows them all (Ø 3.1234, not 3.123)',i&&i.value=='3.1234',i&&i.value);
+ i.focus();log('F: focusing shows the full stored value',i.value=='3.1234',i.value);i.blur();
+ setTimeout(()=>{log('F: blur keeps the stored value',ev("J.r112stk.round.d")==3.1234,ev("J.r112stk.round.d"));ev("J.r112stk.round.d=3;show()");setTimeout(()=>{log('F: whole values still show 3 decimals (3.000)',Q('#r112stk input[data-sk="round.d"]').value=='3.000');ev("J.r112stk.round.d=3.1234;show()")},300)},300)},700);
+S(()=>{ev("(()=>{const m=S.m[S.cur];m.s.forEach(x=>{x.st='user'});const c=m.s.find(x=>x.k=='Control');if(c&&!String(c.v||'').trim()){const sp=r99spec('Control');c.v=sp&&sp.ch?sp.ch.find(v=>/fanuc/i.test(v))||sp.ch[0]:'Fanuc 0i'}save();J.code=gen(J).code;show()})()")},1200);
+S(()=>{const sb=[...d.querySelectorAll('button')].find(x=>x.getAttribute('onclick')=='saveJob()'&&vis(x));if(!sb){log('B: Save button',false,'none');return}sb.scrollIntoView({block:'center'});ev("saveJob()");setTimeout(()=>{const t=Q('#r11toast'),a=t.getBoundingClientRect(),b=sb.getBoundingClientRect();const gap=a.bottom<=b.top?b.top-a.bottom:a.top>=b.bottom?a.top-b.bottom:-1;const cx=Math.abs((a.left+a.right)/2-(b.left+b.right)/2);
+ const on=a.top>=b.top-1&&a.bottom<=b.bottom+1;const ob=[...d.querySelectorAll('button,input,select,textarea')].filter(e=>vis(e)).map(e=>e.getBoundingClientRect()).filter(o=>o.width&&!(o.right<=a.left||o.left>=a.right||o.bottom<=a.top||o.top>=a.bottom));log('B: the Saved pill is anchored to the Save button — nearest clear spot (≤ 60px), centered on it, covering no button or field',gap>=0&&gap<=60&&!ob.length&&cx<=Math.max(8,(b.width-a.width)/2+8)&&a.height>0,JSON.stringify({pill:[a.top,a.bottom,a.left,a.right].map(Math.round),save:[b.top,b.bottom,b.left,b.right].map(Math.round),gap,cx}));
+ log('F: saving writes the full value (3.1234), never the display',ev("S.jobs[0].r112stk.round.d")==3.1234,ev("S.jobs[0].r112stk.round.d"))},350)},1200);
+S(()=>{log('no page errors',!errs.length,errs.join(' | '));fin()},10);
+const run=()=>{const s=seq.shift();if(!s)return;try{s[0]()}catch(e){log('step',false,e.stack)}setTimeout(run,s[1])};setTimeout(run,1200)};
+</script>
