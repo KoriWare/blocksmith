@@ -32,7 +32,7 @@ f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){
    let dmin=1e9,dmax=0;wall.forEach(q=>{for(let t=0;t<=1;t+=0.25){const p=[q.a[0]+(q.b[0]-q.a[0])*t,q.a[1]+(q.b[1]-q.a[1])*t];let d=1e9;part.forEach(s=>{d=Math.min(d,seg(p,s.a,s.b))});dmin=Math.min(dmin,d);dmax=Math.max(dmax,d)}});
    // and the part line is fully covered: every part point has a wear point at r
    let cov=0;pts.forEach(p=>{let d=1e9;wall.forEach(s=>{d=Math.min(d,seg(p,s.a,s.b))});cov=Math.max(cov,d)});
-   const hdr=wc.includes('(WEAR COMP - D# = WEAR ONLY, GEOMETRY 0)');const g4=wc.some(l=>new RegExp('\\\\b${m} D\\\\d').test(l));
+   const dn=((wc.find(x=>/COMP ON/.test(x))||'').match(/D(\\d+)/)||[])[1];const hdr=wc.includes('(WEAR COMP - D'+dn+' = WEAR ONLY, GEOMETRY 0)');const g4=wc.some(l=>new RegExp('\\\\b${m} D\\\\d').test(l));
    tab('sim');draw();const offd=(J.M||[]).filter(q=>q.r112o).length;tab('new');
    return {op:'${op}',hold,rc,dmin:+dmin.toFixed(4),dmax:+dmax.toFixed(4),cov:+cov.toFixed(4),hdr,g4,offd,n:wall.length}})()`);
   if(r.nocomp){log(`D ${op} ${m}: job type writes no comp pass with these defaults`,false,JSON.stringify(r));continue}

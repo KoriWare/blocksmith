@@ -1,0 +1,51 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113z12b: Wear note once, one program line per step, round-bar rapid check on the circle, Casey round-bar flow; was v113z12 C + D: comp passes in Simulate (rendered canvas geometry) and Wear comp on a synthetic job shaped like Kori's (6 x 2.5 boss in a 6 x 3 block, G41, spring, keep tool down) --><iframe id="f" src="../index.html?v=149" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+const SHOT=(location.search.match(/shot=(\d)/)||[])[1]|0;let FX='';
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);if(!ph){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const errs=[];w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};const vis=e=>e&&e.offsetParent;
+const CLK=e=>e.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+const T=t=>[...d.querySelectorAll('button')].find(e=>vis(e)&&e.textContent.trim()==t);
+const chipIn=(card,k)=>{const c=Q('#'+card);return !!(c&&[...c.querySelectorAll('.chip,button')].find(e=>vis(e)&&(e.getAttribute('onclick')||'')==`ed('${k}')`))};
+const code=()=>ev("(J.code||[]).join('\\n')");const GEN=()=>{const c=T('Continue');if(c){c.click();setTimeout(()=>{const b=T('Generate Code');b&&b.click()},400)}else{const b=T('Generate Code');b&&b.click()}};
+const seq=[];const S=(fn,ms=400)=>seq.push([fn,ms]);
+
+S(()=>{try{const x=new XMLHttpRequest();x.open('GET','fixtures/demo-kw.mbjob',false);x.send();FX=x.responseText}catch(e){log('fixture',false,e.message)}ev("tab('recent')")},800);
+S(()=>{w.mbRead(new w.File([FX],'demo-kw.mbjob'))},4000);
+for(let k=0;k<4;k++)S(()=>{if(Q('#mbgo')||ev("!!(J&&J.op=='rboss')")===true)return;w.mbRead(new w.File([FX],'demo-kw.mbjob'))},3000);S(()=>{const b=Q('#mbgo');b?CLK(b):log('import',false,'no #mbgo')},4000);
+S(()=>{const L=[...d.querySelectorAll('#v *')].filter(e=>vis(e)&&!e.children.length&&/^(Demo kw boss|Rectangular Boss\/Profile)$/.test(e.textContent.trim()));L.length?CLK(L[L.length-1]):log('open',false,'no job link')},4000);
+for(let k=0;k<4;k++)S(()=>{},1000);
+S(()=>{ev("(()=>{const m=S.m[S.cur];m.s.forEach(x=>{x.st='user'});const c=m.s.find(x=>x.k=='Control');if(c&&!String(c.v||'').trim()){const sp=r99spec('Control');c.v=sp&&sp.ch?sp.ch.find(v=>/fanuc/i.test(v))||sp.ch[0]:'Fanuc 0i'}save();show()})()")},800);
+S(()=>{if(ev("J&&J.op=='rboss'")!==true){log('job open',false,'no rboss job');return}ev("J.code=gen(J).code;show()")},800);
+
+// 1) Wear one-time note: shown on the first open, cleared and saved; the next open has no note
+S(()=>{const r=JSON.parse(ev("JSON.stringify({note:!!document.querySelector('#r12mode .r12wn1'),flag:J.r12wNote,rec:R12SRC?R12SRC.r112comp.w:null,idx:S.jobs.indexOf(R12SRC)})"));log('1: first open shows the Wear note once, the flag is cleared and Mode Wear is saved on the job record',r.note&&r.flag===0&&r.rec=='wear'&&r.idx>=0,JSON.stringify(r));window.IDX=r.idx},400);
+S(()=>{ev("tab('recent')")},600);S(()=>{ev("reopen("+window.IDX+")")},900);
+S(()=>{const r=JSON.parse(ev("JSON.stringify({note:!!document.querySelector('#r12mode .r12wn1'),w:J.r112comp.w,gray:(document.querySelector('#r12mode .r12wn')||{}).textContent})"));log('1: reopening the job: no one-time note, still Wear, the plain "D register = wear only" note stays',!r.note&&r.w=='wear'&&r.gray=='D register = wear only, set geometry 0',JSON.stringify(r))},600);
+S(()=>{const re=/"r112comp":\{[^}]*"w":"wear"/;const r={k:Object.keys(w.localStorage).some(k=>re.test(w.localStorage.getItem(k)||''))};log('1: the saved Mode is in localStorage (survives a reload)',r.k,JSON.stringify(r))},300);
+// 2) one program line per step
+S(()=>{ev("J.code=gen(J).code;show();tab('sim')")},1500);
+S(()=>{const seq=JSON.parse(ev(`JSON.stringify((()=>{const L=txt();const o=[];const cur=()=>{const c=document.querySelector('#simcode .cur');return c?+c.textContent.trim().split(' ')[0]:-1};o.push([cur(),view.n,r12parked()]);for(let i=0;i<16;i++){r2fwd();o.push([cur(),view.n,r12parked()])}const mot=o.map(x=>/^(?!\\s*\\().*\\b(G0?[0123]\\b.*)?[XYZ]-?[\\d.]/.test(L[x[0]-1]||''));r2back();const bk=cur();return {o,mot,bk,L:L.slice(0,17)}})())`));
+ const lines=seq.o.map(x=>x[0]);log('2: Simulate opens on line 1, ▶| goes 1 → 2 → 3 … one program line per tap (T4 M06, S M03 and comments included), ◀ goes back one line',lines.every((v,i)=>v===i+1)&&seq.bk===16,JSON.stringify(lines)+' back '+seq.bk);
+ let okm=true;for(let i=1;i<seq.o.length;i++){const moved=seq.o[i][1]!==seq.o[i-1][1];const isM=/^(G0?[0123]\b|G54[^\n]*[XYZ]|G43[^\n]*Z|[XYZ])/.test((seq.L[seq.o[i][0]-1]||'').replace(/\([^)]*\)/g,'').trim())||/\b[XYZ]-?[\d.]/.test((seq.L[seq.o[i][0]-1]||'').replace(/\([^)]*\)/g,''));if(moved!==isM){okm=false;break}}
+ log('2: the tool moves only on motion lines (X/Y/Z words), stays put on T/M/S/comment lines; parked at Home until G43',okm&&seq.o[0][2]===true,JSON.stringify(seq.o.map((x,i)=>[x[0],x[1],(seq.L[x[0]-1]||'').slice(0,18)])))},800);
+// 3) round bar rapid check uses the circle
+S(()=>{ev("tab('new');J.r112stk.shape='round';J.r112stk.round={d:7,len:1};J.code=null;show()")},800);
+S(()=>{const r=JSON.parse(ev(`JSON.stringify((()=>{const C=gen(J).code;J.code=C;const k=C.findIndex(l=>/^G43/.test(l));const t=ins=>{J.code=C.slice(0,k+1).concat(ins,C.slice(k+1));const ck=checks(J).find(x=>/rapid \\(G00\\) plunge/i.test(x[0]));let al=[];try{const q=interp(J.code);al=(q.alarms||[]).filter(a=>a.rapid).map(a=>a.msg)}catch(e){al=[e.message]}return {ok:ck?ck[1]:null,al}};const R=3.5,r=J.p.Cutter.v/2;const o={air:t(['G00 X3.8 Y0.0','G00 Z-0.1','G00 Z0.2']),diag:t(['G00 X2.8 Y2.8','G00 Z-0.1','G00 Z0.2']),edge:t(['G00 X3.6 Y0.0','G00 Z-0.1','G00 Z0.2']),bar:t(['G00 X0.5 Y0.5','G00 Z-0.1','G00 Z0.2'])};J.code=C;return o})())`));
+ log('3: round bar Ø7: G00 to X3.8 Y0 / X2.8 Y2.8 (tool wholly outside the circle, inside the square outline) then G00 Z-0.1 is in air - not flagged, no alarm',r.air.ok===true&&r.diag.ok===true&&!r.air.al.length&&!r.diag.al.length,JSON.stringify(r));
+ log('3: real rapids into the bar are still flagged: X0.5 Y0.5 and X3.6 (tool overlaps the bar edge) then G00 Z-0.1',r.bar.ok===false&&r.edge.ok===false&&r.bar.al.length==1,JSON.stringify(r))},600);
+// Casey flow
+S(()=>{const b0=ev("JSON.stringify([J.p['Boss L'],J.p['Boss W'],J.p.Depth])");const sq=Q('#r112stk [data-st=shape][data-sv=square]');sq&&CLK(sq);const b1=ev("JSON.stringify([J.p['Boss L'],J.p['Boss W'],J.p.Depth,J.r112stk.shape])");const rd=Q('#r112stk [data-st=shape][data-sv=round]');rd&&CLK(rd);const b2=ev("JSON.stringify([J.p['Boss L'],J.p['Boss W'],J.p.Depth,J.r112stk.shape,J.r112stk.round])");log('Casey: switching Square ↔ Round keeps the boss fields (and the bar size)',!!sq&&!!rd&&b1.startsWith(b0.slice(0,-1))&&b2.startsWith(b0.slice(0,-1))&&/"square"/.test(b1)&&/"round",\{"d":7,"len":1\}/.test(b2),b0+' | '+b1+' | '+b2)},600);
+S(()=>{ev("J.r112stk.round={d:5,len:1};J.code=null;show()")},600);
+S(()=>{const h=[...d.querySelectorAll('#out .ok.bad')].find(e=>vis(e)&&/bar Ø/.test(e.textContent));const t=h&&h.textContent;h&&CLK(h);setTimeout(()=>{const a=d.activeElement;log('6 / Casey: the hold names the needed Ø, tapping it jumps to and focuses the bar Ø field',/needs Ø ≥ \d+\.\d{3}/.test(t||'')&&a&&a.getAttribute('data-sk')=='round.d',t+' | active '+(a&&a.outerHTML.slice(0,80)))},300)},600);
+S(()=>{ev("J.r112stk.round={d:7,len:1};J.code=gen(J).code;show()")},800);
+S(()=>{const c=[...d.querySelectorAll(`.chip[onclick="ed('Depth')"]`)].find(vis);if(!c){log('Casey: Depth chip',false,'none');return}c.scrollIntoView({block:'center'});window.Y0=w.scrollY;CLK(c);setTimeout(()=>{const i=Q('#dlgin');if(i){i.value='0';i.dispatchEvent(new w.Event('input',{bubbles:true}))}const ok=Q('#dlgok');ok&&CLK(ok);setTimeout(()=>{log('Casey: Depth 0 on round bar does not move the page',Math.abs(w.scrollY-window.Y0)<=1,window.Y0+' -> '+w.scrollY);ev("J.p.Depth={v:0.5,g:false};J.code=gen(J).code;show()")},500)},300)},2000);
+S(()=>{const dc=[...d.querySelectorAll('#v *')].find(e=>vis(e)&&!e.children.length&&/Verify on the machine/.test(e.textContent));if(!dc){log('Casey: Verify note on round bar',false,'none');return}dc.scrollIntoView({block:'center'});ev("saveJob=saveJob;0");const keep=ev("(()=>{const f=tab;window.__t=f;tab=function(t){if(t==='recent')return;return f.apply(this,arguments)};saveJob();tab=f;return 1})()");setTimeout(()=>{const t=Q('#r11toast');const a=t&&t.getBoundingClientRect(),b=dc.getBoundingClientRect();const hit=!!a&&a.height>0&&!(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom);log('Casey: Saved pill on round bar clears the Verify note',!!a&&a.height>0&&!hit,JSON.stringify({a:a&&[a.top,a.bottom].map(Math.round),b:[b.top,b.bottom].map(Math.round)}))},300)},1000);
+S(()=>{ev("tab('recent')")},600);S(()=>{ev("reopen(0)")},900);
+S(()=>{const r=JSON.parse(ev("JSON.stringify({shape:J.r112stk.shape,round:J.r112stk.round,lab:/Diameter \\(Ø\\)/.test((document.querySelector('#r112stk')||{}).textContent||''),top:!!document.querySelector('#r12top')})"));log('Casey: the saved round-bar job reopens as round bar (Ø7, Length 1, Diameter field, top view)',r.shape=='round'&&r.round.d==7&&r.round.len==1&&r.lab&&r.top,JSON.stringify(r))},600);
+S(()=>{ev("tab('new');pickJob('rboss');show();J.r112stk.shape='round';J.r112stk.round={d:null,len:null};show()")},800);
+S(()=>{const h=Q('#r12hold');const t=h&&h.textContent;h&&CLK(h);setTimeout(()=>{const a=d.activeElement;log('6: tapping the blank-job round-bar hold jumps to and focuses the bar Ø field',!!h&&/Round bar - enter the bar Diameter/.test(t)&&a&&a.getAttribute('data-sk')=='round.d',t+' | active '+(a&&a.outerHTML.slice(0,80)))},300)},600);
+S(()=>{log('no page errors',!errs.length,errs.join(' | '));fin()},10);
+const run=()=>{const s=seq.shift();if(!s)return;try{s[0]()}catch(e){log('step',false,e.stack)}setTimeout(run,s[1])};setTimeout(run,1200)};
+</script>
