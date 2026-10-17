@@ -8970,5 +8970,9 @@ function r13dRaw(){try{return JSON.parse(localStorage.getItem(DRK)||'null')}catc
 function r13dStale(d){try{if(!d||!d.J||!d.J.name)return false;const mn=(S.m[d.cur]||{}).name,uid=(d.k&&d.k.uid)||d.J.uid;const j=(S.jobs||[]).find(x=>(uid&&x.uid==uid)||(x.name==d.J.name&&(!x.machine||x.machine==mn)));const base=d.jd!=null?+d.jd:+d.t;return !!(j&&+j.date>0&&base>0&&+j.date>base)}catch(e){return false}}
 {const _sj=saveJob;saveJob=function(){const r=_sj.apply(this,arguments);try{const n=S.jobs[0];if(J&&n&&n.date&&n.name==J.name)J.date=n.date}catch(e){}return r}}
 {const _dg=drGet;drGet=function(){const d=_dg.apply(this,arguments);if(d&&r13dStale(d)){try{localStorage.removeItem(DRK)}catch(e){}return null}return d}}
+
+/* floor pass (Finish stock Z > 0): Simulate draws the FLOOR PASS block in a lighter teal than the wall finish */
+let R13FPC={k:null,a:-1,b:-1};function r13fpRange(){try{const L=txt();const k=L.length+'|'+(L[0]||'')+'|'+(L[L.length-1]||'');if(R13FPC.k===k&&R13FPC.L===L.length)return R13FPC;let a=-1,b=-1;for(let i=0;i<L.length;i++){if(a<0){if(/^\(FLOOR PASS AT FULL DEPTH/.test(L[i]))a=i}else if(/^\((FINISH PASS|SPRING PASS)/.test(L[i])){b=i;break}}if(a>=0&&b<0)b=L.length;R13FPC={k,L:L.length,a,b};return R13FPC}catch(e){return {a:-1,b:-1}}}
+{const _d=draw;draw=function(){const r=_d.apply(this,arguments);try{if(!J||J.lathe||!/^(rboss|cboss)$/.test(J.op)||!J.M||!ctx||typeof ln!='function')return r;if(!(+((J.p['Finish stock Z']||{}).v)>0))return r;const g=r13fpRange();if(g.a<0)return r;const n=Math.min(view.n,J.M.length);ctx.save();ctx.setLineDash([]);ctx.strokeStyle='#7fe9dc';ctx.lineWidth=2;for(let i=0;i<n;i++){const m=J.M[i];if(m.r||m.out||!(m.l>g.a&&m.l<g.b))continue;ln(m.a,m.b)}ctx.restore()}catch(e){}return r}}
 /* R79-END */</script>
 </body></html>
