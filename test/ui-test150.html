@@ -1,0 +1,105 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113z13: new Home (recent machines / jobs / job lists, empty states, tap targets, tour banner once, Tour on More) + polish B1-B6 --><iframe id="f" src="../index.html?v=150" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>{r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));o.textContent=r.join('\n')};
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+let FX='';const errs=[];
+f.onload=()=>{const w=f.contentWindow,d=w.document,Q=s=>d.querySelector(s);
+if(ph==0){ph=1;w.localStorage.clear();w.location.reload();return}
+if(ph==1){ph=2;setTimeout(phase1,1200);return}
+if(ph==2){ph=3;setTimeout(phase2,1200);return}
+function H(){const w=f.contentWindow,d=w.document;return {w,d,Q:s=>d.querySelector(s),ev:x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}},vis:e=>e&&e.offsetParent,CLK:e=>e.dispatchEvent(new w.MouseEvent('click',{bubbles:true}))}}
+function runSeq(seq,done){const run=()=>{const s=seq.shift();if(!s){done&&done();return}try{s[0]()}catch(e){log('step',false,e.stack)}setTimeout(run,s[1])};run()}
+w.addEventListener('error',e=>errs.push(String(e.error&&e.error.stack||e.message)));
+function phase1(){const {w,d,Q,ev,vis,CLK}=H();const seq=[];const S=(fn,ms=400)=>seq.push([fn,ms]);
+ // first open: banner, empty-ish state with demo machines
+ S(()=>{const b=Q('#r13ban');log('Tour: first open shows the yellow-outlined banner "New here? A 2-minute walk-through." with Take the tour and ✕',!!b&&vis(b)&&/New here\? A 2-minute walk-through\./.test(b.textContent)&&/Take the tour/.test(b.textContent)&&!!b.querySelector('.r13x'),b&&b.textContent);
+  const gone=['#hBuild','#r91tour','#r89w'].filter(s=>Q(s));const t=Q('#home').textContent;log('Home: Start building, Tour button/link, machine card and Library card are gone',!gone.length&&!/Start Building|Switch machine|Setup \d+%|^Library/.test(t)&&!/Library/.test([...d.querySelectorAll('#home .card .t')].map(e=>e.textContent).join('|')),gone.join(',')+' '+t.slice(0,300));
+  const ids=[...Q('#home').children].map(e=>e.id||e.className);log('Home: banner, brand card, Recent machines, Recent jobs, Recent job lists, then the red Verify warning (in that order)',ids[0]=='r13ban'&&/card/.test(ids[1])&&Q('#home').children[1].querySelector('svg')&&ids[2]=='r13mach'&&ids[3]=='r13jobs'&&ids[4]=='r13lists'&&/Verify on the machine/.test(Q('#home').children[5].textContent),JSON.stringify(ids));
+  log('Home: footer with the version kept',!!Q('#appver')&&Q('#appver').textContent==ev('APP_VERSION'),Q('#appver')&&Q('#appver').textContent)},300);
+ S(()=>{CLK(Q('#r13ban .r13x'))},300);
+ S(()=>{log('Tour: ✕ hides the banner',!Q('#r13ban'));ev('home()');log('Tour: banner stays gone after going Home again',!Q('#r13ban'))},300);
+ S(()=>{ev('more()')},400);
+ S(()=>{const c=Q('#v').firstElementChild;log('More: Tour is the top row ("Walk through BlockSmith again")',!!c&&c.id=='r89more'&&/^🎓 Tour/.test(c.textContent)&&/Walk through BlockSmith again/.test(c.textContent)&&d.querySelectorAll('#r89more').length==1,c&&c.id+' '+c.textContent);CLK(c)},400);
+ S(()=>{log('More: tapping Tour opens the tour picker (Mill tour / Lathe tour)',!!Q('#r89again')&&/Mill tour/.test(Q('#r89again').textContent))},400);
+ // empty states
+ S(()=>{ev("S.m=[];S.jobs=[];S.jlists=[];home()")},400);
+ S(()=>{const m=Q('#r13mach'),j=Q('#r13jobs'),l=Q('#r13lists');const add=Q('#r13add');const bg=add&&w.getComputedStyle(add).backgroundColor;
+  log('Empty: Recent machines says "No machines yet." with one yellow Add machine button',!!m&&/No machines yet\./.test(m.textContent)&&!!add&&vis(add)&&add.textContent=='Add machine'&&/255, 2[01]\d, (31|19)/.test(bg)&&add.offsetHeight>=44,bg);
+  const g=e=>e&&w.getComputedStyle(e).color;const je=j&&j.querySelector('.r13e'),le=l&&l.querySelector('.r13e');
+  log('Empty: Recent jobs and Recent job lists each show one gray line, no buttons',!!je&&je.textContent=='No saved jobs yet. Pick a machine above to start one.'&&!!le&&le.textContent=='No job lists yet. Combine saved jobs into one program in the Job manager.'&&/153, 153, 153/.test(g(je))&&/153, 153, 153/.test(g(le))&&!j.querySelector('button')&&!l.querySelector('button'),g(je)+' '+(je&&je.textContent)+' | '+(le&&le.textContent));
+  log('Empty: See all is hidden on every empty card',!d.querySelector('#home .r13sa'));
+  log('Empty: Add machine is the only yellow button on Home',[...d.querySelectorAll('#home button')].filter(b=>vis(b)&&/255, 2[01]\d, (31|19)/.test(w.getComputedStyle(b).backgroundColor)).length==1);
+  CLK(add)},400);
+ S(()=>{log('Empty: Add machine opens the machine presets',/Presets/.test(Q('#ttl').textContent),Q('#ttl').textContent)},400);
+ // ordering + caps
+ S(()=>{ev(`(()=>{const now=Date.now();localStorage.setItem('mc_r13ts',now);const mk=(n,u)=>({name:n,type:'demo VMC',id:'m_'+n,s:[{k:'Control',v:'Fanuc 0i-style (verify)'},{k:'Units',v:'inch'}],tools:[],used:u});
+   S.m=[mk('M0',now-5e6),mk('M1',now-1e6),mk('M2',null),mk('M3',now-3e6),mk('M4',now-2e6)];S.cur=0;
+   S.jobs=[];const ds=[3,0,7,1,5,2,6,4];ds.forEach((k,i)=>S.jobs.push({op:i%2?'rboss':'face',name:'J'+k,machine:'M'+(i%5),date:now-k*36e5-1000,p:{}}));
+   S.jlists=[{id:'L0',name:'L0',mid:'m_M0',entries:[{},{}],date:now-9e7},{id:'L1',name:'L1',mid:'m_M1',entries:[],date:now-8e7,saved:now-1e5},{id:'L2',name:'L2',mid:'m_M0',entries:[{}],date:now-3e5},{id:'L3',name:'L3',mid:'m_M0',entries:[],date:now-7e7},{id:'L4',name:'L4',mid:'m_M3',entries:[],date:now-2e5}];home()})()`)},400);
+ S(()=>{const names=id=>[...d.querySelectorAll('#'+id+' .r13row .r13n')].map(e=>e.textContent);const m=names('r13mach'),j=names('r13jobs'),l=names('r13lists');
+  log('Order: Recent machines shows the 3 most recently used (cap 3)',JSON.stringify(m)=='["M1","M4","M3"]',JSON.stringify(m));
+  log('Order: Recent jobs shows the 5 last saved, newest first (cap 5)',JSON.stringify(j)=='["J0","J1","J2","J3","J4"]',JSON.stringify(j));
+  log('Order: Recent job lists shows the 3 last saved (cap 3)',JSON.stringify(l)=='["L1","L4","L2"]',JSON.stringify(l));
+  const sa=[...d.querySelectorAll('#home .r13sa')].filter(vis);log('See all ›: yellow, on all three cards when they have rows, ≥44px',sa.length==3&&sa.every(b=>b.textContent=='See all ›'&&/255, 210, 31/.test(w.getComputedStyle(b).color)&&b.offsetHeight>=44),sa.length);
+  const mm=Q('#r13mach .r13row');log('Rows: machine row shows control · units and last used',/Fanuc 0i-style · inch/.test(mm.textContent)&&/ago|Today|Just now/.test(mm.querySelector('.r13d').textContent),mm.textContent);
+  const jr=[...d.querySelectorAll('#r13jobs .r13row')];log('Rows: job row shows the type chip (yellow for Boss/Profile, gray otherwise) and machine',jr.length==5&&jr.every(x=>{const c=x.querySelector('.r13chip');return c&&(/Boss|Profile/.test(c.textContent)?c.classList.contains('y'):!c.classList.contains('y'))})&&jr.some(x=>x.querySelector('.r13chip.y')),jr.map(x=>x.querySelector('.r13m').textContent).join('|'));
+  const lr=Q('#r13lists .r13row');log('Rows: list row shows job count',/^\d+ jobs?$/.test(lr.querySelector('.r13m').textContent),lr.textContent);
+  const rows=[...d.querySelectorAll('#home .r13row')];log('Tap targets: every row is a full-row target ≥ 48px tall and spans the card',rows.length==11&&rows.every(x=>{const a=x.getBoundingClientRect(),c=x.closest('.card').getBoundingClientRect();return a.height>=48&&a.width>=c.width-40&&x.getAttribute('onclick')}),rows.map(x=>Math.round(x.getBoundingClientRect().height)).join(','));
+  // a tap on the date / chevron of a row still opens it
+  const pt=rows[0].querySelector('.r13d span').getBoundingClientRect();const hit=d.elementFromPoint(pt.left+2,pt.top+pt.height/2);log('Tap targets: tapping the › of a row hits that row',!!hit&&hit.closest('.r13row')===rows[0])},500);
+ // taps
+ S(()=>{ev("J=null;S.jobs=[];S.jlists=[];S.m=[];localStorage.removeItem('mc');location.reload()")},100);
+ runSeq(seq,()=>{})}
+function phase2(){const {w,d,Q,ev,vis,CLK}=H();const seq=[];const S=(fn,ms=400)=>seq.push([fn,ms]);
+ S(()=>{log('Tour: the banner does not come back after reload',!Q('#r13ban'),!!Q('#r13ban'))},200);
+ // fresh demo machines; make 2 jobs and a list on Mill B, then come back
+ S(()=>{ev("(()=>{const now=Date.now();S.m.forEach((m,i)=>m.used=now-(i+1)*864e5);save();home()})()")},300);
+ S(()=>{const rows=[...d.querySelectorAll('#r13mach .r13row')];const i=rows.findIndex(x=>/Mill B/.test(x.textContent));window.TI=i;const k=ev("S.m.findIndex(m=>m.name=='Mill B')");CLK(rows[i>=0?i:1]);window.TK=k},600);
+ S(()=>{log('Tap machine: starts a new job on that machine (Build job picker, no job open)',ev("S.cur")===window.TK&&ev("!J||!J.op")&&/Build|New job/.test(Q('#ttl').textContent)&&/Mill B/.test(Q('#ttl').textContent),Q('#ttl').textContent+' cur='+ev('S.cur'));
+  ev("pickJob('face');show()")},800);
+ S(()=>{ev("J.name='Face B1';saveJob()")},800);
+ S(()=>{ev("home()")},400);
+ S(()=>{const m=[...d.querySelectorAll('#r13mach .r13n')].map(e=>e.textContent),j=[...d.querySelectorAll('#r13jobs .r13n')].map(e=>e.textContent);log('Last used: building + saving on Mill B moves it to the top of Recent machines; the job is first in Recent jobs',m[0]=='Mill B'&&j[0]=='Face B1',JSON.stringify([m,j]))},400);
+ S(()=>{ev("S.m.forEach(m=>{if(m.name!='Mill B')m.used=Date.now()-5e3});const a=S.m.find(m=>m.name=='Mill B');a.used=Date.now()-9e9;S.cur=S.m.findIndex(m=>m.name=='Mill A');save();J=null;home()")},300);
+ S(()=>{const r=Q('#r13jobs .r13row');CLK(r)},300);
+ S(()=>{log('Tap job: opens it on Build (on its machine)',ev("J&&J.name")=='Face B1'&&/Build|New job/.test(Q('#ttl').textContent)&&/Mill B/.test(Q('#ttl').textContent),Q('#ttl').textContent);ev("home()")},800);
+ S(()=>{const m=[...d.querySelectorAll('#r13mach .r13n')].map(e=>e.textContent);log('Last used: opening a job saved on Mill B moves Mill B back to the top',m[0]=='Mill B',JSON.stringify(m))},300);
+ S(()=>{ev("(()=>{const k=S.m.findIndex(m=>m.name=='Mill A');S.cur=k;jmNew('Run A');})()")},500);
+ S(()=>{ev("home()")},300);
+ S(()=>{const l=[...d.querySelectorAll('#r13lists .r13n')].map(e=>e.textContent);log('Recent job lists: a new list appears',l[0]=='Run A',JSON.stringify(l));
+  ev("(()=>{const k=S.m.findIndex(m=>m.name=='Mill A');S.cur=k;jmNew('Run B');S.cur=k;home()})()")},500);
+ S(()=>{ev("(()=>{const l=S.jlists.find(x=>x.name=='Run A');l.prog=2000;save();home()})()")},400);
+ S(()=>{const l=[...d.querySelectorAll('#r13lists .r13n')].map(e=>e.textContent);log('Recent job lists: editing and saving an older list moves it to the top (last saved)',l[0]=='Run A'&&l[1]=='Run B',JSON.stringify(l))},400);
+ S(()=>{ev("S.cur=S.m.findIndex(m=>m.name=='Mill B');save();home()")},300);
+ S(()=>{const r=Q('#r13lists .r13row');CLK(r)},300);
+ S(()=>{log('Tap list: opens it in the Job manager (switching to its machine)',/Job manager|Run A/.test(Q('#ttl').textContent)&&ev("JML")==ev("S.jlists.find(x=>x.name=='Run A').id")&&ev("S.m[S.cur].name")=='Mill A',Q('#ttl').textContent+' JML='+ev('JML'))},800);
+ S(()=>{ev("home()")},400);
+ S(()=>{log('Come back: Home renders the three cards again with See all',!!Q('#r13mach')&&!!Q('#r13jobs')&&!!Q('#r13lists')&&d.querySelectorAll('#home .r13sa').length==3)},300);
+ S(()=>{CLK(Q('#r13mall'))},300);S(()=>{log('See all (machines) → Machines tab',/My Machines/.test(Q('#ttl').textContent),Q('#ttl').textContent);ev('home()')},400);
+ S(()=>{CLK(Q('#r13jall'))},300);S(()=>{log('See all (jobs) → Library',/Library/.test(Q('#ttl').textContent),Q('#ttl').textContent);ev('home()')},400);
+ S(()=>{CLK(Q('#r13lall'))},300);S(()=>{log('See all (lists) → Job manager',/Job manager/.test(Q('#ttl').textContent),Q('#ttl').textContent)},400);
+ // B polish on demo-rb
+ S(()=>{try{const x=new XMLHttpRequest();x.open('GET','fixtures/demo-rb.mbjob',false);x.send();FX=x.responseText}catch(e){log('fixture',false,e.message)}ev("tab('recent')")},800);
+ S(()=>{w.mbRead(new w.File([FX],'demo-rb.mbjob'))},3000);
+ for(let k=0;k<4;k++)S(()=>{if(Q('#mbgo'))return;w.mbRead(new w.File([FX],'demo-rb.mbjob'))},2500);S(()=>{const b=Q('#mbgo');b?CLK(b):log('import',false,'no #mbgo')},3000);
+ S(()=>{ev("reopen(S.jobs.findIndex(j=>j.op=='rboss'))")},2000);
+ S(()=>{if(ev("J&&J.op=='rboss'&&J.r112stk.shape=='round'")!==true){log('job open',false,'no rboss');return}
+  const ch=k=>{const c=[...d.querySelectorAll('#out .chip')].find(e=>vis(e)&&e.getAttribute('onclick')==`ed('${k}')`);return c&&c.querySelector('b').textContent};const sd=Q('#r112stk input[data-sk="round.d"]'),sl=Q('#r112stk input[data-sk="round.len"]');
+  log('B3: round-bar and boss fields show 3 decimals (Ø 3.000, Length 1.000, Boss L 2.000, Boss W 1.500)',sd&&sd.value=='3.000'&&sl&&sl.value=='1.000'&&ch('Boss L')=='2.000'&&ch('Boss W')=='1.500',JSON.stringify([sd&&sd.value,sl&&sl.value,ch('Boss L'),ch('Boss W')]));
+  log('B3: program output unchanged by the display format',ev("J.r112stk.round.d")===3&&ev("J.p['Boss W'].v")===1.5);
+  const lb=[...d.querySelectorAll('.r112drow b')].filter(vis).map(e=>e.textContent);log('B6: the offset field label reads D (not D#)',lb.length>=1&&lb.every(t=>t=='D'),JSON.stringify(lb));
+  const notes=[...d.querySelectorAll('#r12mode .note')].filter(vis).map(e=>e.className.replace('note ','')+':'+e.textContent);log('B5: comp card shows one gray Wear line plus the one-time note — no r12wh duplicate',d.querySelectorAll('#r12mode .r12wn').length==1&&!d.querySelector('.r12wh')&&notes.length<=2,JSON.stringify(notes))},800);
+ // B4: Saved pill vs File line
+ S(()=>{ev("(()=>{const m=S.m[S.cur];m.s.forEach(x=>{x.st='user'});const c=m.s.find(x=>x.k=='Control');if(c&&!String(c.v||'').trim()){const sp=r99spec('Control');c.v=sp&&sp.ch?sp.ch.find(v=>/fanuc/i.test(v))||sp.ch[0]:'Fanuc 0i'}save();J.code=gen(J).code;show()})()")},1000);
+ S(()=>{const fl=[...d.querySelectorAll('#v .s')].find(e=>vis(e)&&/^File: /.test(e.textContent));if(!fl){log('B4: File line present',false,'none');return}fl.scrollIntoView({block:'center'});w.scrollBy(0,fl.getBoundingClientRect().top-695) /* put the File line where the pill would sit */;ev("r11toast('Saved ✓')");setTimeout(()=>{const t=Q('#r11toast');const a=t&&t.getBoundingClientRect(),b=fl.getBoundingClientRect();const hit=!!a&&!(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom);log("B4: the Saved pill does not cover the 'File: O####.nc' line",!!t&&a.height>0&&!hit&&/O\d{4}\.nc/.test(fl.textContent),JSON.stringify({a:a&&[a.top,a.bottom].map(Math.round),b:[b.top,b.bottom].map(Math.round),t:fl.textContent.slice(0,40)}))},300)},800);
+ // B2: held view label not clipped
+ S(()=>{ev("(()=>{J.p['Boss L']={v:2.9,g:false};J.p['Boss W']={v:2.7,g:false};J.code=null;show()})()")},900);
+ S(()=>{const sv=Q('#r12top');const t=sv&&sv.querySelector('.r12needt');if(!t){log('B2: held view',false,'no needs label');return}const SV=t.ownerSVGElement;const A=t.getBBox(),vb=SV.viewBox&&SV.viewBox.baseVal,T=sv.querySelector('.r12stockt').getBBox();const b={top:vb&&vb.height?vb.y:0};const a={y:A.y,top:A.y,bottom:A.y+A.height,height:A.height},st={y:T.y,top:T.y};
+  log("B2: held top view — 'needs Ø' label is fully inside the view (not clipped at the top) and above 'stock Ø' without overlap",a.top>=b.top-0.5&&a.height>0&&a.bottom<=st.top+1,JSON.stringify({needTop:+a.y.toFixed(1),vbTop:b.top,y:t.getAttribute('y'),stockTop:+st.y.toFixed(1)}))},600);
+ // B1: comp blank + Ø blank: both shown, stock first
+ S(()=>{ev("(()=>{J.p['Boss L']={v:2,g:false};J.p['Boss W']={v:1.5,g:false};J.r112stk.round.d=null;J.r112comp={m:null,d:null,r9blank:1};J.code=null;show()})()")},900);
+ S(()=>{const h=Q('#r12hold');const need=[...d.querySelectorAll('#out > .card')].filter(vis).find(c=>/^Need \d+ more/.test((c.querySelector('.t')||{}).textContent||''));
+  log('B1: comp blank + Ø blank — the round-bar Ø hold is visible, stock first, and the Need list still lists Cutter comp under it',!!h&&vis(h)&&/Diameter \(Ø\)/.test(h.textContent)&&!!need&&/cutter comp/i.test(need.textContent)&&!!(h.compareDocumentPosition(need)&4),(h&&h.textContent)+' | '+(need&&need.textContent.slice(0,120)))},600);
+ S(()=>{log('no page errors',!errs.length,errs.join(' | '));fin()},10);
+ runSeq(seq)}
+};
+</script>

@@ -48,7 +48,7 @@ S(()=>{const r=JSON.parse(ev("JSON.stringify({n:view.n,cur:(document.querySelect
 S(()=>{ev("tab('new');pickJob('rboss');show()")},800);
 S(()=>{const b=Q('#out .r99f[data-r99k="Z0"] .r12ok');log('B5: the Z0 Shift row in the new-job form has an OK button',!!b&&vis(b)&&b.textContent=='OK');if(b){const i=Q('#out .r99f[data-r99k="Z0"] input');if(i)i.value='';CLK(b);setTimeout(()=>{log('B5: OK with a blank field commits Z0 Shift = 0',ev("JSON.stringify(J.p.Z0)")=='{"v":0,"g":false}',ev("JSON.stringify(J.p.Z0)"))},300)}},900);
 S(()=>{ev("J.r112stk.shape='round';J.r112stk.round={d:null,len:null};show()")},600);
-S(()=>{const h=Q('#r12hold');const need=[...d.querySelectorAll('#out > .card')].filter(vis).find(c=>/^Need \d+ more/.test((c.querySelector('.t')||{}).textContent||''));log('B2: Round bar on a blank job shows the hold, not the Need list',!!h&&vis(h)&&/^⛔ Not written: Round bar - enter the bar Diameter \(Ø\) and Length in the Stock card\.$/.test(h.textContent)&&!need,h&&h.textContent)},600);
+S(()=>{const h=Q('#r12hold');const need=[...d.querySelectorAll('#out > .card')].filter(vis).find(c=>/^Need \d+ more/.test((c.querySelector('.t')||{}).textContent||''));log('B2 (v113z13 B1): Round bar on a blank job shows the hold first, with the Need list (other picks) kept visible under it',!!h&&vis(h)&&/^⛔ Not written: Round bar - enter the bar Diameter \(Ø\) and Length in the Stock card\.$/.test(h.textContent)&&!!need&&h.nextElementSibling===need,h&&h.textContent)},600);
 S(()=>{log('no page errors',!errs.length,errs.join(' | '));fin()},10);
 const run=()=>{const s=seq.shift();if(!s)return;try{s[0]()}catch(e){log('step',false,e.stack)}setTimeout(run,s[1])};setTimeout(run,1200)};
 </script>
