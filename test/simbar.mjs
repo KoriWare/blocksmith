@@ -57,14 +57,15 @@ for(const [k,v] of Object.entries(VIEWS)){
  // all on, at the end: baseline
  const on=await p.evaluate(()=>{for(const [id,q] of [['#tTool','tool'],['#tStk','stk'],['#tPath','path']])if(!view[q])$(id).click();window.__rec=[];scrub(J.M.length);const r=window.__rec.pop();$('#tStk').click();window.__rec=[];scrub(J.M.length);const r2=window.__rec.pop();$('#tStk').click();window.__rec=null;r.px=r2.px;/* path pixels counted with Stock off: engrave draws cut moves as grooves when Stock is on */return r});
  ok(`${k}: all on - tool drawn, path drawn`,on&&on.tool===true&&on.px>30,JSON.stringify(on));
- ok(`${k}: Stock on draws the stock layer`,on&&on.stk===true||k=='swiss'||k=='hmc'||k=='rotary',JSON.stringify(on&&on.stk));
+ ok(`${k}: Stock on draws the stock layer`,on&&on.stk===true||k=='swiss'||k=='hmc'||k=='rotary'||k=='lathe',JSON.stringify(on&&on.stk));
+ if(k=='lathe'){const L=await p.evaluate(async()=>{const b=$('#tStk'),s0=view.stk;b.click();await new Promise(r=>setTimeout(r,150));const t=($('#r11toast')||{}).textContent;return {cls:b.className,op:getComputedStyle(b).opacity,dis:b.getAttribute('aria-disabled'),toast:t,same:view.stk===s0,inRow:b.parentElement===$('#tTool').parentElement&&!!b.offsetParent}});ok('lathe: Stock stays in the row, gray and dimmed, tap shows "No stock in lathe view" and changes nothing',L.inRow&&/\bgr\b/.test(L.cls)&&+L.op<0.6&&L.dis=='true'&&L.toast=='No stock in lathe view'&&L.same,JSON.stringify(L))}
  const lab=await p.evaluate(()=>[...$('#tTool').parentElement.children].filter(x=>x.offsetParent).map(x=>x.textContent.trim()).join());ok(`${k}: row XYZ,Tool,Stock,Path,speed`,/^XYZ,Tool,Stock,Path,[\d.]+×$/.test(lab),lab);
  const base=await p.evaluate(()=>{scrub(0);for(const id of ['#tTool','#tStk','#tPath'])$(id).click();window.__rec=[];scrub(0);const r=window.__rec.pop();window.__rec=[];play();return r.px});/* layers off at line 0: only fixed marks (axes, centerline, labels) remain */await w(2500);
  const fr=await p.evaluate(()=>{const r=window.__rec;window.__rec=null;clearInterval(pl);return r});
- const mid=fr.filter(f=>f.n>0);const bad=mid.filter(f=>f.tool!==false||f.stk!==false||f.px>base+3);ok(`${k}: path pixels measurable (on ${on.px} vs fixed marks ${base})`,on.px-base>30);
+ const mid=fr.filter(f=>f.n>0);/* lathe: Stock cannot be toggled there and draws nothing visible (checked above) */const bad=mid.filter(f=>f.tool!==false||(k!='lathe'&&f.stk!==false)||f.px>base+3);ok(`${k}: path pixels measurable (on ${on.px} vs fixed marks ${base})`,on.px-base>30);
  ok(`${k}: Tool, Stock, Path off stay hidden on every playback frame (${mid.length} frames, n up to ${Math.max(0,...mid.map(f=>f.n))})`,mid.length>=3&&!bad.length,bad.slice(0,3).map(f=>JSON.stringify(f)).join(' ')+` base=${base}`);
  if(process.env.DUMP){await p.evaluate(()=>scrub(J.M.length));const u=await p.evaluate(()=>cv.toDataURL());(await import('fs')).writeFileSync(`/tmp/off-${k}.png`,Buffer.from(u.split(',')[1],'base64'))}
- const st=await p.evaluate(()=>({t:view.tool,s:view.stk,p:view.path,c:['#tTool','#tStk','#tPath'].map(i=>$(i).className.split(' ').pop()).join()}));ok(`${k}: states and colours kept after play`,st.t==0&&st.s==0&&st.p==0&&st.c=='gr,gr,gr',JSON.stringify(st));
+ const st=await p.evaluate(()=>({t:view.tool,s:view.stk,p:view.path,c:['#tTool','#tStk','#tPath'].map(i=>$(i).className.split(' ').pop()).join()}));ok(`${k}: states and colours kept after play`,st.t==0&&(k=='lathe'||st.s==0)&&st.p==0&&st.c=='gr,gr,gr',JSON.stringify(st));
  await p.evaluate(()=>{for(const id of ['#tTool','#tStk','#tPath'])$(id).click()});
 }
 ok('no page errors',!errs.length,errs.join(' | ').slice(0,300));
