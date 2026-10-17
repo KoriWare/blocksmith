@@ -5,7 +5,7 @@ const HERE=path.dirname(fileURLToPath(import.meta.url)),BASE=path.resolve(HERE,'
 const FX=n=>fs.readFileSync(path.join(HERE,'fixtures','demo-'+n+'.mbjob'),'utf8');
 let pass=0,fail=0;const ok=(c,m)=>{if(c){pass++;console.log('PASS',m)}else{fail++;console.log('FAIL',m)}};
 const b=await puppeteer.launch({executablePath:'/usr/bin/google-chrome',headless:'new',args:['--no-sandbox','--allow-file-access-from-files']});
-let p;async function newPage(){if(p)await p.close().catch(()=>{});p=await b.newPage();await p.setViewport({width:390,height:844,hasTouch:true,isMobile:true});p.on('pageerror',e=>console.log('PAGEERR',e.message));p.on('dialog',d=>d.dismiss().catch(()=>{}))}await newPage();const sl=ms=>new Promise(r=>setTimeout(r,ms));
+let p;async function newPage(){if(p)await p.close().catch(()=>{});p=await b.newPage();await p.evaluateOnNewDocument(()=>{window.R12DEFMODE='control'}) /* v113z12: Control-mode regressions; Wear in ui-test147/148 */;await p.setViewport({width:390,height:844,hasTouch:true,isMobile:true});p.on('pageerror',e=>console.log('PAGEERR',e.message));p.on('dialog',d=>d.dismiss().catch(()=>{}))}await newPage();const sl=ms=>new Promise(r=>setTimeout(r,ms));
 const URL='file://'+BASE+'/index.html?v=113z5';
 const E=(s,...a)=>p.evaluate(s,...a);
 const tapEl=async h=>{await h.evaluate(e=>e.scrollIntoView({block:'center'}));await sl(150);const bb=await h.boundingBox();if(!bb)throw new Error('not visible');await p.touchscreen.tap(bb.x+bb.width/2,bb.y+bb.height/2);await sl(450)};
@@ -210,7 +210,7 @@ for(let n of ['opp','rad','cham','cham2','lr']){await fresh();const big=n=='cham
 // ---------- v113z6) Maria: the RENDERED Keep tool down switch shows the effective value (locked = Off) after a real file import, after the 0.7 s machine-poll redraw, after toggles/undo, and after a reload
 {await fresh();const kdState=()=>E(()=>{const s=[...document.querySelectorAll('.r5sw[data-r5k="Keep tool down"]')];if(s.length!=1)return {n:s.length};const b=v=>s[0].querySelector(`[data-v=${v}]`);const yel=e=>/255, 210, 31/.test(getComputedStyle(e).backgroundColor);return {n:1,offSel:b('NO').classList.contains('on')&&b('NO').getAttribute('aria-checked')=='true'&&yel(b('NO')),onSel:b('YES').classList.contains('on')||b('YES').getAttribute('aria-checked')=='true'||yel(b('YES')),onDis:b('YES').disabled,why:!!s[0].querySelector('.r5why'),v:J.p['Keep tool down'].v}});
  const okLocked=(st,m)=>ok(st.n==1&&st.offSel&&!st.onSel&&st.onDis&&st.why,m+': '+JSON.stringify(st));
- ok(await E(()=>APP_VERSION)=='v113z11b'&&/const C='mc-v113z11b'/.test(fs.readFileSync(path.join(BASE,'sw.js'),'utf8')),'build v113z11b with service-worker cache mc-v113z11b (no stale copy)');
+ ok(await E(()=>APP_VERSION)=='v113z12'&&/const C='mc-v113z12'/.test(fs.readFileSync(path.join(BASE,'sw.js'),'utf8')),'build v113z12 with service-worker cache mc-v113z12 (no stale copy)');
  await E(()=>tab('recent'));await sl(500);const fi=await p.$('#mbf');await fi.uploadFile(path.join(HERE,'fixtures','demo-lr.mbjob'));await sl(1200);{const h=await p.evaluateHandle(()=>[...document.querySelectorAll('button')].find(e=>e.offsetParent&&e.textContent.trim()=='Add to Library'));if(h.asElement())await tapEl(h.asElement());await sl(800)}
  await E(()=>{const i=S.jobs.findIndex(x=>/DEMO RIGHT LEFT/.test(x.name||''));reopen(i);Object.assign(r112stk(),{shape:'square',square:{L:4,W:3,H:1},zp:'tr'});show()});await sl(600);
  okLocked(await kdState(),'real file import (#mbf), Right+Left + YES: rendered Off selected (yellow), On not selected + disabled, reason shown');

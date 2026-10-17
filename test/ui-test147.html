@@ -1,0 +1,47 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113z12 D: Wear comp on every comp job type (G41 and G42) --><!-- based on ui-test121 setup; was: finish stock + arc lead-in for the comp finish (app moves only) on HMC B / 4-axis A - top of stock and corner swing from the face point + Zero from centerline; blank zero holds with a link; off-center block --><iframe id="f" src="../index.html?v=147" style="width:390px;height:760px;border:0"></iframe><script src="fill110.js"></script><script>
+let step=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,30000)));
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length};
+f.onload=()=>{const w=f.contentWindow;const E=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+ if(step==0){step=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+ setTimeout(()=>{try{
+ E(`NOASK=1;pick('Generic HMC 4-axis','Horizontal mills');pick('Generic 3-axis VMC','Vertical mills');var I5=S.m.length-1;S.m[I5].name='Five';r98set(I5,'vmc5');
+ S.m.forEach(m=>m.s.forEach(x=>{const sp=r99spec(x.k);if(!String(x.v||'').trim()||(sp&&!r99ok(x.k,x.v,sp))){const ex=sp&&(sp.ch&&sp.ch.find(c=>!r99blankChoice(c))||sp.ex);if(ex)x.v=String(ex).replace(/^e\\.g\\.\\s*/,'')}x.st='user'}));
+ {const m=S.m[I5];const set=(k,v)=>{let x=m.s.find(y=>y.k==k);if(!x){x={k};m.s.push(x)}x.v=v;x.st='user'};set('Rotary pair','B + C');r100ensure(m,'B direction','','confirm');r100ensure(m,'C direction','','confirm');set('B direction','Clockwise (+)');set('C direction','Clockwise (+)');r100sync(m);set('Tilt axis limits (min / max deg)','-30 / 110')}
+ S.m.forEach(m=>{const sd=m.s.find(x=>x.k==R104SIDE);if(sd){sd.v='Right';sd.st='user'}});save();1`);
+ w.F110OV=F110OV;w.F110MACH=F110MACH;E(F110SETUP);w.__FILL=E(F110FILL);
+ E(`var Z0V=7;var A0=S.m.findIndex(m=>r98t(m)=='vmc4');var SQB=(mi,cz,ang,off,H)=>{cur(mi);eval(F110MACH);J=null;tab('new');pickJob('cpock');__FILL('cpock');show();__FILL('cpock');J.p.Z0={v:Z0V,g:false};J.p['Clear Z']={v:cz,g:false};if(J.p['Center X'])J.p['Center X']={v:mi==A0?10:0,g:false};if(J.p['Center Y'])J.p['Center Y']={v:mi==A0?-1:10,g:false};J.r112comp={m:'off',d:null};J.r112eZ0ok=1;const s=r112stk();s.shape='square';s.square={L:20,W:9.875,H:H||null};s.fp='bc';s.zp='bl';s.off=off;r111fill0();const ax=r111axes();const st=r111state(ax);ax.forEach(a=>st.v[a.id]=String(ang));r112after();show();return {code:!!(J.code&&J.code.length),hold:J.r112eHold||'',top:(($('.r112etop')||{}).textContent||''),link:!!$('#r112eOffGo'),held:!!$('#r112held')}};1`);
+ const idx=JSON.parse(E(`JSON.stringify(S.m.map((m,i)=>[i,r98t(m)]))`));const A=idx.find(x=>x[1]=='vmc4')[0],B=idx.find(x=>x[1]=='hmc')[0];const R=s=>JSON.parse(E('JSON.stringify('+s+')'));
+ const V=idx.find(x=>x[1]=='vmc3')[0];
+ E(`var GJ=(op,ps,cm)=>{cur(${V});eval(F110MACH);J=null;tab('new');pickJob(op);__FILL(op);show();__FILL(op);Object.entries(ps||{}).forEach(([k,v])=>J.p[k]={v,g:false});J.r112comp=Object.assign({m:'G41',d:null},cm||{});show();return {hold:J.r112cmpHold||'',c:(J.code||[]).join('\\n'),fs:($('#r112fs')||{}).value,fl:($('#r112fl')||{}).value}};1`);
+
+
+
+
+
+ const PT=`(()=>{const pr=c=>{const q=interp(c);const M=Array.isArray(q)?q:q.moves;let on=-1,off=-1;c.forEach((l,i)=>{if(on<0&&/\\(COMP ON - /.test(l))on=i;if(on>=0&&off<0&&/\\(COMP OFF - /.test(l))off=i});return {M,on,off}};return pr})()`;
+ const ops=[['cpock',{'Center X':2,'Center Y':1.5,Dia:1.5}],['cboss',{'Center X':2,'Center Y':1.5,'Boss Ø':1.5,'Finish stock Z':0.02,'Spring pass':'On - 1 pass'}],['rpock',{'Center X':2,'Center Y':1.5,'Pocket L':2.5,'Pocket W':1.5,'Corner R':0.25}],['slot',{'Start X':1,'Start Y':1.5,'End X':3,'End Y':1.5,'Slot width':0.5}],['polyb',{'Center X':2,'Center Y':1.5,Sides:6,'Across flats':1.5,Side:'Pocket','First flat angle':0}],['polyb',{'Center X':2,'Center Y':1.5,Sides:6,'Across flats':1.5,Side:'Boss','First flat angle':0}],['rboss',{}]];
+ const BASE={Depth:0.3,Z0:0,Cutter:0.375,Stepdown:0.1,Tool:3,'Work offset':'G54','Stepover %':50,Feed:20,'Plunge feed':10,RPM:3000,'Clear Z':0.1};
+ for(const [op,ps0] of ops)for(const m of ['G41','G42']){const ps=op=='rboss'?ps0:{...BASE,...ps0};
+  const r=(x=>{const v=E('JSON.stringify('+x+')');if(/^ERR/.test(v))return {nocomp:1,err:v.slice(0,300)};return JSON.parse(v)})(`(()=>{const o=GJ('${op}',${JSON.stringify(ps)},{m:'${m}',w:'control',fs:0.01});if(/boss/.test('${op}')){const s=J.r112stk||r112stk();s.shape='square';s.square=('${op}'=='cboss')?{L:4,W:3,H:1}:{L:6,W:3,H:2};s.zp='bl';if('${op}'=='rboss'){J.p['Boss L']={v:4,g:false};J.p['Boss W']={v:2,g:false};J.p.Sides={v:'Back, Right, Front, Left',g:false};J.p['Corner Back-right']={v:'Chamfer 0.5',g:false};J.p['Corner Back-left']={v:'Round 0.5',g:false}}J.code=null;show();if(!J.code||!J.code.length){try{J.code=gen(J).code}catch(e){}}}const cc=J.code?J.code.slice():[];const rc=(+J.p.Cutter.v)/2;J.r112comp={...J.r112comp,w:'wear'};J.code=null;show();if(/boss/.test('${op}')&&(!J.code||!J.code.length)){try{J.code=gen(J).code}catch(e){}}const wc=J.code?J.code.slice():[];const hold=J.r12wHold||J.r112cmpHold||'';
+   if(!cc.length||!wc.length)return {op:'${op}',hold,cc:cc.length,wc:wc.length,pg:(document.querySelector('#out .ok.bad')||{}).textContent};const pr=${PT};const A=pr(cc),B=pr(wc);if(A.on<0)return {op:'${op}',nocomp:1,hold};
+   // part line = control moves inside the pair minus lead line, lead arc, overlap, lead-out and comp-off
+   const lc=[...new Set(A.M.filter(q=>q.l>A.on&&q.l<A.off).map(q=>q.l))];const part=A.M.filter(q=>q.l>lc[0]&&q.l<=lc[lc.length-3]);
+   const pts=[];part.forEach(q=>{for(let t=0;t<=1;t+=0.1)pts.push([q.a[0]+(q.b[0]-q.a[0])*t,q.a[1]+(q.b[1]-q.a[1])*t])});
+   const lw=[...new Set(B.M.filter(q=>q.l>B.on&&q.l<B.off).map(q=>q.l))];const wall=B.M.filter(q=>q.l>lw[0]&&q.l<=lw[lw.length-3]);
+   const seg=(p,a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],L2=dx*dx+dy*dy;let t=L2?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L2:0;t=Math.max(0,Math.min(1,t));return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy)};
+   let dmin=1e9,dmax=0;wall.forEach(q=>{for(let t=0;t<=1;t+=0.25){const p=[q.a[0]+(q.b[0]-q.a[0])*t,q.a[1]+(q.b[1]-q.a[1])*t];let d=1e9;part.forEach(s=>{d=Math.min(d,seg(p,s.a,s.b))});dmin=Math.min(dmin,d);dmax=Math.max(dmax,d)}});
+   // and the part line is fully covered: every part point has a wear point at r
+   let cov=0;pts.forEach(p=>{let d=1e9;wall.forEach(s=>{d=Math.min(d,seg(p,s.a,s.b))});cov=Math.max(cov,d)});
+   const hdr=wc.includes('(WEAR COMP - D# = WEAR ONLY, GEOMETRY 0)');const g4=wc.some(l=>new RegExp('\\\\b${m} D\\\\d').test(l));
+   tab('sim');draw();const offd=(J.M||[]).filter(q=>q.r112o).length;tab('new');
+   return {op:'${op}',hold,rc,dmin:+dmin.toFixed(4),dmax:+dmax.toFixed(4),cov:+cov.toFixed(4),hdr,g4,offd,n:wall.length}})()`);
+  if(r.nocomp){log(`D ${op} ${m}: job type writes no comp pass with these defaults`,false,JSON.stringify(r));continue}
+  if(r.hold){log(`D ${op} ${m}: Wear held with a reason (listed in the report)`,/^Wear comp: /.test(r.hold),JSON.stringify(r));continue}
+  log(`D ${op} ${m} Wear: finish path at the tool center - every wall point exactly R tool (${r.rc}) from the part line (±0.0015), part covered (inside sharp corners ≤ 1.2 R), header line, ${m} D# kept, sim draws the code as written (no extra offset)`,r.n>0&&Math.abs(r.dmin-r.rc)<=0.0015&&Math.abs(r.dmax-r.rc)<=0.0015&&r.cov<=r.rc*1.2&&r.hdr&&r.g4&&r.offd===0,JSON.stringify(r))}
+ // Control stays the v113z11b output (no header, sim offsets)
+ {const r=R(`(()=>{GJ('rboss',{},{m:'G41',w:'control'});{const s=J.r112stk||r112stk();s.shape='square';s.square={L:6,W:3,H:2};s.zp='bl';if(true){J.p['Boss L']={v:4,g:false};J.p['Boss W']={v:2,g:false};J.p.Sides={v:'Back, Right, Front, Left',g:false};J.p['Corner Back-right']={v:'Chamfer 0.5',g:false};J.p['Corner Back-left']={v:'Round 0.5',g:false}}J.code=null;show();if(!J.code||!J.code.length){try{J.code=gen(J).code}catch(e){}}}return {hdr:(J.code||[]).some(l=>/WEAR COMP/.test(l)),n:(J.code||[]).length}})()`);log('D Control: no wear header, program written as before',!r.hdr&&r.n>20,JSON.stringify(r))}
+ // Mode row UI
+ {const r=R(`(()=>{GJ('rboss',{},{m:'off'});const a=!!document.querySelector('#r12mode');J.r112comp={m:'G42',d:null};show();const b=[...document.querySelectorAll('#r12mode .r12mb')].map(x=>x.textContent+(x.classList.contains('on')?'*':''));const n=(document.querySelector('#r12mode .r12wn')||{}).textContent;document.querySelector('#r12mode [data-w=control]').click();const c=(J.r112comp||{}).w;const n2=!!document.querySelector('#r12mode .r12wn');return {a,b,n,c,n2,need:/Needs a pick/.test((document.querySelector('#r112cmp')||{}).textContent)}})()`);
+  log('D UI: Comp Off shows no Mode row; with G42 the Mode row shows Wear* / Control, gray note "D register = wear only, set geometry 0"; Control hides the note',!r.a&&r.b.join('|')=='Wear*|Control'&&r.n=='D register = wear only, set geometry 0'&&r.c=='control'&&!r.n2,JSON.stringify(r))}
+ }catch(e){log('exception',false,e.stack)}fin()},400)};
+</script>

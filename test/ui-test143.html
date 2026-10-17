@@ -1,4 +1,6 @@
 <!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113z10: Rectangular Boss/Profile Depth card: Boss top below stock Z + Depth (boss top to floor), floor Z = Z0 - (top + depth), step downs from the boss top, old jobs line for line --><iframe id="f" src="../index.html?v=143" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+/* v113z12: these are Control-mode (in-control comp) regressions; Wear is covered by ui-test147 */setInterval(()=>{try{document.getElementById('f').contentWindow.R12DEFMODE='control'}catch(e){}},20);
+
 let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
 const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
 const SHOT=(location.search.match(/shot=(\d)/)||[])[1]|0;let FX='';

@@ -147,9 +147,9 @@ await T('z3',async()=>{await p.goto(URL);await p.evaluate(()=>{localStorage.clea
  await cor('Sharp');await sl(400);
  {const h=await p.$('button[data-t=sim]');await tapAt(h);await sl(1600)}
  const st=async()=>JSON.stringify([await E('view.n'),await E(`(document.querySelector('#simcode .cur')||{}).textContent||''`),await E(`(($('#tpos')||$('#info')||{}).textContent.match(/line\\s*\\S+/)||[''])[0]`)]);
- const o=JSON.parse(await st());log('Casey 3: Simulate opens on the G43 step: highlight G43 line, status "line 11", step index on that move',/G43/.test(o[1])&&o[2]=='line 11'&&o[0]>0&&await E(`/G43/.test(J.code[J.M[view.n-1].l])`),JSON.stringify(o));
- await tap('#r2fw');const f=JSON.parse(await st());log('Casey 3: Step forward continues from G43 (next line, not back to line 9)',f[0]==o[0]+1&&f[2]=='line 12',JSON.stringify(f));
- await tap('#r2bk');const k=JSON.parse(await st());log('Casey 3: Step back returns to the G43 step',k[0]==o[0]&&k[2]=='line 11',JSON.stringify(k));
+ const o=JSON.parse(await st());log('Casey 3 (v113z12): Simulate opens on line 1 (step 0, tool parked at Home until G43)',/^\s*1 /.test(o[1])&&o[0]===0&&await E(`r12parked()`),JSON.stringify(o));
+ await tap('#r2fw');const f=JSON.parse(await st());log('Casey 3 (v113z12): Step forward moves one move (step 1)',f[0]==o[0]+1&&/^line \d+$/.test(f[2]),JSON.stringify(f));
+ await tap('#r2bk');const k=JSON.parse(await st());log('Casey 3 (v113z12): Step back returns to line 1 (step 0)',k[0]==o[0]&&/^\s*1 /.test(k[1]),JSON.stringify(k));
  // 'are these free on Mill A?' card: a Macro B job that writes common variables (#100..) with Free common variables not confirmed
  await E(`{const f=S.m[0].s.find(x=>x.k=='Free common variables');if(f)f.st='sug'};tab('new');ex('G54 T2 6 hole bolt circle 3.0 dia center x0 y0 z0 0 start 15 0.5 deep peck 0.1');1`);await sl(900);
  const cv=await p.$('#cvask');if(!cv)log('free-common-variables card appears for the bolt circle macro',false,await E(`$('#out').innerText.slice(0,200)`));else{await vis400(cv);const c0=await cv.evaluate(e=>e.getBoundingClientRect().top),y0=await E('scrollY');await sl(900);const c1=await cv.evaluate(e=>e.getBoundingClientRect().top);

@@ -1,4 +1,6 @@
 <!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113z8: Rectangular Boss/Profile - nine Build cards, shared Cutter comp card (Off / G41 / G42) is the one direction control, comp card on every milling profile/boss/pocket job, Keep tool down links extra material rows around the outside of the stock, corner rows merged into one line/arc, view row only on Simulate (six even buttons), Circular Boss/Profile unchanged. Synthetic fixture: fixtures/demo-z8.mbjob. ?shot=1 stops on Build, ?shot=2 on Simulate. --><iframe id="f" src="../index.html?v=142" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+/* v113z12: these are Control-mode (in-control comp) regressions; Wear is covered by ui-test147 */setInterval(()=>{try{document.getElementById('f').contentWindow.R12DEFMODE='control'}catch(e){}},20);
+
 let ph=0;const r=[];const log=(n,ok,x)=>r.push((ok?'PASS ':'FAIL ')+n+(ok||!x?'':' :: '+String(x).slice(0,700)));
 const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
 const SHOT=(location.search.match(/shot=(\d)/)||[])[1]|0;let FX='';
