@@ -8962,5 +8962,13 @@ const R13HL=new Map(),R13LT=new Map();let R13MK='';
 decorate=function(){const ed=$('#ed');if(!ed)return;let mk='';try{const m=S.m[S.cur]||{};mk=S.cur+'|'+(J&&J.lathe?1:0)+'|'+JSON.stringify([m.type,m.name,m.opt,(m.s||[]).map(x=>[x.k,x.v,x.st])])}catch(e){}if(mk!==R13MK){R13MK=mk;R13LT.clear()}if(R13HL.size>200000)R13HL.clear();if(R13LT.size>200000)R13LT.clear();
  const act=document.activeElement;ed.querySelectorAll('.ln').forEach(el=>{const t=el.textContent;if(act!==el){if(el._r13t!==t||el._r13h!==el.innerHTML){let h=R13HL.get(t);if(h===undefined){h=hlLine(t);R13HL.set(t,h)}if(el.innerHTML!==h)el.innerHTML=h;el._r13t=t;el._r13h=el.innerHTML}}else{el._r13t=null}
   const t2=el.textContent;let w=R13LT.get(t2);if(w===undefined){w=lintLine(t2);R13LT.set(t2,w)}const tl=w.join('; ');if(el._r13w===tl+'\u0001'+mk&&el.title===tl)return;const wn=!!w.length;if(el.classList.contains('warn')!==wn)el.classList.toggle('warn',wn);if(el.title!==tl)el.title=tl;if(wn){const dw='⚠ '+w[0];if(el.dataset.w!==dw)el.dataset.w=dw}else if('w' in el.dataset)delete el.dataset.w;el._r13w=tl+'\u0001'+mk})};
+
+/* 6.25 fix: an unchanged saved job never writes a draft, and a draft older than the saved job it came from is dropped (the saved job wins) */
+function r13dKey(j){return j?{uid:j.uid||null,name:j.name||null}:{}}
+{const _ds=drSave;drSave=function(){try{if(typeof window.JMKEEPCUR!='number'&&typeof J!='undefined'&&J&&J.op&&J.r79saved){const d=r13dRaw();if(d&&d.J&&d.J.name&&d.J.name==J.name&&d.cur==S.cur)localStorage.removeItem(DRK);return}}catch(e){}const r=_ds.apply(this,arguments);try{const d=r13dRaw();if(d&&d.J&&J){d.k=r13dKey(J);d.jd=J.date||null;localStorage.setItem(DRK,JSON.stringify(d))}}catch(e){}return r}}
+function r13dRaw(){try{return JSON.parse(localStorage.getItem(DRK)||'null')}catch(e){return null}}
+function r13dStale(d){try{if(!d||!d.J||!d.J.name)return false;const mn=(S.m[d.cur]||{}).name,uid=(d.k&&d.k.uid)||d.J.uid;const j=(S.jobs||[]).find(x=>(uid&&x.uid==uid)||(x.name==d.J.name&&(!x.machine||x.machine==mn)));const base=d.jd!=null?+d.jd:+d.t;return !!(j&&+j.date>0&&base>0&&+j.date>base)}catch(e){return false}}
+{const _sj=saveJob;saveJob=function(){const r=_sj.apply(this,arguments);try{const n=S.jobs[0];if(J&&n&&n.date&&n.name==J.name)J.date=n.date}catch(e){}return r}}
+{const _dg=drGet;drGet=function(){const d=_dg.apply(this,arguments);if(d&&r13dStale(d)){try{localStorage.removeItem(DRK)}catch(e){}return null}return d}}
 /* R79-END */</script>
 </body></html>
