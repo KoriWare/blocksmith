@@ -13,7 +13,7 @@ const chipIn=(card,k)=>{const c=Q('#'+card);return !!(c&&[...c.querySelectorAll(
 const code=()=>ev("(J.code||[]).join('\\n')");const GEN=()=>{const c=T('Continue');if(c){c.click();setTimeout(()=>{const b=T('Generate Code');b&&b.click()},400)}else{const b=T('Generate Code');b&&b.click()}};
 const seq=[];const S=(fn,ms=400)=>seq.push([fn,ms]);
 // open the synthetic Rect Boss fixture through the Library import
-S(()=>{try{const x=new XMLHttpRequest();x.open('GET','fixtures/demo-z8.mbjob',false);x.send();FX=x.responseText}catch(e){log('fixture',false,e.message)}ev("tab('recent')")},800);
+S(()=>{try{const x=new XMLHttpRequest();x.open('GET','fixtures/demo-z8.mbjob',false);x.send();FX=x.responseText}catch(e){log('fixture',false,e.message)}/* v114 item 7: these checks compare moves with older fixtures; the new header comment (Z0 = ...) is checked by test/z0hdr.mjs, so it is left out here */ev("(()=>{const g=gen;gen=function(){const r=g.apply(this,arguments);if(r&&Array.isArray(r.code))r.code=r.code.filter(l=>!/^\\(Z0 = /.test(l));return r};1})()");ev("tab('recent')")},800);
 S(()=>{w.mbRead(new w.File([FX],'demo-z8.mbjob'))},4000);
 for(let k=0;k<4;k++)S(()=>{if(Q('#mbgo')||w.J&&w.J.op=='rboss')return;w.mbRead(new w.File([FX],'demo-z8.mbjob'))},3000);S(()=>{const b=Q('#mbgo');b?CLK(b):log('import',false,'no #mbgo')},4000);
 S(()=>{const L=[...d.querySelectorAll('#v *')].filter(e=>vis(e)&&!e.children.length&&/^(Demo z8 boss|Rectangular Boss\/Profile)$/.test(e.textContent.trim()));L.length?CLK(L[L.length-1]):log('open',false,'no job link')},4000);
