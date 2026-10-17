@@ -8973,7 +8973,7 @@ function r13dStale(d){try{if(!d||!d.J||!d.J.name)return false;const mn=(S.m[d.cu
 
 /* floor pass (Finish stock Z > 0): Simulate draws the FLOOR PASS block in a lighter teal than the wall finish */
 let R13FPC={k:null,a:-1,b:-1};function r13fpRange(){try{const L=txt();const k=L.length+'|'+(L[0]||'')+'|'+(L[L.length-1]||'');if(R13FPC.k===k&&R13FPC.L===L.length)return R13FPC;let a=-1,b=-1;for(let i=0;i<L.length;i++){if(a<0){if(/^\(FLOOR PASS AT FULL DEPTH/.test(L[i]))a=i}else if(/^\((FINISH PASS|SPRING PASS)/.test(L[i])){b=i;break}}if(a>=0&&b<0)b=L.length;R13FPC={k,L:L.length,a,b};return R13FPC}catch(e){return {a:-1,b:-1}}}
-{const _d=draw;draw=function(){const r=_d.apply(this,arguments);try{if(!J||J.lathe||!/^(rboss|cboss)$/.test(J.op)||!J.M||!ctx||typeof ln!='function')return r;if(!(+((J.p['Finish stock Z']||{}).v)>0))return r;const g=r13fpRange();if(g.a<0)return r;const n=Math.min(view.n,J.M.length);ctx.save();ctx.setLineDash([]);ctx.strokeStyle='#7fe9dc';ctx.lineWidth=2;for(let i=0;i<n;i++){const m=J.M[i];if(m.r||m.out||!(m.l>g.a&&m.l<g.b))continue;ln(m.a,m.b)}ctx.restore()}catch(e){}return r}}
+{const _d=draw;draw=function(){const r=_d.apply(this,arguments);try{if(!J||J.lathe||!/^(rboss|cboss|rpock)$/.test(J.op)||!J.M||!ctx||typeof ln!='function')return r;if(!(J.op=='rpock'?(r112fin(J).fl>0):(+((J.p['Finish stock Z']||{}).v)>0)))return r;const g=r13fpRange();if(g.a<0)return r;const n=Math.min(view.n,J.M.length);ctx.save();ctx.setLineDash([]);ctx.strokeStyle='#7fe9dc';ctx.lineWidth=2;for(let i=0;i<n;i++){const m=J.M[i];if(m.r||m.out||!(m.l>g.a&&m.l<g.b))continue;ln(m.a,m.b)}ctx.restore()}catch(e){}return r}}
 
 /* A (speed) v113z13b: big programs (over R13BIG lines) keep only a window of editor lines in the page; short programs render exactly as before */
 const R13BIG=2000,R13WN=240;let R13W={on:0,a:0,b:0,n:0},R13LH=17.8,R13CURI=null,R13HIT=null;const R13CLS=new Map();
@@ -9017,5 +9017,12 @@ const R13CK=[];
 
 /* A: big saved jobs (over R13BIG lines) are stored without the Simulate move lists (rebuilt on open), and a big draft is dropped before the save so the phone's storage limit is not hit */
 {const _sn=sanS;sanS=function(T){const r=_sn.apply(this,arguments);try{let big=0;(T&&T.jobs||[]).forEach(j=>{if(j&&Array.isArray(j.code)&&j.code.length>R13BIG){big=1;delete j.M;delete j.run;delete j.moves}});if(big&&T===S){const d=localStorage.getItem(DRK);if(d&&d.length>200000){const cur=typeof J!='undefined'&&J&&J.r79saved;let n=0;try{n=JSON.stringify(T).length}catch(e){}if(n+d.length>4.5e6)localStorage.removeItem(DRK)}}}catch(e){}return r}}
+
+/* v113z13b: Rectangular pocket floor pass - the comp card's floor stock (no new field). Roughing already stops that much above the floor; the last roughing level is run again at full depth (tool centre, no comp, pocket pulled back by the wall stock) before the wall finish. Floor stock 0 = unchanged. */
+{const _g=gen;gen=function(j){const g=_g.apply(this,arguments);try{if(!g||!Array.isArray(g.code)||!j||j.op!='rpock'||j.lathe||!r112appMoves(j))return g;const {fl}=r112fin(j);if(!(fl>0))return g;const C=g.code;if(C.some(l=>/^\(FLOOR PASS/.test(l)))return g;const f=C.findIndex(l=>/^\(FINISH PASS/.test(l));if(f<1)return g;
+ const HX=/^G0?3 X(-?[\d.]+) Y(-?[\d.]+) I(-?[\d.]+) J-?0\.?0* Z(-?[\d.]+) F(-?[\d.]+)\s*$/;let h=-1;for(let i=f-1;i>0;i--){if(HX.test(C[i])){h=i;break}}if(h<0)return g;let hs=h;while(hs>0&&HX.test(C[hs-1]))hs--;const st=C[hs-1];if(!/^G01 X\S+ Y\S+ F/.test(st))return g;
+ const z0=+((j.p.Z0||{}).v)||0,dep=+((j.p.Depth||{}).v);if(!(dep>0))return g;const zf=z0-dep,zr=+HX.exec(C[h])[4];if(!(zf<zr-1e-9))return g;const m=HX.exec(C[h]);const f4z=x=>r112f(x);
+ const body=C.slice(h+1,f);if(!body.length||body.some(l=>/^\s*(G00|G0 |M|\()/.test(l)))return g;
+ const blk=[`(FLOOR PASS AT FULL DEPTH Z${f4z(zf)} - TAKES THE FLOOR STOCK ${f4z(fl)})`,st,`G03 X${m[1]} Y${m[2]} I${m[3]} J0. Z${f4z(zf)} F${m[5]}`,...body];g.code=[...C.slice(0,f),...blk,...C.slice(f)];if(j===J)J.code=g.code}catch(e){console.error(e)}return g}}
 /* R79-END */</script>
 </body></html>

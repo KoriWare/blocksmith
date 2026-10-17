@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><body><pre id="o"></pre><!-- v113z13b: Rectangular pocket floor pass from the comp card's floor stock: before the wall finish, tool centre, no comp, inside the wall-stock line, full depth, none at 0, Simulate lighter teal --><iframe id="f" src="../index.html?v=153" style="position:fixed;inset:0;width:390px;height:844px;border:0"></iframe><script>
+let ph=0;const r=[];const log=(n,ok,x)=>{r.push((ok?'PASS ':'FAIL ')+n+(ok||x===undefined?'':' :: '+String(x).slice(0,600)));o.textContent=r.join('\n')};
+const fin=()=>{o.textContent=r.join('\n')+'\nP='+r.filter(x=>x.startsWith('PASS')).length+' F='+r.filter(x=>x.startsWith('FAIL')).length};
+f.onload=()=>{const w=f.contentWindow;if(!ph){ph=1;w.localStorage.clear();w.localStorage.setItem('mc_tour','done');w.location.reload();return}
+const ev=x=>{try{return w.eval(x)}catch(e){return 'ERR '+e.message}};
+setTimeout(()=>{try{ev("S.m[S.cur].s.forEach(x=>{x.st='user'});tab('new');pickJob('rpock');show()");
+ const G=(fl,m,mode)=>{const t=ev(`(()=>{const set=(k,v)=>J.p[k]={v,g:false};set('Pocket L',3);set('Pocket W',2);set('Center X',0);set('Center Y',0);set('Corner R',0.3);set('Depth',0.4);set('Stepdown',0.1);set('Cutter',0.5);set('Tool',3);set('Feed',20);set('RPM',3000);set('Plunge feed',10);set('Stepover %',50);set('Clear Z',0.1);set('Work offset','G54');set('Z0',0);J.r112comp={m:'${m}',w:'${mode}',fs:0.01,fl:${fl}};J.code=null;show();return JSON.stringify(gen(J).code||[])})()`);try{return JSON.parse(t)}catch(e){throw new Error(t)}};
+ const blk=C=>{const a=C.findIndex(l=>/^\(FLOOR PASS/.test(l)),b=C.findIndex(l=>/^\(FINISH PASS/.test(l));return {a,b,F:a>=0?C.slice(a,b):[]}};
+ for(const [m,mode] of [['G41','control'],['G41','wear'],['G42','control'],['off','control']]){const C=G(0.02,m,mode),k=blk(C);
+  log(`pocket floor pass before wall finish (${m} ${mode})`,k.a>0&&k.b>k.a,[k.a,k.b]);
+  log(`pocket floor pass at tool centre, no comp (${m} ${mode})`,k.F.length>4&&!k.F.some(l=>/G4[12]\b/.test(l)),k.F.slice(0,3));
+  log(`pocket floor pass reaches full depth Z-0.4 (${m} ${mode})`,k.F.some(l=>/Z-0\.4\b/.test(l)));
+  let mx=0,my=0;k.F.forEach(l=>{const a=l.match(/X(-?[\d.]+)/),b=l.match(/Y(-?[\d.]+)/);if(a)mx=Math.max(mx,Math.abs(+a[1]));if(b)my=Math.max(my,Math.abs(+b[1]))});
+  log(`pocket floor pass stays inside the wall-stock line (${m} ${mode})`,mx<=1.24+1e-6&&my<=0.74+1e-6,[mx,my]);
+  log(`floor stock 0: no floor pass (${m} ${mode})`,blk(G(0,m,mode)).a<0)}
+ G(0.02,'G41','control');ev("tab('sim')");setTimeout(()=>{try{const px=()=>{ev("view.n=J.M.length;draw()");const cv=w.document.querySelector('#cv');const d=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data;let n=0;for(let i=0;i<d.length;i+=4)if(Math.abs(d[i]-127)<6&&Math.abs(d[i+1]-233)<6&&Math.abs(d[i+2]-220)<6)n++;return n};
+  const p1=px();log('Simulate draws the pocket floor pass in lighter teal',p1>100,p1);ev("tab('new')");setTimeout(()=>{G(0,'G41','control');ev("tab('sim')");setTimeout(()=>{const p0=px();log('no lighter teal at floor stock 0',p0==0,p0);fin()},800)},500)}catch(e){log('sim error',false,e.stack);fin()}},900)
+}catch(e){log('script error',false,e.stack);fin()}},1500)};
+</script>
