@@ -11,7 +11,8 @@ const run=(op,mt,shape,z0)=>p.evaluate((op,mt,shape,z0)=>{tab('new');const m=S.m
  J.r112stk=shape=='round'?{shape:'round',round:{d:2,len:3},square:{L:null,W:null,H:null},zp:'bc',z:'top',xend:'left',yend:'bottom',fp:'bc',top:null,front:null,off:{}}:{shape:'square',round:{d:null,len:null},square:{L:5,W:3,H:1},zp:'tr',z:'top',xend:'left',yend:'bottom',fp:'bc',top:null,front:null,off:{}};
  J.r112comp={...(J.r112comp||{}),m:'G41',w:'control'};J.code=null;show();const c=gen(J).code||[];return {h:c.filter(l=>/^\(Z0 = /.test(l)),i:c.findIndex(l=>/^\(Z0 = /.test(l)),g43:c.find(l=>/^G43/.test(l))}},op,mt,shape,z0);
 let r=await run('rboss','vmc3','square',0);ok('top of stock, shift 0: one header line "(Z0 = TOP OF STOCK)" near the top',r.h.length==1&&r.h[0]=='(Z0 = TOP OF STOCK)'&&r.i>0&&r.i<6,JSON.stringify(r));
-r=await run('rboss','vmc3','square',-0.05);ok('top of stock, shift -0.05: header states the shift',r.h.length==1&&/^\(Z0 = TOP OF STOCK \+0\.05 - STOCK TOP AT Z-0\.05( - G52 Z-0\.05 TO PART ZERO)?\)$/.test(r.h[0]),JSON.stringify(r));
+r=await run('rboss','vmc3','square',-0.05);ok('top of stock, shift -0.05: header states the shift',r.h.length==1&&r.h[0]=='(Z0 = 0.05 ABOVE STOCK TOP - SHIFT -0.05 - STOCK TOP AT Z-0.05)',JSON.stringify(r));
+r=await run('rboss','vmc3','square',0.05);ok('top of stock, shift +0.05: "(Z0 = 0.05 BELOW STOCK TOP - SHIFT 0.05 - STOCK TOP AT Z0.05)"',r.h.length==1&&r.h[0]=='(Z0 = 0.05 BELOW STOCK TOP - SHIFT 0.05 - STOCK TOP AT Z0.05)',JSON.stringify(r));
 r=await run('cboss','vmc4','round',0);ok('round bar on the rotary, shift 0: "(Z0 = CENTERLINE)"',r.h.length==1&&r.h[0]=='(Z0 = CENTERLINE)',JSON.stringify(r));
 const r2=await run('cboss','vmc4','round',-0.05);ok('round bar on the rotary, shift -0.05: still "(Z0 = CENTERLINE)" - the generator does not apply the shift there (same G43 line)',r2.h.length==1&&r2.h[0]=='(Z0 = CENTERLINE)'&&r2.g43===r.g43,JSON.stringify([r2,r.g43]));
 
