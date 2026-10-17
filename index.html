@@ -9138,9 +9138,11 @@ function r13scrRestore(){try{if(V.dataset.page!=='edit'||R13SCR.J!==J||!R13SCR.t
 {const _g=r101g53;const C={k:null,r:null};r101g53=function(lines){if(!Array.isArray(lines)||lines.length<=R13BIG)return _g.apply(this,arguments);const k=lines.join('\n');if(C.k===k)return C.r.slice();const r=_g.apply(this,arguments);C.k=k;C.r=r.slice();return r}}
 /* v114: big programs - the page build and the checks list are two tasks: show() runs with the checks refresh held, then the refresh runs on its own (each stays under 1 s at 4x) */
 var R13DEFREF=0,R13REFPEND=0;
-/* Stacey: a job loaded from a slim saved record or draft has no stored move list; refresh read J.moves[0] and stopped before the 'Program runs in simulator' row, so the endless-loop check went missing after reopen. Same start as a fresh import (no moves = the default start). */
-{const _rf=refresh;refresh=function(){try{if(typeof J!='undefined'&&J&&!Array.isArray(J.moves))J.moves=[]}catch(e){}if(R13DEFREF){R13REFPEND=1;return}return _rf.apply(this,arguments)}}
-async function r13show2(){R13DEFREF=1;R13REFPEND=0;try{show()}finally{R13DEFREF=0}if(R13REFPEND){R13REFPEND=0;await new Promise(r=>setTimeout(r,0));try{refresh()}catch(e){}}}
+/* Stacey: a job loaded from a slim saved record or draft has no stored move list; refresh read J.moves[0] and stopped before the 'Program runs in simulator' row, so the endless-loop check went missing after reopen. The move list is put back as the import build makes it (one parked move at 0,0,2), so every load path runs the same checks. */
+function r13mvFix(){try{if(typeof J!='undefined'&&J&&J.op=='import'&&!Array.isArray(J.raw)&&Array.isArray(J.code))J.raw=J.code.slice();/* slim records leave out raw when it equals the code */if(typeof J!='undefined'&&J&&!Array.isArray(J.moves))J.moves=J.op=='import'?[{a:[0,0,2],b:[0,0,2],r:1,l:0}]:[]}catch(e){}}
+{const _sw=show;show=function(){r13mvFix();return _sw.apply(this,arguments)}}
+{const _rf=refresh;refresh=function(){r13mvFix();if(R13DEFREF){R13REFPEND=1;return}return _rf.apply(this,arguments)}}
+async function r13show2(){R13DEFREF=1;R13REFPEND=0;try{show()}finally{R13DEFREF=0}if(R13REFPEND){R13REFPEND=0;try{r13pSet(0.98,'Listing the checks…')}catch(e){}await new Promise(r=>setTimeout(r,0));try{refresh()}catch(e){}}}
 /* big programs: the rotary scan is a pure function of the lines - reuse it for the same text */
 {const _rs=r101rotScan;const C={a:null,k:null,r:null};r101rotScan=function(lines){if(!Array.isArray(lines)||lines.length<=R13BIG)return _rs.apply(this,arguments);/* v114: the only caller reads the scan, so the cached array is returned as is (the copy cost ~200 ms at 4x per page build) */if(C.a===lines&&C.r)return C.r;const k=lines.join('\n');if(C.k===k){C.a=lines;return C.r}const r=_rs.apply(this,arguments);C.a=lines;C.k=k;C.r=r;return r}}
 /* R79-END */</script>
